@@ -12,3 +12,7 @@
 # Tooling
 node_modules/
 *.log
+
+# Python
+__pycache__/
+*.pyc
