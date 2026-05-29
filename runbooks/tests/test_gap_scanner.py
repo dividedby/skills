@@ -143,6 +143,20 @@ class GapScannerProposalTest(unittest.TestCase):
         self.assertEqual(result["filed"], 0)
         self.assertEqual(tracker.filed, [])
 
+    def test_private_signal_in_title_is_blocked_nothing_filed(self):
+        # The title is published too, so it must pass the sanitizer just like the
+        # body — a clean body does not excuse a leaky title.
+        tracker = PayloadTracker()
+        candidate = {
+            "dedup_key": "retry-backoff-policy",
+            "priority": 9,
+            "title": "Generalize retry logic from src/billing/charge.py",
+            "body": "A standard retry-with-backoff skill would unify the repos.",
+        }
+        result = self._run(lambda repos: [candidate], tracker)
+        self.assertEqual(result["filed"], 0)
+        self.assertEqual(tracker.filed, [])
+
     def test_private_marker_in_body_is_blocked(self):
         tracker = PayloadTracker()
         candidate = {

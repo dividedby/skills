@@ -42,9 +42,10 @@ always-on VPS; authenticated `git clone`, no GitHub Actions).
    stable `dedup_key`, a `priority`, a `title`, and a **generalized** `body`
    describing the need in the abstract — never paste repo content.
 
-4. **Sanitize, then gate.** Run every draft body through the sanitizer, always
-   passing the configured `private_markers`; drop any it blocks. The proposal
-   gate then picks at most one survivor:
+4. **Sanitize, then gate.** Run every draft's `title` and `body` (both get
+   published) through the sanitizer, always passing the configured
+   `private_markers`; drop any it blocks. The proposal gate then picks at most
+   one survivor:
 
    ```
    python3 -c "from runbooks.lib.sanitizer import check; print(check(body, private_markers=markers))"

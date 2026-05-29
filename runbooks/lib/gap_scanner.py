@@ -41,9 +41,10 @@ def run(
 
     ``find_needs(repos)`` is the agent's analysis step — ``repos`` maps repo name
     to its cloned path (read-only); it judges recurrence and returns candidate
-    dicts carrying ``dedup_key``, ``priority``, ``title`` and ``body``. Each
-    candidate body is run through the *real* sanitizer (``private_markers`` always
-    supplied); any that leaks private content is dropped before the gate sees it.
+    dicts carrying ``dedup_key``, ``priority``, ``title`` and ``body``. A
+    candidate's ``title`` and ``body`` (both published) are run together through
+    the *real* sanitizer (``private_markers`` always supplied); any that leaks
+    private content is dropped before the gate sees it.
     The *real* proposal gate then picks at most one of the survivors, filed via
     ``file_issue(payload)`` with the provenance and triage labels attached.
 
@@ -56,11 +57,14 @@ def run(
         if find_needs is not None and file_issue is not None:
             candidates = find_needs(result.repos)
             # Sanitizer first: drop any draft that leaks private content, so the
-            # gate only ever chooses among bodies safe to file publicly.
+            # gate only ever chooses among drafts safe to file publicly. Both the
+            # title and the body are published, so both must clear the guard.
             clean = [
                 c
                 for c in candidates
-                if check(c["body"], private_markers=private_markers)["allowed"]
+                if check(
+                    f"{c['title']}\n{c['body']}", private_markers=private_markers
+                )["allowed"]
             ]
             open_keys = open_issues() if open_issues is not None else []
             chosen = decide(clean, open_keys, min_priority=min_priority)["file"]
