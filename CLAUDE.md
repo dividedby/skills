@@ -1,6 +1,7 @@
 Skills are organized into bucket folders under skills/:
 
     engineering/ — daily code work
+    config/      — setting up and auditing a project's Claude config (instruction files + settings/hooks harness)
 
 Every skill must be registered in two places:
 

@@ -2,6 +2,10 @@
   "name": "dividedby-skills",
   "skills": [
     "./skills/engineering/frontend-design",
-    "./skills/engineering/software-design"
+    "./skills/engineering/software-design",
+    "./skills/config/init-project-claude",
+    "./skills/config/audit-project-claude",
+    "./skills/config/init-project-harness",
+    "./skills/config/audit-project-harness"
   ]
 }
