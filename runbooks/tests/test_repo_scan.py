@@ -53,6 +53,21 @@ class RepoScanTest(unittest.TestCase):
         # Everything cloned is removed at end of run.
         self.assertFalse(workdir.exists())
 
+    def test_clones_owner_slash_name_entries(self):
+        # The real config lists repos as "owner/name"; the slash must not break
+        # the scratch-dir layout or the cleanup.
+        src = self.base / "remote" / "acme" / "billing"
+        src.mkdir(parents=True)
+        (src / "README.md").write_text("proprietary")
+        self.fixtures["acme/billing"] = src
+        clone = FakeRemote(self.fixtures)
+
+        with scan(["acme/billing"], clone=clone) as result:
+            self.assertIn("acme/billing", result.repos)
+            self.assertEqual((result.repos["acme/billing"] / "README.md").read_text(), "proprietary")
+            workdir = result.workdir
+        self.assertFalse(workdir.exists())
+
     def test_unlisted_repo_is_never_read(self):
         self._fixture_repo("billing")
         self._fixture_repo("secret-side-project")  # exists on the remote but not listed

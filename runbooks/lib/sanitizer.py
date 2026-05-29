@@ -5,6 +5,16 @@ Used by the gap-scanner run-book, which reads private repos but files
 generalized proposals here. The no-private-code rule is enforced mechanically
 here, not by prompt discipline. This module never touches the tracker; the
 run-book gates on the returned decision.
+
+Known limitations (the guard is necessary, not sufficient):
+- It catches *structural* leak signals (markers, fenced code, file paths, import
+  lines). It cannot judge whether free prose names something private — a bare
+  private identifier like ``calculateChargebackFee`` passes. So the run-book must
+  always supply the configured ``private_markers``, and prose discipline still
+  matters for identifiers the markers don't cover.
+- The file-path signal also matches public URLs with an extension
+  (``…/patterns.html``), so a body that cites sources can be over-blocked. The
+  caller (#20) decides how to cite sources without tripping it.
 """
 
 import re
