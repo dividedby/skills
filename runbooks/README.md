@@ -30,8 +30,11 @@ helpers are Python stdlib.
       consumer-side, then proposes at most one skill refinement via the real
       proposal gate, filed under `source:self-improvement` (#19). Never edits a
       skill. Without the proposal seams it is the #16 analysis-only run.
-    - `gap_scanner.py` — `run(...)` scans the curated repos read-only and exits
-      clean; files nothing yet (#17).
+    - `gap_scanner.py` — `run(...)` scans the curated repos read-only, then
+      detects a recurring need and proposes at most one new skill via the real
+      sanitizer + proposal gate, filed under `source:gap-scanner` (#20). Sanitizer
+      runs before the gate so private content is dropped before filing. Without
+      the proposal seams it is the #17 scan-only skeleton.
 - `config/` — `gap-scanner-repos.json`, the curated repo allow-list (explicit;
   no auto-discovery).
 - `tests/` — stdlib `unittest`. Pure helpers use synthetic inputs (no fakes);

@@ -53,6 +53,25 @@ class SanitizerGuardTest(unittest.TestCase):
         self.assertFalse(result["allowed"])
         self.assertIn("acme-internal/billing-core", result["reason"])
 
+    def test_source_url_with_a_path_is_over_blocked_known_limit(self):
+        # Documents the known limit: the structural path signal also matches a
+        # public source URL that has a path-with-extension. We keep check() strict
+        # (the structural guard is load-bearing) rather than weaken it; #20 cites
+        # sources by bare domain instead. See test below.
+        body = "Pattern documented at https://example.com/guide/patterns.html."
+        result = check(body)
+        self.assertFalse(result["allowed"])
+        self.assertIn("path", result["reason"].lower())
+
+    def test_bare_domain_citation_is_allowed(self):
+        # The citation style #20 uses so legitimate proposals are not over-blocked.
+        body = (
+            "Multiple repos reimplement retry-with-backoff. A standard policy "
+            "(see the discussion on martinfowler.com) would unify them."
+        )
+        result = check(body)
+        self.assertTrue(result["allowed"])
+
 
 if __name__ == "__main__":
     unittest.main()
