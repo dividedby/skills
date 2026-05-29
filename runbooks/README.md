@@ -10,17 +10,32 @@ helpers are Python stdlib.
 
 ## Layout
 
-- `lib/` — pure decision helpers (inputs in, decision out; no tracker/git/clone
-  I/O). The run-books inject everything; this is the seam that makes the
-  ≤1-issue-per-run cap and the no-private-code rule testable offline.
-  - `proposal_gate.py` — `decide(candidates, open_issues, min_priority=1)`
-    picks at most one proposal to file (dedup + priority + deterministic
-    tie-break).
-  - `sanitizer.py` — `check(body, private_markers=())` blocks private-repo
-    content from this public tracker.
-- `tests/` — stdlib `unittest` over synthetic inputs. No fakes; the helpers are
-  pure.
-- `prompts/` — run-book prompts (the orchestration the AFK agent follows).
+- `lib/` — helpers. The **pure decision** helpers take inputs and return a
+  decision with no tracker/git/clone I/O; the **orchestrators** wire seams with
+  all I/O injected, so the whole workflow is testable on fixtures.
+  - Pure decisions:
+    - `proposal_gate.py` — `decide(candidates, open_issues, min_priority=1)`
+      picks at most one proposal to file (dedup + priority + deterministic
+      tie-break).
+    - `sanitizer.py` — `check(body, private_markers=())` blocks private-repo
+      content from this public tracker.
+  - Seams:
+    - `map_store.py` — `read_map` / `write_map` for the integration map;
+      `write_map` writes only if changed (keeps re-runs to a minimal diff).
+    - `repo_scan.py` — `load_repo_list` (curated allow-list) + `scan` context
+      manager (shallow-clone listed repos via an injected `clone`, clean up on
+      exit).
+  - Orchestrators:
+    - `self_improvement.py` — `run(...)` builds/commits the integration map
+      consumer-side; analysis only, no issues (#16).
+    - `gap_scanner.py` — `run(...)` scans the curated repos read-only and exits
+      clean; files nothing yet (#17).
+- `config/` — `gap-scanner-repos.json`, the curated repo allow-list (explicit;
+  no auto-discovery).
+- `tests/` — stdlib `unittest`. Pure helpers use synthetic inputs (no fakes);
+  orchestrators use integration dry-runs against fixture dirs + injected fakes.
+- `prompts/` — run-book prompts (the orchestration the AFK agent follows):
+  `self-improvement.md`, `gap-scanner.md`.
 
 ## Tests
 

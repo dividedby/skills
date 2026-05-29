@@ -1,0 +1,4 @@
+{
+  "_comment": "Curated allow-list of repos the gap-scanner may read. Explicit only — the scanner never auto-discovers repos. Each entry is an owner/name the run-book can clone read-only. Empty = scan nothing.",
+  "repos": []
+}
