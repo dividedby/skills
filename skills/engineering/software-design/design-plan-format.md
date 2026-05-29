@@ -35,7 +35,7 @@ CONTEXT.md                    ← Domain vocabulary (owned by /grill-with-docs)
 ```markdown
 # Design Plan: <Feature Name>
 
-> Status: draft | approved | shipped
+> Status: approved | shipped
 > Created: YYYY-MM-DD
 > Epic: <PRD link or parent issue>
 
@@ -64,9 +64,14 @@ surfaced it for /grill-with-docs extraction — not captured here.
 
 | Seam | What crosses it | Adapter in tests | Adapter in prod |
 |---|---|---|---|
-| InventoryReservation | Reserve items for an order | FakeInventoryReservation | InventoryServiceAdapter |
-| ShipmentDispatch | Send a shipment | FakeShipmentDispatch | FedExAdapter |
-| NotificationGateway | Send customer notifications | FakeNotificationGateway | EmailAdapter |
+| InventoryReservation | Reserve items for an order | FakeInventoryReservation (must enforce stock limits; return InsufficientStock on shortage) | InventoryServiceAdapter |
+| ShipmentDispatch | Send a shipment | FakeShipmentDispatch (must record dispatched orderId; reject duplicate dispatches) | FedExAdapter |
+| NotificationGateway | Send customer notifications | FakeNotificationGateway (must track sent notifications; support no-preferred-channel path) | EmailAdapter |
+
+The parenthetical in *Adapter in tests* records the **fake contract** — the
+behavioral expectation the fake must honor. A fake with no recorded contract
+defaults to happy-path returns, which defeats its purpose (see
+[modules-and-seams.md](modules-and-seams.md)). Keep it to one scannable line.
 
 ## Invariants and Contracts
 
@@ -114,15 +119,18 @@ each one with a decision or, for hard trade-offs, an ADR via
 
 ## Status Field
 
-- **draft** — the skill has written the plan but the user has not yet
-  approved the batch.
 - **approved** — the user approved the batch; rewritten issues are
-  live in the tracker; implementation can begin.
+  live in the tracker; implementation can begin. The plan is **born in
+  this state**: it is rendered in conversation and written to disk only
+  after batch approval (SKILL.md step 9), so it never lands as a draft.
 - **shipped** — the last issue in the index closed. Future agents read
   `CONTEXT.md` and ADRs first; the plan stays for historical context
   only.
 
-There is no `stale` status. Drift is handled inline (see next section).
+There is no `draft` status — the skill never writes the plan to disk
+before approval (that would break the one-batch-approval invariant in
+SKILL.md step 9). There is no `stale` status either; drift is handled
+inline (see next section).
 
 ---
 

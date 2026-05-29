@@ -182,15 +182,18 @@ values.
 call capture. Only at external services with no sandbox. Never mock your
 own modules — that couples tests to implementation.
 
-Record the strategy in the Design Plan per seam:
+Record the strategy in the Design Plan's Seams table (see
+[design-plan-format.md](design-plan-format.md)). Embed the behavioral
+expectation — the **fake contract** — as a parenthetical in the *Adapter in
+tests* cell:
 
 ```
-Seam: PaymentGateway
-  Adapter in tests:  FakePaymentGateway (in-memory)
-  Adapter in prod:   StripeAdapter
-  Fake contract:     Must charge and return a PaymentResult;
-                     must simulate declines.
+FakePaymentGateway (must simulate declines; return a PaymentResult for any charged amount)
 ```
+
+One-line parentheticals keep the table scannable. A fake with no recorded
+contract obligation defaults to happy-path returns — which defeats the purpose
+of the fake.
 
 ### What belongs inside vs outside
 
