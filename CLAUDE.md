@@ -3,10 +3,7 @@ Skills are organized into bucket folders under skills/:
     engineering/ — daily code work
     config/      — setting up and auditing a project's Claude config (instruction files + settings/hooks harness)
 
-Every skill must be registered in two places:
-
-- `.claude-plugin/plugin.json` — the array of skill paths.
-- Top-level `README.md` — link the skill name to its `SKILL.md` and give a one-line description.
+Each skill is registered in `.claude-plugin/plugin.json` (`skills[]`) and linked from the top-level `README.md` with a one-line description — enforced by the `check-skill-registration` Stop hook.
 
 A bucket's own `README.md` is **not** required by default. Add one only when either: (a) the repo has ≥3 buckets and the top-level README is getting long, or (b) a single bucket holds ≥3 skills and a localized index aids navigation.
 
