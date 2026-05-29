@@ -91,10 +91,20 @@ from the triage roles in `docs/agents/triage-labels.md` — the triage labels
 still gate the human merge. (This resolves ADR 0003's placeholder "e.g.
 `self-improvement`" to the `source:`-prefixed form for consistency.)
 
-**Gap-scanner (#20) runner.** D reads **private** repos, but this repo's only
-run-book precedent — the architecture-review workflow — is public GitHub
-Actions, which cannot shallow-clone private repos without granting broad
-secrets. D's runner is therefore expected to be the non-GHA path (the always-on
-VPS in ADR 0003), not a GitHub Actions cron. Provisioning that runner is out of
-scope (ops, per the PRD); **confirm the runner before implementing #20's clone
-step.**
+**Runner (resolved).** Both run-books run on the maintainer's existing
+always-on VPS — the assumption in ADR 0003, now confirmed as real infra, not
+aspirational. The VPS is the shared home: C reads the `agent-research` KB and
+commits the integration map; D clones the curated private repos read-only. The
+VPS authenticates with a deploy key / PAT (standard `git clone`); OpenVPN egress
+is **not** a requirement (the maintainer is not routing-sensitive). The public
+GitHub Actions path is rejected for D specifically because it would put a
+private-repo read token in a public repo's Actions. Provisioning/cron wiring
+remains an ops concern, out of scope for the issues.
+
+**Sanitizer stays strict, structural-first.** The maintainer's private repos are
+"personal, not for the world" rather than confidential — so the
+`private_markers` list is *secondary*. The real risk is a stray secret
+(`.env`, key, customer record) in a personal repo, so the load-bearing guard is
+the **structural** one: never let raw repo content (fenced code, file paths,
+import lines) into a public issue. Keep `check()` strict on pasted content even
+though the repos themselves are not secrets.
