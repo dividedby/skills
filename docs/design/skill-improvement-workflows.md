@@ -75,3 +75,26 @@ without the live tracker.
 - #18 — Sanitizer guard (pure) + tests
 - #19 — Self-improvement run-book: file a real refinement (≤1/run)
 - #20 — Gap-scanner run-book: file a real proposal (≤1/run, sanitized)
+
+## Operational notes (for #16–#20)
+
+**Provenance labels.** Each run-book tags its filed issue with a `source:`
+label it also reads to dedup. Follow the convention the architecture-review
+workflow already uses (`source:architecture-review`):
+
+- C (self-improvement) → `source:self-improvement`
+- D (gap-scanner) → `source:gap-scanner`
+
+Create the label on first use, idempotently, the way the arch-review workflow
+does (`gh label create … || true`). These are **provenance** labels, distinct
+from the triage roles in `docs/agents/triage-labels.md` — the triage labels
+still gate the human merge. (This resolves ADR 0003's placeholder "e.g.
+`self-improvement`" to the `source:`-prefixed form for consistency.)
+
+**Gap-scanner (#20) runner.** D reads **private** repos, but this repo's only
+run-book precedent — the architecture-review workflow — is public GitHub
+Actions, which cannot shallow-clone private repos without granting broad
+secrets. D's runner is therefore expected to be the non-GHA path (the always-on
+VPS in ADR 0003), not a GitHub Actions cron. Provisioning that runner is out of
+scope (ops, per the PRD); **confirm the runner before implementing #20's clone
+step.**
