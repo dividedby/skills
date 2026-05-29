@@ -27,7 +27,9 @@ helpers are Python stdlib.
       exit).
   - Orchestrators:
     - `self_improvement.py` — `run(...)` builds/commits the integration map
-      consumer-side; analysis only, no issues (#16).
+      consumer-side, then proposes at most one skill refinement via the real
+      proposal gate, filed under `source:self-improvement` (#19). Never edits a
+      skill. Without the proposal seams it is the #16 analysis-only run.
     - `gap_scanner.py` — `run(...)` scans the curated repos read-only and exits
       clean; files nothing yet (#17).
 - `config/` — `gap-scanner-repos.json`, the curated repo allow-list (explicit;

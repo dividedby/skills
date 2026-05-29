@@ -1,10 +1,12 @@
-# Self-improvement run-book — maintain the integration map
+# Self-improvement run-book — maintain the map, propose one refinement
 
 You are running unattended. No user is watching. Do not ask questions — make the
-call yourself. This run does **analysis only**: you build and commit the
-integration map. You do **not** file issues or edit skills (that is a later
-step). See `CONTEXT.md` for `integration map`, ADR 0003 for the producer/decider
-split, and ADR 0004 for the helper boundary.
+call yourself. This run does two things: (1) build and commit the integration
+map (analysis), then (2) diff that map against current reality and propose **at
+most one** skill refinement by filing an issue. You **never edit or merge a
+skill directly** — you propose via an issue and stop. See `CONTEXT.md` for
+`integration map`, ADR 0003 for the producer/decider split, and ADR 0004 for the
+helper boundary.
 
 ## Scope
 
@@ -35,12 +37,32 @@ split, and ADR 0004 for the helper boundary.
 
 4. **Commit only if it changed.** If `write_map` reported `True`, commit the map
    (analysis/bookkeeping — this is the one auto-commit the VPS is allowed, per
-   ADR 0003). If it reported `False`, there is nothing to commit; stop.
+   ADR 0003). If it reported `False`, there is nothing to commit.
+
+5. **Propose at most one refinement.** Diff the committed map against the current
+   skills/KB to surface refinement candidates (you may invoke
+   `improve-codebase-architecture` as the analysis step). Give each candidate a
+   stable `dedup_key`, a `priority`, a `title` and a generalized `body`. The
+   proposal gate decides — never your own judgement on the cap:
+
+   ```
+   python3 -c "from runbooks.lib.proposal_gate import decide; \
+     print(decide(candidates, open_keys, min_priority=1))"
+   ```
+
+   where `open_keys` are the dedup keys of issues already open under
+   `source:self-improvement`. If `decide` returns a candidate, file exactly one
+   issue with labels `source:self-improvement` and `needs-triage`; otherwise file
+   nothing. Ensure the provenance label exists first, idempotently:
+
+   ```
+   gh label create source:self-improvement --description "Filed by the self-improvement run-book" || true
+   ```
 
 ## Rules
 
-- Analysis only. **No issues filed, no skill edits.** The only mutation is the
-  committed integration map.
+- **Propose, never merge.** At most one issue per run (the gate enforces it; zero
+  is fine). **No skill edits** — the only direct mutation is the committed map.
 - The map lives in this repo, never in `agent-research` (one-way dependency).
 - Re-runs update the map in place with a minimal diff — never a wholesale
   regeneration.
