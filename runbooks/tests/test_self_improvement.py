@@ -2,6 +2,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from runbooks.lib.kb_source import load_kb_source, read_kb
 from runbooks.lib.map_store import read_map
 from runbooks.lib.self_improvement import (
     SOURCE_LABEL,
@@ -109,6 +110,116 @@ class SelfImprovementRunTest(unittest.TestCase):
         # The KB is read-only input; the map is written consumer-side only.
         self.assertEqual(sorted(p.name for p in kb_dir.iterdir()), before)
         self.assertTrue(self.map_path.exists())
+
+
+class SelfImprovementKbAcquisitionTest(unittest.TestCase):
+    """The KB acquisition contract (#29): the real kb-source loader + reader feed
+    the orchestrator's injected ``kb_reader`` so ``build_map`` is exercised over a
+    ``knowledge/<subject>/{practices,artifacts}/``-shaped fixture — the C parallel
+    to the gap-scanner's fixture-dir scan tests."""
+
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.base = Path(self._tmp.name)
+        self.kb_root = self.base / "agent-research"
+        self.map_path = self.base / "integration-map.md"
+        self.commit = FakeCommit()
+
+    def tearDown(self):
+        self._tmp.cleanup()
+
+    def _note(self, subpath, name, text):
+        d = self.kb_root / subpath
+        d.mkdir(parents=True, exist_ok=True)
+        (d / name).write_text(text)
+
+    def _config(self, subpaths):
+        cfg = self.base / "kb-source.json"
+        cfg.write_text(
+            '{"kb": "dividedby/agent-research", "subpaths": %s}'
+            % list(subpaths).__repr__().replace("'", '"')
+        )
+        return cfg
+
+    def test_configured_reader_feeds_build_map_over_the_knowledge_layer(self):
+        self._note("knowledge/mattpocock/practices", "index.md", "# practices")
+        self._note(
+            "knowledge/mattpocock/practices", "tdd.md", "red-green-refactor"
+        )
+        self._note("knowledge/mattpocock/artifacts", "index.md", "# artifacts")
+        cfg = self._config(
+            [
+                "knowledge/mattpocock/practices",
+                "knowledge/mattpocock/artifacts",
+            ]
+        )
+        source = load_kb_source(cfg)
+
+        def build_map(kb, repo):
+            # The agent's analysis step, exercised over the real read: a stable
+            # listing of the practice notes it ingested.
+            practices = [
+                n["name"]
+                for n in kb
+                if n["subpath"].endswith("/practices")
+            ]
+            return "# Integration map\n\n" + "".join(
+                f"- {repo['skills'][0]} ↔ {name}\n" for name in practices
+            )
+
+        result = run(
+            kb_reader=lambda: read_kb(self.kb_root, source["subpaths"]),
+            repo_reader=lambda: {"skills": ["tdd"]},
+            build_map=build_map,
+            map_path=self.map_path,
+            commit=self.commit,
+        )
+
+        self.assertTrue(result["changed"])
+        self.assertEqual(self.commit.committed, [self.map_path])
+        written = read_map(self.map_path)
+        # The configured practice notes were ingested and mapped, in stable order.
+        self.assertIn("tdd ↔ index.md", written)
+        self.assertIn("tdd ↔ tdd.md", written)
+
+    def test_subject_not_in_config_is_never_ingested(self):
+        # No auto-discovery: a subject present under the KB root but absent from
+        # the configured subpaths never reaches build_map.
+        self._note("knowledge/mattpocock/practices", "tdd.md", "listed")
+        self._note("knowledge/secret-subject/practices", "leak.md", "private")
+        cfg = self._config(["knowledge/mattpocock/practices"])
+        source = load_kb_source(cfg)
+        seen = {}
+
+        def build_map(kb, repo):
+            seen["names"] = sorted(n["name"] for n in kb)
+            return "# Integration map\n\n- tdd ↔ practices\n"
+
+        run(
+            kb_reader=lambda: read_kb(self.kb_root, source["subpaths"]),
+            repo_reader=lambda: {"skills": ["tdd"]},
+            build_map=build_map,
+            map_path=self.map_path,
+            commit=self.commit,
+        )
+        self.assertEqual(seen["names"], ["tdd.md"])
+
+    def test_sparse_kb_still_builds_and_commits_a_map(self):
+        # A configured subject the KB does not yet carry yields an empty read; the
+        # map is then valid but sparse (parallels the existing sparse-KB test).
+        cfg = self._config(["knowledge/humanlayer/practices"])
+        source = load_kb_source(cfg)
+        result = run(
+            kb_reader=lambda: read_kb(self.kb_root, source["subpaths"]),
+            repo_reader=lambda: {"skills": ["tdd"]},
+            build_map=lambda kb, repo: "# Integration map\n\n- tdd ↔ (gap)\n"
+            if not kb
+            else "# Integration map\n\n- tdd ↔ found\n",
+            map_path=self.map_path,
+            commit=self.commit,
+        )
+        self.assertTrue(result["changed"])
+        self.assertIn("(gap)", read_map(self.map_path))
 
 
 class SelfImprovementProposalTest(unittest.TestCase):

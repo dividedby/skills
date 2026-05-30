@@ -1,0 +1,10 @@
+{
+  "_comment": "Acquisition contract for the self-improvement run-book (C): which knowledge base, and which knowledge/ subpaths to read. Explicit allow-list only — the reader never auto-discovers subjects or categories on disk. The KB root is cloned by the VPS via a deploy key (ADR 0003); these subpaths are relative to it. Mirrors gap-scanner-repos.json.",
+  "kb": "dividedby/agent-research",
+  "subpaths": [
+    "knowledge/humanlayer/practices",
+    "knowledge/humanlayer/artifacts",
+    "knowledge/mattpocock/practices",
+    "knowledge/mattpocock/artifacts"
+  ]
+}
