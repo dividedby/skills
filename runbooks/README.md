@@ -25,6 +25,10 @@ helpers are Python stdlib.
     - `repo_scan.py` — `load_repo_list` (curated allow-list) + `scan` context
       manager (shallow-clone listed repos via an injected `clone`, clean up on
       exit).
+    - `kb_source.py` — `load_kb_source` (curated `knowledge/` allow-list) +
+      `read_kb` (read only the listed subpaths under an injected KB root, stable
+      order). The self-improvement acquisition contract — the C parallel to
+      `repo_scan` (explicit; no auto-discovery).
   - Orchestrators:
     - `self_improvement.py` — `run(...)` builds/commits the integration map
       consumer-side, then proposes at most one skill refinement via the real
@@ -35,8 +39,9 @@ helpers are Python stdlib.
       sanitizer + proposal gate, filed under `source:gap-scanner` (#20). Sanitizer
       runs before the gate so private content is dropped before filing. Without
       the proposal seams it is the #17 scan-only skeleton.
-- `config/` — `gap-scanner-repos.json`, the curated repo allow-list (explicit;
-  no auto-discovery).
+- `config/` — curated allow-lists (explicit; no auto-discovery):
+  `gap-scanner-repos.json` (D's repo list) and `kb-source.json` (C's KB slug +
+  `knowledge/` subpaths).
 - `tests/` — stdlib `unittest`. Pure helpers use synthetic inputs (no fakes);
   orchestrators use integration dry-runs against fixture dirs + injected fakes.
 - `prompts/` — run-book prompts (the orchestration the AFK agent follows):

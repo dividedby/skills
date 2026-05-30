@@ -46,6 +46,11 @@ without the live tracker.
   serves open).
 - **Repo-scan** (gap-scanner) — shallow clone + cleanup. Fake: local fixture
   directories.
+- **KB-source** (self-improvement) — the acquisition contract C reads: a curated
+  `kb-source.json` (KB slug + explicit `knowledge/` subpaths; no auto-discovery)
+  + a reader over only those subpaths, feeding the injected `kb_reader`. The C
+  parallel to Repo-scan (#29). Fake: a `knowledge/`-shaped fixture tree. The KB
+  root (clone transport) stays injected/out-of-scope (ADR 0003).
 - **Map store** (self-improvement) — read/write + commit the integration map.
   Fake: a scratch path.
 
@@ -79,6 +84,8 @@ without the live tracker.
 - #18 — Sanitizer guard (pure) + tests
 - #19 — Self-improvement run-book: file a real refinement (≤1/run)
 - #20 — Gap-scanner run-book: file a real proposal (≤1/run, sanitized)
+- #29 — Self-improvement run-book: pin the KB ingest contract (`kb-source.json`
+  + reader), the C parallel to D's repo allow-list
 
 ## Operational notes (for #16–#20)
 

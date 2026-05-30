@@ -10,15 +10,28 @@ helper boundary.
 
 ## Scope
 
-- **Read (input):** the `agent-research` knowledge base (`knowledge/` layer) and
-  this repo's `skills/`, `CONTEXT.md`, and `docs/adr/`. All read-only.
+- **Read (input):** the `agent-research` knowledge base — only the `knowledge/`
+  subpaths in the curated allow-list `runbooks/config/kb-source.json` (never
+  auto-discover subjects on disk) — and this repo's `skills/`, `CONTEXT.md`, and
+  `docs/adr/`. All read-only.
 - **Write (output):** the integration map, **consumer-side in this repo only**
   (e.g. `docs/design/integration-map.md`). Never write into `agent-research`.
 
 ## Task
 
-1. Read the KB's `knowledge/` layer and this repo's skills, `CONTEXT.md`, and
-   ADRs. A sparse or near-empty KB is fine — the map is then valid but sparse.
+1. Load the KB acquisition contract, then read only its configured `knowledge/`
+   subpaths (the curated allow-list — never auto-discover subjects):
+
+   ```
+   python3 -c "from runbooks.lib.kb_source import load_kb_source, read_kb; \
+     s = load_kb_source('runbooks/config/kb-source.json'); \
+     print(read_kb('<kb-root>', s['subpaths']))"
+   ```
+
+   `<kb-root>` is the local clone of `s['kb']` on the VPS (transport is ops, out
+   of scope — ADR 0003). A configured subject the KB does not yet carry is
+   skipped, not fatal. Then read this repo's skills, `CONTEXT.md`, and ADRs. A
+   sparse or near-empty KB is fine — the map is then valid but sparse.
 
 2. Build the integration map: real `skill ↔ practice/artifact` mappings. A skill
    with no external counterpart is recorded as a **gap**, not omitted. Keep the
