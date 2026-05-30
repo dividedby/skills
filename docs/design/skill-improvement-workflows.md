@@ -1,6 +1,6 @@
 ---
 feature: skill-improvement-workflows
-status: in-progress
+status: done
 parent: "#14"
 ---
 
@@ -88,6 +88,12 @@ without the live tracker.
 - #20 — Gap-scanner run-book: file a real proposal (≤1/run, sanitized)
 - #29 — Self-improvement run-book: pin the KB ingest contract (`kb-source.json`
   + reader), the C parallel to D's repo allow-list
+
+All indexed issues are merged: both run-books, the shared pure helpers (gate,
+sanitizer), and both acquisition contracts are built and tested. What remains is
+**ops, intentionally out-of-scope here**: the VPS transport that runs them (deploy
+key + `git clone` of the KB / curated repos, cron wiring) per ADR 0003, and
+Twitter ingestion on the agent-research side (deferred until that data exists).
 
 ## Operational notes (for #16–#20)
 
