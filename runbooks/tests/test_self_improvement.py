@@ -157,12 +157,9 @@ class SelfImprovementKbAcquisitionTest(unittest.TestCase):
 
         def build_map(kb, repo):
             # The agent's analysis step, exercised over the real read: a stable
-            # listing of the practice notes it ingested.
-            practices = [
-                n["name"]
-                for n in kb
-                if n["subpath"].endswith("/practices")
-            ]
+            # listing of the practice notes it ingested. The category axis is a
+            # first-class field — no path re-parsing.
+            practices = [n["name"] for n in kb if n["category"] == "practices"]
             return "# Integration map\n\n" + "".join(
                 f"- {repo['skills'][0]} ↔ {name}\n" for name in practices
             )

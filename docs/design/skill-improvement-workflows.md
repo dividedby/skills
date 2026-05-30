@@ -48,9 +48,11 @@ without the live tracker.
   directories.
 - **KB-source** (self-improvement) — the acquisition contract C reads: a curated
   `kb-source.json` (KB slug + explicit `knowledge/` subpaths; no auto-discovery)
-  + a reader over only those subpaths, feeding the injected `kb_reader`. The C
-  parallel to Repo-scan (#29). Fake: a `knowledge/`-shaped fixture tree. The KB
-  root (clone transport) stays injected/out-of-scope (ADR 0003).
+  + a reader over only those subpaths, feeding the injected `kb_reader`. The
+  reader carries each note's `subject`/`category` axes — the two the integration
+  map is built on (`skill ↔ practice/artifact`) — so consumers never re-parse the
+  path. The C parallel to Repo-scan (#29). Fake: a `knowledge/`-shaped fixture
+  tree. The KB root (clone transport) stays injected/out-of-scope (ADR 0003).
 - **Map store** (self-improvement) — read/write + commit the integration map.
   Fake: a scratch path.
 

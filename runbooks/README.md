@@ -26,9 +26,10 @@ helpers are Python stdlib.
       manager (shallow-clone listed repos via an injected `clone`, clean up on
       exit).
     - `kb_source.py` — `load_kb_source` (curated `knowledge/` allow-list) +
-      `read_kb` (read only the listed subpaths under an injected KB root, stable
-      order). The self-improvement acquisition contract — the C parallel to
-      `repo_scan` (explicit; no auto-discovery).
+      `read_kb` (read only the listed subpaths under an injected KB root; each
+      note carries its `subject`/`category` axes, in stable order). The
+      self-improvement acquisition contract — the C parallel to `repo_scan`
+      (explicit; no auto-discovery).
   - Orchestrators:
     - `self_improvement.py` — `run(...)` builds/commits the integration map
       consumer-side, then proposes at most one skill refinement via the real

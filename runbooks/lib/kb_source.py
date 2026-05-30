@@ -31,7 +31,11 @@ def read_kb(root, subpaths):
 
     Walks only the ``subpaths`` named in the contract (no auto-discovery): a
     directory present under ``root`` but absent from ``subpaths`` is never read.
-    Each ``*.md`` note becomes a record ``{"subpath", "name", "text"}``; the
+    Each ``*.md`` note becomes a record ``{"subpath", "subject", "category",
+    "name", "text"}``. ``subject``/``category`` are the two domain axes the
+    integration map is built on (``skill ↔ practice/artifact``), derived from the
+    ``knowledge/<subject>/<category>`` layout so consumers never re-parse the
+    path; a subpath that doesn't carry both segments leaves them ``None``. The
     result is sorted by ``(subpath, name)`` so a re-run produces a minimal diff,
     not a reordered rewrite. A configured subpath missing on disk is skipped, not
     fatal (the KB may not yet carry every listed subject).
@@ -42,9 +46,18 @@ def read_kb(root, subpaths):
         d = root / subpath
         if not d.is_dir():
             continue
+        parts = subpath.strip("/").split("/")
+        category = parts[-1] if parts else None
+        subject = parts[-2] if len(parts) >= 2 else None
         for f in d.glob("*.md"):
             notes.append(
-                {"subpath": subpath, "name": f.name, "text": f.read_text()}
+                {
+                    "subpath": subpath,
+                    "subject": subject,
+                    "category": category,
+                    "name": f.name,
+                    "text": f.read_text(),
+                }
             )
     notes.sort(key=lambda n: (n["subpath"], n["name"]))
     return notes

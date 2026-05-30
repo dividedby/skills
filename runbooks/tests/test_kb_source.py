@@ -66,6 +66,32 @@ class ReadKbTest(unittest.TestCase):
         )
         self.assertEqual(notes[1]["text"], "red-green-refactor")
 
+    def test_records_carry_subject_and_category_axes(self):
+        # The two domain axes the integration map is built on are first-class on
+        # each record — consumers never re-parse the path.
+        self._note("knowledge/mattpocock/practices", "tdd.md", "")
+        self._note("knowledge/humanlayer/artifacts", "agent.md", "")
+        notes = read_kb(
+            self.root,
+            ["knowledge/mattpocock/practices", "knowledge/humanlayer/artifacts"],
+        )
+        by_name = {n["name"]: n for n in notes}
+        self.assertEqual(
+            (by_name["tdd.md"]["subject"], by_name["tdd.md"]["category"]),
+            ("mattpocock", "practices"),
+        )
+        self.assertEqual(
+            (by_name["agent.md"]["subject"], by_name["agent.md"]["category"]),
+            ("humanlayer", "artifacts"),
+        )
+
+    def test_non_conforming_subpath_leaves_axes_none(self):
+        # A subpath without the knowledge/<subject>/<category> shape still reads,
+        # but the axes it can't supply are None rather than a wrong guess.
+        self._note("flat", "note.md", "")
+        notes = read_kb(self.root, ["flat"])
+        self.assertEqual((notes[0]["subject"], notes[0]["category"]), (None, "flat"))
+
     def test_subject_on_disk_but_not_listed_is_never_read(self):
         # No auto-discovery: a subject dir present under the KB root but absent
         # from the configured subpaths is never read.
