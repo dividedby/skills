@@ -46,11 +46,18 @@ jobs:
           test -d "$RUNNER_TEMP/knowledge-mirror/knowledge"
           echo "Mirror at $RUNNER_TEMP/knowledge-mirror@$(git -C "$RUNNER_TEMP/knowledge-mirror" rev-parse --short HEAD)"
 
-      - name: Ensure provenance label exists
+      - name: Ensure provenance + skill-request labels exist
         run: |
           gh label create "$LABEL" \
             --color "5319E7" \
             --description "Issues proposed by the automated apply-agent-research loop" \
+            >/dev/null 2>&1 || true
+          # This repo owns the skill-request label; Consumers apply it, never create
+          # it (fine-grained Issues:write may not cover label creation). See
+          # docs/design/skill-request-flow.md.
+          gh label create "skill-request" \
+            --color "0E8A16" \
+            --description "Cross-repo demand: a Consumer wants a capability no skill exists for yet (aggregates; see ADR 0006)" \
             >/dev/null 2>&1 || true
 
       - name: Run apply-agent-research

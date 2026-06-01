@@ -86,10 +86,14 @@ Beyond improving itself, here the skill also —
   net-new published skill (broadly useful per [ADR 0001](../../../docs/adr/0001-buckets-cluster-by-user-intent.md)),
   not just a refinement to an existing one; and
 - **drains incoming `skill-request` issues** — open `skill-request` issues are
-  cross-repo *demand*. Fold the best-supported one into a proposed skill. Treat
-  duplicate requests as corroborating demand, not noise. (The inbound
-  `skill-request` channel itself is designed separately; this end only consumes
-  what is already filed.)
+  cross-repo *demand*. Fold the best-supported one into a proposed skill. A request
+  with more "+1 / also wanted by `<repo>`" corroboration carries more build
+  priority — duplicate requests aggregate as demand, they are not noise
+  ([ADR 0006](../../../docs/adr/0006-skill-request-demand-corroboration.md)). The
+  inbound channel — issue contract, aggregation, and the per-Consumer write token —
+  is designed in
+  [`skill-request-flow.md`](../../../docs/design/skill-request-flow.md); this end
+  only consumes what is already filed.
 
 These are *additional candidate sources* feeding the same one-proposal-per-run
 gate — not extra issues. Still at most one issue per run.

@@ -90,17 +90,17 @@ cross-repo credential; the VPS is not involved (agent-research ADR 0016).
   relevance judgment instead), `repo_scan` + `gap_scanner` (gap-scanner superseded
   by the `skill-request` flow).
 
-## `skill-request` — named here, designed later
+## `skill-request` — designed in its own doc
 
 The gap-scanner's function (detect that other repos need a net-new skill) moves
 to **decentralized demand**: a Consumer running `apply-agent-research` on itself,
 finding it needs a capability the skills repo lacks, files a **`skill-request`**
 issue into the skills tracker; duplicate requests *aggregate* as demand signal
 (legitimate cross-repo demand corroboration, distinct from the knowledge-claim
-corroboration ADR 0018 forbids). This flow is **out of scope here** and deferred
-to its own design — it carries open questions this doc does not settle: the
-cross-repo write token (own-repo `GITHUB_TOKEN` cannot file into another repo;
-needs a PAT/App token), demand-aggregation/dedup semantics, and who triggers it.
+corroboration ADR 0018 forbids). The open questions this doc deferred — the
+cross-repo write token, demand-aggregation semantics, and who triggers it — are
+settled in [`skill-request-flow.md`](./skill-request-flow.md) and
+[ADR 0006](../adr/0006-skill-request-demand-corroboration.md).
 
 ## Invariants
 
@@ -113,7 +113,6 @@ needs a PAT/App token), demand-aggregation/dedup semantics, and who triggers it.
 
 ## Open / deferred
 
-- The full `skill-request` design (above).
 - The agent-research mirror implementation + its ADR 0019 amendment (cross-repo
   dependency, above).
 - Build sequencing for the skill + the skills-repo workflow (a later to-issues pass).
