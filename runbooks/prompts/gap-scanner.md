@@ -1,5 +1,9 @@
 # Gap-scanner run-book — scan curated repos, propose one new skill
 
+> **Superseded** — retained until `apply-agent-research` lands, then removed. See
+> [`docs/design/cross-repo-knowledge-application.md`](../../docs/design/cross-repo-knowledge-application.md):
+> the gap-scanner is replaced by the decentralized `skill-request` flow.
+
 You are running unattended. No user is watching. Do not ask questions — make the
 call yourself. You read the curated private repos read-only, detect a recurring
 cross-repo need, and propose **at most one** generalized new skill by filing an

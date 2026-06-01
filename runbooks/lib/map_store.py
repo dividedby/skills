@@ -1,4 +1,8 @@
-"""Map store: read/write the integration map for the self-improvement run-book.
+"""SUPERSEDED — retained until ``apply-agent-research`` lands, then removed. See
+``docs/design/cross-repo-knowledge-application.md``: the integration map is
+dropped in the decentralized-pull redesign, so this seam has no consumer.
+
+Map store: read/write the integration map for the self-improvement run-book.
 
 The integration map is analysis the run-book auto-maintains (see CONTEXT.md). It
 lives consumer-side in this repo, never in agent-research. This module owns only

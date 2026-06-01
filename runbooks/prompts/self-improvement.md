@@ -1,5 +1,10 @@
 # Self-improvement run-book — maintain the map, propose one refinement
 
+> **Superseded** — retained until `apply-agent-research` lands, then removed. See
+> [`docs/design/cross-repo-knowledge-application.md`](../../docs/design/cross-repo-knowledge-application.md):
+> the central-push run-book is replaced by the decentralized-pull
+> `apply-agent-research` skill, and the integration map referenced below is dropped.
+
 You are running unattended. No user is watching. Do not ask questions — make the
 call yourself. This run does two things: (1) build and commit the integration
 map (analysis), then (2) diff that map against current reality and propose **at

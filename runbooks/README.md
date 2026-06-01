@@ -1,5 +1,15 @@
 # Run-books
 
+> **Mostly superseded** — retained until `apply-agent-research` lands, then
+> removed. See
+> [`docs/design/cross-repo-knowledge-application.md`](../docs/design/cross-repo-knowledge-application.md):
+> the central-push run-book topology (integration map, self-improvement and
+> gap-scanner orchestrators, the curated KB/repo allow-lists) is replaced by the
+> decentralized-pull `apply-agent-research` skill and the `skill-request` flow.
+> The only survivors are the pure helpers `lib/proposal_gate.py` and
+> `lib/sanitizer.py`, which the new skill reuses; everything else here is
+> superseded and will be deleted once the skill lands.
+
 Internal machinery for the skill-improvement workflows — **not** published
 skills, never registered in `plugin.json`. See
 [`CONTEXT.md`](../CONTEXT.md) for the `run-book` vocabulary,

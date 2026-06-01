@@ -1,4 +1,8 @@
-"""Gap-scanner run-book orchestrator.
+"""SUPERSEDED — retained until ``apply-agent-research`` lands, then removed. See
+``docs/design/cross-repo-knowledge-application.md``: the gap-scanner is replaced
+by the decentralized ``skill-request`` flow.
+
+Gap-scanner run-book orchestrator.
 
 Scans the curated repo-list read-only via the repo-scan seam, asks an injected
 ``find_needs`` analysis step to surface recurring cross-repo needs, runs the

@@ -1,4 +1,9 @@
-"""KB-source seam for the self-improvement run-book.
+"""SUPERSEDED — retained until ``apply-agent-research`` lands, then removed. See
+``docs/design/cross-repo-knowledge-application.md``: the static KB allow-list is
+replaced by runtime relevance judgment, so this seam (and ``kb-source.json``)
+has no consumer.
+
+KB-source seam for the self-improvement run-book.
 
 Pins the acquisition contract C reads: which knowledge base, and which
 ``knowledge/`` subpaths within it. Like the gap-scanner's repo allow-list, the

@@ -1,4 +1,8 @@
-"""Self-improvement run-book orchestrator.
+"""SUPERSEDED — retained until ``apply-agent-research`` lands, then removed. See
+``docs/design/cross-repo-knowledge-application.md``: this central-push
+orchestrator is folded into the decentralized-pull ``apply-agent-research`` skill.
+
+Self-improvement run-book orchestrator.
 
 Reads the agent-research knowledge base and this repo, asks an injected
 ``build_map`` step (the agent's analysis) to produce the integration map, and

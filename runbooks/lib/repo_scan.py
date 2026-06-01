@@ -1,4 +1,8 @@
-"""Repo-scan seam for the gap-scanner run-book.
+"""SUPERSEDED — retained until ``apply-agent-research`` lands, then removed. See
+``docs/design/cross-repo-knowledge-application.md``: the gap-scanner is replaced
+by the decentralized ``skill-request`` flow, so this scan seam has no consumer.
+
+Repo-scan seam for the gap-scanner run-book.
 
 Scans only a curated repo-list, shallow-clones each repo read-only into a scratch
 working area via an injected ``clone`` function, and removes everything at end of
