@@ -28,4 +28,12 @@ Setting up and auditing a project's Claude config — instruction files and the 
 
 ### Meta
 
-- **[apply-agent-research](./skills/meta/apply-agent-research/SKILL.md)** — Apply an external agent-research knowledge base to a repo's own agent-meta: read a public knowledge mirror plus the repo's own governance docs, then propose at most one improvement as a labeled issue — never editing, committing, or merging.
+- **[apply-agent-research](./skills/meta/apply-agent-research/SKILL.md)** — Apply an external agent-research knowledge base to a repo's own agent-meta: read a public knowledge mirror plus the repo's own governance docs, then propose at most one improvement per channel as a labeled issue — never editing, committing, or merging.
+
+## Proposal loops
+
+Scheduled, skill-driven workflows that propose improvements via labeled issues (a human decides — never auto-applied). Onboarding docs for standing them up in other repos:
+
+- **[proposal-loop-harness](./docs/onboarding/proposal-loop-harness.md)** — the shared skeleton both loops follow (fetch-fresh skill install, propose-via-issues, scheduling).
+- **[consumer-setup](./docs/onboarding/consumer-setup.md)** — wire a repo up as an `apply-agent-research` Consumer (agent-meta self-improvement + the cross-repo `skill-request` / `skill-promotion` channels).
+- **[arch-review-setup](./docs/onboarding/arch-review-setup.md)** — the simpler `improve-codebase-architecture` loop (codebase → refactor proposals).

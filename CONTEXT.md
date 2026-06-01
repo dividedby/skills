@@ -54,3 +54,42 @@ decentralized-pull model a Consumer depends on `dividedby/skills` one-way;
 fresh at run time rather than committing a copy (see
 [ADR 0008](./docs/adr/0008-consumers-fetch-the-skill-fresh-not-vendored.md)).
 _Avoid_: subscriber, client, downstream repo.
+
+**Proposal loop**:
+A scheduled, skill-driven workflow that reads an input, then **proposes via
+labeled issues and never applies** — no commits, edits, or PRs (the
+producer/decider split, [ADR 0003](./docs/adr/0003-skill-improvement-workflows-propose-via-issues.md)).
+It fetches its skill fresh each run rather than vendoring it
+([ADR 0008](./docs/adr/0008-consumers-fetch-the-skill-fresh-not-vendored.md)).
+`apply-agent-research` (KB → agent-meta) and `improve-codebase-architecture`
+(codebase → refactors) are two members of this family, sharing one harness; the
+shared shape is documented in
+[`docs/onboarding/proposal-loop-harness.md`](./docs/onboarding/proposal-loop-harness.md).
+_Avoid_: bot, pipeline, automation.
+
+**Local skill**:
+A skill that lives in a **Consumer**'s own repo, not published to
+`dividedby/skills`. Invokable only within that Consumer. The **supply-side
+audit** classifies each as *redundant* (duplicates a published or installed
+skill — adopt the canonical one), *promotable* (novel and broadly useful — a
+**promotion candidate**), or *repo-specific* (legitimately local — keep).
+_Avoid_: private skill, custom skill, internal skill.
+
+**Supply-side audit**:
+The step in a Consumer's `apply-agent-research` loop that enumerates the
+Consumer's **local skills** and matches each against the known skill universe
+(the published `dividedby/skills` catalog + the installed-skill snapshot). It is
+the **mirror of the demand-side already-do-this filter**
+([ADR 0009](./docs/adr/0009-skill-request-checks-existing-and-installed-skills.md)):
+0009 stops a Consumer *requesting* what already exists; the supply-side audit
+inspects what the Consumer *already built*. See
+[ADR 0010](./docs/adr/0010-consumers-audit-local-skills-supply-side.md).
+_Avoid_: local-skill scan, dedup check.
+
+**Skill promotion**:
+A Consumer **offering a local skill up** to `dividedby/skills` for adoption as a
+published skill — the **supply** twin of a **skill-request** (demand). Filed as
+a `skill-promotion` issue with the same capability-key / `+1` / leak-guard
+machinery as a skill-request but inverse semantics. See
+[`docs/design/skill-promotion-flow.md`](./docs/design/skill-promotion-flow.md).
+_Avoid_: skill donation, upstreaming, contribution.

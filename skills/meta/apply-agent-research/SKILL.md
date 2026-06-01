@@ -75,12 +75,44 @@ proposal.
 
 ## Output
 
-At most one issue per run (zero is fine), labeled `source:agent-research`, into the
-host repo's **own** tracker. The body proposes one agent-meta improvement with a
-concrete before/after and cites the knowledge that motivated it. It must pass the
-**leak guard** and the **one-proposal gate** mechanically — see
-[proposal-flow.md](proposal-flow.md). Never file a menu of options; make the call
-and file the single best candidate, or skip.
+**At most one issue per channel per run** (zero per channel is fine), each picked
+by the **one-proposal gate** run independently over that channel's candidates —
+see [proposal-flow.md](proposal-flow.md) and
+[ADR 0011](../../../docs/adr/0011-per-channel-proposal-caps.md). The base channels,
+into the host repo's **own** tracker:
+
+- **self-improvement** (`source:agent-research`) — one agent-meta improvement
+  with a concrete before/after, citing the KB knowledge note that motivated it.
+- **skill-audit** (`source:skill-audit`) — see the supply-side audit below.
+
+The cross-repo channels (`skill-request`, `skill-promotion`, into
+`dividedby/skills`) are described under their flows, below. Within every channel
+the rule is unchanged: **never file a menu of options; make the call and file the
+single best candidate, or skip.** Every filed body passes the **leak guard**
+before filing. Zero across all channels is a fine run.
+
+## Supply-side audit (Consumers with local skills)
+
+If the host has **local skills** — skills in its own repo not published to
+`dividedby/skills` — the loop audits them
+([ADR 0010](../../../docs/adr/0010-consumers-audit-local-skills-supply-side.md)).
+Enumerate each local skill and match it against the known skill universe: the
+**published catalog** (read live from the fresh `dividedby/skills` clone the loop
+makes to fetch this skill, [ADR 0008](../../../docs/adr/0008-consumers-fetch-the-skill-fresh-not-vendored.md))
+**and** the **installed-skill snapshot** (`docs/agents/installed-skills.md`). One
+scan, three verdicts:
+
+- **Redundant** (matches an existing skill) → a `source:skill-audit` candidate
+  in the host's own tracker: adopt the canonical skill, retire the local copy.
+- **Promotable** (no match **and** clears general merit, [ADR 0001](../../../docs/adr/0001-buckets-cluster-by-user-intent.md))
+  → a `skill-promotion` offer up to `dividedby/skills` (see
+  [`skill-promotion-flow.md`](../../../docs/design/skill-promotion-flow.md)).
+- **Repo-specific** (no match, not broadly useful) → keep, no-op.
+
+This is the **mirror** of the demand-side already-do-this filter
+([ADR 0009](../../../docs/adr/0009-skill-request-checks-existing-and-installed-skills.md)):
+same matcher, pointed at what the host *already built* instead of what it
+*wishes for*. A host with no local skills skips this entirely.
 
 ## Quality bar
 
@@ -111,14 +143,26 @@ Beyond improving itself, here the skill also —
   inbound channel — issue contract, aggregation, and the per-Consumer write token —
   is designed in
   [`skill-request-flow.md`](../../../docs/design/skill-request-flow.md); this end
-  only consumes what is already filed.
+  only consumes what is already filed; and
+- **owns the `skill-promotion` label and adopts offers** — incoming
+  `skill-promotion` issues are cross-repo *supply*: a Consumer offering a local
+  skill it already built (see
+  [`skill-promotion-flow.md`](../../../docs/design/skill-promotion-flow.md)).
+  Unlike demand, an offer is **already a concrete proposal with a reference
+  implementation**, so it needs no folding into a candidate — the issue *is* the
+  deliverable, reviewed and adopted by the human. The loop's only duty here is to
+  **ensure the `skill-promotion` label exists** (the workflow does this
+  idempotently, as it does for `skill-request`).
 
-These are *additional candidate sources* feeding the same one-proposal-per-run
-gate — not extra issues. Still at most one issue per run.
+The self-improvement, general-merit, and skill-request-drain candidates are
+*separate channels*, each capped at one issue per run by its own gate pass — not
+one shared slot ([ADR 0011](../../../docs/adr/0011-per-channel-proposal-caps.md)).
 
 ## Invariants
 
-- At most one issue per run; the gate enforces it; zero is acceptable.
+- At most one issue **per channel** per run; the gate enforces each channel
+  independently ([ADR 0011](../../../docs/adr/0011-per-channel-proposal-caps.md));
+  zero per channel is acceptable.
 - The skill writes **nothing** to the repo — no edits, no commits, no PRs. It
   proposes via an issue and stops.
 - Every filed body passes the real leak guard; no private content reaches a public

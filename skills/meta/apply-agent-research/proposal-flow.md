@@ -53,14 +53,18 @@ body** to remove the structural trigger (a fenced code block, a pasted import, o
 a `path/like.this` token), then re-check. Do not bypass it. The guard is
 necessary, not sufficient — keep prose generalized regardless of what it catches.
 
-## The one-proposal gate
+## The one-proposal gate — run once per channel
 
-Feed the gate every candidate (self-improvement, general-merit skill, and
-`skill-request` drains all compete here) plus the open keys. It returns the single
-winner, or none:
+The cap is **per channel**, not global ([ADR 0011](../../../docs/adr/0011-per-channel-proposal-caps.md)):
+each channel (`self-improvement`, `skill-audit`, the skills-repo's
+`general-merit`, and the cross-repo `skill-request` / `skill-promotion` file-or-+1
+steps) gets its own gate pass over **only that channel's** candidates. The gate is
+generic over the candidate set it is handed, so this needs **no code change** —
+just invoke it once per channel-group. Feed each pass that channel's candidates
+plus the keys already open *in that channel*:
 
     echo '{"candidates": [{"dedup_key": "...", "priority": 3, "title": "..."}],
-           "open_issues": ["<keys already open or wontfix>"],
+           "open_issues": ["<keys already open or wontfix in THIS channel>"],
            "min_priority": 1}' \
       | python3 <skill-dir>/lib/cli.py gate
 
@@ -68,8 +72,12 @@ winner, or none:
 - The gate drops any candidate whose key is already open and any below
   `min_priority`, then picks the highest priority (ties break on the smallest
   key — deterministic).
-- Output `{"file": {...}}` → file that one. `{"file": null}` → file nothing;
-  print `SKIPPED: <one-line reason>` and stop.
+- Output `{"file": {...}}` → file that one. `{"file": null}` → file nothing in
+  this channel; print `SKIPPED: <channel>: <one-line reason>` and move to the
+  next channel.
+
+Do **not** merge candidates from different channels into one gate pass — that
+reintroduces the cross-channel suppression ADR 0011 removed.
 
 ## Filing
 
