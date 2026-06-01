@@ -68,9 +68,14 @@ jobs:
           MIRROR_DIR: ${{ runner.temp }}/knowledge-mirror
         run: |
           set -euo pipefail
+          # Bash is intentionally unscoped: the leak guard/gate are invoked via a
+          # pipe (printf ... | python3 .../cli.py), which a scoped pattern like
+          # Bash(python3:*) blocks (the command starts with printf). The
+          # no-commits/edits invariant holds via contents:read + no Edit/Write,
+          # not via Bash scoping. Do not re-scope. See agent-research#127.
           claude -p \
             --permission-mode acceptEdits \
-            --allowedTools "Bash(gh:*) Bash(git:*) Bash(python3:*) Read Grep Glob" \
+            --allowedTools "Bash Read Grep Glob" \
             --append-system-prompt "$(cat .github/workflows/prompts/apply-agent-research.md)" \
             "Run the scheduled apply-agent-research pass. The knowledge mirror is already cloned at ${MIRROR_DIR} (read-only). Follow the instructions in the system prompt." \
             | tee "$RUNNER_TEMP/agent.log"

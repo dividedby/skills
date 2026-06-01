@@ -28,13 +28,29 @@ request **out to `dividedby/skills`**, distinct from the at-most-one
 ## The issue contract
 
 A `skill-request` issue lives in `dividedby/skills`, carries the `skill-request`
-label, and its body states three things:
+label, and its body must **justify a published skill**, not merely name a wish.
+The maintainer drains these by *writing* skills, so a thin request is not
+actionable — it cannot be written into a good skill. The body states:
 
 - **Capability wanted** — what the skill would do, in generalized terms (the
   same leak-safe discipline as `source:agent-research`: no host-private content,
   the tracker is public).
-- **Motivating knowledge** — the `agent-research` knowledge note(s) that surfaced
-  the need, so the maintainer can trace the basis.
+- **Motivating knowledge** — the *specific, traceable* `agent-research`
+  knowledge note(s) that surfaced the need: name the file/area in the mirror (or
+  the note title), not a paraphrase like "research shows". The maintainer must be
+  able to open the basis.
+- **Why a published skill** — why it is broadly useful across repos
+  ([ADR 0001](../adr/0001-buckets-cluster-by-user-intent.md)), *and* why it
+  belongs as a **skill** rather than (a) a **run-book** the requesting repo owns
+  — an orchestration/schedule wrapper is a run-book, not a skill (see
+  `CONTEXT.md`); or (b) a **harness feature** — a `SKILL.md` is guidance loaded
+  at invocation and cannot do what only the runtime can (e.g. read its own live
+  token count). State this skill-shaped check explicitly.
+- **Not already covered** — which existing capability it does *not* duplicate,
+  including skills installed in the maintainer's global environment
+  ([ADR 0007](../adr/0007-already-do-this-baseline-includes-installed-skills.md),
+  `docs/agents/installed-skills.md`). The ask is a net-new capability or a named
+  integration, not a rebuild.
 - **Requesting repo** — which Consumer felt the gap.
 
 It embeds a stable **capability key** so later requests can find it:
@@ -52,6 +68,26 @@ produce the same slug — that is what makes aggregation work.
 > demand corroboration). Don't reuse `proposal_gate` for this — it is the wrong
 > rule (see ADR 0006).
 
+## Filter already-do-this first
+
+A `skill-request` is only valid for a capability **no skill provides**. Before
+checking for duplicate *requests*, the Consumer checks whether the capability
+**already exists**, matching the candidate against — from the fresh
+`dividedby/skills` clone it already makes to fetch the skill
+([ADR 0008](../adr/0008-consumers-fetch-the-skill-fresh-not-vendored.md)):
+
+- the **published skill catalog** — `skills/<bucket>/*/SKILL.md` and
+  `.claude-plugin/plugin.json`; and
+- the **installed-skill snapshot** — `docs/agents/installed-skills.md` (skills
+  available in the maintainer's global environment, including upstream
+  `mattpocock/skills` not republished here).
+
+If either already covers the capability, **do not file** — it is already-do-this,
+not demand (the same baseline [ADR 0007](../adr/0007-already-do-this-baseline-includes-installed-skills.md)
+gives the skills-repo's own loop, now applied to the Consumer's filing path; see
+[ADR 0009](../adr/0009-skill-request-checks-existing-and-installed-skills.md)).
+Only a genuine gap proceeds to the duplicate-request check below.
+
 ## Aggregation: duplicates corroborate
 
 Before filing, the Consumer lists open `skill-request` issues in `dividedby/skills`
@@ -61,6 +97,12 @@ and matches on the capability key:
 - **Match exists** → **do not** open a second issue. Post a comment:
   `+1 — also wanted by <repo>` plus its own motivating knowledge. N such comments
   on one issue is the demand signal.
+
+A request the maintainer closes as under-justified is **not** durable
+suppression: because matching is over *open* issues only, a later,
+better-justified request for the same capability re-files fresh and re-opens the
+demand. (Contrast `source:agent-research`, where a `wontfix` close *is* durable —
+see its [proposal flow](../../skills/meta/apply-agent-research/proposal-flow.md).)
 
 The **skills-repo draining end** (the `apply-agent-research` specialization, built
 in the skill) reads these open `skill-request`s and their accumulated "+1" tally as

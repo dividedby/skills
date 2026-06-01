@@ -44,3 +44,13 @@ clone. Derived from (never authoritative over) the private `agent-research`;
 its raw `sources/` are never mirrored. Pushed by `agent-research`'s synthesize
 workflow, commit-if-changed.
 _Avoid_: cache, export, feed, snapshot.
+
+**Consumer**:
+A repo that runs the `apply-agent-research` loop on *itself* — reading the
+knowledge mirror (or, if it is the knowledge source, its own `knowledge/`
+tree) and proposing agent-meta improvements into its own tracker. In the
+decentralized-pull model a Consumer depends on `dividedby/skills` one-way;
+`agent-research` never depends on a Consumer. A Consumer fetches the skill
+fresh at run time rather than committing a copy (see
+[ADR 0008](./docs/adr/0008-consumers-fetch-the-skill-fresh-not-vendored.md)).
+_Avoid_: subscriber, client, downstream repo.
