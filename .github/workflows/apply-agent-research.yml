@@ -63,7 +63,7 @@ jobs:
             --permission-mode acceptEdits \
             --allowedTools "Bash(gh:*) Bash(git:*) Bash(python3:*) Read Grep Glob" \
             --append-system-prompt "$(cat .github/workflows/prompts/apply-agent-research.md)" \
-            "Run the weekly apply-agent-research pass. The knowledge mirror is already cloned at \$MIRROR_DIR. Follow the instructions in the system prompt." \
+            "Run the weekly apply-agent-research pass. The knowledge mirror is already cloned at ${MIRROR_DIR} (read-only). Follow the instructions in the system prompt." \
             | tee "$RUNNER_TEMP/agent.log"
 
       - name: Summarise run
