@@ -1,4 +1,4 @@
-# Weekly apply-agent-research pass
+# Scheduled apply-agent-research pass
 
 You are running unattended in GitHub Actions. No user is watching. Do not ask
 questions — make the call yourself. Your job is to apply the `apply-agent-research`

@@ -2,9 +2,11 @@ name: Apply Agent Research
 
 on:
   schedule:
-    # 11:37 UTC Mondays = 06:37 CT. Weekly: agent-meta knowledge moves slowly and
-    # the loop re-clones the mirror fresh each run. Off-the-hour to reduce cron delay.
-    - cron: "37 11 * * 1"
+    # 11:37 UTC Mon/Wed/Fri = 06:37 CT. MWF aligns with the upstream non-Twitter
+    # capture cadence (agent-research capture.yml) so refreshed mirror knowledge is
+    # applied promptly; the loop re-clones the mirror fresh each run and the
+    # one-proposal gate keeps each run to ≤1 issue. Off-the-hour to reduce cron delay.
+    - cron: "37 11 * * 1,3,5"
   workflow_dispatch:
 
 jobs:
@@ -70,7 +72,7 @@ jobs:
             --permission-mode acceptEdits \
             --allowedTools "Bash(gh:*) Bash(git:*) Bash(python3:*) Read Grep Glob" \
             --append-system-prompt "$(cat .github/workflows/prompts/apply-agent-research.md)" \
-            "Run the weekly apply-agent-research pass. The knowledge mirror is already cloned at ${MIRROR_DIR} (read-only). Follow the instructions in the system prompt." \
+            "Run the scheduled apply-agent-research pass. The knowledge mirror is already cloned at ${MIRROR_DIR} (read-only). Follow the instructions in the system prompt." \
             | tee "$RUNNER_TEMP/agent.log"
 
       - name: Summarise run
