@@ -1,8 +1,15 @@
 ---
 feature: skill-improvement-workflows
-status: done
+status: superseded
+superseded-by: cross-repo-knowledge-application
 parent: "#14"
 ---
+
+> **Superseded** by [`cross-repo-knowledge-application.md`](./cross-repo-knowledge-application.md)
+> (agent-research ADR 0019, decentralized pull). The central-push run-books below
+> were built but never wired; consumption is now a published `apply-agent-research`
+> skill each consumer runs on itself. The pure helpers (`proposal_gate`,
+> `sanitizer`) carry over; the rest is deprecated. Kept for history.
 
 # Design Plan: skill-improvement AFK workflows (C & D)
 

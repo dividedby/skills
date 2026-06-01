@@ -30,14 +30,17 @@ _Avoid_: doc, reference, attachment.
 
 **Run-book**:
 A cron-driven prompt that an unattended ("AFK") agent follows to perform a
-recurring workflow. Lives in the repo but is **not** a published skill — it
-orchestrates, and may invoke skills as steps. The self-improvement and
-gap-scanner workflows are run-books, not skills.
+recurring workflow. Lives in the repo but is **not itself** a published skill —
+it orchestrates, and may invoke skills as steps, including as a thin scheduled
+wrapper around a single published skill. The reusable *capability* it invokes
+can be a published skill; the run-book is only the schedule and the per-repo
+wiring around it.
 _Avoid_: skill, script, job, automation.
 
-**Integration map**:
-A standing analysis doc, auto-maintained by the self-improvement run-book,
-that maps the skills in this repo to the external practices/artifacts tracked
-in the `agent-research` knowledge base. Used as the diff baseline that surfaces
-refinement opportunities. Lives consumer-side (here), never in `agent-research`.
-_Avoid_: crosswalk, comparison table, matrix.
+**Knowledge mirror**:
+A public, read-only repository holding a verbatim copy of `agent-research`'s
+synthesized `knowledge/` tree — the credential-free read surface that consumers
+clone. Derived from (never authoritative over) the private `agent-research`;
+its raw `sources/` are never mirrored. Pushed by `agent-research`'s synthesize
+workflow, commit-if-changed.
+_Avoid_: cache, export, feed, snapshot.

@@ -58,3 +58,34 @@ maintainer's other repos.
 One orchestrated B→C→D pipeline (rejected — independent jobs; the KB is a source,
 not a trigger). Auto-merging skill changes (no human gate; an AFK agent editing
 the published plugin unsupervised is the exact risk this split avoids).
+
+**Amendment (decentralized pull): the topology flips from push to pull, and the
+consumer mechanism becomes a published skill.** agent-research ADR 0019
+("knowledge consumed via decentralized pull") supersedes the *central-push*
+shape of this ADR. The self-improvement and gap-scanner run-books — designed to
+run on the VPS and push proposals into consumers — were built but never wired;
+they are superseded. Consumption is now **decentralized pull**: each consumer
+repo runs its own loop and proposes changes *to itself*. Three consequences
+revise this ADR:
+
+- **It *is* a skill now.** The "too narrow for the plugin" rejection above
+  assumed a single-consumer "improve *my* skills from *my* KB" machine. The
+  replacement, `apply-agent-research`, is a **general** capability any consumer
+  installs (it never knows whose KB or repo it reads) — broadly useful, so
+  plugin-worthy under ADR 0001. It is a **published skill**; the per-repo
+  schedule that fires it is a thin run-book wrapper. The reusable pure helpers
+  (`proposal_gate`, `sanitizer`) carry over unchanged; the central orchestrators
+  and their topology-bound modules are deprecated.
+- **The producer now commits nothing.** This ADR allowed the VPS one auto-commit
+  — the integration map. The map is dropped (the host repo's own governance docs
+  are the "already-do-this" baseline), so the loop writes *nothing* to the repo:
+  pure read → file ≤1 issue. The producer/decider line is sharper than before.
+- **The sanitizer's justification shifts, its role does not.** The KB is read via
+  a *public* knowledge mirror, so the guard no longer protects the KB; it protects
+  against leaking the **host repo's own** private content into a public tracker
+  (load-bearing when the host is private, and for the deferred `skill-request`
+  cross-repo flow). The `#26` amendment's structural guard stands.
+
+The consumer-side realization lives in
+[`docs/design/cross-repo-knowledge-application.md`](../design/cross-repo-knowledge-application.md).
+The provenance label is `source:agent-research`.
