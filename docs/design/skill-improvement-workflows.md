@@ -10,6 +10,10 @@ parent: "#14"
 > were built but never wired; consumption is now a published `apply-agent-research`
 > skill each consumer runs on itself. The pure helpers (`proposal_gate`,
 > `sanitizer`) carry over; the rest is deprecated. Kept for history.
+>
+> **`runbooks/` is now retired** — the surviving helpers + the `cli.py` seam moved
+> under the skill at `skills/meta/apply-agent-research/lib/` (ADR 0004 amendment).
+> Any `runbooks/lib/...` path below is historical; read it at the new location.
 
 # Design Plan: skill-improvement AFK workflows (C & D)
 

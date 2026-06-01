@@ -1,8 +1,8 @@
 """Proposal gate: the pure decision that picks at most one proposal to file.
 
-Shared by the self-improvement and gap-scanner run-books. The cap (at most one
-issue per run) and dedup live here so they do not depend on model judgment. The
-run-book gathers candidates and open-issue dedup keys and injects them; this
+Called by the ``apply-agent-research`` skill (via ``cli.py``). The cap (at most
+one issue per run) and dedup live here so they do not depend on model judgment.
+The caller gathers candidates and open-issue dedup keys and injects them; this
 module never touches the tracker.
 """
 

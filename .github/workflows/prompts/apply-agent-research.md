@@ -44,8 +44,10 @@ this prompt is the concrete wiring for the skills-repo instance. Read both the
 
 3. **Pick and guard the single best candidate.** Run its final `title + body`
    through the leak guard, then the one-proposal gate, exactly as
-   `proposal-flow.md` describes (`python3 -m runbooks.lib.cli sanitize` then
-   `... gate`, run from the repo root). If the guard blocks, revise the body to
+   `proposal-flow.md` describes. Here `<skill-dir>` is
+   `skills/meta/apply-agent-research`, so the calls are
+   `python3 skills/meta/apply-agent-research/lib/cli.py sanitize` then `... gate`,
+   run from the repo root. If the guard blocks, revise the body to
    drop the structural trigger and re-check — do not bypass it. The skills repo is
    public and has no private markers to pass.
 

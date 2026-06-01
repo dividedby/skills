@@ -2,8 +2,11 @@
 
 The capability is in [SKILL.md](SKILL.md). This file is the mechanical flow that
 makes the "at most one, leak-safe, deduplicated" guarantees hold *without relying
-on prompt discipline*. Two pure decisions enforce them; the host provides them as
-a CLI (in this repo: `python3 -m runbooks.lib.cli`, run from the repo root).
+on prompt discipline*. Two pure decisions enforce them, shipped with this skill at
+`lib/` and invoked by file path: `python3 <skill-dir>/lib/cli.py` (not `-m` — the
+skill folder is not an importable module; the script puts its own dir on the path).
+`<skill-dir>` is wherever this skill is installed; the host's workflow substitutes
+the concrete path.
 
 ## Dedup keys
 
@@ -34,7 +37,7 @@ Supply the host's private markers when the host has any (the public skills repo
 has none to pass):
 
     printf '%s' "$TITLE
-    $BODY" | python3 -m runbooks.lib.cli sanitize [--marker <private-name> ...]
+    $BODY" | python3 <skill-dir>/lib/cli.py sanitize [--marker <private-name> ...]
 
 Exit `0` + `ALLOW` → safe to file. Exit `1` + `BLOCK: <reason>` → **revise the
 body** to remove the structural trigger (a fenced code block, a pasted import, or
@@ -50,7 +53,7 @@ winner, or none:
     echo '{"candidates": [{"dedup_key": "...", "priority": 3, "title": "..."}],
            "open_issues": ["<keys already open or wontfix>"],
            "min_priority": 1}' \
-      | python3 -m runbooks.lib.cli gate
+      | python3 <skill-dir>/lib/cli.py gate
 
 - `priority` is your integer ranking of the candidates (higher = stronger).
 - The gate drops any candidate whose key is already open and any below

@@ -26,6 +26,15 @@ is what makes unattended operation safe. A human reviews the issue and decides.
 See [proposal-flow.md](proposal-flow.md) for the mechanical flow — dedup keys, the
 leak guard and one-proposal gate, and the issue body shape.
 
+The leak guard and the gate are enforced by code, not prompt discipline: the skill
+**bundles** them under [`lib/`](lib/) (the pure `sanitizer` / `proposal_gate`
+decisions and a `cli.py` seam), so they travel with the skill wherever it is
+installed and run by file path — `python3 <skill-dir>/lib/cli.py …`. Stdlib-only,
+unit-tested under [`tests/`](tests/)
+(`python3 -m unittest discover -s <skill-dir>/tests`). See the
+[ADR 0004 amendment](../../../docs/adr/0004-runbook-helpers-are-python-stdlib.md)
+for why they live here rather than in a separate `runbooks/` dir.
+
 ## Inputs
 
 - **The public knowledge mirror** — a credential-free, read-only clone of

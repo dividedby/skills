@@ -1,5 +1,28 @@
 # Run-book decision helpers are Python stdlib, under `runbooks/`
 
+> **Amendment (2026-06-01) — helpers relocated; `runbooks/` retired.** The
+> decentralized-pull redesign (agent-research ADR 0019,
+> [`cross-repo-knowledge-application`](../design/cross-repo-knowledge-application.md))
+> moved consumption into the published `apply-agent-research` skill that each
+> Consumer runs on *itself*. The skill enforces the leak guard and one-proposal
+> cap mechanically, so it must invoke the gate/sanitizer CLI **wherever it is
+> installed** — a path `runbooks/` (present only in this repo) cannot satisfy. The
+> two surviving helpers + the `cli.py` seam therefore now live **under the skill**
+> at `skills/meta/apply-agent-research/lib/`, invoked by file path
+> (`python3 <skill-dir>/lib/cli.py …`, not `-m`, since the skill folder name is
+> not an importable module), so they travel with the installed skill.
+>
+> This reverses the "Not skills" / "bundling … is ceremony" stance below, because
+> the force that justified it is gone: the helpers were "internal machinery on the
+> maintainer's runner," but they are now **runtime dependencies of a published
+> skill that ships to other repos**. The rejected alternative was *a skill per
+> helper* (ceremony, and it would publish machinery as a capability); co-locating
+> two support files under the one skill that needs them is neither. Everything
+> else holds unchanged: still stdlib-only, still pure (inputs in, decision out),
+> still never registered in `plugin.json`. The original record stands below.
+
+---
+
 The skill-improvement run-books ([ADR 0003](./0003-skill-improvement-workflows-propose-via-issues.md))
 lean on two **pure decision helpers**: a proposal gate (the ≤1-issue-per-run cap
 plus dedup) and a sanitizer guard (blocks private-repo content from this public

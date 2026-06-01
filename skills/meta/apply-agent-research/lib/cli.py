@@ -1,26 +1,34 @@
-"""CLI seam over the surviving pure helpers, for the ``apply-agent-research`` skill.
+"""CLI seam over the pure helpers, for the ``apply-agent-research`` skill.
 
 The skill runs unattended in CI and must enforce the leak guard and the
 one-proposal cap *mechanically*, not by prompt discipline. This module exposes
-the two surviving pure decisions — ``sanitizer.check`` and ``proposal_gate.decide``
-— as stdin/stdout subcommands so the workflow can gate on an exit code or parse a
-JSON decision from Bash. It holds no policy of its own; the decisions live in
+the two pure decisions — ``sanitizer.check`` and ``proposal_gate.decide`` — as
+stdin/stdout subcommands so the workflow can gate on an exit code or parse a JSON
+decision from Bash. It holds no policy of its own; the decisions live in
 ``sanitizer.py`` / ``proposal_gate.py`` and are tested there.
 
+Invoked by file path (``python3 <skill-dir>/lib/cli.py``), not ``-m`` — the skill
+folder name is hyphenated, so it is not an importable module. It bootstraps its
+own directory onto ``sys.path`` so the sibling imports resolve from any cwd, which
+is what lets the helpers travel with the installed skill into a Consumer repo.
+
     # block iff the body trips the structural guard or names a private marker
-    echo "<body>" | python3 -m runbooks.lib.cli sanitize [--marker M ...]
+    echo "<body>" | python3 <skill-dir>/lib/cli.py sanitize [--marker M ...]
 
     # pick at most one candidate to file (exact-key dedup against open issues)
     echo '{"candidates": [...], "open_issues": [...]}' \
-        | python3 -m runbooks.lib.cli gate
+        | python3 <skill-dir>/lib/cli.py gate
 """
 
 import argparse
 import json
+import os
 import sys
 
-from runbooks.lib.proposal_gate import decide
-from runbooks.lib.sanitizer import check
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+from proposal_gate import decide  # noqa: E402  (after sys.path bootstrap)
+from sanitizer import check  # noqa: E402
 
 
 def _sanitize(args, stdin, out):
@@ -49,7 +57,7 @@ def main(argv=None, stdin=None, out=None):
     stdin = stdin if stdin is not None else sys.stdin
     out = out if out is not None else sys.stdout
 
-    parser = argparse.ArgumentParser(prog="runbooks.lib.cli")
+    parser = argparse.ArgumentParser(prog="cli.py")
     sub = parser.add_subparsers(dest="command", required=True)
 
     p_sanitize = sub.add_parser("sanitize", help="leak guard over stdin")

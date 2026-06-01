@@ -1,6 +1,10 @@
+import os
+import sys
 import unittest
 
-from runbooks.lib.sanitizer import check
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "lib"))
+
+from sanitizer import check  # noqa: E402  (after sys.path bootstrap)
 
 
 class SanitizerGuardTest(unittest.TestCase):

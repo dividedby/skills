@@ -1,20 +1,20 @@
 """Sanitizer guard: the pure decision that blocks private-repo content from
 reaching this repo's PUBLIC issue tracker.
 
-Used by the gap-scanner run-book, which reads private repos but files
-generalized proposals here. The no-private-code rule is enforced mechanically
-here, not by prompt discipline. This module never touches the tracker; the
-run-book gates on the returned decision.
+Called by the ``apply-agent-research`` skill (via ``cli.py``) when a Consumer
+reads private sources but files generalized proposals into a public tracker. The
+no-private-code rule is enforced mechanically here, not by prompt discipline.
+This module never touches the tracker; the caller gates on the returned decision.
 
 Known limitations (the guard is necessary, not sufficient):
 - It catches *structural* leak signals (markers, fenced code, file paths, import
   lines). It cannot judge whether free prose names something private — a bare
-  private identifier like ``calculateChargebackFee`` passes. So the run-book must
-  always supply the configured ``private_markers``, and prose discipline still
-  matters for identifiers the markers don't cover.
+  private identifier like ``calculateChargebackFee`` passes. So the caller must
+  always supply the host's configured ``private_markers``, and prose discipline
+  still matters for identifiers the markers don't cover.
 - The file-path signal also matches public URLs with an extension
   (``…/patterns.html``), so a body that cites sources can be over-blocked. The
-  caller (#20) decides how to cite sources without tripping it.
+  caller decides how to cite sources without tripping it.
 """
 
 import re
@@ -42,7 +42,7 @@ def check(body, private_markers=()):
     or ``{"allowed": False, "reason": <str>}`` to block it.
 
     ``private_markers`` is an iterable of strings (e.g. private repo or owner
-    names) the run-book knows are sensitive; any occurrence blocks. Beyond that,
+    names) the host knows are sensitive; any occurrence blocks. Beyond that,
     generic leak signals (pasted code, file paths, import lines) block, while a
     body that only describes a need in the abstract is allowed.
     """

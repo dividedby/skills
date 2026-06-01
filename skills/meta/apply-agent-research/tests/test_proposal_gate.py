@@ -1,6 +1,10 @@
+import os
+import sys
 import unittest
 
-from runbooks.lib.proposal_gate import decide
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "lib"))
+
+from proposal_gate import decide  # noqa: E402  (after sys.path bootstrap)
 
 
 class ProposalGateTest(unittest.TestCase):

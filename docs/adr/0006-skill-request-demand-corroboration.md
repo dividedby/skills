@@ -25,8 +25,9 @@ different rule**:
 
 **Decision.** Duplicate `skill-request`s aggregate as demand corroboration; they
 are never dedup-suppressed. This is deliberately *unlike* the exact-key
-suppression in `runbooks/lib/proposal_gate.py` (which dedups a single repo's own
-proposals to protect the one-issue-per-run cap) and *unlike* ADR 0018. Usefulness
+suppression in the proposal gate
+(`skills/meta/apply-agent-research/lib/proposal_gate.py`, which dedups a single
+repo's own proposals to protect the one-issue-per-run cap) and *unlike* ADR 0018. Usefulness
 of a *built* skill is still settled by **adoption**, not by request count — the
 demand signal sets build order, it does not by itself justify a skill.
 

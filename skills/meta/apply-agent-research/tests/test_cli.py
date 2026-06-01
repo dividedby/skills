@@ -9,10 +9,14 @@ so the workflow can gate on it from Bash. The decisions themselves are tested in
 
 import io
 import json
+import os
+import sys
 import unittest
 from contextlib import redirect_stdout
 
-from runbooks.lib import cli
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "lib"))
+
+import cli  # noqa: E402  (after sys.path bootstrap)
 
 
 def _run(argv, stdin=""):
