@@ -25,6 +25,13 @@ Default vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-
 
 Single-context: one `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.
 
+### Installed skills
+
+Capabilities installed in the maintainer's global environment (`~/.claude/`) are
+available in every session even when not files under this repo's `skills/`. A
+committed snapshot lives at `docs/agents/installed-skills.md` so remote loops can
+read it. See `docs/agents/installed-skills.md`.
+
 ### Skill editorial intent
 
 Skills in this repo prescribe at the principle level; code examples are illustrative sketches, not literal rules. See [`docs/adr/0002-design-skills-prescribe-at-principle-level.md`](./docs/adr/0002-design-skills-prescribe-at-principle-level.md).

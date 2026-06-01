@@ -53,6 +53,15 @@ for why they live here rather than in a separate `runbooks/` dir.
   - **Already-do-this filter** — "does this repo *already* do this?" If the repo
     already encodes the practice, there is no proposal. This replaces the old
     integration map: the repo's own docs are the baseline.
+  - **Installed-skill inventory (if the host maintains one)** — the repo's own
+    `skills/` is not the whole picture: capabilities installed in the host's
+    environment are available in every session even when not files here. If the
+    host commits an inventory of them (this repo: `docs/agents/installed-skills.md`),
+    read it as part of the already-do-this baseline. A remote run cannot enumerate
+    the install at run time, so this committed snapshot is the only signal it has.
+    **Treat an already-installed capability as present, not absent** — never
+    propose rebuilding it. The proposal there is an *integration* or *novel use*
+    with this repo's own skills, if the inventory shows that gap.
 
 ## The mapping discipline
 

@@ -30,6 +30,15 @@ Before proposing, gather the keys already spoken for:
 Grep the `dedup-key:` markers out of those issue bodies to build the open-keys
 list passed to the gate.
 
+**Read the reasoning, don't just match keys.** Exact-key suppression catches a
+verbatim re-file, but the maintainer's *why* on a closed `wontfix` is the durable
+signal — read the **bodies and comments** of closed `wontfix` issues and learn the
+principle behind each refusal, not just its slug. A candidate that is conceptually
+the same refused thing under a *different* key must still be suppressed; and a
+stated principle ("we don't add what an installed external skill already covers")
+generalizes to candidates the maintainer never saw. When you suppress on reasoning
+rather than an exact key match, say so in the `SKIPPED:` line.
+
 ## The leak guard (sanitizer)
 
 Run the candidate's final `title + body` through the guard **before** filing.
