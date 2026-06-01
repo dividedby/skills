@@ -1,14 +1,12 @@
 # Run-books
 
-> **Mostly superseded** — retained until `apply-agent-research` lands, then
-> removed. See
-> [`docs/design/cross-repo-knowledge-application.md`](../docs/design/cross-repo-knowledge-application.md):
-> the central-push run-book topology (integration map, self-improvement and
-> gap-scanner orchestrators, the curated KB/repo allow-lists) is replaced by the
-> decentralized-pull `apply-agent-research` skill and the `skill-request` flow.
-> The only survivors are the pure helpers `lib/proposal_gate.py` and
-> `lib/sanitizer.py`, which the new skill reuses; everything else here is
-> superseded and will be deleted once the skill lands.
+> **Mostly retired.** The central-push run-book topology (integration map,
+> self-improvement and gap-scanner orchestrators, the curated KB/repo allow-lists)
+> was replaced by the decentralized-pull `apply-agent-research` skill and the
+> `skill-request` flow — see
+> [`docs/design/cross-repo-knowledge-application.md`](../docs/design/cross-repo-knowledge-application.md).
+> What remains here are the two pure decision helpers the new skill reuses,
+> plus the CLI seam that exposes them to the workflow.
 
 Internal machinery for the skill-improvement workflows — **not** published
 skills, never registered in `plugin.json`. See
@@ -20,43 +18,21 @@ helpers are Python stdlib.
 
 ## Layout
 
-- `lib/` — helpers. The **pure decision** helpers take inputs and return a
-  decision with no tracker/git/clone I/O; the **orchestrators** wire seams with
-  all I/O injected, so the whole workflow is testable on fixtures.
+- `lib/` — the survivors. Two **pure decision** helpers (inputs in, decision out,
+  no tracker/git/clone I/O) and one CLI seam over them.
   - Pure decisions:
     - `proposal_gate.py` — `decide(candidates, open_issues, min_priority=1)`
       picks at most one proposal to file (dedup + priority + deterministic
       tie-break).
     - `sanitizer.py` — `check(body, private_markers=())` blocks private-repo
       content from this public tracker.
-  - Seams:
-    - `map_store.py` — `read_map` / `write_map` for the integration map;
-      `write_map` writes only if changed (keeps re-runs to a minimal diff).
-    - `repo_scan.py` — `load_repo_list` (curated allow-list) + `scan` context
-      manager (shallow-clone listed repos via an injected `clone`, clean up on
-      exit).
-    - `kb_source.py` — `load_kb_source` (curated `knowledge/` allow-list) +
-      `read_kb` (read only the listed subpaths under an injected KB root; each
-      note carries its `subject`/`category` axes, in stable order). The
-      self-improvement acquisition contract — the C parallel to `repo_scan`
-      (explicit; no auto-discovery).
-  - Orchestrators:
-    - `self_improvement.py` — `run(...)` builds/commits the integration map
-      consumer-side, then proposes at most one skill refinement via the real
-      proposal gate, filed under `source:self-improvement` (#19). Never edits a
-      skill. Without the proposal seams it is the #16 analysis-only run.
-    - `gap_scanner.py` — `run(...)` scans the curated repos read-only, then
-      detects a recurring need and proposes at most one new skill via the real
-      sanitizer + proposal gate, filed under `source:gap-scanner` (#20). Sanitizer
-      runs before the gate so private content is dropped before filing. Without
-      the proposal seams it is the #17 scan-only skeleton.
-- `config/` — curated allow-lists (explicit; no auto-discovery):
-  `gap-scanner-repos.json` (D's repo list) and `kb-source.json` (C's KB slug +
-  `knowledge/` subpaths).
-- `tests/` — stdlib `unittest`. Pure helpers use synthetic inputs (no fakes);
-  orchestrators use integration dry-runs against fixture dirs + injected fakes.
-- `prompts/` — run-book prompts (the orchestration the AFK agent follows):
-  `self-improvement.md`, `gap-scanner.md`.
+  - Seam:
+    - `cli.py` — exposes `sanitizer.check` and `proposal_gate.decide` as
+      stdin/stdout subcommands (`sanitize`, `gate`) so the `apply-agent-research`
+      skill enforces the leak guard and the one-proposal cap *mechanically* in CI,
+      not by prompt discipline. Holds no policy of its own.
+- `tests/` — stdlib `unittest`. Pure helpers use synthetic inputs (no fakes); the
+  CLI is exercised over its stdin/stdout contract.
 
 ## Tests
 
