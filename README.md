@@ -25,3 +25,7 @@ Setting up and auditing a project's Claude config — instruction files and the 
 - **[audit-project-harness](./skills/config/audit-project-harness/SKILL.md)** — Audit a repo's `.claude/settings.json` against the global config: cut redundant hooks, flag contradictions, recommend missing high-value hooks.
 - **[init-project-claude](./skills/config/init-project-claude/SKILL.md)** — Scaffold missing `CLAUDE.md` / `AGENTS.md` instruction files the "earn the line" way.
 - **[audit-project-claude](./skills/config/audit-project-claude/SKILL.md)** — Audit `CLAUDE.md` / `AGENTS.md` against the global config: cut duplication, flag contradictions, enforce progressive disclosure.
+
+### Meta
+
+- **[apply-agent-research](./skills/meta/apply-agent-research/SKILL.md)** — Apply an external agent-research knowledge base to a repo's own agent-meta: read a public knowledge mirror plus the repo's own governance docs, then propose at most one improvement as a labeled issue — never editing, committing, or merging.

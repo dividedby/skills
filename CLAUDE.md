@@ -2,6 +2,7 @@ Skills are organized into bucket folders under skills/:
 
     engineering/ — daily code work
     config/      — setting up and auditing a project's Claude config (instruction files + settings/hooks harness)
+    meta/        — applying external agent-research knowledge to improve this repo's own agent-meta
 
 Each skill is registered in `.claude-plugin/plugin.json` (`skills[]`) and linked from the top-level `README.md` with a one-line description — enforced by the `check-skill-registration` Stop hook.
 

@@ -1,0 +1,78 @@
+name: Apply Agent Research
+
+on:
+  schedule:
+    # 11:37 UTC Mondays = 06:37 CT. Weekly: agent-meta knowledge moves slowly and
+    # the loop re-clones the mirror fresh each run. Off-the-hour to reduce cron delay.
+    - cron: "37 11 * * 1"
+  workflow_dispatch:
+
+jobs:
+  apply-agent-research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    concurrency:
+      group: apply-agent-research
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      issues: write
+
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
+      LABEL: source:agent-research
+      MIRROR: dividedby/agent-research-knowledge
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Clone the public knowledge mirror (credential-free, read-only)
+        run: |
+          set -euo pipefail
+          git clone --depth 1 "https://github.com/${MIRROR}.git" "$RUNNER_TEMP/knowledge-mirror"
+          test -d "$RUNNER_TEMP/knowledge-mirror/knowledge"
+          echo "Mirror at $RUNNER_TEMP/knowledge-mirror@$(git -C "$RUNNER_TEMP/knowledge-mirror" rev-parse --short HEAD)"
+
+      - name: Ensure provenance label exists
+        run: |
+          gh label create "$LABEL" \
+            --color "5319E7" \
+            --description "Issues proposed by the automated apply-agent-research loop" \
+            >/dev/null 2>&1 || true
+
+      - name: Run apply-agent-research
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          MIRROR_DIR: ${{ runner.temp }}/knowledge-mirror
+        run: |
+          set -euo pipefail
+          claude -p \
+            --permission-mode acceptEdits \
+            --allowedTools "Bash(gh:*) Bash(git:*) Bash(python3:*) Read Grep Glob" \
+            --append-system-prompt "$(cat .github/workflows/prompts/apply-agent-research.md)" \
+            "Run the weekly apply-agent-research pass. The knowledge mirror is already cloned at \$MIRROR_DIR. Follow the instructions in the system prompt." \
+            | tee "$RUNNER_TEMP/agent.log"
+
+      - name: Summarise run
+        if: always()
+        run: |
+          {
+            echo "## Apply agent research"
+            echo ""
+            echo '```'
+            tail -n 50 "$RUNNER_TEMP/agent.log" 2>/dev/null || echo "(no log produced)"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

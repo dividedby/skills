@@ -6,6 +6,7 @@
     "./skills/config/init-project-claude",
     "./skills/config/audit-project-claude",
     "./skills/config/init-project-harness",
-    "./skills/config/audit-project-harness"
+    "./skills/config/audit-project-harness",
+    "./skills/meta/apply-agent-research"
   ]
 }

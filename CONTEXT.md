@@ -14,7 +14,7 @@ _Avoid_: command, tool, prompt.
 
 **Bucket**:
 A top-level grouping under `skills/` that clusters skills by use case.
-Currently `engineering/` and `config/`.
+Currently `engineering/`, `config/`, and `meta/`.
 _Avoid_: category, namespace, group.
 
 **Convention**:
