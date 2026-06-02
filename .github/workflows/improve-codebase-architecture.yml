@@ -59,18 +59,27 @@ jobs:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
         run: |
           set -euo pipefail
+          # --output-format json so the run emits total_cost_usd; the agent's
+          # final message is pulled back out into agent.log for the summary.
+          # Cost is recorded to track monthly Agent SDK spend (see #58).
           claude -p \
+            --output-format json \
             --permission-mode acceptEdits \
             --allowedTools "Bash(gh:*) Bash(git:*) Read Grep Glob WebSearch WebFetch" \
             --append-system-prompt "$(cat .github/workflows/prompts/improve-codebase-architecture.md)" \
             "Run the daily architecture-review pass. Follow the instructions in the system prompt." \
-            | tee "$RUNNER_TEMP/agent.log"
+            > "$RUNNER_TEMP/agent.json"
+          jq -r '.result // ""' "$RUNNER_TEMP/agent.json" | tee "$RUNNER_TEMP/agent.log"
+          jq -r '"total_cost_usd=\(.total_cost_usd // "n/a")  duration_ms=\(.duration_ms // "n/a")  num_turns=\(.num_turns // "n/a")"' \
+            "$RUNNER_TEMP/agent.json" | tee "$RUNNER_TEMP/agent.cost"
 
       - name: Summarise run
         if: always()
         run: |
           {
             echo "## Architecture review"
+            echo ""
+            echo "**Cost:** $(cat "$RUNNER_TEMP/agent.cost" 2>/dev/null || echo "n/a")"
             echo ""
             echo '```'
             tail -n 50 "$RUNNER_TEMP/agent.log" 2>/dev/null || echo "(no log produced)"
