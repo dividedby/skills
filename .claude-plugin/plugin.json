@@ -1,6 +1,7 @@
 {
   "name": "dividedby-skills",
   "skills": [
+    "./skills/engineering/context-firewall",
     "./skills/engineering/frontend-design",
     "./skills/engineering/software-design",
     "./skills/config/init-project-claude",

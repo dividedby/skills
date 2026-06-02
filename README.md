@@ -14,6 +14,7 @@ Pick the skills you want when prompted. Re-run to update.
 
 ### Engineering
 
+- **[context-firewall](./skills/engineering/context-firewall/SKILL.md)** — Restructure a long, multi-item run so late items don't decay: a fresh discarded sub-agent context per item, between-item budget checkpoints, and intentional compaction. Loop optional.
 - **[frontend-design](./skills/engineering/frontend-design/SKILL.md)** — Design, refine, and audit production-grade frontend interfaces across React, Next.js, Tailwind, and vanilla HTML/CSS/JS that avoid generic AI aesthetics.
 - **[software-design](./skills/engineering/software-design/SKILL.md)** — Turns a PRD and published backlog into named modules, located seams, and a testing strategy that makes issues TDD-ready.
 
