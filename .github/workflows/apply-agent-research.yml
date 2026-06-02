@@ -81,16 +81,21 @@ jobs:
           # --output-format json so the run emits total_cost_usd; the agent's
           # final message is pulled back out into agent.log for the summary.
           # Cost is recorded to track monthly Agent SDK spend (see #58).
+          # Capture claude's exit code WITHOUT aborting: a failed run still spends
+          # Agent SDK credit and still writes total_cost_usd to agent.json, so we
+          # must extract+log the cost before propagating the failure (exit $rc).
+          rc=0
           claude -p \
             --output-format json \
             --permission-mode acceptEdits \
             --allowedTools "Bash Read Grep Glob" \
             --append-system-prompt "$(cat .github/workflows/prompts/apply-agent-research.md)" \
             "Run the scheduled apply-agent-research pass. The knowledge mirror is already cloned at ${MIRROR_DIR} (read-only). Follow the instructions in the system prompt." \
-            > "$RUNNER_TEMP/agent.json"
-          jq -r '.result // ""' "$RUNNER_TEMP/agent.json" | tee "$RUNNER_TEMP/agent.log"
+            > "$RUNNER_TEMP/agent.json" || rc=$?
+          jq -r '.result // ""' "$RUNNER_TEMP/agent.json" 2>/dev/null | tee "$RUNNER_TEMP/agent.log" || true
           jq -r '"total_cost_usd=\(.total_cost_usd // "n/a")  duration_ms=\(.duration_ms // "n/a")  num_turns=\(.num_turns // "n/a")"' \
-            "$RUNNER_TEMP/agent.json" | tee "$RUNNER_TEMP/agent.cost"
+            "$RUNNER_TEMP/agent.json" 2>/dev/null | tee "$RUNNER_TEMP/agent.cost" || true
+          exit $rc
 
       - name: Summarise run
         if: always()
