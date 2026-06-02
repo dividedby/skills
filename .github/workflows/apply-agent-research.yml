@@ -78,24 +78,25 @@ jobs:
           # Bash(python3:*) blocks (the command starts with printf). The
           # no-commits/edits invariant holds via contents:read + no Edit/Write,
           # not via Bash scoping. Do not re-scope. See agent-research#127.
-          # --output-format json so the run emits total_cost_usd; the agent's
-          # final message is pulled back out into agent.log for the summary.
-          # Cost is recorded to track monthly Agent SDK spend (see #58).
-          # Capture claude's exit code WITHOUT aborting: a failed run still spends
-          # Agent SDK credit and still writes total_cost_usd to agent.json, so we
-          # must extract+log the cost before propagating the failure (exit $rc).
-          rc=0
+          # --output-format stream-json --verbose: stream every event to the log so
+          # a hung/timed-out run leaves a trace (plain json buffers and goes dark),
+          # AND the final result event (with total_cost_usd) reaches the log before
+          # claude exits — so cost is captured even on a failed run (#58) and the
+          # cross-repo ledger scrapes it. Matches agent-research's 4 workflows.
+          # pipefail propagates an agent failure; the cost is already in the log.
           claude -p \
-            --output-format json \
+            --output-format stream-json --verbose \
             --permission-mode acceptEdits \
             --allowedTools "Bash Read Grep Glob" \
             --append-system-prompt "$(cat .github/workflows/prompts/apply-agent-research.md)" \
             "Run the scheduled apply-agent-research pass. The knowledge mirror is already cloned at ${MIRROR_DIR} (read-only). Follow the instructions in the system prompt." \
-            > "$RUNNER_TEMP/agent.json" || rc=$?
-          jq -r '.result // ""' "$RUNNER_TEMP/agent.json" 2>/dev/null | tee "$RUNNER_TEMP/agent.log" || true
-          jq -r '"total_cost_usd=\(.total_cost_usd // "n/a")  duration_ms=\(.duration_ms // "n/a")  num_turns=\(.num_turns // "n/a")"' \
-            "$RUNNER_TEMP/agent.json" 2>/dev/null | tee "$RUNNER_TEMP/agent.cost" || true
-          exit $rc
+            | tee "$RUNNER_TEMP/agent.jsonl"
+          # Clean step-summary from the saved stream (fromjson? skips any non-JSON
+          # line; last result event wins). Best-effort: a failed run already failed
+          # the pipe above, and its full trace is in the log.
+          jq -rR 'fromjson? | select(.type=="result") | .result // ""' "$RUNNER_TEMP/agent.jsonl" | tail -1 > "$RUNNER_TEMP/agent.log" || true
+          jq -rR 'fromjson? | select(.type=="result") | "total_cost_usd=\(.total_cost_usd // "n/a")  duration_ms=\(.duration_ms // "n/a")  num_turns=\(.num_turns // "n/a")"' \
+            "$RUNNER_TEMP/agent.jsonl" | tail -1 > "$RUNNER_TEMP/agent.cost" || true
 
       - name: Summarise run
         if: always()
