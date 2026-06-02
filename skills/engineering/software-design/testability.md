@@ -100,6 +100,7 @@ Before finalizing a module's interface in the Design Plan:
 [ ] External I/O lives at a named seam, not embedded in logic
 [ ] Value types used for domain concepts (no primitive obsession)
 [ ] Interface is narrow enough that test setup is simple
+[ ] Seam operations are specifically named — no generic dispatcher at seams
 [ ] Each operation tests cleanly without requiring other operations first
 ```
 
