@@ -28,6 +28,17 @@ A markdown file inside a skill folder that the `SKILL.md` links to for
 detail (e.g. `banned-patterns.md`, `direction-doc-format.md`).
 _Avoid_: doc, reference, attachment.
 
+**Autonomous loop** (a.k.a. AFK loop):
+An unattended agent run that repeats a work cycle until a stop condition,
+guarded by a per-iteration feedback gate and an iteration/cost cap. The general
+category over a **Proposal loop** (its propose-only instance — never applies,
+[ADR 0003](./docs/adr/0003-skill-improvement-workflows-propose-via-issues.md))
+and an **applying loop** (commits or opens PRs on a green gate); a **Run-book**
+is the scheduled wrapper around one. Setup methodology lives in the
+`autonomous-loop` skill, which defers execution to an existing runtime rather
+than reimplementing one.
+_Avoid_: bot, daemon, automation, AFK bot.
+
 **Run-book**:
 A cron-driven prompt that an unattended ("AFK") agent follows to perform a
 recurring workflow. Lives in the repo but is **not itself** a published skill —
@@ -56,9 +67,10 @@ fresh at run time rather than committing a copy (see
 _Avoid_: subscriber, client, downstream repo.
 
 **Proposal loop**:
-A scheduled, skill-driven workflow that reads an input, then **proposes via
-labeled issues and never applies** — no commits, edits, or PRs (the
-producer/decider split, [ADR 0003](./docs/adr/0003-skill-improvement-workflows-propose-via-issues.md)).
+The propose-only instance of an **Autonomous loop**: a scheduled, skill-driven
+workflow that reads an input, then **proposes via labeled issues and never
+applies** — no commits, edits, or PRs (the producer/decider split,
+[ADR 0003](./docs/adr/0003-skill-improvement-workflows-propose-via-issues.md)).
 It fetches its skill fresh each run rather than vendoring it
 ([ADR 0008](./docs/adr/0008-consumers-fetch-the-skill-fresh-not-vendored.md)).
 `apply-agent-research` (KB → agent-meta) and `improve-codebase-architecture`
