@@ -276,19 +276,32 @@ Three named scales. Never write a raw value where a token would do.
 
 ### Shadow / elevation scale
 
-A **compact named scale** of 5 levels:
+A **compact named scale** of 5 levels. Illustrative values (per ADR 0002,
+these are an example shape, not canonical numbers). `light-dark()` accepts
+only a `<color>` argument, so wrap the *shadow color* in it — the same
+mechanism as the color tokens — and keep the geometry shared across modes:
 
+```css
+:root {
+  --shadow-sm:      0 1px 2px  light-dark(oklch(0.15 0.01 220 / 0.07), oklch(0.10 0.01 220 / 0.36)); /* hairline lift (cards at rest) */
+  --shadow-md:      0 2px 6px  light-dark(oklch(0.15 0.01 220 / 0.10), oklch(0.10 0.01 220 / 0.44)); /* hover lift (interactive cards) */
+  --shadow-lg:      0 4px 16px light-dark(oklch(0.15 0.01 220 / 0.12), oklch(0.10 0.01 220 / 0.52)); /* dropdown, popover */
+  --shadow-xl:      0 8px 32px light-dark(oklch(0.15 0.01 220 / 0.16), oklch(0.10 0.01 220 / 0.60)); /* modal, large overlay */
+  --shadow-overlay: 0 16px 56px light-dark(oklch(0.15 0.01 220 / 0.20), oklch(0.10 0.01 220 / 0.72)); /* full-screen overlay / scrim */
+}
 ```
---shadow-sm       /* hairline lift (cards at rest) */
---shadow-md       /* hover lift (interactive cards) */
---shadow-lg       /* dropdown, popover */
---shadow-xl       /* modal, large overlay */
---shadow-overlay  /* full-screen overlay / scrim */
-```
+
+Dark-mode opacity runs 4–5× higher than light: a dark surface absorbs
+ambient contrast, so a faint shadow simply vanishes against it and needs
+far more opacity to register the same lift. Tune the `oklch` hue channel to
+the direction's ambient palette during Step 5 (cool `220`, warm `40`,
+neutral `0`) — a shadow tinted toward the surface reads more natural than
+neutral black. If a mode needs different blur or offset (not just color),
+fall back to the class-swap mechanism rather than `light-dark()`, which
+cannot vary geometry.
 
 Every component uses only named levels. Ad-hoc `box-shadow` values are a
-WARN-tier slop signal during audit. Tune shadows per mode (light/dark);
-the same shadow values rarely read the same in both.
+WARN-tier slop signal during audit.
 
 ### Radius scale
 
