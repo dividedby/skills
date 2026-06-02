@@ -26,7 +26,7 @@ Dispatch Explore to report:
 Read [CATALOG.md](CATALOG.md). Propose **only** entries whose trigger matched in Step 2 and that pass the 4-part annoyance filter. For each: what it does, why it earns its place, and its annoyance cost. Then list catalog/anti-catalog entries you **deliberately rejected** and why (no trigger, or filtered out). Recommend `deny`-only for permissions — **never** an allowlist.
 
 ## Step 4 — Validate against current docs
-Before showing the proposal, dispatch the **`claude-code-guide`** agent to confirm the **specific** hook events, matchers, and settings keys you're proposing are current, supported, and non-deprecated (use the catalog's doc anchors). Drop or correct anything stale. Scope the check to what you're actually proposing — don't validate the whole catalog. (Skip this step if Step 2 hit the stop-condition and nothing is proposed.)
+Before showing the proposal, **WebFetch the catalog's canonical doc anchors** (Hooks + Settings, plus Permissions if a permission is proposed) to confirm the **specific** hook events, matchers, and settings keys you're proposing are current, supported, and non-deprecated. Drop or correct anything stale. Scope the check to what you're actually proposing — don't validate the whole catalog. (Skip this step if Step 2 hit the stop-condition and nothing is proposed.)
 
 ## Step 5 — Output & approval
 Show the proposed `settings.json` additions and a one-line summary of each. Await approval. **Route the actual write through the `update-config` skill** — don't hand-edit JSON here. Write to the shared `settings.json`, never `settings.local.json`.

@@ -30,7 +30,7 @@ Read the shared catalog at `~/.claude/skills/init-project-harness/CATALOG.md`. P
 Recommend `deny`-only for permissions; never propose an allowlist.
 
 ## Step 4 — Validate against current docs
-Before showing `add` proposals (or any key you'd rewrite), dispatch the **`claude-code-guide`** agent to confirm the specific hook events, matchers, and settings keys are current, supported, and non-deprecated (use the catalog's doc anchors). Drop or correct anything stale. Scope to what you're touching. (Skip if Step 2 hit the stop-condition.)
+Before showing `add` proposals (or any key you'd rewrite), **WebFetch the catalog's canonical doc anchors** (Hooks + Settings, plus Permissions if you're proposing a permission) to confirm the specific hook events, matchers, and settings keys are current, supported, and non-deprecated. Drop or correct anything stale. Scope to what you're touching. (Skip if Step 2 hit the stop-condition.)
 
 ## Step 5 — Output & approval
 Per finding: `cut` / `fix-contradiction` / `flag` / `add` / `keep` with a `settings.json` key-path ref and a one-line why. End with the proposed lean structure. Await approval. **Route any write through the `update-config` skill** — write to the shared `settings.json`, never `settings.local.json`.

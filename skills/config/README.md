@@ -44,6 +44,6 @@ judgment calls are surfaced for an optional `/grill-me` pass.
 The two harness skills draw recommendations from a single fact-gated catalog
 at [`init-project-harness/CATALOG.md`](./init-project-harness/CATALOG.md):
 each entry has a trigger, value, annoyance cost, and a canonical doc anchor.
-Proposals are validated against live Claude Code docs (via the
-`claude-code-guide` agent) before approval, and settings writes route through
-the `update-config` skill.
+Proposals are validated against live Claude Code docs (via WebFetch against the
+catalog's canonical doc anchors) before approval, and settings writes route
+through the `update-config` skill.
