@@ -47,7 +47,8 @@ pushes to the default branch.
 
 Start from the [harness skeleton](./proposal-loop-harness.md) (fetch-fresh,
 `contents: read` / `issues: write`, off-the-hour cron + `workflow_dispatch`,
-scoped tools, step-summary). Then layer on the Consumer specifics:
+scoped tools, step-summary with the `total_cost_usd=…` cost-ledger line). Then
+layer on the Consumer specifics:
 
 1. **Fetch the skill fresh + hard-gate its guard.** Clone `dividedby/skills`
    shallow, `cp -R skills/meta/apply-agent-research` into `~/.claude/skills/`.
@@ -133,14 +134,25 @@ scoped tools, step-summary). Then layer on the Consumer specifics:
   a leak: file/comment issues on the public skills tracker, nothing more.
 - **Ensure `CLAUDE_CODE_OAUTH_TOKEN`** exists (a repo already running Claude in
   Actions has it — reuse, don't re-add).
+- **Create a second fine-grained PAT for the cost ledger**, least privilege:
+  Repository access = **only** `CONSUMER_REPO`; Permissions = `Actions: Read`
+  (+ implied `Metadata: Read`); finite expiry. Hand it to the `dividedby/agent-research`
+  owner to store there as the secret `<CONSUMER>_ACTIONS_TOKEN` — it lives in the
+  **hub** repo, not in `CONSUMER_REPO`, because the hub uses it to read this
+  Consumer's run logs and scrape the `total_cost_usd=…` summary line. This is
+  **distinct** from `SKILLS_TRACKER_TOKEN` (Issues:rw, can't read Actions logs):
+  least privilege **per channel**. The hub-side counterpart — adding `CONSUMER_REPO`
+  to the ledger's `DEFAULT_SURFACE` and wiring the token — is tracked in
+  `dividedby/agent-research` (agent-research#170); cross-link the onboarding PR to it.
 
 ## Verify
 
 `workflow_dispatch` a manual run. Confirm it: clones the mirror (or reads native
 knowledge); runs the guard tests green; files **≤1 per channel** into this repo's
 own tracker (or prints `SKIPPED: <channel>: …`); and — if warranted — files-or-+1's
-≤1 `skill-request` and/or ≤1 `skill-promotion` in `dividedby/skills`. Watch the
-run; report the issue links.
+≤1 `skill-request` and/or ≤1 `skill-promotion` in `dividedby/skills`. Confirm the
+step summary carries the `total_cost_usd=…  duration_ms=…  num_turns=…` ledger
+line (present even on a failed run). Watch the run; report the issue links.
 
 ## Guardrails (do not violate)
 

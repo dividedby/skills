@@ -74,17 +74,28 @@ jobs:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
         run: |
           set -euo pipefail
+          # stream-json + tee to JSONL so the final `result` event (carrying
+          # total_cost_usd) reaches the log before claude exits — cost is then
+          # captured even on a failed run, and the cross-repo ledger can scrape it.
           claude -p \
+            --output-format stream-json --verbose \
             --permission-mode acceptEdits \
             --allowedTools "<scoped to what the loop needs>" \
             --append-system-prompt "$(cat .github/workflows/prompts/<loop>.md)" \
             "<one-line task pointer to the system prompt>" \
-            | tee "$RUNNER_TEMP/agent.log"
+            | tee "$RUNNER_TEMP/agent.jsonl"
+          # Clean summary (last result event) + the cost ledger line. Best-effort:
+          # a failed run already failed the pipe above; fromjson? skips non-JSON.
+          jq -rR 'fromjson? | select(.type=="result") | .result // ""' \
+            "$RUNNER_TEMP/agent.jsonl" | tail -1 > "$RUNNER_TEMP/agent.log" || true
+          jq -rR 'fromjson? | select(.type=="result") | "total_cost_usd=\(.total_cost_usd // "n/a")  duration_ms=\(.duration_ms // "n/a")  num_turns=\(.num_turns // "n/a")"' \
+            "$RUNNER_TEMP/agent.jsonl" | tail -1 > "$RUNNER_TEMP/agent.cost" || true
 
       - name: Summarise run
         if: always()
         run: |
-          { echo "## <Loop Name>"; echo; echo '```'; \
+          { echo "## <Loop Name>"; echo; \
+            cat "$RUNNER_TEMP/agent.cost" 2>/dev/null || true; echo; echo '```'; \
             tail -n 50 "$RUNNER_TEMP/agent.log" 2>/dev/null || echo "(no log)"; \
             echo '```'; } >> "$GITHUB_STEP_SUMMARY"
 ```
@@ -106,6 +117,16 @@ jobs:
   runs Claude via `anthropics/claude-code-base-action`, match that instead of the
   `npm install -g @anthropic-ai/claude-code` + `claude -p` shown here. The skill is
   used by file path, so no skill-discovery config is needed either way.
+- **Emit the cost-ledger line.** The runner streams `stream-json` JSONL and the
+  summary step surfaces a single `total_cost_usd=<…>  duration_ms=<…>
+  num_turns=<…>` line. A cross-repo **cost hub** (`dividedby/agent-research`)
+  scrapes that line from each participating repo's run logs to project monthly
+  spend, so every proposal loop must emit it — it is part of the skeleton, not a
+  per-loop add-on. Use `--output-format stream-json --verbose` (not plain `json`,
+  which buffers and goes dark on a hang) so the final `result` event lands in the
+  log before `claude` exits; cost is then captured even on a failed run. The hub
+  reads logs via a least-privilege `Actions: Read` PAT it holds — see the
+  onboarding doc's manual steps for the token the human must mint.
 
 ## Required secrets
 
