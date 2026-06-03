@@ -141,9 +141,22 @@ layer on the Consumer specifics:
   **hub** repo, not in `CONSUMER_REPO`, because the hub uses it to read this
   Consumer's run logs and scrape the `total_cost_usd=…` summary line. This is
   **distinct** from `SKILLS_TRACKER_TOKEN` (Issues:rw, can't read Actions logs):
-  least privilege **per channel**. The hub-side counterpart — adding `CONSUMER_REPO`
-  to the ledger's `DEFAULT_SURFACE` and wiring the token — is tracked in
-  `dividedby/agent-research` (agent-research#170); cross-link the onboarding PR to it.
+  least privilege **per channel**.
+  - **`<CONSUMER>` is a deliberate, stable short-name, not the repo slug.** The hub
+    can't mechanically derive it, so it stores the secret under exactly the literal
+    name you choose — e.g. `goodreads-bot` registers as `GOODREADS_ACTIONS_TOKEN`
+    (the `-bot` is dropped). Pick the short-name once and keep it fixed; it's the
+    literal secret name on the hub side.
+  - **Hub-side counterpart (for the agent-research owner).** Onboarding into the
+    ledger is three mechanical edits in `dividedby/agent-research`: add a
+    `RepoSurface` to the `COST_SURFACE` registry in `kb_afk/cost_ledger.py`, add the
+    matching secret-passthrough line to `.github/workflows/cost-ledger.yml`, and add
+    a docs row. The procedure is documented there in `docs/cost-tracking.md`
+    ("Onboarding a new Consumer"); follow that rather than this summary if they
+    diverge. Code can land **ahead of** the token — an unset `<CONSUMER>_ACTIONS_TOKEN`
+    scrapes 0 rows for the repo (no failure), so provisioning order is flexible.
+    (`agent-research` is private; this pointer is for the owner, not a read the
+    onboarding agent needs — the consumer-side contract above is self-sufficient.)
 
 ## Verify
 
