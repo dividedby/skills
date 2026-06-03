@@ -40,6 +40,6 @@ Canonical docs (anchors for validation):
 - **Notification / Stop sounds / desktop pings** — pure annoyance, no project value.
 - **Blocking PreToolUse gates on every `Bash` call** — duplicates/competes with the global `bash-guard`, slows every command. (A **narrow** matcher scoped to one dangerous command class — the git guard above — is not this; it gates only matching commands and is justified by the CI/AFK carve-out.)
 - **Re-adding a `permissions.allow` list** — banned; the global bypass-mode + surgical hooks are the backstop.
-- **Re-declaring the global safety hooks** (`read-guard`/`bash-guard`) — additive, so they'd fire twice for no gain.
+- **Re-declaring the global safety hooks** (`read-guard`/`bash-guard`) **verbatim** — additive, so they'd fire twice for no gain. (Exception: a narrow guard that must run where global config is absent — see the CI/AFK carve-out and the git guard above. That isn't re-declaring the global hook verbatim; it's the only copy that runs in CI.)
 - **Auto-commit / auto-push / auto-deploy on `Stop`** — surprising and hard to reverse; outward-facing actions need a human.
 - **Overriding scalar globals** (`model`, `defaultMode`, `effortLevel`, statusline, notif flags) in a project file — personal/global preferences; a project override is a contradiction to flag, not an addition.
