@@ -83,3 +83,41 @@ flushes to). It is what makes a long unattended run observable and recoverable.
 
 A loop you can't stop or resume isn't ready for AFK. Wire the progress file
 before the first unattended run.
+
+## Worked example: a triaged backlog in one self-paced session
+
+The common case where this skill and `/context-firewall` compose. You have a
+backlog of briefed, ready-for-agent issues and you want to burn it down from a
+single interactive session (`/loop` self-paced) rather than a scheduled
+fresh-process-per-issue runtime. Because it's **one accumulating context**, the
+firewall is what keeps the last issue as sharp as the first.
+
+1. **Input** — the triaged backlog (authored by `/triage` / `/to-issues`, not
+   here). Each issue is one **work item**.
+2. **Runtime** — `/loop` self-paced. One session, you're around for the first
+   passes. The iteration boundary is *not* a context boundary here — the
+   orchestrator fills as issues accumulate — so step 4 supplies the boundary.
+3. **Stop condition** — backlog empty, or a cap trips first (below).
+4. **Firewall each issue** (`/context-firewall`) — dispatch each issue to a
+   sub-agent (the in-session Agent/sub-agent dispatch, *not* a new process) that
+   loads only that issue's brief, does the work behind its own gate, and returns
+   a compact outcome. The loop session never carries the raw diffs or tool
+   output — only the distilled result.
+5. **Gate or halt** — the sub-agent runs the issue's feedback gate; a red gate
+   halts that item without landing work. Green → it opens a branch + PR
+   (guardrail 2), never `main`.
+6. **Flush, then drop** — append the completed issue's outcome to the progress
+   file, drop its detail from the session, continue lean. This is the same
+   progress file that makes monitor/stop/resume work.
+7. **Cap** — backlog size is the natural ceiling; add an iteration or
+   wall-clock cap so a stuck issue can't spin forever (guardrail 4).
+
+The guardrails are what let steps 4–6 run while you step away: the git-guard
+(guardrail 1) blocks irreversible ops no matter what a sub-agent decides, and
+every item is on a PR, gated, and persisted before the next begins.
+
+When *would* you skip `/context-firewall` in this flow? When the runtime is
+already fresh-context-per-issue (a scheduled `claude -p` per issue) — there each
+process is its own firewall and the orchestrator never accumulates. The firewall
+earns its keep precisely because the single-session runtime doesn't give it for
+free.
