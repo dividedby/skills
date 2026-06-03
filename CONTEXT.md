@@ -23,6 +23,17 @@ A cross-cutting rule that multiple skills follow, documented under
 read by skills during their work.
 _Avoid_: agent skill, shared rule, policy.
 
+**Guard hook**:
+A deterministic PreToolUse hook that blocks a class of dangerous commands by
+exiting non-zero (e.g. `bash-guard.py`, `pnpm-guard`, a git-guard). The
+**deterministic** counterpart to a **Convention** (a prose rule): a convention
+only lowers the odds an agent does the harmful thing, a guard hook makes it
+impossible. Proposed/audited via the `config/` harness skills' `CATALOG.md`, not
+as a standalone skill. A project-scope guard may re-declare a global one when the
+run lacks global config (CI/AFK) — see
+[ADR 0013](./docs/adr/0013-project-scope-hooks-may-redeclare-global-guards-for-ci.md).
+_Avoid_: safety hook, blocker, validator.
+
 **Supporting file**:
 A markdown file inside a skill folder that the `SKILL.md` links to for
 detail (e.g. `banned-patterns.md`, `direction-doc-format.md`).
