@@ -11,7 +11,7 @@ Audit this project's **harness** — `.claude/settings.json` (hooks, `env`, perm
 Be efficient: **delegate discovery/reading to an Explore subagent** and work from condensed findings + refs. Don't pull whole files into the parent.
 
 ## Step 1 — Global baseline
-Read `~/.claude/settings.json` and the two safety hooks (`read-guard.py`, `bash-guard.py`) once. Treat the global harness as **already in effect**. Key facts: hooks are **additive across scopes** (a re-declared global hook fires twice; safety hooks can't be weakened from project config); `deny` rules union and win from any scope; scalars/`env` resolve most-specific-wins.
+Read `~/.claude/settings.json` and the two safety hooks (`read-guard.py`, `bash-guard.py`) once. Treat the global harness as **already in effect**. Key facts: hooks are **additive across scopes** (a re-declared global hook fires twice; safety hooks can't be weakened from project config); `deny` rules union and win from any scope; scalars/`env` resolve most-specific-wins. **Carve-out:** the additive rule assumes the global harness travels with every run; it doesn't. A **guard hook** that must fire where global config is absent (an AFK/CI `claude -p` run — no `~/.claude/`) is correct to re-declare at project scope, so don't `cut` it as duplication ([ADR 0013](../../../docs/adr/0013-project-scope-hooks-may-redeclare-global-guards-for-ci.md); the git guard in CATALOG.md is the worked example).
 
 ## Step 2 — Locate & read (subagent)
 Dispatch Explore to return:

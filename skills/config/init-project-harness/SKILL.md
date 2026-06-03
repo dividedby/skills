@@ -11,7 +11,7 @@ Scaffold this project's **harness** — `.claude/settings.json` (hooks, `env`, d
 Be efficient: **delegate discovery to an Explore subagent** and work from condensed findings + `file:line`. Don't pull whole files into the parent.
 
 ## Step 1 — Global baseline
-Read `~/.claude/settings.json` and the two safety hooks (`read-guard.py`, `bash-guard.py`) once. Treat the global harness (bypass-style `defaultMode`, the surgical PreToolUse hooks, model/effort/statusline, enabled plugins) as **already in effect**. Nothing you scaffold may restate, duplicate, or weaken any of it. Hooks are **additive across scopes** — re-declaring a global hook makes it fire twice, and the safety hooks cannot be weakened from here.
+Read `~/.claude/settings.json` and the two safety hooks (`read-guard.py`, `bash-guard.py`) once. Treat the global harness (bypass-style `defaultMode`, the surgical PreToolUse hooks, model/effort/statusline, enabled plugins) as **already in effect**. Nothing you scaffold may restate, duplicate, or weaken any of it. Hooks are **additive across scopes** — re-declaring a global hook makes it fire twice, and the safety hooks cannot be weakened from here. **Carve-out:** this assumes the global harness travels with every run; it doesn't. For a **guard hook** that must fire where global config is absent (an AFK/CI `claude -p` run — no `~/.claude/`), project-scope re-declaration is correct, not duplication, since it is the only copy that runs ([ADR 0013](../../../docs/adr/0013-project-scope-hooks-may-redeclare-global-guards-for-ci.md); see the git guard in CATALOG.md).
 
 ## Step 2 — Detect (subagent)
 Dispatch Explore to report:
