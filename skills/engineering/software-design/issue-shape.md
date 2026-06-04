@@ -63,6 +63,27 @@ issue title can stay; the body is rewritten.
 
 ---
 
+## Durability: Write Briefs That Survive Code Drift
+
+A TDD-ready issue may sit unworked for weeks, then be picked up cold by an
+unattended agent (this is the brief `/autonomous-loop` consumes — it checks
+for this durability before running, and bounces a brief that lacks it back
+here). An issue body must stay correct as the codebase moves underneath it.
+Write for **durability over precision**:
+
+- **Name behaviours, interfaces, and types — not file paths or line
+  numbers.** "the `OrderFulfillment` module's `fulfill` entry point", not
+  `src/orders/fulfill.ts:42`. Paths and line numbers go stale while the
+  issue waits; a named contract does not.
+- **State *what* the system should do, not *how* to wire it.** Acceptance
+  criteria are observable outcomes (the `Given/when/then` form above), not
+  implementation steps.
+- **Make acceptance criteria independently verifiable** and bound the work
+  with an explicit out-of-scope note when the boundary is non-obvious, so a
+  cold reader knows when they are done and what not to touch.
+
+---
+
 ## Frontend-Flavored Detection (Two-of-Three Trigger)
 
 Evaluate each issue against three signals. An issue is **frontend-flavored**

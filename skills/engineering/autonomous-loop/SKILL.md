@@ -19,10 +19,12 @@ the discipline that makes running unattended safe. See `CONTEXT.md` for the
 **Autonomous loop** / **Proposal loop** / **Run-book** vocabulary, and
 [RUNNING-AFK.md](RUNNING-AFK.md) for the HITL→AFK hardening detail.
 
-It owns four things and **defers the rest**:
+It owns five things and **defers the rest**:
 
 - **Input** — a briefed backlog is the *input*, not something this skill
-  authors. Defer spec/backlog authoring to `/to-issues` and `/triage`.
+  authors. Defer spec/backlog authoring to `/to-issues` and `/triage`, and
+  durable TDD-ready issue bodies to `/software-design` (`issue-shape.md`).
+  This skill only *checks* the input is durable (element 5); it never authors it.
 - **Execution** — defer to an existing runtime (below). No new loop mechanism.
 - A loop iteration that is **itself multi-item** → reach for `/context-firewall`
   for per-item context hygiene. (One-way pointer; the **work item** is the
@@ -84,6 +86,17 @@ The loop writes a durable **progress file** (the same artifact
 `/context-firewall` flushes to). It lets you watch progress, stop cleanly, and
 resume by reading the file and skipping done items. Persisted progress is what
 makes stopping safe.
+
+---
+
+### 5. Brief-durability precondition
+
+Before the first iteration, check each brief survives a cold pickup over a
+moving codebase: behaviours/interfaces/types named (not file paths or line
+numbers), acceptance criteria observable and independently verifiable, scope
+boundary explicit where non-obvious. A brief that fails bounces back to its
+author (`/software-design`'s `issue-shape.md` owns this format) — this skill
+gates durability, it never authors the brief.
 
 ---
 

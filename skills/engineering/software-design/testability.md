@@ -101,6 +101,7 @@ Before finalizing a module's interface in the Design Plan:
 [ ] Value types used for domain concepts (no primitive obsession)
 [ ] Interface is narrow enough that test setup is simple
 [ ] Seam operations are specifically named — no generic dispatcher at seams
+[ ] No boolean flag parameters — use named variants or separate operations
 [ ] Each operation tests cleanly without requiring other operations first
 ```
 

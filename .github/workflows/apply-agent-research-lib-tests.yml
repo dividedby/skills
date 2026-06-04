@@ -1,0 +1,32 @@
+name: apply-agent-research lib tests
+
+# The sanitizer (leak prevention) and the one-proposal gate are the two hard
+# constraints that make the unattended apply-agent-research loop safe. The
+# SKILL.md points to their stdlib test suite but nothing ran it — a lib
+# regression during an unrelated edit could fail open silently. This converts
+# that advisory "tests exist" note into a hard gate. Stdlib-only, sub-second.
+# Path-filtered so doc-only commits (the bulk here) don't trigger it.
+
+on:
+  push:
+    paths:
+      - "skills/meta/apply-agent-research/lib/**"
+      - "skills/meta/apply-agent-research/tests/**"
+  pull_request:
+    paths:
+      - "skills/meta/apply-agent-research/lib/**"
+      - "skills/meta/apply-agent-research/tests/**"
+  workflow_dispatch:
+
+jobs:
+  lib-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+
+      - name: Run sanitizer + proposal-gate test suite
+        run: python3 -m unittest discover -s skills/meta/apply-agent-research/tests
