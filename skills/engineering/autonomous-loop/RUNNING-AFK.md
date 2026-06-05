@@ -103,6 +103,24 @@ firewall is what keeps the last issue as sharp as the first.
    loads only that issue's brief, does the work behind its own gate, and returns
    a compact outcome. The loop session never carries the raw diffs or tool
    output — only the distilled result.
+   - **Reconcile the brief against the live issue first** (inside that same
+     sub-agent) — before working, the sub-agent reads the issue's *current* full
+     body + all comments and reconciles them against the brief. The brief stays
+     the contract for the work, but a brief can silently drop load-bearing
+     context the body carries, or go stale because clarifying/scope-changing
+     comments landed after it was written. On a **material** discrepancy — the
+     body or a later comment carries load-bearing context the brief omits (a
+     scope change, a reproduction detail, an added requirement) — the sub-agent
+     **halts that item and records the reason in the progress file** (step 6's
+     flush), rather than proceeding on its own reconstruction: there is no author
+     to bounce to mid-run, and a confident wrong guess on a stale brief is
+     unrecoverable while a recorded halt is. **Trivial/cosmetic** mismatches
+     (wording, formatting, non-load-bearing detail) are not material and do not
+     halt. This full read happens **inside the disposable per-item context**, so
+     the bloat is transient and discarded with the sub-agent — the orchestrator
+     never reads full bodies/comments and the firewall is preserved. This
+     per-pickup reconciliation is distinct from the pre-run brief-*shape* check
+     (SKILL.md element 5), which runs once before the loop.
 5. **Gate or halt** — the sub-agent runs the issue's feedback gate; a red gate
    halts that item without landing work. Green → it opens a branch + PR
    (guardrail 2), never `main`.

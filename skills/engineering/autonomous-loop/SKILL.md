@@ -91,12 +91,19 @@ makes stopping safe.
 
 ### 5. Brief-durability precondition
 
-Before the first iteration, check each brief survives a cold pickup over a
-moving codebase: behaviours/interfaces/types named (not file paths or line
-numbers), acceptance criteria observable and independently verifiable, scope
-boundary explicit where non-obvious. A brief that fails bounces back to its
-author (`/software-design`'s `issue-shape.md` owns this format) — this skill
-gates durability, it never authors the brief.
+This is a **pre-run shape check**, run once before the first iteration: check
+each brief survives a cold pickup over a moving codebase — behaviours/interfaces/
+types named (not file paths or line numbers), acceptance criteria observable and
+independently verifiable, scope boundary explicit where non-obvious. A brief that
+fails bounces back to its author (`/software-design`'s `issue-shape.md` owns this
+format) — this skill gates durability, it never authors the brief.
+
+It is **distinct from per-item reconciliation**, which is a separate,
+*per-pickup* responsibility done inside the firewalled sub-agent: at each item's
+pickup the sub-agent reads the live full issue body + comments and halts on a
+material discrepancy against the brief (see [RUNNING-AFK.md](RUNNING-AFK.md) step
+4a). Element 5 checks the brief's *shape* once; reconciliation checks the brief's
+*currency against the live issue* every pickup. Don't conflate them.
 
 ---
 
