@@ -111,7 +111,7 @@ Every frontend-flavored issue gets the `**Frontend design**` stamp,
 uniformity beats optimisation. `/software-design` performs the stamp pass
 even when otherwise eligible for early-exit (see `SKILL.md`).
 
-The four field values are written **mechanically**, not interpreted:
+The five field values are written **mechanically**, not interpreted:
 
 - **Stack** — read from the project's package manifest / framework config.
 - **Intent** — paraphrase the `Behavior:` line.

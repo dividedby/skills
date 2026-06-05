@@ -116,11 +116,11 @@ stamp the `**Frontend design**` routing block into the body — even if
 the backlog is small enough that the rest of the skill will early-exit,
 and even if only one issue qualifies. Uniformity beats optimisation.
 
-The four field values are written mechanically (Stack from manifest,
-Intent paraphrasing the Behavior line, Aesthetic direction is always
-the literal `see docs/design/direction.md`, Token authority is the
-recorded path or the placeholder). Do not interpret the pointers. Do
-not open `docs/design/direction.md`. Do not ask the user about
+Write the field values mechanically per the **Stamping Rule** in
+[issue-shape.md](issue-shape.md) — including the conditional `Review`
+field, added only when the issue's acceptance criteria call for an
+accessibility, contrast, or design audit. Do not interpret the pointers.
+Do not open `docs/design/direction.md`. Do not ask the user about
 typography, color, or motion — those belong to `/frontend-design`.
 
 Backend-only issues get no stamp; the block is omitted entirely.
