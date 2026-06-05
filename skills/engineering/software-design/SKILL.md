@@ -201,7 +201,9 @@ For each issue, rewrite the body using the format in
 - TDD notes — entry point, test-first behavior, edge cases, fake strategy, must-not-test
 
 Split any issue that mixes modules. Each rewritten issue is one observable
-behavior.
+behavior. After splitting and rewriting, order the full set per the
+tracer-bullet rule in [issue-shape.md](issue-shape.md): tracer bullet first,
+then core behavior, then edge cases, then integration.
 
 ### 9. Propose all mutations as a single batch
 
@@ -268,6 +270,7 @@ agents read `CONTEXT.md` and ADRs first; the Design Plan stays in
 [ ] Each module has exactly one reason to change
 [ ] Each seam is named in domain language with a recorded adapter strategy
 [ ] No issue mixes responsibilities from two modules
+[ ] Issues ordered within the epic: tracer bullet → core behavior → edge cases → integration
 [ ] Testing entry points are public interfaces, not internals
 [ ] New terms or trade-offs surfaced for /grill-with-docs extraction
 [ ] Full batch of rewrites previewed and approved before writing
