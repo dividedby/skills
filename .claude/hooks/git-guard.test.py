@@ -7,6 +7,7 @@ commands and non-git commands. This test is the feedback gate for the guard:
 run it directly (`./git-guard.test.py`) — no test framework required.
 """
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -17,6 +18,9 @@ HOOK = Path(__file__).with_name("git-guard.py")
 BLOCK = True
 ALLOW = False
 
+# Always-enforced cases. Run with the unattended signal cleared (interactive)
+# to prove these block regardless of environment. Branch deletion is tested
+# separately below since it is environment-sensitive.
 CASES = [
     # force push (shared-history rewrite) — but --force-with-lease is allowed
     ("git push --force", BLOCK),
@@ -27,10 +31,6 @@ CASES = [
     # hard reset (discards working tree + index)
     ("git reset --hard", BLOCK),
     ("git reset --hard HEAD~1", BLOCK),
-    # branch deletion
-    ("git branch -D feature", BLOCK),
-    ("git branch -d feature", BLOCK),
-    ("git branch --delete feature", BLOCK),
     # force clean (deletes untracked files)
     ("git clean -f", BLOCK),
     ("git clean -fd", BLOCK),
@@ -67,29 +67,56 @@ CASES = [
     ("python3 build.py", ALLOW),
 ]
 
+# Branch deletion is unattended-only: blocked in CI / `claude -p`, allowed in an
+# interactive session where the maintainer can catch mistakes.
+BRANCH_DELETE_CASES = [
+    "git branch -D feature",
+    "git branch -d feature",
+    "git branch --delete feature",
+]
 
-def run(cmd: str) -> int:
+# Signal that is_unattended() keys off of (GitHub Actions sets both).
+UNATTENDED_ENV = {"CI": "true", "GITHUB_ACTIONS": "true"}
+
+
+def run(cmd: str, unattended: bool) -> int:
     payload = json.dumps({"tool_name": "Bash", "tool_input": {"command": cmd}})
+    env = {k: v for k, v in os.environ.items() if k not in UNATTENDED_ENV}
+    if unattended:
+        env.update(UNATTENDED_ENV)
     proc = subprocess.run(
         [sys.executable, str(HOOK)],
-        input=payload, capture_output=True, text=True,
+        input=payload, capture_output=True, text=True, env=env,
     )
     return proc.returncode
 
 
 def main() -> int:
     failures = []
-    for cmd, should_block in CASES:
-        code = run(cmd)
+
+    def check(cmd, should_block, unattended):
+        code = run(cmd, unattended)
         blocked = code == 2
         if blocked != should_block:
             want = "BLOCK" if should_block else "ALLOW"
             got = "BLOCK" if blocked else f"ALLOW(exit {code})"
-            failures.append(f"  {cmd!r}: want {want}, got {got}")
+            ctx = "unattended" if unattended else "interactive"
+            failures.append(f"  [{ctx}] {cmd!r}: want {want}, got {got}")
+
+    # Always-enforced cases: assert they hold even interactively (env cleared).
+    for cmd, should_block in CASES:
+        check(cmd, should_block, unattended=False)
+
+    # Branch deletion flips on the unattended signal.
+    for cmd in BRANCH_DELETE_CASES:
+        check(cmd, BLOCK, unattended=True)
+        check(cmd, ALLOW, unattended=False)
+
     if failures:
         print("git-guard self-test FAILED:\n" + "\n".join(failures))
         return 1
-    print(f"git-guard self-test passed ({len(CASES)} cases)")
+    total = len(CASES) + 2 * len(BRANCH_DELETE_CASES)
+    print(f"git-guard self-test passed ({total} cases)")
     return 0
 
 

@@ -16,6 +16,7 @@ Payload: the documented PreToolUse shape on stdin —
   {"tool_name": "Bash", "tool_input": {"command": "..."}}
 """
 import json
+import os
 import re
 import sys
 
@@ -31,10 +32,6 @@ PATTERNS = [
     # hard reset discards the working tree and index
     (re.compile(r'\bgit\s+reset\b[^|;&\n]*--hard\b', re.IGNORECASE),
      'git reset --hard (discards working tree + index)'),
-    # branch deletion drops a local ref
-    (re.compile(r'\bgit\s+branch\b[^|;&\n]*(?:--delete\b'
-                r'|(?:^|\s)-[a-z]*[dD][a-z]*(?=\s|$))', re.IGNORECASE),
-     'git branch delete (drops a local branch ref)'),
     # force clean deletes untracked files; -n/--dry-run is harmless and ignored
     (re.compile(r'\bgit\s+clean\b[^|;&\n]*(?:--force\b'
                 r'|(?:^|\s)-[a-z]*f[a-z]*(?=\s|$))', re.IGNORECASE),
@@ -47,6 +44,27 @@ PATTERNS = [
                 r'|\s\.(?=\s|$))', re.IGNORECASE),
      'git checkout that discards working-tree changes'),
 ]
+
+# Patterns enforced only in unattended runs (CI / `claude -p`). Branch deletion
+# drops a local ref but never touches the working tree or shared history, so
+# interactively — where the maintainer is present to catch mistakes — it is a
+# routine cleanup. Unattended, the maintainer's global guards are absent, so it
+# stays blocked. See is_unattended().
+UNATTENDED_ONLY_PATTERNS = [
+    (re.compile(r'\bgit\s+branch\b[^|;&\n]*(?:--delete\b'
+                r'|(?:^|\s)-[a-z]*[dD][a-z]*(?=\s|$))', re.IGNORECASE),
+     'git branch delete (drops a local branch ref)'),
+]
+
+
+def is_unattended() -> bool:
+    """True in CI / unattended `claude -p`, false in an interactive session.
+
+    GitHub Actions always sets CI=true and GITHUB_ACTIONS=true; neither is
+    present in a local interactive shell. These are the repo's unattended
+    contexts (the two proposal-loop workflows).
+    """
+    return bool(os.environ.get('CI') or os.environ.get('GITHUB_ACTIONS'))
 
 # git restore touches the worktree by default. Block it unless it is a
 # pure --staged unstage (no --worktree / -W), which leaves the worktree intact.
@@ -69,6 +87,10 @@ def find_block(cmd: str):
     m = _GIT_RESTORE.search(cmd)
     if m and restore_is_destructive(m.group(1)):
         return 'git restore that discards working-tree changes'
+    if is_unattended():
+        for pat, label in UNATTENDED_ONLY_PATTERNS:
+            if pat.search(cmd):
+                return label
     return None
 
 
