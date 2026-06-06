@@ -1,0 +1,43 @@
+name: hook self-tests
+
+# The two PreToolUse guards (git-guard, check-skill-registration) ship stdlib
+# self-tests that are the feedback gate for each guard, but nothing ran them in
+# CI — a guard regression during an unrelated edit could land silently. This
+# converts that advisory "tests exist" note into a hard gate, mirroring the
+# apply-agent-research lib-tests workflow. Stdlib-only, sub-second. Path-filtered
+# to the hooks dir so doc-only commits (the bulk here) don't trigger it.
+
+on:
+  push:
+    paths:
+      - ".claude/hooks/**"
+  pull_request:
+    paths:
+      - ".claude/hooks/**"
+  workflow_dispatch:
+
+jobs:
+  hook-self-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      # The self-tests are standalone scripts (sys.exit(main())), not unittest
+      # cases, so they're run directly rather than via `unittest discover`. The
+      # empty-glob guard fails the build if a rename leaves nothing to run,
+      # rather than passing green having tested nothing.
+      - name: Run hook self-tests
+        run: |
+          set -e
+          shopt -s nullglob  # empty glob -> zero iterations, so the guard below fires
+          found=0
+          for t in .claude/hooks/*.test.py; do
+            echo "== $t =="
+            python3 "$t"
+            found=1
+          done
+          [ "$found" = 1 ] || { echo "no hook self-tests found"; exit 1; }
