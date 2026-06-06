@@ -128,6 +128,12 @@ nor `wontfix` fits. Mark these with **`awaiting-corroboration`**:
   `awaiting-corroboration`; the build path is then `/grill-with-docs` →
   `/write-a-skill`.
 
+The label is **channel-agnostic** — it marks any triaged issue parked on a
+cross-repo +1 that can't be manufactured, not only `skill-request`s. A
+*demonstration* goal that's blocked on an organic collision (e.g. #75, proving
+the +1 branch fires across two distinct Consumers) is the same parked state and
+carries the same label.
+
 ## Cross-repo write token (per Consumer)
 
 The default `GITHUB_TOKEN` is own-repo scoped and **will 403** writing into
