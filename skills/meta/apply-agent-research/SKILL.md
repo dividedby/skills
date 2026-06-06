@@ -29,9 +29,13 @@ leak guard and one-proposal gate, and the issue body shape.
 The leak guard and the gate are enforced by code, not prompt discipline: the skill
 **bundles** them under [`lib/`](lib/) (the pure `sanitizer` / `proposal_gate`
 decisions and a `cli.py` seam), so they travel with the skill wherever it is
-installed and run by file path — `python3 <skill-dir>/lib/cli.py …`. Stdlib-only,
-unit-tested under [`tests/`](tests/)
-(`python3 -m unittest discover -s <skill-dir>/tests`). See the
+installed and run by file path — `python3 <skill-dir>/lib/cli.py …`. The seam also
+exposes the **guarded filing path** (`cli.py file` / `cli.py comment`): it runs the
+leak guard on the `title + body` and shells to `gh` **only on ALLOW**, so filing
+cannot skip the guard by construction — not because the agent remembered to. A
+Consumer workflow disallows direct `gh issue create` / `gh issue comment`, leaving
+the guarded path as the only way to write a tracker. Stdlib-only, unit-tested under
+[`tests/`](tests/) (`python3 -m unittest discover -s <skill-dir>/tests`). See the
 [ADR 0004 amendment](../../../docs/adr/0004-runbook-helpers-are-python-stdlib.md)
 for why they live here rather than in a separate `runbooks/` dir.
 

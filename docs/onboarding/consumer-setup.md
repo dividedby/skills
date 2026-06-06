@@ -66,8 +66,10 @@ layer on the Consumer specifics:
 1. **Fetch the skill fresh + hard-gate its guard.** Clone `dividedby/skills`
    shallow, `cp -R skills/meta/apply-agent-research` into `~/.claude/skills/`.
    Immediately **run the guard's unit tests as a hard gate**
-   (`python3 -m unittest discover -s <skill-dir>/tests`) and confirm
-   `cli.py sanitize` and `cli.py gate` run. **Never proceed on a broken guard.**
+   (`python3 -m unittest discover -s <skill-dir>/tests`) and confirm the seam runs —
+   the gate (`cli.py gate`), the standalone guard (`cli.py sanitize`), and the
+   **guarded filing path** (`cli.py file --help` / `cli.py comment --help`), which is
+   how the loop files (step 7). **Never proceed on a broken guard.**
    The same fresh clone is also the **live published-skill catalog** the
    already-do-this / audit steps read (`skills/<bucket>/*/SKILL.md`,
    `.claude-plugin/plugin.json`) — no separate fetch.
@@ -109,32 +111,40 @@ layer on the Consumer specifics:
      match the candidate against the published catalog (fresh clone) **and**
      `docs/agents/installed-skills.md`. If either covers it, **do not file**.
    - `gh issue list --label skill-request --state open --repo dividedby/skills`,
-     match on `<!-- capability: <slug> -->`. **No match** → file a new issue
-     following the full contract (capability generalized; the *specific, traceable*
-     motivating KB note; why a published skill; what it does not duplicate;
-     `CONSUMER_REPO`; the capability marker). **Match** → `+1 — also wanted by
-     CONSUMER_REPO` plus this repo's motivating knowledge. Apply the existing
-     `skill-request` label; never create it.
+     match on `<!-- capability: <slug> -->`. **No match** → file a new issue through
+     the guarded path (`cli.py file --repo dividedby/skills --label skill-request
+     --title … --body-file …`) following the full contract (capability generalized;
+     the *specific, traceable* motivating KB note; why a published skill; what it
+     does not duplicate; `CONSUMER_REPO`; the capability marker). **Match** → `+1 —
+     also wanted by CONSUMER_REPO` via `cli.py comment --repo dividedby/skills
+     --issue <n> --body-file …`, plus this repo's motivating knowledge. Apply the
+     existing `skill-request` label; never create it.
 
 6. **`skill-promotion` supply channel** (`docs/design/skill-promotion-flow.md`) —
    for each **promotable** local skill from step 4:
    - `gh issue list --label skill-promotion --state open --repo dividedby/skills`,
      match on `<!-- capability: <slug> -->`. **No match** → file a new
-     `skill-promotion` issue (capability offered, generalized; why it clears
-     general merit and is skill-shaped; a pointer to where the implementation
-     lives — never a paste; not-already-covered; `CONSUMER_REPO`; the marker).
-     **Match** → `+1 — also built by CONSUMER_REPO`. Apply the existing
-     `skill-promotion` label; never create it.
+     `skill-promotion` issue via the guarded path (`cli.py file --repo
+     dividedby/skills --label skill-promotion …`) (capability offered, generalized;
+     why it clears general merit and is skill-shaped; a pointer to where the
+     implementation lives — never a paste; not-already-covered; `CONSUMER_REPO`; the
+     marker). **Match** → `+1 — also built by CONSUMER_REPO` via `cli.py comment`.
+     Apply the existing `skill-promotion` label; never create it.
 
    Steps 5–6 write to `dividedby/skills`, so they use **`SKILLS_TRACKER_TOKEN`**,
    never the default `GITHUB_TOKEN` (own-repo scoped → 403). Each is its own
    per-channel ≤1 output.
 
-7. **Leak guard on every filed body** — including the cross-repo ones, which land
-   on a **public** tracker. If the repo is private, pass `PRIVATE_MARKERS`:
-   `… | python3 <skill-dir>/lib/cli.py sanitize --marker <name> --marker <name>`
-   so any occurrence hard-blocks. The guard catches *structural* leaks otherwise;
-   a private Consumer almost always has markers to add — and step 6 is the highest
+7. **Leak guard on every filed body — enforced by the filing path, not by memory.**
+   Every issue and +1 is filed through `cli.py file` / `cli.py comment`, which run
+   the guard on the `title + body` and write to the tracker **only on ALLOW** — so
+   no filed body (including the cross-repo ones, which land on a **public** tracker)
+   can skip it. Wire the Consumer workflow to **disallow direct `gh issue create` /
+   `gh issue comment`** (`--disallowedTools` on the `claude` invocation) so the
+   guarded path is the only way to write a tracker. If the repo is private, pass
+   `PRIVATE_MARKERS` to those calls (`--marker <name> --marker <name>`, repeatable)
+   so any occurrence hard-blocks. The guard catches *structural* leaks otherwise; a
+   private Consumer almost always has markers to add — and step 6 is the highest
    risk, since the thing being offered is the repo's own `SKILL.md`.
 
 ## Manual steps for the human (surface these — the agent cannot do them)

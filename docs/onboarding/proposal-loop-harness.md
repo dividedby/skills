@@ -109,12 +109,18 @@ jobs:
   (e.g. a Consumer runs after the knowledge mirror's synthesis push).
 - **`concurrency` with `cancel-in-progress: false`** so a long run is never
   killed mid-flight by the next tick.
-- **Scoped `--allowedTools`.** Grant only what the loop needs (`Read Grep Glob`,
-  `Bash(gh:*) Bash(git:*)`, etc.). *Exception:* if the skill invokes a guard via a
-  **pipe** (`printf ... | python3 cli.py`), `Bash` must be **unscoped** — a scoped
-  `Bash(python3:*)` blocks a command that starts with `printf`. The no-commits
+- **Scoped `--allowedTools`, plus `--disallowedTools` for the filing tool.** Grant
+  only what the loop needs (`Read Grep Glob`, `Bash(gh:*) Bash(git:*)`, etc.).
+  *Exception:* if the skill invokes the one-proposal **gate** via a pipe
+  (`echo '<json>' | python3 cli.py gate`), `Bash` must stay **unscoped** — a scoped
+  `Bash(python3:*)` blocks a command that starts with `echo`. The no-commits
   invariant then rests on `contents: read` + the absence of `Edit`/`Write`, not on
-  Bash scoping. See agent-research#127.
+  Bash scoping. See agent-research#127. *For a loop that files through a guarded
+  shim* (`apply-agent-research`'s `cli.py file` / `cli.py comment`, which sanitize
+  then `gh`-write only on ALLOW), additionally set `--disallowedTools "Bash(gh issue
+  create:*) Bash(gh issue comment:*)"` so the agent cannot bypass the guard with a
+  direct write. Defense-in-depth, not a sandbox — it makes the *wired* filing path
+  unable to skip the guard, the realistic forgetting-failure.
 - **Adapt the runner to the repo's existing convention.** If the repo already
   runs Claude via `anthropics/claude-code-base-action`, match that instead of the
   `npm install -g @anthropic-ai/claude-code` + `claude -p` shown here. The skill is

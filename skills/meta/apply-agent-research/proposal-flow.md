@@ -41,17 +41,23 @@ rather than an exact key match, say so in the `SKIPPED:` line.
 
 ## The leak guard (sanitizer)
 
-Run the candidate's final `title + body` through the guard **before** filing.
-Supply the host's private markers when the host has any (the public skills repo
-has none to pass):
+The guard is **folded into the filing path** so it cannot be skipped: you file
+through `cli.py file` (or `cli.py comment` for a cross-repo +1), which runs the
+guard on the `title + body` and writes to the tracker **only on ALLOW**. There is
+no separate "remember to sanitize first" step the agent could forget — see
+[Filing](#filing) below. Supply the host's private markers when the host has any
+(the public skills repo has none to pass): `--marker <private-name>` (repeatable).
+
+On `BLOCK: <reason>` nothing is filed and the command exits non-zero — **revise
+the body** to remove the structural trigger (a fenced code block, a pasted import,
+or a `path/like.this` token), then re-run. Do not route around it. The guard is
+necessary, not sufficient — keep prose generalized regardless of what it catches.
+
+To dry-run the guard on a draft *without* filing (e.g. the onboarding smoke test),
+the standalone check is still there:
 
     printf '%s' "$TITLE
     $BODY" | python3 <skill-dir>/lib/cli.py sanitize [--marker <private-name> ...]
-
-Exit `0` + `ALLOW` → safe to file. Exit `1` + `BLOCK: <reason>` → **revise the
-body** to remove the structural trigger (a fenced code block, a pasted import, or
-a `path/like.this` token), then re-check. Do not bypass it. The guard is
-necessary, not sufficient — keep prose generalized regardless of what it catches.
 
 ## The one-proposal gate — run once per channel
 
@@ -81,12 +87,20 @@ reintroduces the cross-channel suppression ADR 0011 removed.
 
 ## Filing
 
-Only when the gate returns a candidate **and** the guard allowed it:
+Only when the gate returns a candidate, file it through the **guarded path** —
+never `gh issue create` directly (a Consumer workflow disallows that tool, so the
+guard cannot be bypassed). Write the body to a file ending with the dedup-key
+marker and a Sources line, then:
 
-    gh issue create \
+    python3 <skill-dir>/lib/cli.py file \
       --title "<concise title>" \
+      --body-file <path> \
       --label source:agent-research \
-      --body "<body, ending with the dedup-key marker and a Sources line>"
+      [--repo <owner/name>] [--marker <private-name> ...]
 
-Ensure the `source:agent-research` label exists first (the workflow does this
-idempotently). File **one** issue, then stop — no second pass, no commits.
+`file` sanitizes `title + body`, then runs `gh issue create` only on ALLOW,
+printing the new issue URL. For a cross-repo +1 on an existing demand/supply
+issue, `cli.py comment --issue <n> --body-file <path> --repo <owner/name>` is the
+same guarded shape over `gh issue comment`. Ensure the label exists first (the
+workflow does this idempotently). File **one** issue per channel, then stop — no
+second pass, no commits.

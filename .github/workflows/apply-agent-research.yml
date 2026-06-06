@@ -71,11 +71,19 @@ jobs:
           MIRROR_DIR: ${{ runner.temp }}/knowledge-mirror
         run: |
           set -euo pipefail
-          # Bash is intentionally unscoped: the leak guard/gate are invoked via a
-          # pipe (printf ... | python3 .../cli.py), which a scoped pattern like
-          # Bash(python3:*) blocks (the command starts with printf). The
-          # no-commits/edits invariant holds via contents:read + no Edit/Write,
-          # not via Bash scoping. Do not re-scope. See agent-research#127.
+          # Bash stays unscoped: the one-proposal GATE is still invoked via a pipe
+          # (echo '<json>' | python3 .../cli.py gate), which a scoped pattern like
+          # Bash(python3:*) would block (the command starts with echo), and the
+          # agent writes each issue body via a heredoc. The leak GUARD, by contrast,
+          # is no longer a standalone step the agent must remember: it is folded into
+          # the guarded filing path (cli.py file/comment sanitizes, then shells to gh
+          # ONLY on ALLOW). --disallowedTools removes the casual `gh issue create` /
+          # `gh issue comment` bypass so filing goes through that guarded path. This
+          # is defense-in-depth, not a sandbox (an agent with arbitrary Bash could
+          # still subvert it); what it buys is that the *wired* filing path cannot
+          # skip the guard — the realistic forgetting-failure. The no-commits/edits
+          # invariant holds via contents:read + no Edit/Write, not via Bash scoping.
+          # See agent-research#127 (the prior unscoped-Bash rationale, now narrowed).
           # --output-format stream-json --verbose: stream every event to the log so
           # a hung/timed-out run leaves a trace (plain json buffers and goes dark),
           # AND the final result event (with total_cost_usd) reaches the log before
@@ -86,13 +94,17 @@ jobs:
             --output-format stream-json --verbose \
             --permission-mode acceptEdits \
             --allowedTools "Bash Read Grep Glob" \
+            --disallowedTools "Bash(gh issue create:*) Bash(gh issue comment:*)" \
             --append-system-prompt "$(cat .github/workflows/prompts/apply-agent-research.md)" \
             "Run the scheduled apply-agent-research pass. The knowledge mirror is already cloned at ${MIRROR_DIR} (read-only). Follow the instructions in the system prompt." \
             | tee "$RUNNER_TEMP/agent.jsonl"
           # Clean step-summary from the saved stream (fromjson? skips any non-JSON
-          # line; last result event wins). Best-effort: a failed run already failed
-          # the pipe above, and its full trace is in the log.
-          jq -rR 'fromjson? | select(.type=="result") | .result // ""' "$RUNNER_TEMP/agent.jsonl" | tail -1 > "$RUNNER_TEMP/agent.log" || true
+          # line). Slurp the result events and take the LAST one's .result whole — do
+          # NOT pipe a raw multi-line .result through `tail -1`, which keeps only its
+          # final line and shreds the agent's per-channel summary (the bug PR #106
+          # fixed for arch-review). Best-effort: a failed run already failed the pipe.
+          jq -R 'fromjson? | select(.type=="result")' "$RUNNER_TEMP/agent.jsonl" \
+            | jq -rs '.[-1].result // ""' > "$RUNNER_TEMP/agent.log" || true
           jq -rR 'fromjson? | select(.type=="result") | "total_cost_usd=\(.total_cost_usd // "n/a")  duration_ms=\(.duration_ms // "n/a")  num_turns=\(.num_turns // "n/a")"' \
             "$RUNNER_TEMP/agent.jsonl" | tail -1 > "$RUNNER_TEMP/agent.cost" || true
 

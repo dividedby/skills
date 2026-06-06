@@ -147,8 +147,12 @@ right for a single-maintainer, few-repo setup.
   built).
 - **In each Consumer repo:** the **filing** step inside its own
   `apply-agent-research` workflow (list-or-file-or-+1 against `dividedby/skills`
-  using `SKILLS_TRACKER_TOKEN`), plus the secret itself. Built per Consumer as
-  Consumers are onboarded — none exist yet, so there is no filing code in this repo.
+  using `SKILLS_TRACKER_TOKEN`), plus the secret itself. The file/+1 writes go
+  through the skill's **guarded path** (`cli.py file` for a new issue, `cli.py
+  comment` for a `+1` — each sanitizes the body and writes only on ALLOW; the
+  workflow disallows direct `gh issue create`/`comment`). See
+  [`consumer-setup.md`](../onboarding/consumer-setup.md) step 7. Built per Consumer
+  as Consumers are onboarded — none exist yet, so there is no filing code in this repo.
 
 ## Invariants
 

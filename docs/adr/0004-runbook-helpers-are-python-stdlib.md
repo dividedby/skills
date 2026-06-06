@@ -21,6 +21,18 @@
 > else holds unchanged: still stdlib-only, still pure (inputs in, decision out),
 > still never registered in `plugin.json`. The original record stands below.
 
+> **Amendment (#108) — the `cli.py` seam now performs the guarded write.** The
+> "purity boundary" below says *all* tracker I/O lives in the run-book/prompt and is
+> injected, keeping the helpers unit-testable without a live tracker. That still
+> holds for the two **decisions** — `sanitizer.check` and `proposal_gate.decide`
+> remain pure, injected, and tested. What changed: the `cli.py` *seam* gained
+> `file` / `comment` subcommands that compose a pure decision (`check`) with the
+> `gh` write so the leak guard **wraps** the transport — the wired loop cannot file
+> without passing the guard (see [ADR 0003](./0003-skill-improvement-workflows-propose-via-issues.md)'s
+> #108 amendment). The transport is a thin, logic-free pass-through to `gh`; the
+> safety-critical *logic* stays in the pure helpers, so the test boundary is
+> unmoved — `test_cli` mocks `gh` and asserts a blocked body never reaches it.
+
 ---
 
 The skill-improvement run-books ([ADR 0003](./0003-skill-improvement-workflows-propose-via-issues.md))

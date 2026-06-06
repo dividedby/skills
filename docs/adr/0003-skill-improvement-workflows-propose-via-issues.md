@@ -89,3 +89,19 @@ revise this ADR:
 The consumer-side realization lives in
 [`docs/design/cross-repo-knowledge-application.md`](../design/cross-repo-knowledge-application.md).
 The provenance label is `source:agent-research`.
+
+**Amendment (#108): the leak guard wraps the wired filing path.** The structural
+sanitizer above was originally a *separate* step the loop ran before
+`gh issue create` — code-enforced as a decision, but prompt-trusted in its
+*invocation* (the agent had to remember to run `sanitize`, then file). That was the
+one place the producer/decider safety still rested on prompt adherence. It is now
+closed the way the arch-review loop closed its publish cap (issue #104): the guard
+is **folded into the filing seam** (`cli.py file` / `cli.py comment`), which
+sanitizes the `title + body` and shells to `gh` **only on ALLOW**. A Consumer
+workflow additionally disallows direct `gh issue create` / `gh issue comment`, so
+the guarded path is the only way the wired loop writes a tracker — "sanitize before
+filing" now holds by construction (the *make-the-bad-state-impossible* move applied
+to the realistic forgetting-failure). This is **defense-in-depth, not a sandbox**:
+an agent with arbitrary Bash could still subvert it, so the no-leak guarantee stays
+*necessary-not-sufficient* and prose discipline still matters — the `#26` structural
+guard is unchanged in what it inspects, only in how it is invoked.

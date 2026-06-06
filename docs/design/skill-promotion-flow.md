@@ -39,11 +39,13 @@ skill-request channels.
   `+1 — also built by <repo>`. Here `+1` is an unusually strong signal — two repos
   *independently building the same skill* is hard evidence of general merit, not
   mere demand.
-- **The leak guard.** The filed `title + body` passes `cli.py sanitize` with the
-  host's private markers. This matters more than for any other channel: a private
-  Consumer's local `SKILL.md` is the very thing being offered, so its name,
-  paths, and identifiers must be generalized — describe the *capability*, point
-  to where the implementation lives, never paste it.
+- **The leak guard.** Filing goes through the guarded path (`cli.py file` for a new
+  offer, `cli.py comment` for a `+1`), which runs the guard on the `title + body`
+  with the host's private markers and writes **only on ALLOW** — so the guard cannot
+  be skipped. This matters more than for any other channel: a private Consumer's
+  local `SKILL.md` is the very thing being offered, so its name, paths, and
+  identifiers must be generalized — describe the *capability*, point to where the
+  implementation lives, never paste it.
 - **Label ownership.** `dividedby/skills` **owns** the `skill-promotion` label
   (created/re-ensured idempotently by the draining workflow); Consumers only
   *apply* it, never create it.
