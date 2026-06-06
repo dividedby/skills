@@ -110,6 +110,24 @@ input to *which* skill to propose next: more corroborating repos raises build
 priority. Demand sets build order; it does not by itself justify a skill —
 usefulness of a *built* skill is still settled by adoption (no adoption tracker).
 
+### Triaged-but-parked: the `awaiting-corroboration` label
+
+Once a maintainer has *triaged* a `skill-request` and accepted it as a valid gap
+that is simply **below the build threshold** (typically single-Consumer demand),
+it is no longer `needs-triage` — it has been evaluated. But "evaluated and parked
+as demand" is a distinct state from "queued to build," and neither `ready-for-*`
+nor `wontfix` fits. Mark these with **`awaiting-corroboration`**:
+
+- It records that the request is triaged, valid, and waiting on cross-repo +1
+  before a build decision — so future triage doesn't re-evaluate it from scratch.
+- Do **not** reuse `needs-triage` for this. That label means "maintainer needs to
+  evaluate" (`docs/agents/triage-labels.md`); keeping it on an already-evaluated
+  request overloads it and contradicts its definition.
+- Promotion out of the parked state: a second Consumer's +1, or an explicit
+  maintainer decision to build despite single-Consumer demand. Either drops
+  `awaiting-corroboration`; the build path is then `/grill-with-docs` →
+  `/write-a-skill`.
+
 ## Cross-repo write token (per Consumer)
 
 The default `GITHUB_TOKEN` is own-repo scoped and **will 403** writing into
