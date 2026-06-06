@@ -92,11 +92,13 @@ makes stopping safe.
 ### 5. Brief-durability precondition
 
 This is a **pre-run shape check**, run once before the first iteration: check
-each brief survives a cold pickup over a moving codebase — behaviours/interfaces/
-types named (not file paths or line numbers), acceptance criteria observable and
-independently verifiable, scope boundary explicit where non-obvious. A brief that
-fails bounces back to its author (`/software-design`'s `issue-shape.md` owns this
-format) — this skill gates durability, it never authors the brief.
+each brief survives a cold pickup per the **Durability** criteria in
+[issue-shape.md](../software-design/issue-shape.md) — names are behaviours/
+interfaces/types (not file paths or line numbers), acceptance criteria state
+*what* in observable Given/When/Then form (not *how* via implementation steps)
+and are independently verifiable, scope boundary explicit where non-obvious. A
+brief that fails bounces back to its author (`/software-design`'s `issue-shape.md`
+owns this format) — this skill gates durability, it never authors the brief.
 
 It is **distinct from per-item reconciliation**, which is a separate,
 *per-pickup* responsibility done inside the firewalled sub-agent: at each item's
