@@ -45,18 +45,17 @@ jobs:
           test -f ~/.claude/skills/improve-codebase-architecture/SKILL.md
           echo "Installed skill from mattpocock/skills@$(git -C "$tmp/mattpocock-skills" rev-parse --short HEAD)"
 
-      - name: Ensure provenance label exists
-        run: |
-          gh label create "$LABEL" \
-            --color "5319E7" \
-            --description "Issues proposed by the automated architecture-review workflow" \
-            >/dev/null 2>&1 || true
-
       - name: Run /improve-codebase-architecture
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
         run: |
           set -euo pipefail
+          # The agent is read-only: it explores, decides, and emits a single
+          # <output> JSON block (see prompt). It does NOT file the issue — the
+          # Publish step below does, deterministically. gh access is scoped to
+          # read-only subcommands so the agent *cannot* create an issue itself;
+          # the one-per-run cap and the label live in code, not in prompt trust.
+          #
           # --output-format stream-json --verbose: stream every event to the log so
           # a hung/timed-out run leaves a trace (plain json buffers and goes dark),
           # AND the final result event (with total_cost_usd) reaches the log before
@@ -66,7 +65,7 @@ jobs:
           claude -p \
             --output-format stream-json --verbose \
             --permission-mode acceptEdits \
-            --allowedTools "Bash(gh:*) Bash(git:*) Read Grep Glob WebSearch WebFetch" \
+            --allowedTools "Bash(gh issue list:*) Bash(gh issue view:*) Bash(gh search:*) Bash(gh api:*) Bash(git:*) Read Grep Glob WebSearch WebFetch" \
             --append-system-prompt "$(cat .github/workflows/prompts/improve-codebase-architecture.md)" \
             "Run the daily architecture-review pass. Follow the instructions in the system prompt." \
             | tee "$RUNNER_TEMP/agent.jsonl"
@@ -77,15 +76,83 @@ jobs:
           jq -rR 'fromjson? | select(.type=="result") | "total_cost_usd=\(.total_cost_usd // "n/a")  duration_ms=\(.duration_ms // "n/a")  num_turns=\(.num_turns // "n/a")"' \
             "$RUNNER_TEMP/agent.jsonl" | tail -1 > "$RUNNER_TEMP/agent.cost" || true
 
+      - name: Publish proposal
+        id: publish
+        env:
+          AGENT_LOG: ${{ runner.temp }}/agent.log
+          OUTPUT_FILE: ${{ runner.temp }}/output.json
+          BODY_FILE: ${{ runner.temp }}/body.md
+        run: |
+          set -euo pipefail
+          # Extract the single <output> block the agent emitted as its last act,
+          # strip an optional ```json fence, and require valid JSON. Loud beats
+          # lossy: a missing/garbled block fails the run rather than silently
+          # skipping — an unattended loop that "succeeds" with no signal is worse
+          # than one that fails visibly.
+          sed -n '/<output>/,/<\/output>/p' "$AGENT_LOG" \
+            | sed '1d;$d' \
+            | sed -e 's/^[[:space:]]*```json[[:space:]]*$//' -e 's/^[[:space:]]*```[[:space:]]*$//' \
+            > "$OUTPUT_FILE"
+          if [ ! -s "$OUTPUT_FILE" ] || ! jq empty "$OUTPUT_FILE" 2>/dev/null; then
+            echo "::error::No valid <output> JSON block found in the agent result." >&2
+            exit 1
+          fi
+          status=$(jq -r '.status' "$OUTPUT_FILE")
+          case "$status" in
+            skipped)
+              echo "SKIPPED: $(jq -r '.reason' "$OUTPUT_FILE")"
+              exit 0
+              ;;
+            proposed)
+              title=$(jq -r '.title' "$OUTPUT_FILE")
+              jq -r '.body' "$OUTPUT_FILE" > "$BODY_FILE"
+              if [ -z "$title" ] || [ ! -s "$BODY_FILE" ]; then
+                echo "::error::status=proposed but title or body is empty." >&2
+                exit 1
+              fi
+              gh label create "$LABEL" \
+                --color "5319E7" \
+                --description "Issues proposed by the automated architecture-review workflow" \
+                >/dev/null 2>&1 || true
+              issue_url=$(gh issue create --title "$title" --body-file "$BODY_FILE" --label "$LABEL" | tail -n1)
+              echo "issue_url=$issue_url" >> "$GITHUB_OUTPUT"
+              echo "Published $issue_url"
+              ;;
+            *)
+              echo "::error::Unknown status '$status' in <output>." >&2
+              exit 1
+              ;;
+          esac
+
       - name: Summarise run
         if: always()
+        env:
+          OUTPUT_FILE: ${{ runner.temp }}/output.json
         run: |
           {
             echo "## Architecture review"
             echo ""
             echo "**Cost:** $(cat "$RUNNER_TEMP/agent.cost" 2>/dev/null || echo "n/a")"
             echo ""
-            echo '```'
-            tail -n 50 "$RUNNER_TEMP/agent.log" 2>/dev/null || echo "(no log produced)"
-            echo '```'
+            if [ -s "$OUTPUT_FILE" ] && jq empty "$OUTPUT_FILE" 2>/dev/null; then
+              status=$(jq -r '.status' "$OUTPUT_FILE")
+              if [ "$status" = "proposed" ]; then
+                echo "**Created:** ${{ steps.publish.outputs.issue_url }}"
+                echo ""
+                echo "$(jq -r '.oneLineSummary' "$OUTPUT_FILE")"
+                echo ""
+                echo "### Candidates considered"
+                jq -r '.candidatesConsidered[] | "- \(.)"' "$OUTPUT_FILE"
+              elif [ "$status" = "skipped" ]; then
+                echo "**Skipped — no fresh candidates today.**"
+                echo ""
+                echo "$(jq -r '.reason' "$OUTPUT_FILE")"
+              fi
+            else
+              echo "**No valid \`<output>\` block produced** — agent likely crashed or went off-script. Last result text:"
+              echo ""
+              echo '```'
+              tail -n 50 "$RUNNER_TEMP/agent.log" 2>/dev/null || echo "(no log produced)"
+              echo '```'
+            fi
           } >> "$GITHUB_STEP_SUMMARY"

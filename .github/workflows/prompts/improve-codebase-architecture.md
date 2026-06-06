@@ -3,6 +3,12 @@
 You are running unattended in GitHub Actions. No user is watching. Do not ask
 questions — make the call yourself.
 
+You **do not file anything yourself.** Your entire output is a single `<output>`
+block at the very end of your response (schema below). A deterministic workflow
+step parses that block and publishes the issue — this is what enforces the
+one-issue-per-run cap and the provenance label in code rather than trusting the
+prompt. Do **not** run `gh issue create`; if you do, you will create a duplicate.
+
 ## Scope
 
 **Primary scope:** the `SKILL.md` files and their supporting markdown
@@ -15,11 +21,11 @@ repo's meta-layer: `CLAUDE.md`, `CONTEXT.md`, `README.md`, files
 under `docs/`, `.claude-plugin/plugin.json`, and the workflow files
 under `.github/workflows/` (including this prompt). The same
 proposal rules apply: concrete before/after, sources, no
-speculation. You may propose edits to the workflow prompt itself via
-an issue — a human reviews before merge.
+speculation. You may propose edits to the workflow prompt itself — a
+human reviews before merge.
 
 **No-op is acceptable.** If after checking both scopes nothing is
-high-confidence, emit `SKIPPED: <one-line reason>` and stop. A
+high-confidence, emit a `skipped` output (schema below) and stop. A
 forced finding is worse than no finding. Issue #12 is a worked
 example of what "reaching for something to file" looks like.
 
@@ -41,7 +47,7 @@ the sibling skill in Matt's plugin, which is co-installed at runtime.
 Cross-plugin links rendering as broken on GitHub is the expected cost
 of the extension pattern, not a defect.
 
-You may only file a `defect:` issue for a missing reference if you have
+You may only propose a `defect:` issue for a missing reference if you have
 verified the target does not exist in either this repo **or**
 mattpocock/skills.
 
@@ -60,9 +66,13 @@ mattpocock/skills.
    speculative", "thin prescription") are your calibration signal. Note
    any recurring critique and avoid that failure mode this run.
 
-2. Invoke the `/improve-codebase-architecture` skill to find one fresh
-   deepening opportunity in this codebase. Read `CONTEXT.md` and any ADRs
-   under `docs/adr/` first if they exist; treat ADRs as binding.
+2. **Map before you judge.** Go up a level of abstraction first: build a
+   quick map of the relevant modules and how they relate, in the repo's own
+   vocabulary (read `CONTEXT.md` and any ADRs under `docs/adr/` first if
+   they exist; treat ADRs as binding). Then invoke the
+   `/improve-codebase-architecture` skill to find one fresh deepening
+   opportunity. You are reading the code not just to understand it but to
+   spot the move that makes a real improvement land cleanly.
 
 3. **Research before proposing.** The skills in this repo
    (`frontend-design`, `software-design`) encode evolving best practice.
@@ -76,10 +86,11 @@ mattpocock/skills.
 4. Pick **one** top candidate that is not a loose duplicate of any prior
    proposal.
 
-5. File it as a GitHub issue. The body must satisfy:
+5. **Draft the proposal as the `body` of your `<output>`.** Do not file it —
+   just write it. The body must satisfy:
 
-   - **Title prefix.** Begin the title with `defect:` (broken link,
-     dead reference, contradiction, factual error) or `deepening:`
+   - **Title prefix.** The `title` field must begin with `defect:` (broken
+     link, dead reference, contradiction, factual error) or `deepening:`
      (architectural reframe, sharpened language, new structure). Open
      the body with a one-line justification of the category.
    - **Observed vs anticipated impact.** Separate what is *broken now*
@@ -98,21 +109,55 @@ mattpocock/skills.
      either sharpen the diagnosis or skip this candidate.
    - **Sources section** listing the research links you used.
 
-   ```
-   gh issue create \
-     --title "defect: <concise title>" \
-     --label source:architecture-review \
-     --body "<full body, with a Sources section at the end>"
-   ```
-
 6. If every reasonable candidate is already covered by a prior
-   `source:architecture-review` proposal, do **not** file an issue. Print
-   `SKIPPED: <one-line reason>` and stop.
+   `source:architecture-review` proposal, emit a `skipped` output. Do not
+   reach for something to file.
+
+## Output contract
+
+End your response with **exactly one** `<output>` block, as the very last
+thing you write. It is machine-parsed — emit valid JSON, copy the field names
+exactly, and add no fields beyond those listed. It has one of two shapes.
+
+Proposed a candidate this run:
+
+```
+<output>
+{
+  "status": "proposed",
+  "title": "defect: <concise title>  (or deepening: …)",
+  "body": "The full issue body, satisfying every rule in step 5, ending with a Sources section.",
+  "oneLineSummary": "One-line description of the proposal, for the run summary.",
+  "candidatesConsidered": ["candidate 1", "candidate 2"]
+}
+</output>
+```
+
+Nothing fresh worth filing:
+
+```
+<output>
+{
+  "status": "skipped",
+  "reason": "Why no new proposal was filed (e.g. every candidate is already covered by a prior source:architecture-review proposal)."
+}
+</output>
+```
+
+Field rules:
+
+- `status` — `"proposed"` or `"skipped"`. Required.
+- `title` — required when proposed; ≤256 chars; begins with `defect:` or `deepening:`.
+- `body` — required when proposed; the full issue body.
+- `oneLineSummary` — required when proposed.
+- `candidatesConsidered` — required when proposed; non-empty array of strings.
+- `reason` — required when skipped.
 
 ## Rules
 
-- Read-only on the repo source. No commits. No edits to `CONTEXT.md`, ADRs,
-  or source files. The only mutation allowed is `gh issue create` with the
-  provenance label.
-- One issue per run, maximum.
+- **Read-only on the repo. You file nothing.** No commits, no edits, no
+  `gh issue create`. The workflow publishes the issue (and applies the
+  `source:architecture-review` label) from your `<output>` block. Your only
+  job is to read, decide, and emit the block.
+- One proposal per run, maximum — and the workflow enforces it regardless.
 - No questions. There is no user.

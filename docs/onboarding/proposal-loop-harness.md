@@ -11,7 +11,9 @@ share this harness; only the *skill*, the *input*, and the *label* differ:
   channels.
 - **[`arch-review-setup.md`](./arch-review-setup.md)** —
   `improve-codebase-architecture` (the codebase → refactor proposals). The
-  simplest member: harness + a skill, nothing more.
+  leanest member: no extra input, no cross-repo channels — harness + a skill,
+  plus a deterministic publish seam (the agent emits a structured `<output>`; a
+  shell step files the issue) so the per-run cap lives in code.
 
 This file is the **common skeleton** both reference. Read it first, then the
 loop-specific doc.
