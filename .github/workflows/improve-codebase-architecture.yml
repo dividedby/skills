@@ -87,11 +87,17 @@ jobs:
           BODY_FILE: ${{ runner.temp }}/body.md
         run: |
           set -euo pipefail
-          # Extract the single <output> block the agent emitted as its last act,
-          # strip an optional ```json fence, and require valid JSON. Loud beats
-          # lossy: a missing/garbled block fails the run rather than silently
-          # skipping — an unattended loop that "succeeds" with no signal is worse
-          # than one that fails visibly.
+          # The agent emits a small <output> JSON block (short single-line fields
+          # only) and, when proposing, a separate <body> block of RAW markdown.
+          # The split is deliberate: the issue body is long prose with embedded
+          # code and quoted text, which is unreliable to hand-escape inside a JSON
+          # string — a single unescaped " breaks the whole block. Keeping body out
+          # of the JSON removes that failure mode (downstream agent-research#211).
+          #
+          # Extract <output>, strip an optional ```json fence, require valid JSON.
+          # Loud beats lossy: a missing/garbled block fails the run rather than
+          # silently skipping — an unattended loop that "succeeds" with no signal
+          # is worse than one that fails visibly.
           sed -n '/<output>/,/<\/output>/p' "$AGENT_LOG" \
             | sed '1d;$d' \
             | sed -e 's/^[[:space:]]*```json[[:space:]]*$//' -e 's/^[[:space:]]*```[[:space:]]*$//' \
@@ -108,9 +114,10 @@ jobs:
               ;;
             proposed)
               title=$(jq -r '.title' "$OUTPUT_FILE")
-              jq -r '.body' "$OUTPUT_FILE" > "$BODY_FILE"
+              # The body is the RAW <body> block — copied verbatim, no JSON decode.
+              sed -n '/<body>/,/<\/body>/p' "$AGENT_LOG" | sed '1d;$d' > "$BODY_FILE"
               if [ -z "$title" ] || [ ! -s "$BODY_FILE" ]; then
-                echo "::error::status=proposed but title or body is empty." >&2
+                echo "::error::status=proposed but title is empty or no <body> block was found." >&2
                 exit 1
               fi
               gh label create "$LABEL" \

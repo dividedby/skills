@@ -20,11 +20,16 @@ first**; this doc is only the deltas.
 - **No cross-repo writes**, so **no `SKILLS_TRACKER_TOKEN`** — only
   `CLAUDE_CODE_OAUTH_TOKEN`. `permissions: contents: read, issues: write` and
   `GITHUB_TOKEN` suffice.
-- **Deterministic publish, structured `<output>`.** The agent does **not** file
-  the issue. It explores, decides, and ends its run with a single schema-validated
-  `<output>` JSON block (`status: proposed|skipped`, plus `title` / `body` /
-  `oneLineSummary` / `candidatesConsidered`, or `reason`). A `Publish proposal`
-  shell step parses that block and runs `gh issue create` itself — so the
+- **Deterministic publish, structured `<output>` + raw `<body>`.** The agent does
+  **not** file the issue. It explores, decides, and ends its run with a small
+  schema-validated `<output>` JSON block of short single-line fields
+  (`status: proposed|skipped`, plus `title` / `oneLineSummary` /
+  `candidatesConsidered`, or `reason`) and — when proposing — a separate `<body>`
+  block of **raw markdown** for the issue body. The body is kept out of the JSON
+  on purpose: a long body with embedded code and quoted text is unreliable to
+  hand-escape inside a JSON string, and a single unescaped `"` invalidates the
+  whole block (see #117). A `Publish proposal` shell step parses the JSON, copies
+  the `<body>` verbatim, and runs `gh issue create` itself — so the
   one-proposal-per-run cap and the provenance label live **in code**, not in
   prompt-adherence, and a missing/garbled block **fails the run loudly** rather
   than skipping silently. The step summary surfaces the outcome + candidates

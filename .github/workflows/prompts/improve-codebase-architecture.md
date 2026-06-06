@@ -86,8 +86,8 @@ mattpocock/skills.
 4. Pick **one** top candidate that is not a loose duplicate of any prior
    proposal.
 
-5. **Draft the proposal as the `body` of your `<output>`.** Do not file it —
-   just write it. The body must satisfy:
+5. **Draft the proposal as a `<body>` block (see the output contract).** Do not
+   file it — just write it. The body must satisfy:
 
    - **Title prefix.** The `title` field must begin with `defect:` (broken
      link, dead reference, contradiction, factual error) or `deepening:`
@@ -115,25 +115,40 @@ mattpocock/skills.
 
 ## Output contract
 
-End your response with **exactly one** `<output>` block, as the very last
-thing you write. It is machine-parsed — emit valid JSON, copy the field names
-exactly, and add no fields beyond those listed. It has one of two shapes.
+End your response with a small machine-parsed `<output>` JSON block, **followed
+by** — only when proposing — a `<body>` block holding the raw issue body.
 
-Proposed a candidate this run:
+The split is deliberate and load-bearing: the `<output>` JSON carries only
+**short, single-line** fields, so it stays valid JSON. The issue body — long
+prose with embedded code, file paths, and quoted text — goes in the `<body>`
+block as **raw markdown**, where it needs **no JSON escaping**. Do **not** put
+the body inside the JSON: a multi-paragraph string with unescaped `"` quotes or
+newlines produces invalid JSON and the run fails.
+
+Emit valid JSON in `<output>`, copy the field names exactly, and add no fields
+beyond those listed. It has one of two shapes.
+
+Proposed a candidate this run — emit the `<output>` block, then the `<body>`
+block, in that order, as the very last things you write:
 
 ```
 <output>
 {
   "status": "proposed",
   "title": "defect: <concise title>  (or deepening: …)",
-  "body": "The full issue body, satisfying every rule in step 5, ending with a Sources section.",
   "oneLineSummary": "One-line description of the proposal, for the run summary.",
   "candidatesConsidered": ["candidate 1", "candidate 2"]
 }
 </output>
+<body>
+The full issue body as raw markdown, satisfying every rule in step 5, ending
+with a Sources section. No escaping — write it exactly as it should appear in
+the filed issue. Do not include the <body> / </body> markers in the prose
+itself.
+</body>
 ```
 
-Nothing fresh worth filing:
+Nothing fresh worth filing — emit only the `<output>` block, no `<body>`:
 
 ```
 <output>
@@ -147,17 +162,17 @@ Nothing fresh worth filing:
 Field rules:
 
 - `status` — `"proposed"` or `"skipped"`. Required.
-- `title` — required when proposed; ≤256 chars; begins with `defect:` or `deepening:`.
-- `body` — required when proposed; the full issue body.
-- `oneLineSummary` — required when proposed.
-- `candidatesConsidered` — required when proposed; non-empty array of strings.
+- `title` — required when proposed; ≤256 chars; begins with `defect:` or `deepening:`. Keep it on one line.
+- `oneLineSummary` — required when proposed; one line.
+- `candidatesConsidered` — required when proposed; non-empty array of short strings.
 - `reason` — required when skipped.
+- The `<body>` block — required when proposed, omitted when skipped; raw markdown, no JSON escaping.
 
 ## Rules
 
 - **Read-only on the repo. You file nothing.** No commits, no edits, no
   `gh issue create`. The workflow publishes the issue (and applies the
-  `source:architecture-review` label) from your `<output>` block. Your only
-  job is to read, decide, and emit the block.
+  `source:architecture-review` label) from your `<output>` + `<body>` blocks.
+  Your only job is to read, decide, and emit them.
 - One proposal per run, maximum — and the workflow enforces it regardless.
 - No questions. There is no user.
