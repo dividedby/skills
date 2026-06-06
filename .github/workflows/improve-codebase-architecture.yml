@@ -70,9 +70,12 @@ jobs:
             "Run the daily architecture-review pass. Follow the instructions in the system prompt." \
             | tee "$RUNNER_TEMP/agent.jsonl"
           # Clean step-summary from the saved stream (fromjson? skips any non-JSON
-          # line; last result event wins). Best-effort: a failed run already failed
-          # the pipe above, and its full trace is in the log.
-          jq -rR 'fromjson? | select(.type=="result") | .result // ""' "$RUNNER_TEMP/agent.jsonl" | tail -1 > "$RUNNER_TEMP/agent.log" || true
+          # line). Slurp the result events and take the LAST one's .result whole —
+          # do NOT pipe a raw multi-line .result through `tail -1`, which would keep
+          # only its final line and shred any multi-line <output> block the publish
+          # step depends on. Best-effort: a failed agent run already failed the pipe.
+          jq -R 'fromjson? | select(.type=="result")' "$RUNNER_TEMP/agent.jsonl" \
+            | jq -rs '.[-1].result // ""' > "$RUNNER_TEMP/agent.log" || true
           jq -rR 'fromjson? | select(.type=="result") | "total_cost_usd=\(.total_cost_usd // "n/a")  duration_ms=\(.duration_ms // "n/a")  num_turns=\(.num_turns // "n/a")"' \
             "$RUNNER_TEMP/agent.jsonl" | tail -1 > "$RUNNER_TEMP/agent.cost" || true
 
