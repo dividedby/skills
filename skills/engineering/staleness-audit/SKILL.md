@@ -60,10 +60,11 @@ so the only non-deterministic input to a finding's classification is the upstrea
 For each finding, confirm three things from upstream, using web search/fetch:
 
 - **latest** — the current stable release of that toolchain (`Node 22.x`).
-- **EOL** — fetch the pinned major's end-of-life **date**, then decide pastness by
-  comparing it to *today* in code — do not ask the model to judge "is this past
-  EOL?" by feel (it will anchor on the data's vintage and get it wrong). A pin past
-  EOL is the top risk regardless of how far behind it is — security fixes have stopped.
+- **EOL** — fetch the pinned major's end-of-life **date**, then decide pastness
+  with [`lib/eol.py`](lib/eol.py) (`is_past_eol(date, today)`), not by asking the
+  model "is this past EOL?" — it anchors on the data's vintage and gets it wrong.
+  A pin past EOL is the top risk regardless of how far behind it is — security
+  fixes have stopped. Feed the result as `eol_passed` to the ranking helper.
 - **migration** — the canonical upgrade note / changelog link to carry in the
   report so the reader (or a later auto-apply slice) has the path in hand.
 
