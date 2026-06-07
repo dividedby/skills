@@ -128,13 +128,13 @@ Backend-only issues get no stamp; the block is omitted entirely.
 ### 3. Cluster issues by domain concept
 
 Group issues by the concept they touch. A cluster is a coherent set of
-responsibilities that changes for the same reasons.
+responsibilities that changes for the same reasons. Apply the
+**Decomposition Heuristics** in [modules-and-seams.md](modules-and-seams.md)
+to find the cuts.
 
-Ask:
-
-- Which issues share data or state?
-- Which issues could change independently?
-- Which issues cross a communication boundary (sync/async, external system)?
+One signal those heuristics don't name: which issues cross a communication
+boundary (sync/async, external system)? That's a seam, not a module cut —
+it tells you where an adapter goes.
 
 Label each cluster with a domain noun from `CONTEXT.md`.
 
