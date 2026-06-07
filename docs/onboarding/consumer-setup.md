@@ -52,7 +52,12 @@ pushes to the default branch.
   files under the repo; a remote run can't enumerate the install, so the host
   commits a snapshot the loop reads.
 - **A reference workflow to adapt:** `dividedby/skills` →
-  `.github/workflows/apply-agent-research.yml` + `.github/workflows/prompts/apply-agent-research.md`.
+  `.github/workflows/apply-agent-research.yml` (the thin envelope) + the
+  fetched-fresh harness it calls (`harness/prompts/apply-agent-research.md`,
+  `harness/cli.py digest` for the cost ledger). See
+  [`proposal-loop-harness.md`](./proposal-loop-harness.md) for the stub↔harness
+  interface; this loop files through the skill's own guarded `cli.py`, so it uses
+  only `digest`, not the harness `publish` seam.
 - **The target repo's own governance docs:** `CONTEXT.md`, `CLAUDE.md`,
   `docs/adr/` — the skill's ethos-fit oracle *and* already-do-this filter.
 
@@ -70,9 +75,12 @@ layer on the Consumer specifics:
    the gate (`cli.py gate`), the standalone guard (`cli.py sanitize`), and the
    **guarded filing path** (`cli.py file --help` / `cli.py comment --help`), which is
    how the loop files (step 7). **Never proceed on a broken guard.**
-   The same fresh clone is also the **live published-skill catalog** the
+   The same fresh clone is also (a) the **live published-skill catalog** the
    already-do-this / audit steps read (`skills/<bucket>/*/SKILL.md`,
-   `.claude-plugin/plugin.json`) — no separate fetch.
+   `.claude-plugin/plugin.json`) and (b) the **fetched-fresh harness**
+   ([ADR 0014](../adr/0014-harness-is-fetched-fresh-only-the-workflow-envelope-is-vendored.md)):
+   `harness/prompts/apply-agent-research.md` for the system prompt and
+   `harness/cli.py digest` for the cost-ledger line — no separate fetch.
 
 2. **Knowledge input.**
    - `IS_KNOWLEDGE_SOURCE = no` → shallow-clone the **public mirror**

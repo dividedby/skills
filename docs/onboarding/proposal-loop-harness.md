@@ -8,17 +8,18 @@ share this harness; only the *skill*, the *input*, and the *label* differ:
 - **[`consumer-setup.md`](./consumer-setup.md)** — `apply-agent-research`
   (KB + governance docs → agent-meta improvements). The rich one: adds the
   knowledge-mirror input and the cross-repo `skill-request` / `skill-promotion`
-  channels.
+  channels. Files through the skill's own guarded `cli.py`, so it uses only the
+  harness's shared `digest` (not the `publish` seam).
 - **[`arch-review-setup.md`](./arch-review-setup.md)** —
   `improve-codebase-architecture` (the codebase → refactor proposals). The
   leanest member: no extra input, no cross-repo channels — harness + a skill,
-  plus a deterministic publish seam (the agent emits a structured `<output>`; a
-  shell step files the issue) so the per-run cap lives in code.
+  plus the harness `publish` seam (the agent emits a structured `<output>`/`<body>`;
+  the harness files the one capped issue) so the per-run cap lives in code.
 
 This file is the **common skeleton** both reference. Read it first, then the
 loop-specific doc.
 
-## The two load-bearing decisions
+## The load-bearing decisions
 
 - **Propose via issues; a human decides** ([ADR 0003](../adr/0003-skill-improvement-workflows-propose-via-issues.md)).
   The loop's *only* mutation is filing issues. `permissions: contents: read,
@@ -28,10 +29,24 @@ loop-specific doc.
   `git clone --depth 1` the skill's source repo and `cp -R` the skill into
   `~/.claude/skills/` at the start of every run. A committed copy silently drifts;
   for a security-relevant skill (a leak guard) that drift is the worst failure
-  mode. The skill is used **by file path**, so any readable location works —
-  `~/.claude/skills/` is parity convention, not a requirement.
+  mode. The skill is used **by file path**, so any readable location works.
+- **Fetch the harness fresh too; vendor only the envelope** ([ADR 0014](../adr/0014-harness-is-fetched-fresh-only-the-workflow-envelope-is-vendored.md)).
+  The drift-prone harness logic — the `stream-json` cost scrape and the
+  `<output>`/`<body>` publish seam, plus the loop prompts — lives in
+  `dividedby/skills` `harness/` and is fetched fresh on the same rail as the skill.
+  Each repo commits only the thin **workflow envelope** (the "stub"): `on:` cron,
+  `permissions:`, token names, tool scoping, and a clone-and-invoke body. One fix
+  in `harness/` reaches every loop on its next run, killing the #117/#211 drift
+  class (the same invalid-JSON fix had to be hand-applied twice before this).
 
-## Skeleton workflow
+## Skeleton workflow (the stub)
+
+The stub clones `dividedby/skills` for the harness + the prompt, runs the agent,
+and calls `harness/cli.py` for the cost scrape and (for a publish-seam loop) the
+filing. **In `dividedby/skills` itself the harness arrives with the `ref: main`
+checkout** — the checkout *is* the fresh harness — so its own two workflows skip
+the extra clone and call `harness/cli.py` directly. A downstream consumer repo
+clones it into a temp dir, shown here:
 
 ```yaml
 name: <Loop Name>
@@ -52,55 +67,98 @@ jobs:
       GH_REPO: ${{ github.repository }}
       LABEL: source:<provenance>
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with: { ref: <default-branch>, fetch-depth: 1 }
+
+      # --- Fetch the harness fresh (ADR 0014) ---
+      - name: Install the proposal-loop harness
+        run: |
+          set -euo pipefail
+          git clone --depth 1 https://github.com/dividedby/skills.git "$RUNNER_TEMP/skills"
+          echo "HARNESS=$RUNNER_TEMP/skills/harness" >> "$GITHUB_ENV"
 
       # --- Fetch the skill fresh (ADR 0008) ---
       - name: Install the skill
         run: |
           set -euo pipefail
-          tmp=$(mktemp -d)
-          git clone --depth 1 https://github.com/<owner>/<skills-repo>.git "$tmp/src"
           mkdir -p ~/.claude/skills
-          cp -R "$tmp/src/<path-to-skill>" ~/.claude/skills/
+          cp -R "$RUNNER_TEMP/skills/<path-to-skill>" ~/.claude/skills/   # or another repo
           test -f ~/.claude/skills/<skill-name>/SKILL.md
-          echo "Installed <skill-name>@$(git -C "$tmp/src" rev-parse --short HEAD)"
       # If the skill bundles a code guard, run its unit tests here as a HARD GATE
       # and fail the run on failure — never file with a broken guard.
-
-      - name: Ensure provenance label exists
-        run: gh label create "$LABEL" --color "5319E7" --description "..." >/dev/null 2>&1 || true
 
       - name: Run the loop
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
         run: |
           set -euo pipefail
-          # stream-json + tee to JSONL so the final `result` event (carrying
-          # total_cost_usd) reaches the log before claude exits — cost is then
-          # captured even on a failed run, and the cross-repo ledger can scrape it.
+          # stream-json + tee so the final `result` event (carrying total_cost_usd)
+          # reaches the log before claude exits — cost is captured even on failure.
           claude -p \
             --output-format stream-json --verbose \
             --permission-mode acceptEdits \
             --allowedTools "<scoped to what the loop needs>" \
-            --append-system-prompt "$(cat .github/workflows/prompts/<loop>.md)" \
+            --append-system-prompt "$(cat "$HARNESS/prompts/<loop>.md")" \
             "<one-line task pointer to the system prompt>" \
             | tee "$RUNNER_TEMP/agent.jsonl"
-          # Clean summary (last result event) + the cost ledger line. Best-effort:
-          # a failed run already failed the pipe above; fromjson? skips non-JSON.
-          jq -rR 'fromjson? | select(.type=="result") | .result // ""' \
-            "$RUNNER_TEMP/agent.jsonl" | tail -1 > "$RUNNER_TEMP/agent.log" || true
-          jq -rR 'fromjson? | select(.type=="result") | "total_cost_usd=\(.total_cost_usd // "n/a")  duration_ms=\(.duration_ms // "n/a")  num_turns=\(.num_turns // "n/a")"' \
-            "$RUNNER_TEMP/agent.jsonl" | tail -1 > "$RUNNER_TEMP/agent.cost" || true
 
-      - name: Summarise run
+      - name: Digest the run (result log + cost ledger)
         if: always()
         run: |
+          set -euo pipefail
+          python3 "$HARNESS/cli.py" digest \
+            --jsonl "$RUNNER_TEMP/agent.jsonl" \
+            --result-out "$RUNNER_TEMP/agent.log" \
+            --cost-out "$RUNNER_TEMP/agent.cost"
+
+      # --- publish-seam loops only (e.g. arch-review); skip for a loop that
+      #     files through the skill's own guarded cli.py ---
+      - name: Publish proposal
+        run: |
+          set -euo pipefail
+          python3 "$HARNESS/cli.py" publish \
+            --log "$RUNNER_TEMP/agent.log" \
+            --label "$LABEL" \
+            --label-description "<provenance description>" \
+            --cost-file "$RUNNER_TEMP/agent.cost" \
+            --heading "<Loop Name>"
+
+      - name: Summarise a failed run
+        if: failure()
+        run: |
           { echo "## <Loop Name>"; echo; \
-            cat "$RUNNER_TEMP/agent.cost" 2>/dev/null || true; echo; echo '```'; \
-            tail -n 50 "$RUNNER_TEMP/agent.log" 2>/dev/null || echo "(no log)"; \
+            echo "**Cost:** $(cat "$RUNNER_TEMP/agent.cost" 2>/dev/null || echo n/a)"; echo; \
+            echo '```'; tail -n 50 "$RUNNER_TEMP/agent.log" 2>/dev/null || echo "(no log)"; \
             echo '```'; } >> "$GITHUB_STEP_SUMMARY"
 ```
+
+## The stub ↔ harness interface contract
+
+This is the **stable, versioned** seam between the vendored envelope and the
+fetched-fresh harness ([ADR 0014](../adr/0014-harness-is-fetched-fresh-only-the-workflow-envelope-is-vendored.md)).
+The drift-prone logic no longer lives on this surface, so the contract changes
+rarely; when it does, it is a **manual rollout** across the ~3 owned repos.
+
+- **`harness/prompts/<loop>.md`** — the loop's system prompt, `cat` by the stub.
+  The prompt and the `publish` parser share the `<output>`/`<body>` contract and
+  version together, which is why the prompt rides the harness rail.
+- **`python3 harness/cli.py digest --jsonl F --result-out F --cost-out F`** —
+  every loop. Reduces the `stream-json` JSONL to the last result event's `.result`
+  (whole, multi-line preserved) and the `total_cost_usd=…  duration_ms=…
+  num_turns=…` ledger line. Best-effort (exit 0 even with no result event); run it
+  `if: always()` so cost is captured on a failed agent run too.
+- **`python3 harness/cli.py publish --log F --label L [--label-color H]
+  [--label-description T] [--cost-file F] [--heading H] [--repo R]`** —
+  publish-seam loops only. Parses the agent's `<output>` JSON + raw `<body>`, files
+  ≤1 issue under `L`, writes the rich step summary, and emits `issue_url` to
+  `$GITHUB_OUTPUT`. **Fails loudly (exit 1)** on a missing/garbled/unknown-status
+  block — pair it with an `if: failure()` summarise step that surfaces the raw log.
+  Reads `$GH_REPO` / `$GITHUB_STEP_SUMMARY` / `$GITHUB_OUTPUT` from the Actions env.
+
+The `publish` parser is unit-tested (`harness/tests/`, gated by
+`.github/workflows/harness-tests.yml`) precisely because it is the #117 drift
+surface — a tested stdlib parser replaces the brittle `sed`/`jq` hand-escaping
+that caused it ([ADR 0004](../adr/0004-runbook-helpers-are-python-stdlib.md)).
 
 ## Conventions baked into the skeleton
 
@@ -119,22 +177,22 @@ jobs:
   shim* (`apply-agent-research`'s `cli.py file` / `cli.py comment`, which sanitize
   then `gh`-write only on ALLOW), additionally set `--disallowedTools "Bash(gh issue
   create:*) Bash(gh issue comment:*)"` so the agent cannot bypass the guard with a
-  direct write. Defense-in-depth, not a sandbox — it makes the *wired* filing path
-  unable to skip the guard, the realistic forgetting-failure.
+  direct write. A publish-seam loop (arch-review) instead scopes `gh` to read-only
+  subcommands so the agent cannot file at all — the harness `publish` step is the
+  sole filing path.
 - **Adapt the runner to the repo's existing convention.** If the repo already
   runs Claude via `anthropics/claude-code-base-action`, match that instead of the
-  `npm install -g @anthropic-ai/claude-code` + `claude -p` shown here. The skill is
-  used by file path, so no skill-discovery config is needed either way.
-- **Emit the cost-ledger line.** The runner streams `stream-json` JSONL and the
-  summary step surfaces a single `total_cost_usd=<…>  duration_ms=<…>
-  num_turns=<…>` line. A cross-repo **cost hub** (`dividedby/agent-research`)
-  scrapes that line from each participating repo's run logs to project monthly
-  spend, so every proposal loop must emit it — it is part of the skeleton, not a
-  per-loop add-on. Use `--output-format stream-json --verbose` (not plain `json`,
-  which buffers and goes dark on a hang) so the final `result` event lands in the
-  log before `claude` exits; cost is then captured even on a failed run. The hub
-  reads logs via a least-privilege `Actions: Read` PAT it holds — see the
-  onboarding doc's manual steps for the token the human must mint.
+  `claude.ai/install.sh` + `claude -p` shown here. The skill is used by file path,
+  so no skill-discovery config is needed either way.
+- **Emit the cost-ledger line.** `harness/cli.py digest` writes the single
+  `total_cost_usd=<…>  duration_ms=<…>  num_turns=<…>` line that a cross-repo
+  **cost hub** (`dividedby/agent-research`) scrapes from each participating repo's
+  run logs to project monthly spend. Every proposal loop must emit it — it is part
+  of the skeleton, not a per-loop add-on. Use `--output-format stream-json
+  --verbose` (not plain `json`, which buffers and goes dark on a hang) so the final
+  `result` event lands in the log before `claude` exits; cost is then captured even
+  on a failed run. The hub reads logs via a least-privilege `Actions: Read` PAT it
+  holds — see the onboarding doc's manual steps for the token the human must mint.
 
 ## Required secrets
 

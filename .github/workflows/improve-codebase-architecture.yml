@@ -6,6 +6,15 @@ on:
     - cron: "17 11 * * 1-5"
   workflow_dispatch:
 
+# This workflow is the thin **workflow envelope** (ADR 0014): cron, permissions,
+# tokens, tool scoping, and a clone-and-invoke body. The drift-prone logic — the
+# stream-json cost scrape and the <output>/<body> publish seam — lives in the
+# fetched-fresh **proposal-loop harness** (`harness/cli.py`), not inline here, so
+# one fix reaches every loop. In *this* repo the harness arrives with the
+# `ref: main` checkout (the checkout IS the fresh harness); a downstream repo
+# instead clones dividedby/skills into a temp dir — see
+# docs/onboarding/proposal-loop-harness.md.
+
 jobs:
   improve-codebase-architecture:
     runs-on: ubuntu-latest
@@ -51,118 +60,59 @@ jobs:
         run: |
           set -euo pipefail
           # The agent is read-only: it explores, decides, and emits a single
-          # <output> JSON block (see prompt). It does NOT file the issue — the
-          # Publish step below does, deterministically. gh access is scoped to
-          # read-only subcommands so the agent *cannot* create an issue itself;
-          # the one-per-run cap and the label live in code, not in prompt trust.
-          #
-          # --output-format stream-json --verbose: stream every event to the log so
-          # a hung/timed-out run leaves a trace (plain json buffers and goes dark),
-          # AND the final result event (with total_cost_usd) reaches the log before
-          # claude exits — so cost is captured even on a failed run (#58) and the
-          # cross-repo ledger scrapes it. Matches agent-research's 4 workflows.
-          # pipefail propagates an agent failure; the cost is already in the log.
+          # <output> JSON block plus a raw <body> block (see prompt). It does NOT
+          # file the issue — the Publish step does, via the harness, which enforces
+          # the one-issue-per-run cap and the label in code. gh access is scoped to
+          # read-only subcommands so the agent *cannot* create an issue itself.
+          # --output-format stream-json --verbose: stream every event so a hung run
+          # leaves a trace (plain json buffers) and the final result event (with
+          # total_cost_usd) lands before claude exits — cost captured even on failure.
+          # pipefail propagates an agent failure; the Digest step still runs (always).
           claude -p \
             --output-format stream-json --verbose \
             --permission-mode acceptEdits \
             --allowedTools "Bash(gh issue list:*) Bash(gh issue view:*) Bash(gh search:*) Bash(gh api:*) Bash(git:*) Read Grep Glob WebSearch WebFetch" \
-            --append-system-prompt "$(cat .github/workflows/prompts/improve-codebase-architecture.md)" \
+            --append-system-prompt "$(cat harness/prompts/improve-codebase-architecture.md)" \
             "Run the daily architecture-review pass. Follow the instructions in the system prompt." \
             | tee "$RUNNER_TEMP/agent.jsonl"
-          # Clean step-summary from the saved stream (fromjson? skips any non-JSON
-          # line). Slurp the result events and take the LAST one's .result whole —
-          # do NOT pipe a raw multi-line .result through `tail -1`, which would keep
-          # only its final line and shred any multi-line <output> block the publish
-          # step depends on. Best-effort: a failed agent run already failed the pipe.
-          jq -R 'fromjson? | select(.type=="result")' "$RUNNER_TEMP/agent.jsonl" \
-            | jq -rs '.[-1].result // ""' > "$RUNNER_TEMP/agent.log" || true
-          jq -rR 'fromjson? | select(.type=="result") | "total_cost_usd=\(.total_cost_usd // "n/a")  duration_ms=\(.duration_ms // "n/a")  num_turns=\(.num_turns // "n/a")"' \
-            "$RUNNER_TEMP/agent.jsonl" | tail -1 > "$RUNNER_TEMP/agent.cost" || true
+
+      - name: Digest the run (result log + cost ledger)
+        if: always()
+        run: |
+          set -euo pipefail
+          # JSONL -> clean result text + the total_cost_usd=… ledger line the
+          # cross-repo cost hub scrapes. Best-effort by construction (exit 0 even
+          # with no result event), so it runs on a failed agent run too.
+          python3 harness/cli.py digest \
+            --jsonl "$RUNNER_TEMP/agent.jsonl" \
+            --result-out "$RUNNER_TEMP/agent.log" \
+            --cost-out "$RUNNER_TEMP/agent.cost"
 
       - name: Publish proposal
         id: publish
-        env:
-          AGENT_LOG: ${{ runner.temp }}/agent.log
-          OUTPUT_FILE: ${{ runner.temp }}/output.json
-          BODY_FILE: ${{ runner.temp }}/body.md
         run: |
           set -euo pipefail
-          # The agent emits a small <output> JSON block (short single-line fields
-          # only) and, when proposing, a separate <body> block of RAW markdown.
-          # The split is deliberate: the issue body is long prose with embedded
-          # code and quoted text, which is unreliable to hand-escape inside a JSON
-          # string — a single unescaped " breaks the whole block. Keeping body out
-          # of the JSON removes that failure mode (downstream agent-research#211).
-          #
-          # Extract <output>, strip an optional ```json fence, require valid JSON.
-          # Loud beats lossy: a missing/garbled block fails the run rather than
-          # silently skipping — an unattended loop that "succeeds" with no signal
-          # is worse than one that fails visibly.
-          sed -n '/<output>/,/<\/output>/p' "$AGENT_LOG" \
-            | sed '1d;$d' \
-            | sed -e 's/^[[:space:]]*```json[[:space:]]*$//' -e 's/^[[:space:]]*```[[:space:]]*$//' \
-            > "$OUTPUT_FILE"
-          if [ ! -s "$OUTPUT_FILE" ] || ! jq empty "$OUTPUT_FILE" 2>/dev/null; then
-            echo "::error::No valid <output> JSON block found in the agent result." >&2
-            exit 1
-          fi
-          status=$(jq -r '.status' "$OUTPUT_FILE")
-          case "$status" in
-            skipped)
-              echo "SKIPPED: $(jq -r '.reason' "$OUTPUT_FILE")"
-              exit 0
-              ;;
-            proposed)
-              title=$(jq -r '.title' "$OUTPUT_FILE")
-              # The body is the RAW <body> block — copied verbatim, no JSON decode.
-              sed -n '/<body>/,/<\/body>/p' "$AGENT_LOG" | sed '1d;$d' > "$BODY_FILE"
-              if [ -z "$title" ] || [ ! -s "$BODY_FILE" ]; then
-                echo "::error::status=proposed but title is empty or no <body> block was found." >&2
-                exit 1
-              fi
-              gh label create "$LABEL" \
-                --color "5319E7" \
-                --description "Issues proposed by the automated architecture-review workflow" \
-                >/dev/null 2>&1 || true
-              issue_url=$(gh issue create --title "$title" --body-file "$BODY_FILE" --label "$LABEL" | tail -n1)
-              echo "issue_url=$issue_url" >> "$GITHUB_OUTPUT"
-              echo "Published $issue_url"
-              ;;
-            *)
-              echo "::error::Unknown status '$status' in <output>." >&2
-              exit 1
-              ;;
-          esac
+          # Parse <output>/<body>, file <=1 labeled issue, write the rich step
+          # summary, emit issue_url. Fails loudly (exit 1) on a missing/garbled
+          # block — the failure() Summarise step below then surfaces the raw log.
+          python3 harness/cli.py publish \
+            --log "$RUNNER_TEMP/agent.log" \
+            --label "$LABEL" \
+            --label-description "Issues proposed by the automated architecture-review workflow" \
+            --cost-file "$RUNNER_TEMP/agent.cost" \
+            --heading "Architecture review"
 
-      - name: Summarise run
-        if: always()
-        env:
-          OUTPUT_FILE: ${{ runner.temp }}/output.json
+      - name: Summarise a failed run
+        if: failure()
         run: |
           {
             echo "## Architecture review"
             echo ""
             echo "**Cost:** $(cat "$RUNNER_TEMP/agent.cost" 2>/dev/null || echo "n/a")"
             echo ""
-            if [ -s "$OUTPUT_FILE" ] && jq empty "$OUTPUT_FILE" 2>/dev/null; then
-              status=$(jq -r '.status' "$OUTPUT_FILE")
-              if [ "$status" = "proposed" ]; then
-                echo "**Created:** ${{ steps.publish.outputs.issue_url }}"
-                echo ""
-                echo "$(jq -r '.oneLineSummary' "$OUTPUT_FILE")"
-                echo ""
-                echo "### Candidates considered"
-                jq -r '.candidatesConsidered[] | "- \(.)"' "$OUTPUT_FILE"
-              elif [ "$status" = "skipped" ]; then
-                echo "**Skipped — no fresh candidates today.**"
-                echo ""
-                echo "$(jq -r '.reason' "$OUTPUT_FILE")"
-              fi
-            else
-              echo "**No valid \`<output>\` block produced** — agent likely crashed or went off-script. Last result text:"
-              echo ""
-              echo '```'
-              tail -n 50 "$RUNNER_TEMP/agent.log" 2>/dev/null || echo "(no log produced)"
-              echo '```'
-            fi
+            echo "**No valid \`<output>\` block, or the agent crashed** — last result text:"
+            echo ""
+            echo '```'
+            tail -n 50 "$RUNNER_TEMP/agent.log" 2>/dev/null || echo "(no log produced)"
+            echo '```'
           } >> "$GITHUB_STEP_SUMMARY"

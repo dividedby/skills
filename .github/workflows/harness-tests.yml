@@ -1,0 +1,30 @@
+name: harness tests
+
+# The proposal-loop harness (`harness/cli.py`) carries the publish seam — the
+# <output>/<body> parser that files the one capped issue — which was the #117/#211
+# drift class (the same invalid-JSON bug, hand-fixed twice). Now that the seam is
+# fetched fresh by every loop, a regression here would reach all of them at once,
+# so its stdlib test suite is a hard gate, not advisory. Stdlib-only, sub-second.
+# Path-filtered so doc-only commits don't trigger it.
+
+on:
+  push:
+    paths:
+      - "harness/**"
+  pull_request:
+    paths:
+      - "harness/**"
+  workflow_dispatch:
+
+jobs:
+  harness-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: Run the harness CLI test suite
+        run: python3 -m unittest discover -s harness/tests

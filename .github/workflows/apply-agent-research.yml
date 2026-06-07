@@ -95,18 +95,24 @@ jobs:
             --permission-mode acceptEdits \
             --allowedTools "Bash Read Grep Glob" \
             --disallowedTools "Bash(gh issue create:*) Bash(gh issue comment:*)" \
-            --append-system-prompt "$(cat .github/workflows/prompts/apply-agent-research.md)" \
+            --append-system-prompt "$(cat harness/prompts/apply-agent-research.md)" \
             "Run the scheduled apply-agent-research pass. The knowledge mirror is already cloned at ${MIRROR_DIR} (read-only). Follow the instructions in the system prompt." \
             | tee "$RUNNER_TEMP/agent.jsonl"
-          # Clean step-summary from the saved stream (fromjson? skips any non-JSON
-          # line). Slurp the result events and take the LAST one's .result whole — do
-          # NOT pipe a raw multi-line .result through `tail -1`, which keeps only its
-          # final line and shreds the agent's per-channel summary (the bug PR #106
-          # fixed for arch-review). Best-effort: a failed run already failed the pipe.
-          jq -R 'fromjson? | select(.type=="result")' "$RUNNER_TEMP/agent.jsonl" \
-            | jq -rs '.[-1].result // ""' > "$RUNNER_TEMP/agent.log" || true
-          jq -rR 'fromjson? | select(.type=="result") | "total_cost_usd=\(.total_cost_usd // "n/a")  duration_ms=\(.duration_ms // "n/a")  num_turns=\(.num_turns // "n/a")"' \
-            "$RUNNER_TEMP/agent.jsonl" | tail -1 > "$RUNNER_TEMP/agent.cost" || true
+
+      - name: Digest the run (result log + cost ledger)
+        if: always()
+        run: |
+          set -euo pipefail
+          # JSONL -> clean result text (the LAST result event's .result, whole, so
+          # the agent's multi-line per-channel summary survives) + the total_cost_usd=…
+          # ledger line the cross-repo cost hub scrapes. This loop files through the
+          # skill's own guarded cli.py, so it does NOT use the harness publish seam —
+          # only the shared digest. Best-effort (exit 0 even with no result event),
+          # so it runs on a failed agent run too.
+          python3 harness/cli.py digest \
+            --jsonl "$RUNNER_TEMP/agent.jsonl" \
+            --result-out "$RUNNER_TEMP/agent.log" \
+            --cost-out "$RUNNER_TEMP/agent.cost"
 
       - name: Summarise run
         if: always()

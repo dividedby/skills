@@ -28,14 +28,17 @@ first**; this doc is only the deltas.
   block of **raw markdown** for the issue body. The body is kept out of the JSON
   on purpose: a long body with embedded code and quoted text is unreliable to
   hand-escape inside a JSON string, and a single unescaped `"` invalidates the
-  whole block (see #117). A `Publish proposal` shell step parses the JSON, copies
-  the `<body>` verbatim, and runs `gh issue create` itself — so the
-  one-proposal-per-run cap and the provenance label live **in code**, not in
+  whole block (see #117). The **harness `publish` seam** (`harness/cli.py publish`,
+  fetched fresh — [ADR 0014](../adr/0014-harness-is-fetched-fresh-only-the-workflow-envelope-is-vendored.md))
+  parses the JSON, copies the `<body>` verbatim, and runs `gh issue create` — so
+  the one-proposal-per-run cap and the provenance label live **in code**, not in
   prompt-adherence, and a missing/garbled block **fails the run loudly** rather
-  than skipping silently. The step summary surfaces the outcome + candidates
-  considered. This is the generator/publisher split adapted from
-  `mattpocock/course-video-manager`'s `architecture-review.yml`; we hand-roll in
-  shell what it gets from the sandcastle framework.
+  than skipping silently. It is a *tested stdlib parser*, replacing the brittle
+  `sed`/`jq` hand-escaping that caused #117/#211. It writes the step summary
+  (outcome + candidates considered) itself; an `if: failure()` step surfaces the
+  raw log when it fails. This is the generator/publisher split adapted from
+  `mattpocock/course-video-manager`'s `architecture-review.yml`; the harness gives
+  us in tested Python what it gets from the sandcastle framework.
 - **Tools (read-only `gh`):**
   `Bash(gh issue list:*) Bash(gh issue view:*) Bash(gh search:*) Bash(gh api:*) Bash(git:*) Read Grep Glob WebSearch WebFetch`.
   The agent gets only read access to the tracker — it *cannot* `gh issue create`,
@@ -43,14 +46,17 @@ first**; this doc is only the deltas.
 
 ## Reference
 
-`dividedby/skills` → `.github/workflows/improve-codebase-architecture.yml` +
-`.github/workflows/prompts/improve-codebase-architecture.md` is a working
-instance — copy it, change only the skill path and label if porting to another
-repo.
+`dividedby/skills` → `.github/workflows/improve-codebase-architecture.yml` is a
+working **envelope** instance; the prompt + publish seam it calls live in the
+fetched-fresh harness (`harness/prompts/improve-codebase-architecture.md`,
+`harness/cli.py`). Copy the envelope, change only the skill path and label if
+porting to another repo. Note the home-repo envelope reads `harness/` straight
+from its own `ref: main` checkout; a downstream repo clones `dividedby/skills`
+into a temp dir for it — see [`proposal-loop-harness.md`](./proposal-loop-harness.md).
 
 ## To propagate to another repo
 
-1. Copy the workflow + its prompt.
+1. Copy the workflow envelope (it clones the harness fresh; nothing else to vendor).
 2. Ensure the `CLAUDE_CODE_OAUTH_TOKEN` secret exists.
 3. (Recommended) add a `CONTEXT.md` + `docs/adr/` so proposals speak the repo's
    own language.
