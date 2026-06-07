@@ -74,7 +74,7 @@ jobs:
           claude -p \
             --output-format stream-json --verbose \
             --permission-mode acceptEdits \
-            --allowedTools "Bash(gh issue list:*) Bash(gh issue view:*) Bash(gh search:*) Bash(gh api:*) Bash(git:*) Read Grep Glob" \
+            --allowedTools "Bash(gh issue list:*) Bash(gh issue view:*) Bash(gh search:*) Bash(gh api:*) Bash(git:*) Read Grep Glob WebSearch WebFetch" \
             --append-system-prompt "$(cat harness/prompts/staleness-audit.md)" \
             "Run the monthly staleness-review pass. Follow the instructions in the system prompt." \
             | tee "$RUNNER_TEMP/agent.jsonl"

@@ -2,8 +2,8 @@
 
 A **[proposal loop](../../CONTEXT.md)** is a scheduled, skill-driven GitHub
 Actions workflow that reads some input, then **proposes via labeled issues and
-never applies** — no commits, edits, or PRs. Both of this owner's proposal loops
-share this harness; only the *skill*, the *input*, and the *label* differ:
+never applies** — no commits, edits, or PRs. All three of this owner's proposal
+loops share this harness; only the *skill*, the *input*, and the *label* differ:
 
 - **[`consumer-setup.md`](./consumer-setup.md)** — `apply-agent-research`
   (KB + governance docs → agent-meta improvements). The rich one: adds the
@@ -15,8 +15,14 @@ share this harness; only the *skill*, the *input*, and the *label* differ:
   leanest member: no extra input, no cross-repo channels — harness + a skill,
   plus the harness `publish` seam (the agent emits a structured `<output>`/`<body>`;
   the harness files the one capped issue) so the per-run cap lives in code.
+- **[`staleness-setup.md`](./staleness-setup.md)** — `staleness-audit`
+  (the repo's toolchain pins → a ranked staleness report, complementing
+  Dependabot). Monthly, and like arch-review uses the `publish` seam. Distinctive
+  in two ways: it needs **`WebSearch`/`WebFetch`** for upstream latest/EOL
+  validation, and its skill *can* mutate (a verify-gated apply station) yet the
+  loop runs it **report-only** — no `Edit`/`Write`, so the cron never applies.
 
-This file is the **common skeleton** both reference. Read it first, then the
+This file is the **common skeleton** all three reference. Read it first, then the
 loop-specific doc.
 
 ## The load-bearing decisions
