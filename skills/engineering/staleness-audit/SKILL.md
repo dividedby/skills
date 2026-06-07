@@ -18,11 +18,12 @@ pins** Dependabot leaves alone (`.nvmrc`, `engines`, language-version files).
 The skill has one spine, and every later capability thickens a station on it
 rather than adding a new path:
 
-**scan → classify → render → register**
+**scan → classify → validate → render → register**
 
-This first cut walks the **Node toolchain pins** and emits a single ranked,
-**recommend-only** report. No web calls, no file edits — the audit observes and
-recommends; it never mutates the repo at this stage.
+It walks the **Node toolchain pins**, resolves each finding against upstream to
+fill in latest version / EOL / migration, and emits a single urgency-ranked,
+**recommend-only** report. The audit observes and recommends — it never mutates
+the repo at this stage (auto-apply is a later slice).
 
 ## The spine
 
@@ -49,12 +50,36 @@ executable code: [`lib/version_gap.py`](lib/version_gap.py), a pure stdlib helpe
 (ADR 0004) that maps a `(current, latest)` pair to `major | minor | patch | none
 | unknown`. Invoke it by file path; never re-derive the gap math in prose.
 
-At this slice `latest` is unknown (no web), so the gap column reads `unverified`
-for every finding. The classifier is still wired in and unit-tested
-([`lib/version_gap.test.py`](lib/version_gap.test.py)) so the later web slice only
-has to feed it a real `latest`.
+The gap is computed against the `latest` resolved by the next station. The
+classifier is unit-tested ([`lib/version_gap.test.py`](lib/version_gap.test.py)),
+so the only non-deterministic input to a finding's classification is the upstream
+`latest` the validate step fetches.
 
-### Render — one ranked, recommend-only report
+### Validate — resolve each finding against upstream
+
+For each finding, confirm three things from upstream, using web search/fetch:
+
+- **latest** — the current stable release of that toolchain (`Node 22.x`).
+- **EOL** — fetch the pinned major's end-of-life **date**, then decide pastness by
+  comparing it to *today* in code — do not ask the model to judge "is this past
+  EOL?" by feel (it will anchor on the data's vintage and get it wrong). A pin past
+  EOL is the top risk regardless of how far behind it is — security fixes have stopped.
+- **migration** — the canonical upgrade note / changelog link to carry in the
+  report so the reader (or a later auto-apply slice) has the path in hand.
+
+Prefer authoritative sources — the project's own release page or a maintained
+EOL dataset (e.g. `endoflife.date`) over a blog. Resolve `latest`, feed it to
+[`lib/version_gap.py`](lib/version_gap.py) for the real gap, and record
+`eol_passed` per finding.
+
+**Web is a dependency, not a guarantee — degrade, never guess.** When web access
+is unavailable or a lookup fails, do **not** invent a version or EOL date. Emit
+the finding with `latest`/`EOL`/`migration` left as **`unverified: no web
+access`**, and **suppress any apply path** for it — an unverified finding is a
+recommendation only, never something a later slice may auto-apply. A partial
+audit that is honest about what it could not verify beats a confident wrong one.
+
+### Render — one urgency-ranked, recommend-only report
 
 Emit a single markdown table, one row per finding, with these columns:
 
@@ -62,10 +87,12 @@ Emit a single markdown table, one row per finding, with these columns:
 target | file | current | latest | gap | EOL | risk | action | migration
 ```
 
-`latest`, `EOL`, and `migration` may be blank or `unverified` at this slice.
-Every `action` is a recommendation — there is **no apply path here**. Rank
-most-actionable first once gaps are known; with everything `unverified`, a stable
-file order is fine.
+`latest`, `EOL`, and `migration` carry the validated values, or `unverified: no
+web access` when the lookup could not run. Order the rows **most-urgent-first**
+via [`lib/rank.py`](lib/rank.py) — a pure, tested helper that ranks past-EOL pins
+to the top, then by gap severity — so the ordering is reproducible and not a
+per-run judgment call. Every `action` is a recommendation; there is **no apply
+path here**, and unverified findings are explicitly never auto-applied.
 
 ### Register
 
@@ -77,13 +104,17 @@ hook enforces it).
 
 - **Node toolchain pins only.** Python/Go/CI-matrix/container coverage is a later
   station on the same `scan` step, not a different skill.
-- **No web, no mutation.** Resolving `latest`/EOL upstream and any auto-apply are
-  later slices; this one is observe-and-recommend.
+- **Validate, but never mutate.** Upstream resolution (latest/EOL/migration) is in
+  scope; any **auto-apply is not** — this slice stays observe-and-recommend. The
+  apply path is a later slice, and it may only ever act on a *verified* finding.
 
 ## Anti-Patterns
 
-- **Re-deriving the version gap in prose.** The gap is a tested pure function;
-  call it.
+- **Re-deriving the version gap or the ranking in prose.** Both are tested pure
+  functions ([`version_gap.py`](lib/version_gap.py), [`rank.py`](lib/rank.py));
+  call them.
+- **Guessing a version or EOL when web is down.** Degrade to `unverified: no web
+  access` and suppress apply — never fabricate upstream data.
 - **Mutating the repo.** This slice is recommend-only — emit a report, change
   nothing.
 - **Hardcoding a file catalogue as the rule.** Pins are a concept; match the
