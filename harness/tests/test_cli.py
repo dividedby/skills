@@ -188,6 +188,42 @@ class PublishCommandTest(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertEqual(captured["body"], body)
 
+    def test_staleness_report_with_table_pipes_round_trips(self):
+        """A staleness-review body — code fences, unescaped quotes, AND a markdown
+        table whose cells are delimited by `|` pipes — must reach gh verbatim. The
+        pipes are the staleness-specific hazard: they'd be a JSON-escaping nightmare
+        inside the <output> string, which is exactly why the body rides the raw
+        <body> seam instead (see harness/prompts/staleness-audit.md)."""
+        body = (
+            "Scanned the Node toolchain pins in this repo.\n\n"
+            "| target | file | current | latest | gap | action |\n"
+            "| --- | --- | --- | --- | --- | --- |\n"
+            '| node | `.nvmrc` | "18" | unverified | unverified | bump to "latest" |\n'
+            "| node | `package.json` | >=18 | unverified | unverified | review |\n\n"
+            "```sh\nnode --version\n```\n\n"
+            "Every `action` is a recommendation — no apply path on this loop."
+        )
+        self._log(
+            '<output>\n{"status": "proposed", "title": "staleness-review: Node pins",'
+            ' "oneLineSummary": "2 findings", "candidatesConsidered": ["nvmrc", "engines"]}\n</output>\n'
+            f"<body>\n{body}\n</body>\n"
+        )
+        captured = {}
+
+        def fake_run(cmd, **kw):
+            if cmd[:3] == ["gh", "issue", "create"]:
+                path = cmd[cmd.index("--body-file") + 1]
+                with open(path, encoding="utf-8") as fh:
+                    captured["body"] = fh.read()
+                return SimpleNamespace(returncode=0, stdout="https://x/issues/9\n")
+            return SimpleNamespace(returncode=0)
+
+        with mock.patch("cli.subprocess.run", side_effect=fake_run):
+            code, _ = self._publish(["--label", "source:staleness-review"])
+        self.assertEqual(code, 0)
+        self.assertEqual(captured["body"], body)
+        self.assertIn("| target | file |", captured["body"])
+
     def test_skipped_files_nothing_and_summarises(self):
         self._log('<output>\n{"status": "skipped", "reason": "all quiet"}\n</output>\n')
         with mock.patch("cli.subprocess.run") as run:

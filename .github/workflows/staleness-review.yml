@@ -1,0 +1,120 @@
+name: Staleness Review
+
+on:
+  schedule:
+    # 11:37 UTC on the 1st of each month = 05:37/06:37 CT. Monthly cadence: a
+    # toolchain pin drifts on the order of weeks, not days, so a monthly pass is
+    # enough to catch a stale Node line without issue-spam. Off-the-hour to reduce
+    # GitHub cron delay.
+    - cron: "37 11 1 * *"
+  workflow_dispatch:
+
+# This workflow is the thin **workflow envelope** (ADR 0014): cron, permissions,
+# tokens, tool scoping, and an invoke body. The drift-prone logic — the stream-json
+# cost scrape and the <output>/<body> publish seam — lives in the fetched-fresh
+# **proposal-loop harness** (`harness/cli.py`), not inline here, so one fix reaches
+# every loop. The `/staleness-audit` skill is LOCAL to this repo, so the `ref: main`
+# checkout already brings it fresh each run (ADR 0008) — no external clone needed.
+# The loop is propose-only: contents:read + no Edit/Write + report-only prompt, so
+# the cron never applies a change.
+
+jobs:
+  staleness-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    concurrency:
+      group: staleness-review
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      issues: write
+
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
+      LABEL: source:staleness-review
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Install Claude Code
+        run: |
+          set -euo pipefail
+          curl -fsSL https://claude.ai/install.sh | bash
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Ensure provenance label exists
+        run: |
+          gh label create "$LABEL" \
+            --color "5319E7" \
+            --description "Reports filed by the automated staleness-review loop" \
+            >/dev/null 2>&1 || true
+
+      - name: Run staleness-review
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        run: |
+          set -euo pipefail
+          # The agent is read-only: it runs the local /staleness-audit skill
+          # report-only and emits a single <output> JSON block plus a raw <body>
+          # block (see prompt). It does NOT file the issue — the Publish step does,
+          # via the harness, which enforces the one-issue-per-run cap and the label
+          # in code. No Edit/Write tools are granted, and gh access is scoped to
+          # read-only subcommands, so the agent can neither mutate the repo nor file
+          # an issue itself (report-only on the cron, ADR 0011).
+          # --output-format stream-json --verbose: stream every event so a hung run
+          # leaves a trace (plain json buffers) and the final result event (with
+          # total_cost_usd) lands before claude exits — cost captured even on failure.
+          # pipefail propagates an agent failure; the Digest step still runs (always).
+          claude -p \
+            --output-format stream-json --verbose \
+            --permission-mode acceptEdits \
+            --allowedTools "Bash(gh issue list:*) Bash(gh issue view:*) Bash(gh search:*) Bash(gh api:*) Bash(git:*) Read Grep Glob" \
+            --append-system-prompt "$(cat harness/prompts/staleness-audit.md)" \
+            "Run the monthly staleness-review pass. Follow the instructions in the system prompt." \
+            | tee "$RUNNER_TEMP/agent.jsonl"
+
+      - name: Digest the run (result log + cost ledger)
+        if: always()
+        run: |
+          set -euo pipefail
+          # JSONL -> clean result text + the total_cost_usd=… ledger line the
+          # cross-repo cost hub scrapes. Best-effort by construction (exit 0 even
+          # with no result event), so it runs on a failed agent run too.
+          python3 harness/cli.py digest \
+            --jsonl "$RUNNER_TEMP/agent.jsonl" \
+            --result-out "$RUNNER_TEMP/agent.log" \
+            --cost-out "$RUNNER_TEMP/agent.cost"
+
+      - name: Publish report
+        id: publish
+        run: |
+          set -euo pipefail
+          # Parse <output>/<body>, file <=1 labeled issue, write the rich step
+          # summary, emit issue_url. Fails loudly (exit 1) on a missing/garbled
+          # block — the failure() Summarise step below then surfaces the raw log.
+          python3 harness/cli.py publish \
+            --log "$RUNNER_TEMP/agent.log" \
+            --label "$LABEL" \
+            --label-description "Reports filed by the automated staleness-review loop" \
+            --cost-file "$RUNNER_TEMP/agent.cost" \
+            --heading "Staleness review"
+
+      - name: Summarise a failed run
+        if: failure()
+        run: |
+          {
+            echo "## Staleness review"
+            echo ""
+            echo "**Cost:** $(cat "$RUNNER_TEMP/agent.cost" 2>/dev/null || echo "n/a")"
+            echo ""
+            echo "**No valid \`<output>\` block, or the agent crashed** — last result text:"
+            echo ""
+            echo '```'
+            tail -n 50 "$RUNNER_TEMP/agent.log" 2>/dev/null || echo "(no log produced)"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
