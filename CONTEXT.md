@@ -90,6 +90,25 @@ shared shape is documented in
 [`docs/onboarding/proposal-loop-harness.md`](./docs/onboarding/proposal-loop-harness.md).
 _Avoid_: bot, pipeline, automation.
 
+**Proposal-loop harness**:
+The shared, drift-prone logic every **Proposal loop** runs — the publish seam
+(parse the agent's `<output>`/`<body>`, file the one capped issue), the
+cost-ledger scrape, and the loop prompts. Lives in `dividedby/skills` `harness/`
+and is **fetched fresh each run**, on the same rail as the skill
+([ADR 0014](./docs/adr/0014-harness-is-fetched-fresh-only-the-workflow-envelope-is-vendored.md)),
+so one fix reaches every loop. Not the cron schedule or permissions — those are
+the **Workflow envelope**.
+_Avoid_: wiring, glue, scaffolding.
+
+**Workflow envelope** (a.k.a. stub):
+The thin, committed `.github/workflows/*.yml` that GitHub Actions must read from
+the default branch: `on:` cron, `permissions:`, secret/token names, tool
+scoping, and a clone-and-invoke body that fetches the **Proposal-loop harness**
+and calls it. It carries no loop logic — only the intentional per-repo
+customization a reconciler should never touch
+([ADR 0014](./docs/adr/0014-harness-is-fetched-fresh-only-the-workflow-envelope-is-vendored.md)).
+_Avoid_: workflow, wiring, config.
+
 **Local skill**:
 A skill that lives in a **Consumer**'s own repo, not published to
 `dividedby/skills`. Invokable only within that Consumer. The **supply-side
