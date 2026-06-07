@@ -1,10 +1,11 @@
 ---
 name: staleness-audit
 description: >
-  Audit a repo's pinned toolchain versions for staleness and emit a ranked,
-  recommend-only report — the complement to Dependabot's library bumps. Use when
-  asked to check whether a project's language/runtime pins (Node, and later the
-  wider ecosystem) have fallen behind, or to stand up a monthly staleness review.
+  Audit a repo's pinned toolchain versions for staleness and emit a ranked
+  report — the complement to Dependabot's library bumps. Safe in-major bumps are
+  auto-applied behind a verify gate; cross-major / EOL jumps stay recommendations.
+  Use when asked to check whether a project's language/runtime pins (Node, and
+  later the wider ecosystem) have fallen behind, or to stand up a monthly review.
 ---
 
 # Staleness Audit
@@ -18,12 +19,13 @@ pins** Dependabot leaves alone (`.nvmrc`, `engines`, language-version files).
 The skill has one spine, and every later capability thickens a station on it
 rather than adding a new path:
 
-**scan → classify → validate → render → register**
+**scan → classify → validate → apply → render → register**
 
 It walks the **Node toolchain pins**, resolves each finding against upstream to
-fill in latest version / EOL / migration, and emits a single urgency-ranked,
-**recommend-only** report. The audit observes and recommends — it never mutates
-the repo at this stage (auto-apply is a later slice).
+fill in latest version / EOL / migration, then — and only behind a verify gate —
+auto-applies the *safe* (in-major) bumps one at a time, reverting any that break
+the build, and emits a single urgency-ranked report of what was applied and what
+is still recommended.
 
 ## The spine
 
@@ -80,7 +82,58 @@ access`**, and **suppress any apply path** for it — an unverified finding is a
 recommendation only, never something a later slice may auto-apply. A partial
 audit that is honest about what it could not verify beats a confident wrong one.
 
-### Render — one urgency-ranked, recommend-only report
+### Apply — verify-gated, one safe bump at a time
+
+Only the **safe** bumps are auto-applied, and only behind a working verify gate.
+The decision "may this finding be auto-applied, and if not, what downgrade?" is a
+pure decision — it must not depend on model judgment, or a cross-major or EOL jump
+could slip into an unattended apply — so it lives as executable code:
+[`lib/apply_policy.py`](lib/apply_policy.py) (`decide(finding)`). Call it per
+finding; never re-derive the gate in prose. This station owns only the *mechanics*
+the agent executes around that decision.
+
+**Discover the verify command** in priority order, preferring the CI sequence so
+the gate matches what the project actually trusts as green:
+
+1. `package.json` `scripts` (`test`, `lint`, `build`, `typecheck` — run what's
+   defined).
+2. `Makefile` targets (`make test`, `make check`).
+3. CI verify steps — the commands a workflow runs on PRs (`.github/workflows/*`).
+4. A language default as a last resort (`npm test`, `npm ci && npm test`).
+
+Prefer the CI sequence: if CI runs `npm ci && npm run lint && npm test`, that is
+the verify command — a bump is only "green" if it passes what CI would.
+
+**If no verify command is discoverable, auto-apply is disabled** — there is no way
+to prove a bump is safe. Every finding downgrades to **`unverified: no verify
+command`** and the report is recommend-only. `apply_policy.decide` enforces this:
+with `verify_available=False` it returns that reason for *every* finding,
+regardless of gap.
+
+**With a verify command, apply one bump at a time.** For each finding, in urgency
+order, ask `apply_policy.decide`; act only on `"apply"`. Then, per bump:
+
+1. Edit the single owned pin file to the new in-major version — **one bump only**.
+2. Run the verify command.
+3. **Pass:** keep the edit; record the finding as **applied** (feed
+   `verify_passed=True`).
+4. **Fail:** **revert that single edit** and downgrade the finding to
+   **`recommended (verify failed)`** (`apply_policy.decide` returns exactly this
+   for an otherwise-eligible bump with `verify_passed=False`). Carry on to the next
+   bump — one failing bump never blocks the others.
+
+Never batch bumps: a batched verify can't tell you *which* bump broke. One edit,
+one verify, one keep-or-revert.
+
+**Never auto-apply a cross-major or EOL-driven jump.** A `major` gap and any
+past-EOL pin stay recommendations carrying the researched migration path — the safe
+upgrade runs *through* that migration, which is not a mechanical bump.
+`apply_policy.decide` returns `recommended: cross-major` / `recommended: eol jump`
+for these and never `"apply"`, even on a green verify. Likewise an **unverified**
+finding (web was down, per the validate station) is never applied — it has no
+trustworthy `latest` to bump to.
+
+### Render — one urgency-ranked report
 
 Emit a single markdown table, one row per finding, with these columns:
 
@@ -92,8 +145,15 @@ target | file | current | latest | gap | EOL | risk | action | migration
 web access` when the lookup could not run. Order the rows **most-urgent-first**
 via [`lib/rank.py`](lib/rank.py) — a pure, tested helper that ranks past-EOL pins
 to the top, then by gap severity — so the ordering is reproducible and not a
-per-run judgment call. Every `action` is a recommendation; there is **no apply
-path here**, and unverified findings are explicitly never auto-applied.
+per-run judgment call.
+
+Lead the report with an **Applied** section listing each bump the apply station
+applied and verified green — `target`, the `current → new` versions, the file, and
+the verify command that passed. This is the proof the maintainer reviews; if no
+bump was applied (or auto-apply was disabled), say so explicitly. The table below
+then carries the remaining findings, whose `action` is a recommendation —
+including any downgraded to `recommended (verify failed)` or, when no verify
+command was found, every finding as `unverified: no verify command`.
 
 ### Register
 
@@ -105,19 +165,24 @@ hook enforces it).
 
 - **Node toolchain pins only.** Python/Go/CI-matrix/container coverage is a later
   station on the same `scan` step, not a different skill.
-- **Validate, but never mutate.** Upstream resolution (latest/EOL/migration) is in
-  scope; any **auto-apply is not** — this slice stays observe-and-recommend. The
-  apply path is a later slice, and it may only ever act on a *verified* finding.
+- **Auto-apply only the safe, verified bumps.** In-major (patch/minor) bumps on
+  owned files are applied behind a verify gate, one at a time, with per-bump
+  revert. Cross-major / EOL jumps and any unverified finding are recommend-only —
+  the apply station may only ever act on a *verified* finding it can prove green.
 
 ## Anti-Patterns
 
-- **Re-deriving the version gap or the ranking in prose.** Both are tested pure
-  functions ([`version_gap.py`](lib/version_gap.py), [`rank.py`](lib/rank.py));
-  call them.
+- **Re-deriving the gap, the ranking, or the apply gate in prose.** All three are
+  tested pure functions ([`version_gap.py`](lib/version_gap.py),
+  [`rank.py`](lib/rank.py), [`apply_policy.py`](lib/apply_policy.py)); call them.
 - **Guessing a version or EOL when web is down.** Degrade to `unverified: no web
   access` and suppress apply — never fabricate upstream data.
-- **Mutating the repo.** This slice is recommend-only — emit a report, change
-  nothing.
+- **Auto-applying a cross-major or EOL jump.** These carry breaking-change
+  migration; they are recommendations, never mechanical bumps — let
+  `apply_policy.decide` gate it.
+- **Bumping without a verify gate, or batching bumps.** No discoverable verify
+  command means no apply at all. With one, apply a single bump per verify so a
+  failure pins to the bump that caused it; keep on pass, revert on fail.
 - **Hardcoding a file catalogue as the rule.** Pins are a concept; match the
   repo's real layout, with the common files as illustrative starting points
   (ADR 0002).
