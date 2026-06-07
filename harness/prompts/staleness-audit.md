@@ -12,8 +12,10 @@ do, you will create a duplicate.
 
 ## Task
 
-This loop runs the local `/staleness-audit` skill **report-only** against this
-repo and files its ranked report as a single issue per run.
+This loop runs the in-repo staleness-audit skill **report-only** against this
+repo and files its ranked report as a single issue per run. Read and follow the
+skill from its path in the checkout — `skills/engineering/staleness-audit/SKILL.md`
+— there is no slash command to invoke here; this prompt is the concrete wiring.
 
 1. List prior reports labelled `source:staleness-review` (both open and closed)
    so you do not re-file an unchanged report:
@@ -25,7 +27,7 @@ repo and files its ranked report as a single issue per run.
    If a recent open report already says exactly the same thing (the same pins, the
    same gaps), emit a `skipped` output rather than filing a duplicate.
 
-2. Invoke the `/staleness-audit` skill. It walks the repo's Node toolchain pins
+2. Follow `skills/engineering/staleness-audit/SKILL.md`. It walks the repo's Node toolchain pins
    (`.nvmrc` / `.node-version`, `engines.node` in `package.json`), classifies each
    gap via `skills/engineering/staleness-audit/lib/version_gap.py` (call it by
    path — do not re-derive the gap math in prose), and renders one ranked,

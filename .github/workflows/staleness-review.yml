@@ -59,8 +59,9 @@ jobs:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
         run: |
           set -euo pipefail
-          # The agent is read-only: it runs the local /staleness-audit skill
-          # report-only and emits a single <output> JSON block plus a raw <body>
+          # The agent is read-only: it follows the in-repo staleness-audit skill
+          # (skills/engineering/staleness-audit/SKILL.md) report-only and emits a
+          # single <output> JSON block plus a raw <body>
           # block (see prompt). It does NOT file the issue — the Publish step does,
           # via the harness, which enforces the one-issue-per-run cap and the label
           # in code. No Edit/Write tools are granted, and gh access is scoped to
