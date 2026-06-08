@@ -19,7 +19,14 @@ import time
 
 # --- config (edit per repo) -------------------------------------------------
 ROADMAP = "docs/plans/roadmap.md"
-STAMP = ".git/roadmap-drift-nudge.stamp"  # never committed; repoint if .git must stay pristine
+STAMP = ".git/roadmap-drift-nudge.stamp"  # never committed (lives under .git/).
+# If .git/ must stay pristine, repoint STAMP outside the repo — e.g. a temp path
+# keyed by a hash of this repo's location so concurrent repos don't collide:
+#   import hashlib, tempfile
+#   _key = hashlib.sha1(os.path.abspath(ROADMAP).encode()).hexdigest()[:16]
+#   STAMP = os.path.join(tempfile.gettempdir(), f"roadmap-drift-nudge-{_key}.stamp")
+# The stamp only throttles the nudge; losing it just means an extra check, so a
+# volatile temp dir is a safe home.
 THROTTLE_SECONDS = 6 * 60 * 60
 GH_TIMEOUT = 8
 ISSUE_COL: int | None = None   # override: zero-based issue-number column (None ⇒ auto-derive from header)

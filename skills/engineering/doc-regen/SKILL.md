@@ -22,6 +22,13 @@ drift (issues opened/closed via `gh`/web between sessions, which the commit guar
 structurally cannot see). This skill is the **reconcile half**: it repairs the
 drift the nudge reports, and stands the whole pattern up where it does not exist.
 
+The guard enforces freshness **by the issue-reference convention** — a commit
+must touch the roadmap only when its message carries a `#NN`. That makes it
+convention-deep, **not a guarantee**: omitting `#NN` is *both* the documented
+infra-commit escape *and* a silent bypass of the guard. The SessionStart
+drift-nudge is the actual integrity net — it catches the drift the guard let
+through. Wire and trust **both**; the guard alone is a nudge, not a lock.
+
 It is deliberately **propose/edit-for-review** on the repo and **additive-only**
 on issues — same governance posture as
 [ADR 0003](https://github.com/dividedby/skills/blob/main/docs/adr/0003-skill-improvement-workflows-propose-via-issues.md)
@@ -73,8 +80,16 @@ doc from ever falling through to (4).
 ## Bootstrap — stand the pattern up (turn-key)
 
 Run in a repo that has issues but no roadmap. Scaffold everything to the working
-tree for review (never committed), in one pass:
+tree for review (never committed):
 
+- **Checkpoint the judgment before writing.** Assigning waves / statuses / deps
+  is the same tier-2 judgment the Reconcile section says to *propose first, then
+  write* — and the hook wiring you are about to add will constrain every future
+  issue-referencing commit in the repo. So before scaffolding, **state the
+  proposed wave/census mapping and the hook wiring for review**, then write. The
+  rest of bootstrap is one pass to the working tree; only this judgment layer is
+  checkpointed first, so the operator reviews the mapping deliberately rather
+  than improvising a confirmation after the diff already exists.
 - **Drop the roadmap.** Copy [`templates/roadmap.md`](templates/roadmap.md) to
   `ROADMAP`, fill the project name, and **backfill one census row per open
   issue** from `gh issue list` — then run the reconcile tiers below to set
@@ -233,6 +248,23 @@ flags for the human). Tell the human to review `git diff <ROADMAP>` and commit.
   The additive-issue-write surface is for an interactive, watched run.
 - **Complements, does not replace, `roadmap-guard.py`.** The guard keeps the doc
   fresh *inside* a PR; this skill repairs *between-PR* drift.
+
+## Gotchas
+
+- **The guard matches command *text*, not intent.** `roadmap-guard.py` enforces
+  when the command string contains `git commit` *and* any `#NN` — it reads the
+  literal command, so it cannot tell "I am committing" from "my command merely
+  mentions a commit." A Bash call that *quotes* a commit (an `echo`/heredoc, a
+  test harness, a `--dry-run`, a script, or a commit message that embeds another
+  command string) can trip the guard even though nothing is being committed. If a
+  legitimate non-commit command is denied, restructure it so the literal
+  `git commit … #NN` text isn't present, or run it where the guard isn't wired.
+- **The guard you just wired gates *your own* next commits this session.** Once
+  bootstrap installs it, the very next issue-referencing commit in the session —
+  including the bootstrap commit itself — must touch the roadmap or omit the
+  `#NN`. This is correct behavior, but surprising: the operator wiring the guard
+  is its first subject. (Smoke-testing the guard is itself an example of the
+  text-match gotcha above — the smoke command contains `git commit … #NN`.)
 
 ## Anti-Patterns
 

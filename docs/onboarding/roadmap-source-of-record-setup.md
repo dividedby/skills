@@ -31,6 +31,41 @@ If a legacy planning doc already exists (an older `ROADMAP.md`, a TODO/tracking
 doc), `/doc-regen` instead **migrates** it — proposing a mapping into the canonical
 census before reshaping, preserving your prose.
 
+### Migrate: a worked example
+
+The two legacy shapes you'll meet most are a `## TODO` checklist (in a README or
+a planning doc) and an exported GitHub **Projects** board. Migrate maps each
+legacy entry to a census row and each legacy state to the closest canonical
+`Status`. A checklist like:
+
+```md
+## TODO
+- [x] #41 wire the auth middleware
+- [ ] #42 rate-limit the login route   (blocked on #41)
+- [ ] #43 add the audit-log table       — needs design
+```
+
+maps to the canonical census (and `/doc-regen` *proposes* this mapping before
+writing it):
+
+| # | Issue | Wave | Status | Owner | Skill(s) | Deps | Notes |
+| - | ----- | ---- | ------ | ----- | -------- | ---- | ----- |
+| 41 | wire the auth middleware | W1 | **Done** | agent | — | — | — |
+| 42 | rate-limit the login route | W1 | **Next** | agent | `/tdd` | _#41_ | — |
+| 43 | add the audit-log table | W1 | **Parked** | mixed | — | — | needs design |
+
+Legacy → canonical `Status` mapping used above:
+
+- `- [x]` (checked) → **Done** (and the issue is expected closed on GitHub).
+- `- [ ]` with no blocker → **Next**/**Backlog** per the doc's ordering.
+- `- [ ]` annotated "blocked on #N" → **Blocked**, with `#N` in `Deps`
+  (_italic_ once that dep closes).
+- `- [ ]` annotated "needs design"/"someday"/"wontfix" → **Parked**.
+
+A Projects board migrates the same way: each card is a row, and the board's
+columns (`Todo`/`In progress`/`Blocked`/`Done`) map to `Backlog`-or-`Next` /
+`Next` / `Blocked` / `Done`. Freeform card notes carry into the `Notes` cell.
+
 ## What bootstrap creates, and why
 
 Everything repo-specific is three things, hoisted to a config block at the top of
@@ -77,6 +112,24 @@ active hooks in this repo; bootstrap copies them into a consumer.
 A project-scope hook may redeclare a global guard for CI/AFK parity
 ([ADR 0013](../adr/0013-project-scope-hooks-may-redeclare-global-guards-for-ci.md)).
 
+### Footgun: branch-guard + a compound `checkout -b … && commit`
+
+If the consumer repo *also* runs a **branch-guard** (a PreToolUse hook that
+refuses commits on `main`), do **not** create the branch and commit in one
+compound command. A `git checkout -b feature && <commit>` is read by the
+PreToolUse hook *before* the command runs, so it sees the **current** branch
+(still `main`) — the not-yet-executed `checkout -b` doesn't help, and the commit
+is denied. **Create the branch in a separate step from the first commit:**
+
+```sh
+git checkout -b feature      # step 1: switch branches
+# … stage your changes …
+git commit -m "… #NN"        # step 2: now on `feature`, the branch guard passes
+```
+
+This pairing (a roadmap guard plus a branch guard) is a very common combo, so
+it's a near-guaranteed stumble if you chain the two steps.
+
 ## Manual setup (if you'd rather not let the skill scaffold)
 
 1. Copy [`templates/roadmap.md`](../../skills/engineering/doc-regen/templates/roadmap.md)
@@ -85,10 +138,28 @@ A project-scope hook may redeclare a global guard for CI/AFK parity
    indices / status vocab), `chmod +x`.
 3. Wire `settings.json` (snippet above).
 4. `npx skills@latest add dividedby/skills` → pick `doc-regen`.
-5. **Smoke-test:** run the parser test
-   (`python3 .claude/hooks/roadmap-drift-nudge.test.py`) to confirm your column
-   config; run the nudge by hand (`echo '{}' | .claude/hooks/roadmap-drift-nudge.py`)
-   and confirm it reports your real drift; run `/doc-regen` once to reconcile.
+5. **Smoke-test both halves:**
+   - *Nudge:* run the parser test
+     (`python3 .claude/hooks/roadmap-drift-nudge.test.py`) to confirm your column
+     config; run it by hand (`echo '{}' | .claude/hooks/roadmap-drift-nudge.py`)
+     and confirm it reports your real drift.
+   - *Guard:* run its test (`python3 .claude/hooks/roadmap-guard.test.py`), then
+     confirm the enforcement half end-to-end with a deny case and an allow case
+     (`<commit>` = your literal `git commit` invocation):
+
+     ```sh
+     # deny: issue-ref commit that doesn't touch the roadmap → exit 2
+     printf '{"tool_input":{"command":"<commit> -m \\"fix #999\\""}}' | .claude/hooks/roadmap-guard.py; echo $?
+     # allow: non-issue commit → exit 0
+     printf '{"tool_input":{"command":"<commit> -m \\"chore: x\\""}}' | .claude/hooks/roadmap-guard.py; echo $?
+     ```
+
+     (The deny case only fires when the roadmap isn't already staged/changed in
+     the branch — run it from a clean branch. And note this smoke command itself
+     contains `git commit … #999`, so if the guard is *already* wired in your
+     session it may gate the very call you use to test it — see the SKILL.md
+     Gotchas.)
+   - Finally, run `/doc-regen` once to reconcile.
 
 ## Posture
 
