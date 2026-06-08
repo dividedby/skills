@@ -65,9 +65,13 @@ Dispatch each work item to a sub-agent (the existing Agent/sub-agent
 mechanism — **no new runtime**) that loads only that item's inputs and
 returns a compact result. The orchestrator never sees the raw work, only the
 distilled return. This is **within-item** hygiene: per-item bloat is discarded
-with the sub-agent. (A CI-cron runtime gives this for free — a fresh
-`claude -p` per run is a firewall per item; a single interactive session or a
-monolithic run does not, so the sub-agent supplies the boundary.) See
+with the sub-agent. In a session — the Claude Code CLI, interactive or under
+`/loop` — that sub-agent is an **in-session sub-agent** (the Agent tool, no new
+process), *not* a `claude -p`: you're already in a session, so use it. The
+`claude -p` firewall-per-item is the **headless-process** case, where there is no
+session to dispatch within (CI, cron, runners) — there a fresh process per run
+gives the boundary for free; a single interactive session or a monolithic run
+does not, so the in-session sub-agent supplies it. See
 [FIREWALL-PATTERNS.md](FIREWALL-PATTERNS.md).
 
 ### 3. Budget checkpoint between items

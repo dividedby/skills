@@ -59,6 +59,27 @@ can be a published skill; the run-book is only the schedule and the per-repo
 wiring around it.
 _Avoid_: skill, script, job, automation.
 
+**In-session sub-agent**:
+A sub-agent dispatched via the Agent tool **inside the live Claude Code
+process** — subscription-covered, no new process. The mechanism a loop or
+firewall reaches for **when a session already exists** (interactive or `/loop`):
+it supplies the per-item context boundary the persistent session doesn't give for
+free. Preferred over a **Headless process** whenever a session is available; the
+fallback only fits where none is. Distinct from the `/loop`/`/schedule`/CI-cron
+*runtime selection* ([ADR 0012](./docs/adr/0012-autonomous-loop-and-context-firewall-are-two-composing-skills.md)) — this is *how* a work item runs, not *which runtime* schedules it.
+_Avoid_: child process, claude -p, Task, headless agent.
+
+**Headless process**:
+A fresh `claude -p` / Agent SDK process spawned with **no interactive session** —
+the mechanism for environments that have none (CI, cron, runners), where each
+invocation is its own context boundary (a firewall per run) for free. The
+**fallback when there is no session**, never the default inside one — an agent
+running in the Claude Code CLI is *in* a session and should use an
+**In-session sub-agent** instead. Reserving it for the no-session case also
+avoids drawing on the Agent SDK credit (see #58) — but that cost is secondary;
+the routing is environment-fit first.
+_Avoid_: headless runtime, batch agent, claude -p (generically), detached runtime.
+
 **Knowledge mirror**:
 A public, read-only repository holding a verbatim copy of `agent-research`'s
 synthesized `knowledge/` tree — the credential-free read surface that consumers

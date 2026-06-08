@@ -44,6 +44,15 @@ Match the runtime to the run; teach selection, not a new mechanism:
 - **One-shot serialized burn-down** — a finite run to completion over a fixed
   backlog (how #64→#66 ran). Stops when the backlog empties.
 
+**Route per-item work by where you're running.** When a session exists — you're
+in the Claude Code CLI, interactive or under `/loop` — firewall each item with an
+**in-session sub-agent** (the Agent tool, no new process). Reach for a **headless
+process** (a fresh `claude -p`) only where there is *no* session — CI, cron,
+runners — which is also where it earns the iteration-as-context-boundary for free.
+The CLI agent is *in* a session: don't spawn `claude -p` from it. (Preserving the
+Agent SDK credit, #58, is a secondary reason; the routing is environment-fit
+first.)
+
 ---
 
 ## What this skill owns
