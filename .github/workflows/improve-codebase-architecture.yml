@@ -59,6 +59,13 @@ jobs:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
         run: |
           set -euo pipefail
+          # The system prompt is assembled from two parts (ADR 0016): the
+          # fetched-fresh scope-free SKELETON in harness/prompts/ (the shared
+          # proposal discipline + the lockstep <output>/<body> schema) plus this
+          # repo's local Repo-context INCLUDE. Scope is load-bearing — a skeleton
+          # with no scope reviews blindly — so a missing include HARD-FAILS the run,
+          # like the test -f on the skill below.
+          test -f .github/arch-review-context.md
           # The agent is read-only: it explores, decides, and emits a single
           # <output> JSON block plus a raw <body> block (see prompt). It does NOT
           # file the issue — the Publish step does, via the harness, which enforces
@@ -72,7 +79,7 @@ jobs:
             --output-format stream-json --verbose \
             --permission-mode acceptEdits \
             --allowedTools "Bash(gh issue list:*) Bash(gh issue view:*) Bash(gh search:*) Bash(gh api:*) Bash(git:*) Read Grep Glob WebSearch WebFetch" \
-            --append-system-prompt "$(cat harness/prompts/improve-codebase-architecture.md)" \
+            --append-system-prompt "$(cat harness/prompts/improve-codebase-architecture.md; printf '\n\n'; cat .github/arch-review-context.md)" \
             "Run the daily architecture-review pass. Follow the instructions in the system prompt." \
             | tee "$RUNNER_TEMP/agent.jsonl"
 

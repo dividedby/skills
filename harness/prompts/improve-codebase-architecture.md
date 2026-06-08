@@ -11,45 +11,22 @@ prompt. Do **not** run `gh issue create`; if you do, you will create a duplicate
 
 ## Scope
 
-**Primary scope:** the `SKILL.md` files and their supporting markdown
-under `skills/<bucket>/<name>/`. That is what this repo ships. Look
-here first.
+**What to review, which disciplines bind, and what is out of scope are defined in
+the _Repo context_ block appended to this prompt below.** Read it before step 2 —
+it is this repo's contract: primary scope, fallback scope, out-of-scope, the
+binding disciplines/ADRs, and any repo-specific emit hints. This skeleton carries
+no scope of its own; without that appended block you would be reviewing blindly.
 
-**Fallback scope (only if `skills/` is quiet):** if you cannot find a
-high-confidence candidate inside `skills/`, you may expand to the
-repo's meta-layer: `CLAUDE.md`, `CONTEXT.md`, `README.md`, files
-under `docs/`, `.claude-plugin/plugin.json`, and the workflow files
-under `.github/workflows/` (including this prompt). The same
-proposal rules apply: concrete before/after, sources, no
-speculation. You may propose edits to the workflow prompt itself — a
-human reviews before merge.
+**No-op is acceptable.** If after checking the scope defined there nothing is
+high-confidence, emit a `skipped` output (schema below) and stop. A forced finding
+is worse than no finding.
 
-**No-op is acceptable.** If after checking both scopes nothing is
-high-confidence, emit a `skipped` output (schema below) and stop. A
-forced finding is worse than no finding. Issue #12 is a worked
-example of what "reaching for something to file" looks like.
-
-## Ecosystem context — read before proposing
-
-The skills in this repo **extend** Matt Pocock's skills plugin at
-<https://github.com/mattpocock/skills>. They are intended to be installed
-alongside it, not as a replacement.
-
-Before declaring any cross-reference broken, **read Matt's repo** (use
-`WebFetch` on the GitHub URL or `gh api repos/mattpocock/skills/...`).
-Skills you will find there include `grill-with-docs`, `to-prd`,
-`to-issues`, `tdd`, `diagnose`, `triage`, `prototype`, `handoff`,
-`write-a-skill`, `caveman`, `grill-me`, `improve-codebase-architecture`.
-
-A link or reference like `../grill-with-docs/ADR-FORMAT.md` from inside
-`skills/engineering/frontend-design/` is **not broken** — it points to
-the sibling skill in Matt's plugin, which is co-installed at runtime.
-Cross-plugin links rendering as broken on GitHub is the expected cost
-of the extension pattern, not a defect.
-
-You may only propose a `defect:` issue for a missing reference if you have
-verified the target does not exist in either this repo **or**
-mattpocock/skills.
+**Self-edit affordance.** You may propose edits to this repo's own in-repo files,
+including the `.github/arch-review-context.md` that carries the appended Repo
+context (a human reviews before merge). You may **not** propose edits to this
+skeleton prompt itself: it is fetched fresh from the upstream `dividedby/skills`
+harness, and this loop has no channel to file a proposal against that repo — such
+an edit would land un-actionable in this repo's tracker.
 
 ## Task
 
@@ -74,12 +51,10 @@ mattpocock/skills.
    opportunity. You are reading the code not just to understand it but to
    spot the move that makes a real improvement land cleanly.
 
-3. **Research before proposing.** The skills in this repo
-   (`frontend-design`, `software-design`) encode evolving best practice.
-   Before settling on a candidate, use `WebSearch` / `WebFetch` to check
-   current thinking on the area you're proposing to deepen — design
-   tokens, component patterns, module/seam boundaries, testing strategy,
-   accessibility standards, etc. Cite 1–3 sources in the issue body so a
+3. **Research before proposing.** Before settling on a candidate, use
+   `WebSearch` / `WebFetch` to check current thinking on the area you're
+   proposing to deepen — module/seam boundaries, testing strategy, and the
+   patterns relevant to that area. Cite 1–3 sources in the issue body so a
    future reader can see the basis for the proposal. Prefer primary
    sources (specs, framework docs, well-known authors) over listicles.
 

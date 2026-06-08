@@ -17,6 +17,33 @@ first**; this doc is only the deltas.
 - **Input:** none to fetch — the input *is* the checked-out repo. The skill reads
   `CONTEXT.md` + `docs/adr/` for domain language; without them it still runs, just
   blind to the repo's vocabulary.
+- **Split prompt: fetched-fresh skeleton + local Repo-context include**
+  ([ADR 0016](../adr/0016-arch-review-prompt-is-skeleton-plus-local-repo-context-include.md)).
+  Unlike `apply-agent-research`'s single env-parametrized prompt, this loop's
+  per-repo variation *is content* — what to review, which disciplines bind — which
+  has no env representation. So the prompt is two parts joined by the envelope:
+  - The **skeleton** (`harness/prompts/improve-codebase-architecture.md`, fetched
+    fresh) carries everything shared: the unattended/publish-seam framing, the
+    proposal discipline (Task steps 1–6), and the lockstep `<output>`/`<body>`
+    schema. It is **scope-free** — its `## Scope` section forward-references the
+    appended Repo-context block.
+  - The **include** (`.github/arch-review-context.md`, vendored per repo) carries
+    the irreducibly repo-specific substance: primary/fallback/out-of-scope review
+    scope and the binding disciplines/ADRs (plus any repo-specific emit hints). It
+    names its own path so the agent knows it is editable.
+  - The **envelope concatenates** them into the system prompt:
+    `--append-system-prompt "$(cat harness/prompts/improve-codebase-architecture.md; printf '\n\n'; cat .github/arch-review-context.md)"`.
+    The agent never consumes the include's path itself — the envelope does the
+    concatenation — which is why the path is a fixed convention, **not** an env var.
+  - **A missing include hard-fails the run.** The envelope `test -f`s
+    `.github/arch-review-context.md` before invoking the agent, exactly like the
+    existing `test -f …/SKILL.md` gate. Scope is load-bearing: a scope-free
+    skeleton reviews blindly, so adopting this loop *requires* shipping the
+    include. (This removes the harness's graceful degradation when a repo lacks
+    `CONTEXT.md` — an intentional trade.)
+  - **Self-edit affordance is local-only:** the agent may propose edits to its own
+    in-repo files including the include, but **not** the upstream-owned skeleton
+    (this loop has no channel to file against `dividedby/skills`).
 - **No cross-repo writes**, so **no `SKILLS_TRACKER_TOKEN`** — only
   `CLAUDE_CODE_OAUTH_TOKEN`. `permissions: contents: read, issues: write` and
   `GITHUB_TOKEN` suffice.
@@ -47,20 +74,27 @@ first**; this doc is only the deltas.
 ## Reference
 
 `dividedby/skills` → `.github/workflows/improve-codebase-architecture.yml` is a
-working **envelope** instance; the prompt + publish seam it calls live in the
-fetched-fresh harness (`harness/prompts/improve-codebase-architecture.md`,
-`harness/cli.py`). Copy the envelope, change only the skill path and label if
-porting to another repo. Note the home-repo envelope reads `harness/` straight
-from its own `ref: main` checkout; a downstream repo clones `dividedby/skills`
-into a temp dir for it — see [`proposal-loop-harness.md`](./proposal-loop-harness.md).
+working **envelope** instance; the scope-free skeleton + publish seam it calls
+live in the fetched-fresh harness (`harness/prompts/improve-codebase-architecture.md`,
+`harness/cli.py`), and its own scope lives in the local
+`.github/arch-review-context.md` include. Copy the envelope, change the skill path
+and label, and ship your own include if porting to another repo. Note the
+home-repo envelope reads `harness/` straight from its own `ref: main` checkout; a
+downstream repo clones `dividedby/skills` into a temp dir for it — see
+[`proposal-loop-harness.md`](./proposal-loop-harness.md).
 
 ## To propagate to another repo
 
-1. Copy the workflow envelope (it clones the harness fresh; nothing else to vendor).
-2. Ensure the `CLAUDE_CODE_OAUTH_TOKEN` secret exists.
-3. (Recommended) add a `CONTEXT.md` + `docs/adr/` so proposals speak the repo's
+1. Copy the workflow envelope (it clones the harness fresh).
+2. **Write your repo's `.github/arch-review-context.md` include** — the one file
+   you must vendor. Give it your primary/fallback/out-of-scope review scope and
+   the disciplines/ADRs the loop must respect; have it name its own path so the
+   agent knows it is editable. Without it the run hard-fails on the envelope's
+   `test -f`. Use this repo's include as a template.
+3. Ensure the `CLAUDE_CODE_OAUTH_TOKEN` secret exists.
+4. (Recommended) add a `CONTEXT.md` + `docs/adr/` so proposals speak the repo's
    own language.
-4. `workflow_dispatch` once to verify it files ≤1 issue (or skips), then let the
+5. `workflow_dispatch` once to verify it files ≤1 issue (or skips), then let the
    cron take over.
 
 A repo can run **both** this loop and the
