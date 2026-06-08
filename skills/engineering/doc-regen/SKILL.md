@@ -82,11 +82,23 @@ tree for review (never committed), in one pass:
 - **Wire the two hooks.** Copy [`templates/roadmap-guard.py`](templates/roadmap-guard.py)
   (PreToolUse) and [`templates/roadmap-drift-nudge.py`](templates/roadmap-drift-nudge.py)
   (SessionStart) into `.claude/hooks/`, `chmod +x`, and **edit each file's config
-  block** to the repo's roadmap path and census column indices. Ship
-  [`templates/roadmap-drift-nudge.test.py`](templates/roadmap-drift-nudge.test.py)
-  beside the nudge and run it to confirm the parser config matches the table.
-- **Register the hooks in `settings.json`** (the snippet is in the onboarding
-  runbook). A project-scope hook may redeclare a global guard for CI/AFK parity
+  block** to the repo's roadmap path. The nudge auto-derives its census columns
+  from the table header, so most repos need no column edits — set `ISSUE_COL` /
+  `STATUS_COL` only to override, and `DONE_TOKEN` (emoji-aware, e.g. `✅`) to the
+  repo's done marker. In `roadmap-guard.py`, set `BASE_BRANCH` to the branch(es)
+  the PR merges into — a **list** for two-hop repos (feature→staging→main), so
+  the roadmap counts as touched if it changed vs any base.
+- **Ship both `.test.py` files and run them** beside the hooks
+  ([`roadmap-drift-nudge.test.py`](templates/roadmap-drift-nudge.test.py) confirms
+  the parser config matches your table;
+  [`roadmap-guard.test.py`](templates/roadmap-guard.test.py) pins the commit
+  guard). Run with `python3 -B` (bytecode disabled) and add `__pycache__/` to
+  `.gitignore` as a bootstrap step — both prevent the self-test from leaking a
+  `__pycache__/` dir into the tracked `.claude/hooks/` diff the human is about to
+  review and commit.
+- **Register the hooks in `settings.json`** (a `PreToolUse` matcher on `Bash`
+  for the guard, a `SessionStart` entry for the nudge). A project-scope hook
+  may redeclare a global guard for CI/AFK parity
   ([ADR 0013](../../../docs/adr/0013-project-scope-hooks-may-redeclare-global-guards-for-ci.md)).
 
 Bootstrap writes files but **commits nothing** — finish by telling the human to

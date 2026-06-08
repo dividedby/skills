@@ -9,6 +9,9 @@ roadmap's column layout (run the file directly — the `.test.py` name is not a
 
 Stdlib only (ADR 0004). The hook's filename has hyphens, so it is loaded by
 path rather than imported by name."""
+import sys
+sys.dont_write_bytecode = True  # don't leak __pycache__/ into a consumer's tracked hooks dir
+
 import importlib.util
 import os
 import unittest
@@ -40,8 +43,61 @@ class TestParseCensus(unittest.TestCase):
         self.assertNotIn("issue", nudge.parse_census(SAMPLE))
 
     def test_strips_markdown_emphasis_from_status(self):
-        rows = nudge.parse_census("| 7 | x | W1 | **Next** | a | b | c | d |")
+        table = ("| # | Issue | Wave | Status | a | b | c | d |\n"
+                 "| 7 | x | W1 | **Next** | a | b | c | d |")
+        rows = nudge.parse_census(table)
         self.assertEqual(rows[7], "next")
+
+    def test_auto_derives_columns_from_default_header(self):
+        # With ISSUE_COL/STATUS_COL left None, the columns are read from the header.
+        self.assertEqual(nudge.resolve_cols(SAMPLE), (0, 3))
+
+
+# A real-world divergent census: 9 columns, status LAST (index 8), `✅` = done,
+# and the issue column lives at index 1 under an `Issue` header (not `#`).
+EMOJI_SAMPLE = """\
+## Master census
+| Row | Issue | Wave | Owner | Skill(s) | Deps | Cluster | Notes | Status |
+| --- | ----- | ---- | ----- | -------- | ---- | ------- | ----- | ------ |
+| a | #12 | W1 | agent | `/tdd` | — | core | — | **Next** |
+| b | #34 | W1 | agent | `/tdd` | — | core | — | ✅ |
+"""
+
+
+class TestAutoDeriveAndEmoji(unittest.TestCase):
+    def test_derives_non_default_columns_from_header(self):
+        # Issue under "Issue" header at index 1; "Status" header last at index 8.
+        self.assertEqual(nudge.resolve_cols(EMOJI_SAMPLE), (1, 8))
+
+    def test_parses_emoji_status_census(self):
+        rows = nudge.parse_census(EMOJI_SAMPLE)
+        self.assertEqual(rows, {12: "next", 34: "✅"})
+
+    def test_emoji_done_token_marks_closed_as_not_stale(self):
+        rows = nudge.parse_census(EMOJI_SAMPLE)
+        states = {12: "open", 34: "closed"}
+        original = nudge.DONE_TOKEN
+        nudge.DONE_TOKEN = "✅"
+        try:
+            stale, unfiled = nudge.compute_drift(rows, states)
+        finally:
+            nudge.DONE_TOKEN = original
+        self.assertEqual(stale, [])  # 34 is ✅ in census, GitHub-closed — in sync
+        self.assertEqual(unfiled, [])
+
+    def test_explicit_override_wins_over_header(self):
+        original = (nudge.ISSUE_COL, nudge.STATUS_COL)
+        nudge.ISSUE_COL, nudge.STATUS_COL = 1, 8
+        try:
+            self.assertEqual(nudge.resolve_cols(EMOJI_SAMPLE), (1, 8))
+            self.assertEqual(nudge.parse_census(EMOJI_SAMPLE), {12: "next", 34: "✅"})
+        finally:
+            nudge.ISSUE_COL, nudge.STATUS_COL = original
+
+    def test_no_matching_header_yields_empty(self):
+        no_header = "| a | b |\n| 12 | next |"
+        self.assertIsNone(nudge.resolve_cols(no_header))
+        self.assertEqual(nudge.parse_census(no_header), {})
 
 
 class TestComputeDrift(unittest.TestCase):
