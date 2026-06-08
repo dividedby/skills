@@ -173,3 +173,13 @@ a `skill-promotion` issue with the same capability-key / `+1` / leak-guard
 machinery as a skill-request but inverse semantics. See
 [`docs/design/skill-promotion-flow.md`](./docs/design/skill-promotion-flow.md).
 _Avoid_: skill donation, upstreaming, contribution.
+
+**Rejection record**:
+One structured file under `.out-of-scope/` per **explicitly-refused** capability,
+stating why it was declined and the **bar to revisit** — the demonstrated gap that
+would reopen the decision. The *already-refused* counterpart to an **ADR**: an ADR
+records a decision made, a rejection record a decision made *not* to act. It is a
+baseline input to a **Proposal loop** (read directly, never re-propose a capability
+whose bar-to-revisit is unmet) and the durable home for a `wontfix` rationale that
+issue bodies only cross-reference.
+_Avoid_: wontfix doc, rejected-skill note, out-of-scope file.

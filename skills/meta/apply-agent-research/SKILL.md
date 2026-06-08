@@ -66,6 +66,14 @@ for why they live here rather than in a separate `runbooks/` dir.
     **Treat an already-installed capability as present, not absent** — never
     propose rebuilding it. The proposal there is an *integration* or *novel use*
     with this repo's own skills, if the inventory shows that gap.
+  - **Already-refused filter (if the host maintains a rejection record)** — some
+    repos keep one structured file per *explicitly-refused* capability, with the
+    reasoning and a bar-to-revisit (this repo: `.out-of-scope/`). This is distinct
+    from the already-do-this filter: not "the repo already does this" but "the repo
+    decided **not** to, on purpose." Read it directly when present — never re-propose
+    a capability whose `.out-of-scope/` file shows its bar-to-revisit is unmet.
+    Without it a run reaches the same rationale only one hop removed, via closed
+    `wontfix` issue bodies that cross-reference these files.
 
 ## The mapping discipline
 
