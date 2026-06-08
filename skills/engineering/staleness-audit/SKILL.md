@@ -274,9 +274,10 @@ hook enforces it).
 
 ## Anti-Patterns
 
-- **Re-deriving the gap, the ranking, or the apply gate in prose.** All three are
-  tested pure functions ([`version_gap.py`](lib/version_gap.py),
-  [`rank.py`](lib/rank.py), [`apply_policy.py`](lib/apply_policy.py)); call them.
+- **Re-deriving the gap, the EOL-pastness check, the ranking, or the apply gate in
+  prose.** All four are tested pure functions ([`version_gap.py`](lib/version_gap.py),
+  [`eol.py`](lib/eol.py), [`rank.py`](lib/rank.py),
+  [`apply_policy.py`](lib/apply_policy.py)); call them.
 - **Guessing a version or EOL when web is down.** Degrade to `unverified: no web
   access` and suppress apply — never fabricate upstream data.
 - **Auto-applying a cross-major, EOL, or installer-grepped finding.** Cross-major
