@@ -100,8 +100,11 @@ jobs:
           set -euo pipefail
           # stream-json + tee so the final `result` event (carrying total_cost_usd)
           # reaches the log before claude exits — cost is captured even on failure.
+          # --model is pinned (default sonnet) so cost is deterministic and the
+          # cost-hub projection holds — see "Pin --model" below.
           claude -p \
             --output-format stream-json --verbose \
+            --model sonnet \
             --permission-mode acceptEdits \
             --allowedTools "<scoped to what the loop needs>" \
             --append-system-prompt "$(cat "$HARNESS/prompts/<loop>.md")" \
@@ -214,6 +217,19 @@ that caused it ([ADR 0004](../adr/0004-runbook-helpers-are-python-stdlib.md)).
   `result` event lands in the log before `claude` exits; cost is then captured even
   on a failed run. The hub reads logs via a least-privilege `Actions: Read` PAT it
   holds — see the onboarding doc's manual steps for the token the human must mint.
+- **Pin `--model` — default `sonnet`.** Always pass an explicit `--model`; never
+  rely on the `CLAUDE_CODE_OAUTH_TOKEN` default. An unpinned loop runs whatever the
+  subscription default happens to be, which can silently flip (e.g. to opus) and
+  blow the budget without a code change, and makes the cost hub's projection
+  unreliable (its per-run repricing assumes a known model). **`sonnet` is the
+  default choice** for these propose-only loops — the #161 cost/quality benchmark
+  found model is the cost lever but barely moves output quality for synthesis/
+  apply/audit-shaped work; reserve `opus` for a loop that is *demonstrably*
+  quality-critical (in the corpus, only agent-research's downstream-read
+  `synthesize` keeps opus). This pairs with the cost-ledger line above: pinned model
+  + emitted cost is what keeps an onboarded loop inside the hub's $100/mo Agent SDK
+  credit budget (`dividedby/agent-research` `docs/cost-tracking.md`, ADR 0020 cost
+  amendment).
 
 ## Required secrets
 

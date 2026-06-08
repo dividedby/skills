@@ -65,8 +65,8 @@ pushes to the default branch.
 
 Start from the [harness skeleton](./proposal-loop-harness.md) (fetch-fresh,
 `contents: read` / `issues: write`, off-the-hour cron + `workflow_dispatch`,
-scoped tools, step-summary with the `total_cost_usd=…` cost-ledger line). Then
-layer on the Consumer specifics:
+scoped tools, **pinned `--model` (default `sonnet`)**, step-summary with the
+`total_cost_usd=…` cost-ledger line). Then layer on the Consumer specifics:
 
 1. **Fetch the skill fresh + hard-gate its guard.** Clone `dividedby/skills`
    shallow, `cp -R skills/meta/apply-agent-research` into `~/.claude/skills/`.
