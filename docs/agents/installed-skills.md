@@ -27,7 +27,12 @@ Maintainer-maintained; update it when the global install set changes:
 ```
 ls ~/.claude/skills/                         # globally installed skills
 python3 -m json.tool ~/.claude/plugins/installed_plugins.json   # installed plugins
+claude --version                             # built-in CLI skills ship with the binary
 ```
+
+The built-in CLI skills are bundled in the Claude Code binary, not files under
+`~/.claude/`, so they can't be `ls`-ed — read them off the session's available-skill
+list and re-check after a `claude` upgrade.
 
 ## Globally installed skills
 
@@ -36,13 +41,24 @@ Matt Pocock's skill suite (`mattpocock/skills`, upstream of this repo's
 in `~/.claude/skills/`:
 
 `apply-agent-research`, `audit-project-claude`, `audit-project-harness`,
-`caveman`, `diagnose`, `find-skills`, `frontend-design`, `grill-me`,
-`grill-with-docs`, `handoff`, `improve-codebase-architecture`,
-`init-project-claude`, `init-project-harness`, `playwright-cli`, `prototype`,
-`setup-matt-pocock-skills`, `software-design`, `tdd`, `to-issues`, `to-prd`,
-`triage`, `write-a-skill`, `zoom-out`.
+`autonomous-loop`, `caveman`, `context-firewall`, `diagnose`, `doc-regen`,
+`find-skills`, `frontend-design`, `grill-me`, `grill-with-docs`, `handoff`,
+`improve-codebase-architecture`, `init-project-claude`, `init-project-harness`,
+`playwright-cli`, `prototype`, `setup-matt-pocock-skills`, `software-design`,
+`staleness-audit`, `tdd`, `to-issues`, `to-prd`, `triage`, `write-a-skill`,
+`writing-beats`, `writing-fragments`, `writing-shape`, `zoom-out`.
 
 ## Installed plugins
 
 From `claude-plugins-official` (`anthropics/claude-plugins-official`):
 `code-review`, `commit-commands`, `typescript-lsp`.
+
+## Built-in CLI skills
+
+Shipped with the Claude Code binary itself (not `~/.claude/` files), available in
+every session: `claude-api`, `code-review`, `fewer-permission-prompts`, `init`,
+`keybindings-help`, `loop`, `review`, `run`, `schedule`, `security-review`,
+`simplify`, `update-config`, `verify`. These cover capabilities a remote run would
+not otherwise see — notably `verify` (run-the-app verification of a change) and
+`run` (launch/drive the app), the nearest neighbors to any release-QA or
+verification skill-request.
