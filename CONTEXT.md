@@ -117,9 +117,26 @@ The shared, drift-prone logic every **Proposal loop** runs — the publish seam
 cost-ledger scrape, and the loop prompts. Lives in `dividedby/skills` `harness/`
 and is **fetched fresh each run**, on the same rail as the skill
 ([ADR 0014](./docs/adr/0014-harness-is-fetched-fresh-only-the-workflow-envelope-is-vendored.md)),
-so one fix reaches every loop. Not the cron schedule or permissions — those are
-the **Workflow envelope**.
+so one fix reaches every loop. A loop's prompt is fetched whole when it is
+portable (`apply-agent-research`, parametrized by env —
+[ADR 0015](./docs/adr/0015-apply-agent-research-prompt-is-consumer-portable-via-env.md));
+for `improve-codebase-architecture` the harness holds only the scope-free
+**skeleton**, paired with a per-repo **Repo-context include**
+([ADR 0016](./docs/adr/0016-arch-review-prompt-is-skeleton-plus-local-repo-context-include.md)).
+Not the cron schedule or permissions — those are the **Workflow envelope**.
 _Avoid_: wiring, glue, scaffolding.
+
+**Repo-context include**:
+The local, vendored half of a **split** proposal-loop prompt: a per-repo file
+(conventionally `.github/arch-review-context.md`) carrying the irreducibly
+repo-specific substance — primary/fallback/out-of-scope review scope and the
+binding disciplines/ADRs — that has no env representation. The **Workflow
+envelope** concatenates it onto the fetched-fresh scope-free **skeleton** to form
+the system prompt. Used where a loop's per-repo variation *is content* (what to
+review, which disciplines), not the env-expressible wiring that lets
+`apply-agent-research` stay a single portable prompt
+([ADR 0016](./docs/adr/0016-arch-review-prompt-is-skeleton-plus-local-repo-context-include.md)).
+_Avoid_: prompt fragment, local prompt, scope file.
 
 **Workflow envelope** (a.k.a. stub):
 The thin, committed `.github/workflows/*.yml` that GitHub Actions must read from
