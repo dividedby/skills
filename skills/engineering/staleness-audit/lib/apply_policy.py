@@ -34,6 +34,14 @@ def decide(finding):
       lower-confidence source (a grep over `scripts/`, `README*`, `Makefile` —
       an installer hint, not a declared pin file). The *location* of such a pin
       is a guess, so it is never safe to mutate mechanically.
+    - ``is_floor`` — ``True`` when the pin is a constraint the repo *imposes on
+      its consumers* (a published floor: `engines`, `devEngines`, the lower bound
+      of `requires-python`, peer deps) rather than a version the repo *satisfies*
+      for itself (`.nvmrc`, `.tool-versions`, the `go` directive, CI matrix, image
+      tags). Raising a floor narrows who may consume the package — a breaking
+      change the *consumers* feel and the local verify gate cannot see — so a
+      floor is never a mechanical bump in either direction; its remediation is a
+      human support-policy call, not an apply.
 
     Returns one of:
 
@@ -41,6 +49,9 @@ def decide(finding):
       available, and (if a verify result is in) verify passed.
     - ``"recommended: low confidence (installer)"`` — the finding came from a
       best-effort grep, not a declared pin file; recommend-only, never applied.
+    - ``"recommended: floor (consumer-imposed)"`` — the pin is a published floor
+      the repo imposes on its consumers; raising it drops support and lowering it
+      is a support-policy call, so it is recommend-only in either direction.
     - ``"unverified: no verify command"`` — no verify command at all; the whole
       audit drops to recommendations.
     - ``"recommended: cross-major"`` — a major gap; never auto-applied.
@@ -56,14 +67,20 @@ def decide(finding):
     source: a best-effort grep match has no reliable owned file to mutate, so it is
     never auto-applied no matter how clean its gap, EOL, ownership, or verify state
     look. Surfacing the installer reason ahead of everything else makes that
-    source-distrust explicit in the report. Next, absence of a verify command
-    disables apply globally. Then the never-apply ceilings (cross-major, EOL) — an
-    EOL pin is a recommendation even if its gap happens to be in-major, because the
-    safe path runs *through* the EOL'd major's migration. Ownership and an
-    applicable gap come next; the verify result is read last.
+    source-distrust explicit in the report. ``is_floor`` is decided next, for the
+    same shape of reason: it distrusts the *direction* of the bump, not its target.
+    A floor's "behind latest" gap is not staleness — raising it sheds consumers —
+    so no gap, EOL, ownership, or green verify may ever promote a floor into an
+    unattended mutation. Next, absence of a verify command disables apply globally.
+    Then the never-apply ceilings (cross-major, EOL) — an EOL pin is a
+    recommendation even if its gap happens to be in-major, because the safe path
+    runs *through* the EOL'd major's migration. Ownership and an applicable gap
+    come next; the verify result is read last.
     """
     if finding.get("low_confidence") is True:
         return "recommended: low confidence (installer)"
+    if finding.get("is_floor") is True:
+        return "recommended: floor (consumer-imposed)"
     if not finding.get("verify_available"):
         return "unverified: no verify command"
     if finding.get("eol_passed") is True:

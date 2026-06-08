@@ -6,7 +6,8 @@ from apply_policy import decide
 
 
 def f(gap="patch", eol_passed=None, file_owned=True,
-      verify_available=True, verify_passed=None, low_confidence=None):
+      verify_available=True, verify_passed=None, low_confidence=None,
+      is_floor=None):
     return {
         "gap": gap,
         "eol_passed": eol_passed,
@@ -14,6 +15,7 @@ def f(gap="patch", eol_passed=None, file_owned=True,
         "verify_available": verify_available,
         "verify_passed": verify_passed,
         "low_confidence": low_confidence,
+        "is_floor": is_floor,
     }
 
 
@@ -85,6 +87,38 @@ class TestDecide(unittest.TestCase):
         )
         self.assertEqual(
             decide(f(gap="patch", file_owned=False, low_confidence=True)),
+            "recommended: low confidence (installer)",
+        )
+
+    def test_floor_is_recommend_only_even_when_otherwise_eligible(self):
+        # an in-major, owned floor with a green verify would normally be "apply" —
+        # raising a consumer-imposed floor is never a mechanical bump
+        self.assertEqual(
+            decide(f(gap="patch", file_owned=True, verify_available=True,
+                     verify_passed=True, is_floor=True)),
+            "recommended: floor (consumer-imposed)",
+        )
+
+    def test_floor_dominates_the_verify_gate_and_ceilings(self):
+        # decided ahead of the missing-verify disable and the cross-major/EOL
+        # ceilings, so the report names the floor reason rather than burying it
+        self.assertEqual(
+            decide(f(gap="patch", verify_available=False, is_floor=True)),
+            "recommended: floor (consumer-imposed)",
+        )
+        self.assertEqual(
+            decide(f(gap="major", is_floor=True)),
+            "recommended: floor (consumer-imposed)",
+        )
+        self.assertEqual(
+            decide(f(gap="minor", eol_passed=True, is_floor=True)),
+            "recommended: floor (consumer-imposed)",
+        )
+
+    def test_low_confidence_outranks_floor(self):
+        # both are source/shape distrust; low_confidence is decided first
+        self.assertEqual(
+            decide(f(gap="patch", low_confidence=True, is_floor=True)),
             "recommended: low confidence (installer)",
         )
 

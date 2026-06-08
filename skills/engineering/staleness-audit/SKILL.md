@@ -41,12 +41,31 @@ a shop may have its own dotfile). Read each, extract the pinned string verbatim,
 and record `(target, file, current)` — what is pinned, where, and to what. Scan
 only; resolving "latest" is a later station (it stays blank here).
 
-**Node** — `.nvmrc` / `.node-version` (the whole file is the pin); `engines.node`
-in `package.json` (a semver range like `>=18`, `^20.11.0`).
+**Two roles: a version you satisfy vs a floor you impose.** Tag each finding with
+its role, because the two have *opposite* freshness goals and the apply gate keys
+on it:
 
-**Python** — `.python-version`; `requires-python` in `pyproject.toml` or
-`setup.cfg`; `runtime.txt` (a `python-3.x` line); the `python_version` / `envlist`
-hints in `tox.ini`.
+- **satisfy** — the version the repo itself builds or runs on (`.nvmrc`,
+  `.tool-versions`, the `go` directive, a CI matrix entry, a `FROM` tag). Here
+  fresh means *toward latest*; falling behind is the staleness. This is the
+  default role and the one the rest of the spine is written for.
+- **impose** — a *floor* the repo publishes for its **consumers** to satisfy
+  (`engines.node` / `engines.npm`, `devEngines`, the lower bound of
+  `requires-python`, peer-dependency ranges). A floor's goal is the **opposite**:
+  keep it as *low* as the repo can still support, so the most consumers can use
+  it. "Behind latest" is therefore **not** staleness for a floor — raising it
+  sheds consumers. Record it `is_floor`; its disposition is decided differently at
+  classify, validate, and apply.
+
+**Node** — `.nvmrc` / `.node-version` (the whole file is the pin, a *satisfy*
+version); `engines.node` / `engines.npm` / `devEngines` in `package.json` (a
+semver range like `>=18`, `^20.11.0` — an `impose` **floor**, not a version the
+repo runs on).
+
+**Python** — `.python-version` (*satisfy*); `requires-python` in `pyproject.toml`
+or `setup.cfg` (its **lower bound** is an `impose` floor; an upper cap is a
+support ceiling, not staleness); `runtime.txt` (a `python-3.x` line, *satisfy*);
+the `python_version` / `envlist` hints in `tox.ini`.
 
 **Go** — the `go` directive in `go.mod` (`go 1.21`).
 
@@ -114,6 +133,18 @@ EOL dataset (e.g. `endoflife.date`) over a blog. Resolve `latest`, feed it to
 [`lib/version_gap.py`](lib/version_gap.py) for the real gap, and record
 `eol_passed` per finding.
 
+**For an `impose` floor, the gap against `latest` is not the signal — two other
+things are.** First, is the floor **past EOL**? A floor of `node >=16` once Node
+16 is dead means the repo advertises support for a runtime that gets no security
+fixes; that is a real recommendation (to *raise* the floor off the dead major).
+Second, is the floor **higher than what the repo itself satisfies** — does it
+require consumers to be *newer* than the repo's own `.nvmrc` / `.tool-versions` /
+CI matrix? That is the bleeding-edge-on-others defect (a `devEngines:
+pnpm ^11` no one can install, an `engines.node >=22` while the repo tests on 20):
+the floor demands more of consumers than the project itself runs, with no reason.
+Flag it as a recommendation to **lower** the floor to what the repo actually
+supports. Both are recommend-only — neither is a mechanical bump (see Apply).
+
 **Web is a dependency, not a guarantee — degrade, never guess.** When web access
 is unavailable or a lookup fails, do **not** invent a version or EOL date. Emit
 the finding with `latest`/`EOL`/`migration` left as **`unverified: no web
@@ -172,6 +203,16 @@ for these and never `"apply"`, even on a green verify. Likewise an **unverified*
 finding (web was down, per the validate station) is never applied — it has no
 trustworthy `latest` to bump to.
 
+**Never auto-apply a floor.** A pin tagged `is_floor` at scan — `engines`,
+`devEngines`, a `requires-python` lower bound, a peer-dependency range — is a
+constraint the repo imposes on its **consumers**, not a version it runs on.
+Raising it sheds consumers and lowering it is a support-policy judgment; either
+way the local verify gate proves nothing about downstream impact. Pass
+`is_floor=True` and `apply_policy.decide` returns `recommended: floor
+(consumer-imposed)` and never `"apply"`, regardless of gap, EOL, ownership, or
+verify result — decided right after `low_confidence`, because like it the floor is
+distrusted by *shape* (the bump's direction), not by target.
+
 **Never auto-apply a best-effort installer finding.** A pin grepped out of
 `scripts/`, `README*`, or `Makefile` (marked `low_confidence` at scan) has no
 reliable owned file to mutate — the match may be stale docs or an example. Pass
@@ -201,8 +242,10 @@ the verify command that passed. This is the proof the maintainer reviews; if no
 bump was applied (or auto-apply was disabled), say so explicitly. The table below
 then carries the remaining findings, whose `action` is a recommendation —
 including any downgraded to `recommended (verify failed)`, any installer match as
-`recommended: low confidence (installer)`, or, when no verify command was found,
-every finding as `unverified: no verify command`.
+`recommended: low confidence (installer)`, any floor as `recommended: floor
+(consumer-imposed)` (and, for an over-constrained floor, say so in `migration`:
+"lower to <what the repo runs>"), or, when no verify command was found, every
+finding as `unverified: no verify command`.
 
 Close the report with a **Deferred to Dependabot** note: library dependency bumps
 are out of scope by design. If the scan found no Dependabot/Renovate config,
@@ -223,9 +266,11 @@ hook enforces it).
   scope (Deferred to Dependabot).
 - **Auto-apply only the safe, verified bumps.** In-major (patch/minor) bumps on
   owned files are applied behind a verify gate, one at a time, with per-bump
-  revert. Cross-major / EOL jumps, any unverified finding, and any low-confidence
-  installer finding are recommend-only — the apply station may only ever act on a
-  *verified* finding from a declared pin file that it can prove green.
+  revert. Cross-major / EOL jumps, any unverified finding, any low-confidence
+  installer finding, and any consumer-imposed floor (`engines`, `devEngines`,
+  `requires-python` lower bound, peer ranges) are recommend-only — the apply
+  station may only ever act on a *verified, satisfy-role* finding from a declared
+  pin file that it can prove green.
 
 ## Anti-Patterns
 
@@ -238,6 +283,12 @@ hook enforces it).
   and EOL jumps carry breaking-change migration; an installer hint has no reliable
   owned file. All three are recommendations, never mechanical bumps — let
   `apply_policy.decide` gate it (`low_confidence` for installer matches).
+- **Bumping a consumer-imposed floor toward latest.** `engines`, `devEngines`, a
+  `requires-python` lower bound, and peer ranges are floors the repo imposes on
+  others — raising one toward "latest" is not remediation, it sheds consumers. A
+  floor is `is_floor` (recommend-only, both directions); its real signals are
+  past-EOL and being *higher than what the repo itself runs* (the
+  bleeding-edge-on-others defect — recommend lowering it).
 - **Treating a non-version tag as a pin.** `FROM scratch`, an untagged image, or
   `:latest` declares no version to fall behind — skip it, don't flag a phantom gap.
 - **Flagging a library dependency.** A package version in `dependencies` /
