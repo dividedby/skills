@@ -24,8 +24,8 @@ drift the nudge reports, and stands the whole pattern up where it does not exist
 
 It is deliberately **propose/edit-for-review** on the repo and **additive-only**
 on issues — same governance posture as
-[ADR 0003](../../../docs/adr/0003-skill-improvement-workflows-propose-via-issues.md)
-and [ADR 0017](../../../docs/adr/0017-doc-regen-write-posture.md): it edits the
+[ADR 0003](https://github.com/dividedby/skills/blob/main/docs/adr/0003-skill-improvement-workflows-propose-via-issues.md)
+and [ADR 0017](https://github.com/dividedby/skills/blob/main/docs/adr/0017-doc-regen-write-posture.md): it edits the
 working tree and writes issue *comments*, but never commits, never closes an
 issue, and never rewrites an issue body. A human reviews `git diff` and decides.
 
@@ -96,10 +96,52 @@ tree for review (never committed), in one pass:
   `.gitignore` as a bootstrap step — both prevent the self-test from leaking a
   `__pycache__/` dir into the tracked `.claude/hooks/` diff the human is about to
   review and commit.
-- **Register the hooks in `settings.json`** (a `PreToolUse` matcher on `Bash`
-  for the guard, a `SessionStart` entry for the nudge). A project-scope hook
-  may redeclare a global guard for CI/AFK parity
-  ([ADR 0013](../../../docs/adr/0013-project-scope-hooks-may-redeclare-global-guards-for-ci.md)).
+- **Register the hooks in `settings.json`** — a `PreToolUse` matcher on `Bash`
+  for the guard and a `SessionStart` entry for the nudge. **Merge into the
+  existing arrays; never clobber.** `hooks.PreToolUse` and `hooks.SessionStart`
+  are very likely already populated, so *append* these entries to whatever is
+  there rather than overwriting the keys. The canonical shape (illustrative —
+  paths/matcher follow the repo's conventions, ADR 0002):
+
+  ```jsonc
+  {
+    "hooks": {
+      "PreToolUse": [
+        // ── append this; keep every existing PreToolUse entry ──
+        {
+          "matcher": "Bash",                       // guard only inspects Bash git commits
+          "hooks": [
+            { "type": "command", "command": "python3 -B .claude/hooks/roadmap-guard.py" }
+          ]
+        }
+      ],
+      "SessionStart": [
+        // ── append this; keep every existing SessionStart entry ──
+        {
+          "hooks": [                                // no matcher: SessionStart entries don't take one
+            { "type": "command", "command": "python3 -B .claude/hooks/roadmap-drift-nudge.py" }
+          ]
+        }
+      ]
+    }
+  }
+  ```
+
+  - **Matcher presence/absence.** The `PreToolUse` guard **needs** a matcher
+    (`"Bash"`) so it only fires on shell commands; the `SessionStart` nudge takes
+    **no** matcher — omit the key, don't set it to `""`.
+  - **If a matching `Bash` PreToolUse entry already exists**, add the guard
+    command to that entry's `hooks` array rather than adding a second `"Bash"`
+    matcher block.
+  - **Redeclaring a global guard is allowed for CI/AFK parity.** Hooks are
+    additive across scopes, but a project-scope hook **may** redeclare a global
+    guard when the run lacks `~/.claude/` (the AFK/CI `claude -p` case), because
+    the project copy is then the *only* one that runs
+    ([ADR 0013](https://github.com/dividedby/skills/blob/main/docs/adr/0013-project-scope-hooks-may-redeclare-global-guards-for-ci.md)).
+  - **Verify before handing off:** validate the JSON (`python3 -m json.tool
+    .claude/settings.json`), run the parser self-test
+    (`python3 -B .claude/hooks/roadmap-drift-nudge.test.py`), and run the nudge
+    once against the real roadmap to confirm it parses the live table.
 
 Bootstrap writes files but **commits nothing** — finish by telling the human to
 review `git diff` and the new untracked files, then commit.
@@ -161,7 +203,7 @@ touches issues** — "looks done" is the human's call, by construction.
 As reconcile repairs the roadmap, keep the *issues* honest too, since the roadmap
 points the working agent at them for authoritative scope (and the work-the-roadmap
 protocol reads the full issue **including comments**). The write surface is
-strictly additive ([ADR 0017](../../../docs/adr/0017-doc-regen-write-posture.md)):
+strictly additive ([ADR 0017](https://github.com/dividedby/skills/blob/main/docs/adr/0017-doc-regen-write-posture.md)):
 - **Add/update a comment** when a dep closes and unblocks an issue, when routing
   or sequencing changes, or to record a tier-2 slotting decision — so the next
   agent reads it on the issue, not just in the roadmap.
@@ -181,10 +223,14 @@ flags for the human). Tell the human to review `git diff <ROADMAP>` and commit.
 - **Never commits.** Edits the working tree for review; the human commits.
 - **Additive on issues; report-only on tier-3.** Comments and dep notes only;
   no close, no body rewrite; tier-3 never writes at all.
-- **Loop-suppression.** If ever wired into an unattended loop, the issue-write
-  surface is suppressed → propose-only, mirroring `staleness-audit`'s apply
-  station ([ADR 0017](../../../docs/adr/0017-doc-regen-write-posture.md)). The
-  additive-issue-write surface is for an interactive, watched run.
+- **Loop-suppression is envelope-enforced, not self-detected.** When wired into
+  an unattended loop, the issue-write surface is suppressed → propose-only — but
+  the skill does **not** check an env var or flag itself to decide this. The
+  *workflow envelope* enforces it: the loop wrapper grants no issue-write tools
+  and runs a propose-only prompt, so the additive write surface is structurally
+  unavailable. Same posture as `staleness-audit`'s apply station and
+  [ADR 0017](https://github.com/dividedby/skills/blob/main/docs/adr/0017-doc-regen-write-posture.md).
+  The additive-issue-write surface is for an interactive, watched run.
 - **Complements, does not replace, `roadmap-guard.py`.** The guard keeps the doc
   fresh *inside* a PR; this skill repairs *between-PR* drift.
 
