@@ -64,6 +64,20 @@ class TestComputeDrift(unittest.TestCase):
         states = {12: "open", 34: "closed"}
         self.assertEqual(nudge.compute_drift(rows, states), ([], []))
 
+    def test_aggregate_covered_excluded_from_unfiled(self):
+        # Children tracked by an aggregate/epic row (no bare-integer row of their
+        # own) must not read as "unfiled" once listed in AGGREGATE_COVERED.
+        rows = {12: "next"}
+        states = {12: "open", 298: "open", 299: "open", 99: "open"}
+        original = nudge.AGGREGATE_COVERED
+        nudge.AGGREGATE_COVERED = {298, 299}
+        try:
+            stale, unfiled = nudge.compute_drift(rows, states)
+        finally:
+            nudge.AGGREGATE_COVERED = original
+        self.assertEqual(stale, [])
+        self.assertEqual(unfiled, [99])  # 298/299 suppressed; 99 is genuine drift
+
 
 if __name__ == "__main__":
     unittest.main()

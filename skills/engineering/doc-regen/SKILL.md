@@ -31,20 +31,44 @@ issue, and never rewrites an issue body. A human reviews `git diff` and decides.
 
 ## The front door — detect state, then route
 
-The first thing every run does is decide *which mode* it is in, by inspecting the
-configured roadmap path (`ROADMAP`, default `docs/plans/roadmap.md` — the same
-constant the hooks use):
+The first thing every run does is decide *which mode* it is in. **Resolve the
+roadmap path before routing — never assume the default**, because a census may
+already live at a non-default path, and concluding bootstrap against a hardcoded
+default silently writes a *second*, duplicate census (the skill's one
+correctness sin — see Anti-Patterns):
 
-1. **Canonical roadmap present** (the path exists and parses as a census) →
-   **reconcile**. The common case; the rest is just keeping it honest.
-2. **No roadmap, but a legacy planning doc exists** (an older `ROADMAP.md`, a
-   `docs/plan*`, a TODO/tracking doc, a project board exported to markdown) →
-   **migrate**. Adapt the existing artifact into the canonical format.
-3. **Nothing** → **bootstrap**. Stand the whole pattern up from scratch.
+0. **Discover the path first.** Do not trust the `docs/plans/roadmap.md` default
+   blindly. (a) If a hook is already installed
+   (`.claude/hooks/roadmap-guard.py` / `roadmap-drift-nudge.py`), read the
+   `ROADMAP` value from its config block — that is the authoritative path for
+   this repo. (b) If no census sits at that path, **glob for an existing census**
+   anywhere in the repo (`**/*.md` plus the repo root) and detect it by its
+   **census signature**: a markdown table whose header carries *both* an
+   issue-number column (`#`/`Issue`) and a `Status` column. Only after this
+   discovery comes up empty may you conclude bootstrap.
 
-Distinguishing (2) from (3) is a judgment call — look for any human-maintained
+Then route:
+
+1. **Canonical roadmap present at the configured path** (it exists and parses as
+   a census) → **reconcile**. The common case; the rest is just keeping it honest.
+2. **A census exists at a non-default path** (found by the signature glob above)
+   → **relocate, never duplicate**. `git mv` it to the canonical default
+   `docs/plans/roadmap.md`, update every reference (hook config blocks,
+   `settings.json` hook paths, any in-repo links), then **reconcile in place**.
+   The decision is *relocate to canonical*, not adopt-in-place — one path, one
+   census. Do not write a fresh roadmap alongside the one you found.
+3. **No census anywhere, but a legacy planning doc exists** (an older `ROADMAP.md`,
+   a `docs/plan*`, a TODO/tracking doc, a project board exported to markdown that
+   does *not* match the census signature) → **migrate**. Adapt the existing
+   artifact into the canonical format.
+4. **Nothing — no census signature anywhere, no legacy doc** → **bootstrap**.
+   Stand the whole pattern up from scratch.
+
+Distinguishing (3) from (4) is a judgment call — look for any human-maintained
 list of work before concluding there is nothing to adapt. When unsure, treat it
-as migrate and *propose* the mapping rather than overwriting silently.
+as migrate and *propose* the mapping rather than overwriting silently. The
+census-signature glob in step 0 is what keeps an already-canonical-but-misplaced
+doc from ever falling through to (4).
 
 ## Bootstrap — stand the pattern up (turn-key)
 
@@ -106,8 +130,14 @@ Deterministic repairs that need no judgment, applied directly:
 Newly-opened issues with no census row: slot each in with an **inferred** wave,
 cluster, owner, skill routing, and deps. Because these are judgment calls, **state
 the proposed row and the reasoning first**, then write it. Do **not** flag a child
-that is already aggregate-covered by an epic/PRD parent row as "unfiled" — the
-nudge over-reports those by design (it can't see aggregate coverage).
+that is already aggregate-covered by an epic/PRD parent row as "unfiled". The
+nudge can't see aggregate coverage from the table alone, so when you create an
+aggregate row, **add its child issue numbers to the nudge's `AGGREGATE_COVERED`
+config set** (in `roadmap-drift-nudge.py`) — otherwise the nudge cries "unfiled"
+on those children every session and trains the operator to ignore it. The list is
+explicit and auditable by design; a future enhancement may parse `#NN–#NN`
+enumerations out of aggregate rows, but that magic isn't built (it can mask
+genuinely-unfiled issues).
 
 ### Tier 3 — code cross-check (report-only, never write)
 For each open row, look for working-tree evidence the fix already landed (a merged
@@ -159,6 +189,10 @@ flags for the human). Tell the human to review `git diff <ROADMAP>` and commit.
   reviews `git diff` and commits.
 - **Re-deriving the census schema from a hardcoded shape.** Parse by the hook's
   configured column index so the skill adapts to the repo's table.
+- **Writing a duplicate roadmap.** Never conclude bootstrap against the hardcoded
+  default path without first running the census-signature discovery (front-door
+  step 0). A census found at a non-default path is *relocated* to canonical, never
+  duplicated.
 - **Restating issue scope in the roadmap.** The census routes and orders; the
   issue body (plus comments) is authoritative for scope (ADR 0002 — principle,
   not a fixed column layout).
