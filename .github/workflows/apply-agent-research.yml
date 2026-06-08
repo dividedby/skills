@@ -68,7 +68,14 @@ jobs:
       - name: Run apply-agent-research
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # The portable prompt (ADR 0015) reads its wiring from env. This is the
+          # HOST instance, so SKILLS_TRACKER_TOKEN stays UNSET (host mode: drains
+          # skill-requests locally, no cross-repo writes) and PRIVATE_MARKERS is
+          # empty (this repo is public — the guard's structural checks suffice).
           MIRROR_DIR: ${{ runner.temp }}/knowledge-mirror
+          SKILL_DIR: ${{ github.workspace }}/skills/meta/apply-agent-research
+          SKILLS_SRC: ${{ github.workspace }}
+          PRIVATE_MARKERS: ""
         run: |
           set -euo pipefail
           # Bash stays unscoped: the one-proposal GATE is still invoked via a pipe
@@ -96,7 +103,7 @@ jobs:
             --allowedTools "Bash Read Grep Glob" \
             --disallowedTools "Bash(gh issue create:*) Bash(gh issue comment:*)" \
             --append-system-prompt "$(cat harness/prompts/apply-agent-research.md)" \
-            "Run the scheduled apply-agent-research pass. The knowledge mirror is already cloned at ${MIRROR_DIR} (read-only). Follow the instructions in the system prompt." \
+            "Run the scheduled apply-agent-research pass. SKILLS_TRACKER_TOKEN is unset, so this is the HOST instance (host mode). The knowledge mirror is cloned at ${MIRROR_DIR} (read-only), the published-skill catalog + installed-skill snapshot are at ${SKILLS_SRC} (the checkout itself), and the installed skill is at ${SKILL_DIR}. PRIVATE_MARKERS is empty (public repo). Follow the instructions in the system prompt." \
             | tee "$RUNNER_TEMP/agent.jsonl"
 
       - name: Digest the run (result log + cost ledger)

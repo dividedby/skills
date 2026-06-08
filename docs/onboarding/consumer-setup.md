@@ -82,6 +82,27 @@ layer on the Consumer specifics:
    `harness/prompts/apply-agent-research.md` for the system prompt and
    `harness/cli.py digest` for the cost-ledger line — no separate fetch.
 
+   **`cat` that prompt as the system prompt — do not vendor a consumer-specific
+   copy.** The prompt is a single, env-parametrized artifact that serves both the
+   host and every Consumer ([ADR 0015](../adr/0015-apply-agent-research-prompt-is-consumer-portable-via-env.md));
+   you wire its behavior entirely through the env your stub exports (next), not by
+   forking the prompt. The Consumer envelope must export this contract:
+
+   | Env var | Consumer value | Prompt use |
+   |---|---|---|
+   | `MIRROR_DIR` | the mirror clone (or native `knowledge/` if `IS_KNOWLEDGE_SOURCE`) | KB read |
+   | `SKILL_DIR` | the install dir, e.g. `~/.claude/skills/apply-agent-research` | `python3 $SKILL_DIR/lib/cli.py {gate,file,comment}` |
+   | `SKILLS_SRC` | the fresh `dividedby/skills` clone root | published-skill catalog + installed-skills snapshot |
+   | `PRIVATE_MARKERS` | this repo's private markers (space-separated; empty if fully public) | expanded to repeatable `--marker` on every guarded `file`/`comment` |
+   | `SKILLS_TRACKER_TOKEN` | the cross-repo PAT (below) | **role discriminator** (set → consumer mode) + cross-repo GH auth |
+
+   Setting `SKILLS_TRACKER_TOKEN` is what puts the prompt in **consumer mode** (the
+   cross-repo `skill-request`/`skill-promotion` channels); the skills-repo host
+   leaves it unset and runs the same prompt in host mode. `PRIVATE_MARKERS` is the
+   load-bearing leak-safety input on a **private** Consumer filing to the **public**
+   tracker — set it (step 7); an empty value falls back to the guard's structural
+   checks only.
+
 2. **Knowledge input.**
    - `IS_KNOWLEDGE_SOURCE = no` → shallow-clone the **public mirror**
      `dividedby/agent-research-knowledge` (credential-free, read-only). Never

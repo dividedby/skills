@@ -146,8 +146,16 @@ The drift-prone logic no longer lives on this surface, so the contract changes
 rarely; when it does, it is a **manual rollout** across the ~3 owned repos.
 
 - **`harness/prompts/<loop>.md`** — the loop's system prompt, `cat` by the stub.
-  The prompt and the `publish` parser share the `<output>`/`<body>` contract and
-  version together, which is why the prompt rides the harness rail.
+  Two reasons a prompt rides the harness rail rather than being vendored per repo:
+  for a **publish-seam** loop (arch-review, staleness) the prompt and the `publish`
+  parser share the `<output>`/`<body>` contract and version together; for
+  **`apply-agent-research`** the prompt is instead **parametrized by env** and serves
+  both the host and every Consumer from one source, so the rail preserves "one fix
+  reaches every loop" ([ADR 0015](../adr/0015-apply-agent-research-prompt-is-consumer-portable-via-env.md)).
+  That prompt reads its wiring from the env the stub exports — `MIRROR_DIR`,
+  `SKILL_DIR`, `SKILLS_SRC`, `PRIVATE_MARKERS`, and `SKILLS_TRACKER_TOKEN` (whose
+  presence is the host/consumer role discriminator). The exact contract and what a
+  Consumer stub must export is in [`consumer-setup.md`](./consumer-setup.md).
 - **`python3 harness/cli.py digest --jsonl F --result-out F --cost-out F`** —
   every loop. Reduces the `stream-json` JSONL to the last result event's `.result`
   (whole, multi-line preserved) and the `total_cost_usd=…  duration_ms=…
