@@ -22,6 +22,11 @@ GH_TIMEOUT = 8
 ISSUE_COL = 0   # zero-based census column holding the issue number
 STATUS_COL = 3  # zero-based census column holding the status
 DONE_TOKEN = "done"  # substring (lowercased) in the status cell that means closed/done
+# Issue numbers tracked by an aggregate/epic row (e.g. `| K3 | … filed #298–#304 |`)
+# rather than one bare-integer row each. The parser can't see aggregate coverage,
+# so without this list those children read as "unfiled" on every session forever.
+# Curate this when you create an aggregate row (see the runbook note).
+AGGREGATE_COVERED: set[int] = set()
 # ---------------------------------------------------------------------------
 
 
@@ -51,7 +56,8 @@ def compute_drift(rows: dict[int, str], states: dict[int, str]):
     stale_closed = sorted(n for n, st in rows.items()
                           if states.get(n) == "closed" and DONE_TOKEN not in st)
     unfiled_open = sorted(n for n, st in states.items()
-                          if st == "open" and n not in rows)
+                          if st == "open" and n not in rows
+                          and n not in AGGREGATE_COVERED)
     return stale_closed, unfiled_open
 
 
