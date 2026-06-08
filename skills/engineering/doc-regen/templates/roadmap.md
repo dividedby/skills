@@ -52,4 +52,6 @@ no other guidance is needed. Follow it top to bottom:
 ## Self-update protocol
 Any PR that opens/advances/closes an issue updates that issue's census row
 (minimally `Status`, plus `Deps` on anything it unblocks). Closed → `Status: Done`
-(keep the row). Enforced by `roadmap-guard.py`; out-of-band drift repaired by `/doc-regen`.
+(keep the row). In-branch freshness enforced by `roadmap-guard.py`; out-of-band
+drift (issues changed via `gh`/web between sessions) is *detected* by the
+SessionStart `roadmap-drift-nudge.py` and *repaired* by `/doc-regen`.
