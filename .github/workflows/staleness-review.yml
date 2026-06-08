@@ -73,6 +73,7 @@ jobs:
           # pipefail propagates an agent failure; the Digest step still runs (always).
           claude -p \
             --output-format stream-json --verbose \
+            --model sonnet \
             --permission-mode acceptEdits \
             --allowedTools "Bash(gh issue list:*) Bash(gh issue view:*) Bash(gh search:*) Bash(gh api:*) Bash(git:*) Read Grep Glob WebSearch WebFetch" \
             --append-system-prompt "$(cat harness/prompts/staleness-audit.md)" \

@@ -2,8 +2,11 @@ name: Improve Codebase Architecture
 
 on:
   schedule:
-    # 11:17 UTC weekdays = 06:17 CT. Off-the-hour + pre-peak slot to reduce GitHub cron delay.
-    - cron: "17 11 * * 1-5"
+    # 11:17 UTC Monday = 06:17 CT. Off-the-hour + pre-peak slot to reduce GitHub
+    # cron delay. Weekly (was weekdays) under the agent-research cost amendment
+    # (2026-06-08) — a daily arch-review found little run-to-run on a slow-churn
+    # repo, for sonnet spend that added up under the $100 Agent SDK credit.
+    - cron: "17 11 * * 1"
   workflow_dispatch:
 
 # This workflow is the thin **workflow envelope** (ADR 0014): cron, permissions,
@@ -77,6 +80,7 @@ jobs:
           # pipefail propagates an agent failure; the Digest step still runs (always).
           claude -p \
             --output-format stream-json --verbose \
+            --model sonnet \
             --permission-mode acceptEdits \
             --allowedTools "Bash(gh issue list:*) Bash(gh issue view:*) Bash(gh search:*) Bash(gh api:*) Bash(git:*) Read Grep Glob WebSearch WebFetch" \
             --append-system-prompt "$(cat harness/prompts/improve-codebase-architecture.md; printf '\n\n'; cat .github/arch-review-context.md)" \
