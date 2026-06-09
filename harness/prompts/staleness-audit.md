@@ -12,10 +12,12 @@ do, you will create a duplicate.
 
 ## Task
 
-This loop runs the in-repo staleness-audit skill **report-only** against this
-repo and files its ranked report as a single issue per run. Read and follow the
-skill from its path in the checkout — `skills/engineering/staleness-audit/SKILL.md`
-— there is no slash command to invoke here; this prompt is the concrete wiring.
+This loop runs the staleness-audit skill **report-only** against this repo and
+files its ranked report as a single issue per run. Read and follow the skill from
+`@SKILL_DIR@/SKILL.md` — the workflow substitutes `@SKILL_DIR@` for the skill's
+real location (the checkout's `skills/engineering/staleness-audit` in the
+skills-repo itself; the fetched-fresh clone path in a downstream repo). There is
+no slash command to invoke here; this prompt is the concrete wiring.
 
 1. List prior reports labelled `source:staleness-review` (both open and closed)
    so you do not re-file an unchanged report:
@@ -27,11 +29,14 @@ skill from its path in the checkout — `skills/engineering/staleness-audit/SKIL
    If a recent open report already says exactly the same thing (the same pins, the
    same gaps), emit a `skipped` output rather than filing a duplicate.
 
-2. Follow `skills/engineering/staleness-audit/SKILL.md`. It walks the repo's Node toolchain pins
-   (`.nvmrc` / `.node-version`, `engines.node` in `package.json`), classifies each
-   gap via `skills/engineering/staleness-audit/lib/version_gap.py` (call it by
-   path — do not re-derive the gap math in prose), and renders one ranked,
-   **recommend-only** markdown table:
+2. Follow `@SKILL_DIR@/SKILL.md`. Its scan station walks **whatever toolchain pins
+   this repo actually has** — do not assume one ecosystem. Match the repo's real
+   conventions across, e.g., Node (`.nvmrc` / `.node-version`, `engines.node` in
+   `package.json`), Python (`requires-python` / `python` in `pyproject.toml`,
+   `.python-version`, `.tool-versions`), Go (the `go` directive in `go.mod`), CI
+   matrices, and container `FROM` tags. Classify each gap via
+   `@SKILL_DIR@/lib/version_gap.py` (call it by path — do not re-derive the gap math
+   in prose), and render one ranked, **recommend-only** markdown table:
 
    ```
    target | file | current | latest | gap | EOL | risk | action | migration
@@ -73,7 +78,7 @@ that order, as the very last things you write:
 <output>
 {
   "status": "proposed",
-  "title": "staleness-review: <concise summary, e.g. Node toolchain pins (3 findings)>",
+  "title": "staleness-review: <concise summary, e.g. Python + container pins (3 findings)>",
   "oneLineSummary": "One-line description of the report, for the run summary.",
   "candidatesConsidered": ["finding 1", "finding 2"]
 }
@@ -91,7 +96,7 @@ Nothing fresh worth filing — emit only the `<output>` block, no `<body>`:
 <output>
 {
   "status": "skipped",
-  "reason": "Why no report was filed (e.g. no Node toolchain pins found, or an identical open report already exists)."
+  "reason": "Why no report was filed (e.g. no toolchain pins found, or an identical open report already exists)."
 }
 </output>
 ```

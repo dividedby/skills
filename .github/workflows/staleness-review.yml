@@ -77,10 +77,16 @@ jobs:
       - name: Run staleness-review
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # The prompt's @SKILL_DIR@ placeholder is substituted at cat-time so the
+          # same fetched-fresh prompt serves this host repo AND a downstream repo
+          # (which sets SKILL_DIR to its clone path) — the env-parametrization of
+          # ADR 0015 applied to the staleness skill path. Here the skill is read
+          # straight from the ref:main checkout, so the in-tree relative path.
+          SKILL_DIR: skills/engineering/staleness-audit
         run: |
           set -euo pipefail
-          # The agent is read-only: it follows the in-repo staleness-audit skill
-          # (skills/engineering/staleness-audit/SKILL.md) report-only and emits a
+          # The agent is read-only: it follows the staleness-audit skill at
+          # $SKILL_DIR/SKILL.md report-only and emits a
           # single <output> JSON block plus a raw <body>
           # block (see prompt). It does NOT file the issue — the Publish step does,
           # via the harness, which enforces the one-issue-per-run cap and the label
@@ -96,7 +102,7 @@ jobs:
             --model sonnet \
             --permission-mode acceptEdits \
             --allowedTools "Bash(gh issue list:*) Bash(gh issue view:*) Bash(gh search:*) Bash(gh api:*) Bash(git:*) Read Grep Glob WebSearch WebFetch" \
-            --append-system-prompt "$(cat harness/prompts/staleness-audit.md)" \
+            --append-system-prompt "$(sed "s#@SKILL_DIR@#$SKILL_DIR#g" harness/prompts/staleness-audit.md)" \
             "Run the monthly staleness-review pass. Follow the instructions in the system prompt." \
             | tee "$RUNNER_TEMP/agent.jsonl"
 
