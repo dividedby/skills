@@ -186,9 +186,28 @@ that caused it ([ADR 0004](../adr/0004-runbook-helpers-are-python-stdlib.md)).
 
 ## Conventions baked into the skeleton
 
-- **Off-the-hour cron** (`17`/`37` past, pre-peak) to dodge GitHub's busy-hour
-  cron delay. Pick a slot **after** any upstream that produces this loop's input
-  (e.g. a Consumer runs after the knowledge mirror's synthesis push).
+- **Off-the-hour cron + stateless hash-stagger.** Schedule off the top of the hour
+  (`17`/`37` past, pre-peak) to dodge GitHub's busy-hour cron delay, and pick a slot
+  **after** any upstream that produces this loop's input (a Consumer runs after the
+  knowledge mirror's synthesis push). To avoid hand-coordinating slots as more repos
+  onboard, derive the minute/hour from the job's own identity — a **stateless hash
+  slot** (agent-research [ADR 0022](https://github.com/dividedby/agent-research/blob/main/docs/adr/0022-consumer-workflows-self-stagger-by-hash.md)):
+
+  ```python
+  offset = int(sha1(f"{repo}/{workflow}".encode()).hexdigest()[:6], 16)
+  minute = offset % 60
+  hour   = WINDOW_START + (offset // 60) % WINDOW_HOURS
+  ```
+
+  The hash picks only the **minute and hour within the assigned day**; the
+  day/frequency stays as the cadence dictates. The shared **Friday-evening consumer
+  window** (where `apply` / `improve-codebase-architecture` across all repos consume
+  the same week's Friday synthesis) is `WINDOW_START=0`, `WINDOW_HOURS=4` on
+  **Saturday UTC** (`* * 6`) — Saturday 00–04 UTC **is** Friday 19–23 CT, and the
+  single `* * 6` mask avoids the UTC-midnight day-of-week straddle a literal
+  `* * 5` evening window would hit. **First-Monday cadence** (e.g. staleness-review):
+  POSIX cron can't express it, so fire every Monday and gate the job on
+  `[ "$(date -u +%-d)" -le 7 ]`.
 - **`concurrency` with `cancel-in-progress: false`** so a long run is never
   killed mid-flight by the next tick.
 - **Scoped `--allowedTools`, plus `--disallowedTools` for the filing tool.** Grant

@@ -23,9 +23,12 @@ report issue per run** — the complement to Dependabot, which owns library deps
   (`skills/engineering/staleness-audit/SKILL.md`). A *downstream* repo clones
   `dividedby/skills` into a temp dir and points the prompt at that path.
 - **Provenance label:** `source:staleness-review`.
-- **Cadence:** monthly — `cron: "37 11 1 * *"` (1st of the month, off-the-hour). A
-  toolchain pin drifts on the order of weeks, so a monthly pass catches a stale
-  line without issue-spam (contrast the arch loop's weekly cron).
+- **Cadence:** monthly, **first Monday** — `cron: "8 13 * * 1"` gated on
+  `[ "$(date -u +%-d)" -le 7 ]` (POSIX cron can't express "first Monday", so it
+  fires every Monday and a `first-monday-gate` job skips all but the first — see the
+  harness doc's hash-stagger note). A toolchain pin drifts on the order of weeks, so
+  a monthly pass catches a stale line without issue-spam (contrast the arch loop's
+  weekly Friday-evening slot).
 - **Input:** none to fetch — the input *is* the checked-out repo's pins. The skill
   reads `CONTEXT.md` + `docs/adr/` for risk framing if present, but needs neither.
 - **Web is required for the validate station.** Grant **`WebSearch` + `WebFetch`**:

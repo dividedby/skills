@@ -14,6 +14,10 @@ first**; this doc is only the deltas.
 - **Skill source:** `mattpocock/skills` →
   `skills/engineering/improve-codebase-architecture` (not `dividedby/skills`).
 - **Provenance label:** `source:architecture-review`.
+- **Cadence:** weekly, in the shared **Friday-evening window** — slot the cron by
+  the harness hash rule (`sha1("{repo}/improve-codebase-architecture")` within the
+  Saturday-UTC `* * 6` band). It has no corpus input, so it only needs to avoid
+  colliding with the other loops' minutes, which the hash gives for free.
 - **Input:** none to fetch — the input *is* the checked-out repo. The skill reads
   `CONTEXT.md` + `docs/adr/` for domain language; without them it still runs, just
   blind to the repo's vocabulary.

@@ -64,9 +64,10 @@ pushes to the default branch.
 ## What to build in `CONSUMER_REPO`
 
 Start from the [harness skeleton](./proposal-loop-harness.md) (fetch-fresh,
-`contents: read` / `issues: write`, off-the-hour cron + `workflow_dispatch`,
-scoped tools, **pinned `--model` (default `sonnet`)**, step-summary with the
-`total_cost_usd=…` cost-ledger line). Then layer on the Consumer specifics:
+`contents: read` / `issues: write`, hash-slotted off-the-hour cron in the shared
+Friday-evening window + `workflow_dispatch`, scoped tools, **pinned `--model`
+(default `sonnet`)**, step-summary with the `total_cost_usd=…` cost-ledger line).
+Then layer on the Consumer specifics:
 
 1. **Fetch the skill fresh + hard-gate its guard.** Clone `dividedby/skills`
    shallow, `cp -R skills/meta/apply-agent-research` into `~/.claude/skills/`.
@@ -111,6 +112,10 @@ scoped tools, **pinned `--model` (default `sonnet`)**, step-summary with the
      natively; **skip the mirror clone** and point the skill's `MIRROR_DIR` (or
      equivalent) at the local `knowledge/` path. Schedule **after** this repo's
      own synthesis run so it reads fresh knowledge.
+   - **Slot the cron by the harness hash rule** (Friday-evening window, Saturday
+     UTC `* * 6`) so the loop self-staggers against every other Consumer with no
+     schedule coordination — the upstream corpus's Friday-morning synthesis lands
+     well before the window opens, so the mirror is fresh.
    - Invoke Claude using **this repo's existing convention** (e.g. match
      `anthropics/claude-code-base-action` if its other workflows use it).
 
