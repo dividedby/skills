@@ -100,8 +100,11 @@ jobs:
           set -euo pipefail
           # stream-json + tee so the final `result` event (carrying total_cost_usd)
           # reaches the log before claude exits — cost is captured even on failure.
+          # --model is pinned (default sonnet) so cost is deterministic and the
+          # cost-hub projection holds — see "Pin --model" below.
           claude -p \
             --output-format stream-json --verbose \
+            --model sonnet \
             --permission-mode acceptEdits \
             --allowedTools "<scoped to what the loop needs>" \
             --append-system-prompt "$(cat "$HARNESS/prompts/<loop>.md")" \
@@ -183,9 +186,28 @@ that caused it ([ADR 0004](../adr/0004-runbook-helpers-are-python-stdlib.md)).
 
 ## Conventions baked into the skeleton
 
-- **Off-the-hour cron** (`17`/`37` past, pre-peak) to dodge GitHub's busy-hour
-  cron delay. Pick a slot **after** any upstream that produces this loop's input
-  (e.g. a Consumer runs after the knowledge mirror's synthesis push).
+- **Off-the-hour cron + stateless hash-stagger.** Schedule off the top of the hour
+  (`17`/`37` past, pre-peak) to dodge GitHub's busy-hour cron delay, and pick a slot
+  **after** any upstream that produces this loop's input (a Consumer runs after the
+  knowledge mirror's synthesis push). To avoid hand-coordinating slots as more repos
+  onboard, derive the minute/hour from the job's own identity — a **stateless hash
+  slot** (agent-research [ADR 0022](https://github.com/dividedby/agent-research/blob/main/docs/adr/0022-consumer-workflows-self-stagger-by-hash.md)):
+
+  ```python
+  offset = int(sha1(f"{repo}/{workflow}".encode()).hexdigest()[:6], 16)
+  minute = offset % 60
+  hour   = WINDOW_START + (offset // 60) % WINDOW_HOURS
+  ```
+
+  The hash picks only the **minute and hour within the assigned day**; the
+  day/frequency stays as the cadence dictates. The shared **Friday-evening consumer
+  window** (where `apply` / `improve-codebase-architecture` across all repos consume
+  the same week's Friday synthesis) is `WINDOW_START=0`, `WINDOW_HOURS=4` on
+  **Saturday UTC** (`* * 6`) — Saturday 00–04 UTC **is** Friday 19–23 CT, and the
+  single `* * 6` mask avoids the UTC-midnight day-of-week straddle a literal
+  `* * 5` evening window would hit. **First-Monday cadence** (e.g. staleness-review):
+  POSIX cron can't express it, so fire every Monday and gate the job on
+  `[ "$(date -u +%-d)" -le 7 ]`.
 - **`concurrency` with `cancel-in-progress: false`** so a long run is never
   killed mid-flight by the next tick.
 - **Scoped `--allowedTools`, plus `--disallowedTools` for the filing tool.** Grant
@@ -214,6 +236,19 @@ that caused it ([ADR 0004](../adr/0004-runbook-helpers-are-python-stdlib.md)).
   `result` event lands in the log before `claude` exits; cost is then captured even
   on a failed run. The hub reads logs via a least-privilege `Actions: Read` PAT it
   holds — see the onboarding doc's manual steps for the token the human must mint.
+- **Pin `--model` — default `sonnet`.** Always pass an explicit `--model`; never
+  rely on the `CLAUDE_CODE_OAUTH_TOKEN` default. An unpinned loop runs whatever the
+  subscription default happens to be, which can silently flip (e.g. to opus) and
+  blow the budget without a code change, and makes the cost hub's projection
+  unreliable (its per-run repricing assumes a known model). **`sonnet` is the
+  default choice** for these propose-only loops — the #161 cost/quality benchmark
+  found model is the cost lever but barely moves output quality for synthesis/
+  apply/audit-shaped work; reserve `opus` for a loop that is *demonstrably*
+  quality-critical (in the corpus, only agent-research's downstream-read
+  `synthesize` keeps opus). This pairs with the cost-ledger line above: pinned model
+  + emitted cost is what keeps an onboarded loop inside the hub's $100/mo Agent SDK
+  credit budget (`dividedby/agent-research` `docs/cost-tracking.md`, ADR 0020 cost
+  amendment).
 
 ## Required secrets
 

@@ -2,11 +2,16 @@ name: Apply Agent Research
 
 on:
   schedule:
-    # 11:37 UTC Mon/Wed/Fri = 06:37 CT. MWF aligns with the upstream non-Twitter
-    # capture cadence (agent-research capture.yml) so refreshed mirror knowledge is
-    # applied promptly; the loop re-clones the mirror fresh each run and the
-    # one-proposal gate keeps each run to ≤1 issue. Off-the-hour to reduce cron delay.
-    - cron: "37 11 * * 1,3,5"
+    # 01:19 UTC Saturday = 20:19 CT Friday. Weekly, in the Friday-evening consumer
+    # window — slot = sha1("skills/apply-agent-research") within the Sat 00–04 UTC
+    # (= Fri 19–23 CT) band, so onboarding a Consumer needs no schedule coordination
+    # (agent-research ADR 0022 hash-stagger). The Saturday-UTC slot IS Friday
+    # evening CT: one `* * 6` mask avoids the UTC-midnight day-of-week straddle.
+    # Weekly tracks the upstream corpus's cost-amended refresh (agent-research
+    # synthesizes 2×/week / scouts weekly), so applying the mirror more often was
+    # wasted runs; the loop re-clones the mirror fresh and the one-proposal gate
+    # keeps each run to ≤1 issue. (agent-research cost rebalance, 2026-06-08.)
+    - cron: "19 1 * * 6"
   workflow_dispatch:
 
 jobs:
@@ -99,6 +104,7 @@ jobs:
           # pipefail propagates an agent failure; the cost is already in the log.
           claude -p \
             --output-format stream-json --verbose \
+            --model sonnet \
             --permission-mode acceptEdits \
             --allowedTools "Bash Read Grep Glob" \
             --disallowedTools "Bash(gh issue create:*) Bash(gh issue comment:*)" \

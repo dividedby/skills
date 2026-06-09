@@ -2,11 +2,13 @@ name: Staleness Review
 
 on:
   schedule:
-    # 11:37 UTC on the 1st of each month = 05:37/06:37 CT. Monthly cadence: a
-    # toolchain pin drifts on the order of weeks, not days, so a monthly pass is
-    # enough to catch a stale Node line without issue-spam. Off-the-hour to reduce
-    # GitHub cron delay.
-    - cron: "37 11 1 * *"
+    # First Monday of the month, 13:08 UTC = 08:08 CT. Monthly cadence: a toolchain
+    # pin drifts on the order of weeks, not days, so a monthly pass is enough to
+    # catch a stale Node line without issue-spam. POSIX cron can't express "first
+    # Monday" (restricting both day-of-month and day-of-week ORs them), so this
+    # fires EVERY Monday and the `first-monday-gate` job below skips all but the
+    # first (day-of-month ≤ 7). Off-the-hour to reduce GitHub cron delay.
+    - cron: "8 13 * * 1"
   workflow_dispatch:
 
 # This workflow is the thin **workflow envelope** (ADR 0014): cron, permissions,
@@ -19,7 +21,25 @@ on:
 # the cron never applies a change.
 
 jobs:
+  # "First Monday" can't be a cron, so the schedule fires every Monday and this
+  # gate decides whether it's the first one (day-of-month ≤ 7). A manual
+  # workflow_dispatch always passes through (see the staleness-review `if`).
+  first-monday-gate:
+    runs-on: ubuntu-latest
+    outputs:
+      run: ${{ steps.check.outputs.run }}
+    steps:
+      - id: check
+        run: |
+          if [ "$(date -u +%-d)" -le 7 ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+
   staleness-review:
+    needs: first-monday-gate
+    if: ${{ needs.first-monday-gate.outputs.run == 'true' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     concurrency:
@@ -73,6 +93,7 @@ jobs:
           # pipefail propagates an agent failure; the Digest step still runs (always).
           claude -p \
             --output-format stream-json --verbose \
+            --model sonnet \
             --permission-mode acceptEdits \
             --allowedTools "Bash(gh issue list:*) Bash(gh issue view:*) Bash(gh search:*) Bash(gh api:*) Bash(git:*) Read Grep Glob WebSearch WebFetch" \
             --append-system-prompt "$(cat harness/prompts/staleness-audit.md)" \
