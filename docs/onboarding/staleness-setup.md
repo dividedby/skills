@@ -16,12 +16,23 @@ report issue per run** — the complement to Dependabot, which owns library deps
 
 ## What differs from the harness skeleton
 
-- **Skill source:** `dividedby/skills` → `skills/engineering/staleness-audit`. It
-  is **local to this repo**, so the home-repo envelope reads it straight from the
-  `ref: main` checkout — no `cp -R` into `~/.claude/skills/` and no skill-discovery
-  config, because the prompt follows the skill **by file path**
-  (`skills/engineering/staleness-audit/SKILL.md`). A *downstream* repo clones
-  `dividedby/skills` into a temp dir and points the prompt at that path.
+- **Skill source:** `dividedby/skills` → `skills/engineering/staleness-audit`. The
+  prompt follows the skill **by file path** via a `@SKILL_DIR@` placeholder the
+  envelope substitutes at `cat`-time (`sed "s#@SKILL_DIR@#$SKILL_DIR#g"`) — the
+  env-parametrization of [ADR 0015](../adr/0015-apply-agent-research-prompt-is-consumer-portable-via-env.md)
+  applied to the staleness skill path, so one fetched-fresh prompt serves the host
+  and every downstream repo. The **home repo** sets `SKILL_DIR=skills/engineering/staleness-audit`
+  and reads the skill straight from the `ref: main` checkout (no `cp -R`, no
+  skill-discovery config). A **downstream** repo clones `dividedby/skills` into a
+  temp dir and sets `SKILL_DIR` to that clone's
+  `…/skills/engineering/staleness-audit` — no checkout pollution, the same
+  substitution does the rest.
+- **Ecosystem-general.** The prompt does **not** assume Node. It tells the agent to
+  scan whatever pins the repo actually has — Node (`.nvmrc`, `engines.node`),
+  Python (`requires-python`/`python` in `pyproject.toml`, `.python-version`,
+  `.tool-versions`), Go (`go.mod`), CI matrices, container `FROM` tags — per the
+  skill's own scan station. A Python-only repo gets a Python report, not a
+  `skipped: no Node pins`.
 - **Provenance label:** `source:staleness-review`.
 - **Cadence:** monthly, **first Monday** — `cron: "8 13 * * 1"` gated on
   `[ "$(date -u +%-d)" -le 7 ]` (POSIX cron can't express "first Monday", so it
@@ -74,18 +85,24 @@ report issue per run** — the complement to Dependabot, which owns library deps
 `dividedby/skills` → `.github/workflows/staleness-review.yml` is a working
 **envelope** instance; the prompt + publish seam it calls live in the
 fetched-fresh harness (`harness/prompts/staleness-audit.md`, `harness/cli.py`).
-Copy the envelope, change only the skill path and label if porting to another
-repo. The home-repo envelope reads `harness/` straight from its own `ref: main`
-checkout; a downstream repo clones `dividedby/skills` into a temp dir for it — see
-[`proposal-loop-harness.md`](./proposal-loop-harness.md).
+Copy the envelope and set `SKILL_DIR` + the provenance label for the porting repo.
+The home-repo envelope reads `harness/` straight from its own `ref: main` checkout;
+a downstream repo clones `dividedby/skills` into a temp dir for both the harness
+and the skill — see [`proposal-loop-harness.md`](./proposal-loop-harness.md).
 
 ## To propagate to another repo
 
-1. Copy the workflow envelope (it clones the harness fresh; nothing else to vendor).
-2. Ensure the `CLAUDE_CODE_OAUTH_TOKEN` secret exists.
-3. Confirm the repo actually pins a toolchain (otherwise the loop just files a
-   `skipped` report each run — harmless, but pointless).
-4. `workflow_dispatch` once to verify it files ≤1 report issue (or skips), then let
+1. Copy the workflow envelope (it clones `dividedby/skills` fresh for the harness +
+   skill; nothing is vendored).
+2. Set `SKILL_DIR` to the cloned skill path
+   (`$RUNNER_TEMP/<clone>/skills/engineering/staleness-audit`) so the prompt's
+   `@SKILL_DIR@` resolves; keep the read-only `gh` + `WebSearch`/`WebFetch` tool
+   scoping and `permissions: contents: read, issues: write`.
+3. Ensure the `CLAUDE_CODE_OAUTH_TOKEN` secret exists.
+4. Confirm the repo actually pins a toolchain — any ecosystem (Node, Python, Go, …),
+   not just Node (otherwise the loop just files a `skipped` report each run —
+   harmless, but pointless).
+5. `workflow_dispatch` once to verify it files ≤1 report issue (or skips), then let
    the monthly cron take over.
 
 A repo can run this loop alongside the
