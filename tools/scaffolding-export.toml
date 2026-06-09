@@ -1,0 +1,39 @@
+# Scaffolding export manifest — this repo's agent-meta "surfaces".
+#
+# Read by tools/export_scaffolding.py to build a markdown bundle per cluster for
+# an external deep-research review (e.g. Perplexity). One [[cluster]] = one
+# bundle = one focused prompt. Globs are POSIX, relative to the repo root, and
+# may use ** for recursive matches. `exclude` is best-effort secret hygiene on
+# top of the script's built-in token scrubber — it is NOT a security boundary.
+
+[meta]
+repo = "dividedby/skills"
+
+[[cluster]]
+name = "skills-loops"
+title = "apply-agent-research + improve-codebase-architecture (consumer-side proposal loops)"
+include = [
+  ".github/workflows/apply-agent-research.yml",
+  ".github/workflows/improve-codebase-architecture.yml",
+  ".github/arch-review-context.md",
+  "harness/cli.py",
+  "harness/prompts/apply-agent-research.md",
+  "harness/prompts/improve-codebase-architecture.md",
+  "skills/meta/apply-agent-research/SKILL.md",
+  "skills/meta/apply-agent-research/proposal-flow.md",
+  "skills/meta/apply-agent-research/lib/*.py",
+  "CLAUDE.md",
+  "CONTEXT.md",
+  "docs/adr/0003-*.md",
+  "docs/adr/0008-*.md",
+  "docs/adr/0010-*.md",
+  "docs/adr/0011-*.md",
+  "docs/adr/0014-*.md",
+  "docs/adr/0015-*.md",
+  "docs/adr/0016-*.md",
+  "docs/agents/*.md",
+]
+exclude = [
+  "**/*secret*",
+  "**/.env*",
+]
