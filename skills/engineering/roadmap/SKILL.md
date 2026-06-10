@@ -5,10 +5,11 @@ description: >
   live GitHub issue state, so the doc stays trustworthy enough to be the only thing
   you read to pick the next task. Detects state and routes: bootstrap the whole
   pattern in a fresh repo, migrate a legacy planning doc into the canonical format,
-  or reconcile an existing roadmap. Edits the working tree for review and writes
-  additive issue comments; never commits, never closes issues. Use when a
-  SessionStart drift nudge fires, on a cadence, when standing up the roadmap pattern,
-  or any time the census looks stale against `gh`.
+  or reconcile an existing roadmap. Reconcile auto-applies its edits behind a green
+  gate — branch → PR → auto-merge — and writes additive issue comments; it never
+  direct-pushes to the default branch, never auto-closes an issue, and never rewrites
+  a body. Use when a SessionStart drift nudge fires, on a cadence, when standing up
+  the roadmap pattern, or any time the census looks stale against `gh`.
 ---
 
 # Roadmap
@@ -29,12 +30,24 @@ infra-commit escape *and* a silent bypass of the guard. The SessionStart
 drift-nudge is the actual integrity net — it catches the drift the guard let
 through. Wire and trust **both**; the guard alone is a nudge, not a lock.
 
-It is deliberately **propose/edit-for-review** on the repo and **additive-only**
-on issues — same governance posture as
-[ADR 0003](https://github.com/dividedby/skills/blob/main/docs/adr/0003-skill-improvement-workflows-propose-via-issues.md)
-and [ADR 0017](https://github.com/dividedby/skills/blob/main/docs/adr/0017-roadmap-write-posture.md): it edits the
-working tree and writes issue *comments*, but never commits, never closes an
-issue, and never rewrites an issue body. A human reviews `git diff` and decides.
+Reconcile is an **applying loop, gated on green** ([ADR 0022](https://github.com/dividedby/skills/blob/main/docs/adr/0022-roadmap-reconcile-auto-applies-on-a-green-gate.md),
+amending [ADR 0017](https://github.com/dividedby/skills/blob/main/docs/adr/0017-roadmap-write-posture.md)): the
+reconcile edit is a mechanical census projection of live `gh` state, so it lands
+its own changes — **branch → commit → PR → auto-merge** — rather than prompting a
+human to review-and-commit. The repo's **green gate** (hook self-tests,
+`check-skill-registration`, any CI) is the safety, not a human click; the PR is the
+audit trail. It **never direct-pushes to the default branch**. Two invariants from
+ADR 0017 still hold: issue writes stay **additive** (comments, never a body
+rewrite), and **closing stays a human act** — even Tier-3's agent-powered doneness
+verdict only recommends. This posture is identical in interactive and loop runs;
+the green gate, not a watching human, is the control. The *proposal-loop* family
+(apply-agent-research, arch-review) is untouched and stays propose-only
+([ADR 0003](https://github.com/dividedby/skills/blob/main/docs/adr/0003-skill-improvement-workflows-propose-via-issues.md)) —
+reconcile is deterministic maintenance of the maintainer's own roadmap, a
+categorically different thing from auto-applying a judgment proposal.
+
+The bootstrap and migrate modes, which edit human-authored artifacts, still
+**checkpoint their judgment for review** before writing (see those sections).
 
 ## The front door — detect state, then route
 
@@ -231,11 +244,18 @@ explicit and auditable by design; a future enhancement may parse `#NN–#NN`
 enumerations out of aggregate rows, but that magic isn't built (it can mask
 genuinely-unfiled issues).
 
-### Tier 3 — code cross-check (report-only, never write)
-For each open row, look for working-tree evidence the fix already landed (a merged
-file, a closed-looking implementation). List the suspects with a confidence note
-for a human to confirm and close. **This tier never edits the roadmap and never
-touches issues** — "looks done" is the human's call, by construction.
+### Tier 3 — active doneness investigation (recommend, never close)
+For each open row, run a real investigation into whether the work is *done* —
+don't settle for a passive "this file looks merged" glance. Inspect the **linked
+PRs** (merged? CI green? scope matched?), read the **code and tests** the issue
+asked for, and check the **plans** (the issue body, its acceptance criteria, any
+referenced ADR). Synthesize that evidence into a **confident, well-grounded
+recommendation**: done / not-done / partially-done, with the specific evidence that
+backs it, so the human's close decision is a fast yes rather than a fresh
+re-investigation. This tier may add an **additive comment** recording the verdict
+(it shares the additive-only issue-write posture below), but it **never closes the
+issue and never rewrites a body** — closing on inference is the one irreversible act
+kept behind a human, by construction.
 
 ### Issue writes — additive only
 As reconcile repairs the roadmap, keep the *issues* honest too, since the roadmap
@@ -249,10 +269,18 @@ strictly additive ([ADR 0017](https://github.com/dividedby/skills/blob/main/docs
 - **Never close an issue, never rewrite a body.** Closing stays a human act on a
   tier-3 recommendation; bodies are human-authored.
 
-### Finish
-Summarize the three tiers (what was auto-written, what was proposed, what tier-3
-flags for the human). Tell the human to review `git diff <ROADMAP>` and commit.
-**Never commit, never close issues.**
+### Finish — land it behind the green gate
+Reconcile **applies its own changes**: branch off the default branch, commit the
+roadmap edits (and any Tier-2 additive slotting), open a **PR**, and **enable
+auto-merge** so the repo's green gate (hook self-tests, `check-skill-registration`,
+any CI) merges it once checks pass — no human prompt, no direct push to the default
+branch. The PR body is the audit trail: summarize the three tiers (what Tier-1/2
+auto-applied, what additive comments landed, and Tier-3's doneness verdicts with the
+issues a human should review-and-close). This is the posture in **both interactive
+and loop runs** — the green gate is the control, so a watching human is not required.
+**Never direct-push to the default branch, never auto-close an issue.** If the gate
+is red, the PR simply doesn't merge — that is the safety working, not a failure to
+report around.
 
 ## Surfacing AFK-able work
 
@@ -262,9 +290,10 @@ dispatching an autonomous loop is **forward motion**: converting
 often by carving an agent-doable slice out of something that looks blocked or
 human-only. That call stays the maintainer's; this skill only *surfaces* it.
 
-### The AFK-ability pass (report-only, mirrors Tier-3)
-A separate report-only pass with the same posture as tier-3 — it **never edits the
-roadmap and never touches issues**. For each open `needs-triage`/`Parked`/
+### The AFK-ability pass (report-only)
+A separate report-only pass — it **never edits the roadmap and never touches
+issues**, leaving the label/split call to the maintainer (the same human-decision
+boundary Tier-3 keeps for closing). For each open `needs-triage`/`Parked`/
 `ready-for-human` row, ask "is there a deterministic, judgment-free slice here?"
 and flag the candidates for the maintainer, each with a one-line **what would flip
 it** (the single decision or split that would make it `ready-for-agent`). This is
@@ -302,19 +331,26 @@ a maintainer scaffolding a new repo inherits the bar.
 ## Boundaries
 
 - **Static.** `gh` + working tree only — no product or live data, no network
-  beyond the one `gh issue list` call.
-- **Never commits.** Edits the working tree for review; the human commits.
-- **Additive on issues; report-only on tier-3 and the AFK-ability pass.** Comments
-  and dep notes only; no close, no body rewrite; tier-3 and the AFK-ability pass
-  never write at all — they recommend, the human decides.
-- **Loop-suppression is envelope-enforced, not self-detected.** When wired into
-  an unattended loop, the issue-write surface is suppressed → propose-only — but
-  the skill does **not** check an env var or flag itself to decide this. The
-  *workflow envelope* enforces it: the loop wrapper grants no issue-write tools
-  and runs a propose-only prompt, so the additive write surface is structurally
-  unavailable. Same posture as `staleness-audit`'s apply station and
-  [ADR 0017](https://github.com/dividedby/skills/blob/main/docs/adr/0017-roadmap-write-posture.md).
-  The additive-issue-write surface is for an interactive, watched run.
+  beyond the `gh` calls (`issue list`, comment, PR create/auto-merge).
+- **Reconcile auto-applies behind a green gate; never direct-pushes.** It branches,
+  commits, opens a PR, and enables auto-merge — the green gate merges it. The
+  default branch is never written directly ([ADR 0022](https://github.com/dividedby/skills/blob/main/docs/adr/0022-roadmap-reconcile-auto-applies-on-a-green-gate.md)).
+  (Bootstrap and migrate, which touch human-authored artifacts, still scaffold to
+  the working tree for review — see those sections.)
+- **Additive on issues; closing stays human.** Comments and dep notes only — no
+  close, no body rewrite. Tier-3 is an *active doneness investigation* that may add
+  a verdict comment but never closes; the AFK-ability pass is report-only and never
+  writes. The agent recommends; the human owns the irreversible close.
+- **Same posture in interactive and loop runs — no loop-suppression for reconcile.**
+  ADR 0022 **reverses** ADR 0017's loop-suppression invariant for the reconcile
+  path: because the green gate (not a watching human) is the control, an unattended
+  loop applies exactly as an interactive run does — it is an *applying loop* the
+  `autonomous-loop` skill already blesses (commit/PR/merge on a green gate), not a
+  proposal loop. The invariants that **do** survive into the loop are no-auto-close
+  and no-body-rewrite. The *proposal-loop* family (apply-agent-research, arch-review)
+  stays propose-only and envelope-suppressed
+  ([ADR 0003](https://github.com/dividedby/skills/blob/main/docs/adr/0003-skill-improvement-workflows-propose-via-issues.md)) —
+  reconcile is not in that family.
 - **Complements, does not replace, `roadmap-guard.py`.** The guard keeps the doc
   fresh *inside* a PR; this skill repairs *between-PR* drift.
 
@@ -344,8 +380,10 @@ a maintainer scaffolding a new repo inherits the bar.
   are tier-2 candidates.
 - **Auto-closing an issue, or editing its body.** Closing is a human act on a
   tier-3 recommendation; issue writes are additive comments only.
-- **Committing the reconcile.** It edits the working tree for review; a human
-  reviews `git diff` and commits.
+- **Direct-pushing the reconcile to the default branch.** Reconcile branches, opens
+  a PR, and enables auto-merge so the green gate lands it — the default branch is
+  never written directly, and there is no human review-and-commit step to wait on
+  (ADR 0022).
 - **Re-deriving the census schema from a hardcoded shape.** Parse by the hook's
   configured column index so the skill adapts to the repo's table.
 - **Writing a duplicate roadmap.** Never conclude bootstrap against the hardcoded
