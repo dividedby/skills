@@ -40,13 +40,13 @@ Matt Pocock's skill suite (`mattpocock/skills`, upstream of this repo's
 `dividedby/skills`) and this repo's own published skills are installed globally
 in `~/.claude/skills/`:
 
-`apply-agent-research`, `audit-project-claude`, `audit-project-harness`,
-`autonomous-loop`, `caveman`, `context-firewall`, `diagnose`, `doc-regen`,
-`find-skills`, `frontend-design`, `grill-me`, `grill-with-docs`, `handoff`,
-`improve-codebase-architecture`, `init-project-claude`, `init-project-harness`,
-`playwright-cli`, `prototype`, `setup-matt-pocock-skills`, `software-design`,
-`staleness-audit`, `tdd`, `to-issues`, `to-prd`, `triage`, `write-a-skill`,
-`writing-beats`, `writing-fragments`, `writing-shape`, `zoom-out`.
+`apply-agent-research`, `autonomous-loop`, `caveman`, `context-firewall`,
+`diagnose`, `doc-regen`, `find-skills`, `frontend-design`, `grill-me`,
+`grill-with-docs`, `handoff`, `improve-codebase-architecture`,
+`playwright-cli`, `project-claude-config`, `prototype`,
+`setup-matt-pocock-skills`, `software-design`, `staleness-audit`, `tdd`,
+`to-issues`, `to-prd`, `triage`, `write-a-skill`, `writing-beats`,
+`writing-fragments`, `writing-shape`, `zoom-out`.
 
 ## Installed plugins
 
