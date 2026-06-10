@@ -1,0 +1,39 @@
+# Roadmap mirror. Renders the working-tree roadmap into a read-only, machine-owned
+# mirror issue body (#220) on every push to main that touches the doc,
+# commit-if-changed (no diff -> no write). Deterministic: stdlib `gh` calls only,
+# no `claude -p`, so the cost-ledger rule does not apply. ADR 0020 (the doc stays
+# the source of record; this is only a read-only mirror) + ADR 0004 (stdlib helpers).
+name: roadmap-mirror
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/plans/roadmap.md"
+  workflow_dispatch:
+
+# Serialize so two quick pushes can't race the commit-if-changed PATCH.
+concurrency:
+  group: roadmap-mirror
+  cancel-in-progress: false
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      MIRROR_ISSUE: "220"
+      ROADMAP_PATH: "docs/plans/roadmap.md"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: Render and update the mirror (commit-if-changed)
+        run: |
+          python3 -B .github/scripts/roadmap-mirror.py "$MIRROR_ISSUE" "$ROADMAP_PATH"
