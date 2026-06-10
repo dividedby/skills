@@ -111,7 +111,7 @@ jobs:
             --model claude-sonnet-4-6 \
             --max-budget-usd 3.00 \
             --permission-mode acceptEdits \
-            --allowedTools "Bash(gh issue list:*) Bash(gh issue view:*) Bash(gh search:*) Bash(gh api:*) Bash(git:*) Read Grep Glob WebSearch WebFetch" \
+            --allowedTools "Bash(gh issue list:*) Bash(gh issue view:*) Bash(gh search:*) Bash(gh api:*) Bash(git:*) Bash(python3:*) Read Grep Glob WebSearch WebFetch" \
             --append-system-prompt "$(sed "s#@SKILL_DIR@#$SKILL_DIR#g" harness/prompts/staleness-audit.md)" \
             "Run the monthly staleness-review pass. Follow the instructions in the system prompt." \
             | tee "$RUNNER_TEMP/agent.jsonl"

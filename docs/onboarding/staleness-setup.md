@@ -74,8 +74,12 @@ report issue per run** — the complement to Dependabot, which owns library deps
   ([ADR 0004](../adr/0004-runbook-helpers-are-python-stdlib.md)); the
   staleness-specific round-trip case (a body with table pipes) is pinned in
   `harness/tests/test_cli.py`.
-- **Tools (read-only `gh` + web):**
-  `Bash(gh issue list:*) Bash(gh issue view:*) Bash(gh search:*) Bash(gh api:*) Bash(git:*) Read Grep Glob WebSearch WebFetch`.
+- **Tools (read-only `gh` + web + python3):**
+  `Bash(gh issue list:*) Bash(gh issue view:*) Bash(gh search:*) Bash(gh api:*) Bash(git:*) Bash(python3:*) Read Grep Glob WebSearch WebFetch`.
+  `Bash(python3:*)` is load-bearing: the skill's classify/EOL/rank stations run
+  the stdlib helpers under `lib/` (`version_gap.py`, `eol.py`, `rank.py`) —
+  without the grant the agent's helper invocations are permission-denied and it
+  falls back to deriving gaps and rankings in prose.
   The agent gets only read access to the tracker and **no `Edit`/`Write`** — it can
   neither `gh issue create` nor mutate the repo, which makes the deterministic
   publish the sole filing path and keeps the cron report-only.
