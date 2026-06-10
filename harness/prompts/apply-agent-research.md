@@ -94,7 +94,10 @@ independently clear the bar that would have made it the run's single best.
 
 2. **Gather candidates per enabled channel**, each with a stable `dedup_key`, an
    integer `priority`, and a drafted title/body with a concrete before/after citing
-   the motivating KB note.
+   the motivating KB note. Reality gate: any claim about how a tool, flag, API,
+   model, or version behaves counts as verified only if you fetched the primary
+   source (or ran the tool) in-session and can quote the output — fabricating or
+   approximating a quote disqualifies the candidate.
 
 3. **`skill-request` demand channel (consumer mode only)**
    (`$SKILLS_SRC/docs/design/skill-request-flow.md`) — when the KB mapping lands on a
