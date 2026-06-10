@@ -16,11 +16,12 @@ yet — enrich now, drain later.
 
 ---
 
-## ✅ Actioned
-
-Drained ideas move below, checked, linked to the issue/PR they became.
+<details>
+<summary>✅ Actioned — Drained ideas move below, checked, linked to the issue/PR they became.</summary>
 
 <!-- - [x] <idea> → #123 -->
+
+</details>
 
 ---
 
@@ -42,8 +43,8 @@ When I ask you to "drain the inbox" (or to drain a specific item), promote the i
 end-to-end, adapting to what *this* idea needs:
 
 1. **Dedup / relate** — before acting, review the OPEN issues in this repo. Decide
-   whether the idea (a) already exists → note it and move it to `## ✅ Actioned`
-   pointing at the existing issue, (b) fits INTO an open issue → comment there
+   whether the idea (a) already exists → note it and move it to the `✅ Actioned`
+   section pointing at the existing issue, (b) fits INTO an open issue → comment there
    instead of filing new, or (c) BLOCKS / DEPENDS ON an open issue → record that
    relationship.
 2. **Pick only the steps it needs** — do not run the whole pipeline by rote. Choose
@@ -63,7 +64,7 @@ end-to-end, adapting to what *this* idea needs:
    rather than handing an agent unbounded judgment. Split a blocked/human-only idea
    into an AFK-able slice plus a human sibling when that's the cleaner carve.
 4. **Move to Actioned** — once the idea becomes an issue/PR (or is resolved as a
-   dup/relation), move it under `## ✅ Actioned`, check it, and append `→ #<num>`.
+   dup/relation), move it into the `✅ Actioned` section, check it, and append `→ #<num>`.
 
 Never delete an idea silently — either drain it or move it with a one-line disposition.
 Keep `## Ideas` sorted newest-on-top.
