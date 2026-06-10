@@ -31,7 +31,7 @@ drift-nudge is the actual integrity net — it catches the drift the guard let
 through. Wire and trust **both**; the guard alone is a nudge, not a lock.
 
 Reconcile is an **applying loop, gated on green** ([ADR 0022](https://github.com/dividedby/skills/blob/main/docs/adr/0022-roadmap-reconcile-auto-applies-on-a-green-gate.md),
-amending [ADR 0017](https://github.com/dividedby/skills/blob/main/docs/adr/0017-roadmap-write-posture.md)): the
+amending [ADR 0017](https://github.com/dividedby/skills/blob/main/docs/adr/0017-doc-regen-write-posture.md)): the
 reconcile edit is a mechanical census projection of live `gh` state, so it lands
 its own changes — **branch → commit → PR → auto-merge** — rather than prompting a
 human to review-and-commit. The repo's **green gate** (hook self-tests,
@@ -279,7 +279,7 @@ kept behind a human, by construction.
 As reconcile repairs the roadmap, keep the *issues* honest too, since the roadmap
 points the working agent at them for authoritative scope (and the work-the-roadmap
 protocol reads the full issue **including comments**). The write surface is
-strictly additive ([ADR 0017](https://github.com/dividedby/skills/blob/main/docs/adr/0017-roadmap-write-posture.md)):
+strictly additive ([ADR 0017](https://github.com/dividedby/skills/blob/main/docs/adr/0017-doc-regen-write-posture.md)):
 - **Add/update a comment** when a dep closes and unblocks an issue, when routing
   or sequencing changes, or to record a tier-2 slotting decision — so the next
   agent reads it on the issue, not just in the roadmap.

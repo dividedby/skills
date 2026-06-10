@@ -17,7 +17,7 @@ glance-from-the-web property without moving authority off the file. The mirror i
 refreshed by a small deterministic CI job, **never by the skill** — so it sits
 outside the skill's write-posture rules.
 
-This is **not** a body-rewrite in the sense [ADR 0017](./0017-roadmap-write-posture.md)
+This is **not** a body-rewrite in the sense [ADR 0017](./0017-doc-regen-write-posture.md)
 forbids: 0017 protects *human-authored* issue bodies from the skill. The mirror
 issue is a machine-owned artifact whose body *is* the render target; CI owns it.
 

@@ -1,4 +1,4 @@
-# roadmap edits the working tree and writes additive issue comments, but never commits or closes
+# doc-regen edits the working tree and writes additive issue comments, but never commits or closes
 
 The `roadmap` skill (issue [#154](https://github.com/dividedby/skills/issues/154); renamed from `doc-regen`, see #200)
 reconciles a repo's roadmap census with live GitHub issue state. Its original
