@@ -100,6 +100,52 @@ class TestAutoDeriveAndEmoji(unittest.TestCase):
         self.assertEqual(nudge.parse_census(no_header), {})
 
 
+# A census with a collapsed closed wave (ADR 0023 progressive-disclosure): the
+# `<details>`/`<summary>` and prose lines are non-table, and the closed rows inside
+# the `<details>` are ordinary `| … |` rows. The parser keys off the leading `|`
+# (and an integer issue cell), so the markup is ignored and the wrapped closed rows
+# parse exactly as inline rows would — they must not be miscounted.
+COLLAPSED_WAVE_SAMPLE = """\
+## Master census (active waves inline)
+| # | Issue | Wave | Status | Owner | Skill(s) | Deps | Notes |
+| - | ----- | ---- | ------ | ----- | -------- | ---- | ----- |
+| 12 | open thing | W2 | **Next** | agent | `/tdd` | — | — |
+
+<details>
+<summary>Closed wave W1 — &lt;theme&gt;</summary>
+
+W1 shipped the thing. Rows kept inline here until a newer wave supersedes them.
+
+| 34 | a closed one | W1 | Done | agent | `/tdd` | _#12_ | — |
+| 56 | another closed | W1 | Done | agent | — | — | — |
+
+</details>
+"""
+
+
+class TestCollapsedClosedWave(unittest.TestCase):
+    def test_parses_rows_inside_details_unchanged(self):
+        # The `<details>`/`<summary>`/prose lines are skipped (no leading `|` or no
+        # integer issue cell); the wrapped closed rows parse as normal Done rows.
+        rows = nudge.parse_census(COLLAPSED_WAVE_SAMPLE)
+        self.assertEqual(rows, {12: "next", 34: "done", 56: "done"})
+
+    def test_collapsed_closed_rows_are_not_drift(self):
+        # Both closed-and-Done rows inside the `<details>` are in sync with GitHub,
+        # so neither shows as stale, and the lone open row is filed → no drift.
+        rows = nudge.parse_census(COLLAPSED_WAVE_SAMPLE)
+        states = {12: "open", 34: "closed", 56: "closed"}
+        self.assertEqual(nudge.compute_drift(rows, states), ([], []))
+
+    def test_pruned_closed_wave_does_not_resurface_as_unfiled(self):
+        # After a wave is pruned (its rows gone), its closed issues have no census
+        # row. compute_drift only flags *open* issues with no row, so closed pruned
+        # issues stay silent — the prune is safe against the nudge (ADR 0023).
+        rows = {12: "next"}  # W1 rows pruned; only the active W2 row remains
+        states = {12: "open", 34: "closed", 56: "closed"}
+        self.assertEqual(nudge.compute_drift(rows, states), ([], []))
+
+
 class TestComputeDrift(unittest.TestCase):
     def test_stale_closed_when_gh_closed_but_census_not_done(self):
         rows = {12: "next", 34: "done"}

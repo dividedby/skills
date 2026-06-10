@@ -237,8 +237,17 @@ tree for the tier-3 cross-check. One network call to `gh`; no product or live da
 
 ### Tier 1 — mechanical (write to the working tree)
 Deterministic repairs that need no judgment, applied directly:
-- A closed issue whose row is not `Done` → set `Status: Done` (**keep the row** —
-  closed issues stay in the census as `Done`, never deleted).
+- A closed issue whose row is not `Done` → set `Status: Done`.
+- **Closed-wave lifecycle ([ADR 0023](https://github.com/dividedby/skills/blob/main/docs/adr/0023-closed-waves-collapse-then-prune-census-is-an-execution-view.md)).** The census is an *execution view*, not the
+  archive — keep the active backlog readable by collapsing then pruning closed work
+  at **wave granularity**:
+  - When *every* issue in a wave is `Done`, **collapse** that wave's rows into a
+    `<details><summary>Closed wave W# — theme</summary>`. Open waves and the active
+    census stay inline.
+  - Once a *newer* wave is active, **prune** the collapsed wave's rows to a one-line
+    wave summary and **bump the Burn-down cumulative closed-count integer** — bumped,
+    never recomputed (pruned rows are gone). The rows are not lost: GitHub retains
+    closed issues and git history retains every old row.
 - A row whose blocking `Deps` have all closed → *italicize* the satisfied deps and
   flip `Blocked` → `Backlog`/`Next` per the doc's own ordering rules.
 - Recompute wave and `Next` markers per the roadmap's stated ordering.
@@ -247,7 +256,9 @@ Deterministic repairs that need no judgment, applied directly:
   / open, the five status-bucket counts and their issue lists, and the open-by-wave
   line are all projections of the table onto the `Owner` + `Status` + label
   vocabulary (see the roadmap Legend). So it carries no judgment: reconcile rewrites
-  it wholesale every pass rather than diffing it.
+  it wholesale every pass rather than diffing it. The one **carried-forward** field is
+  the **cumulative closed-count integer** — it is *bumped* by the prune, not recomputed
+  from the table (pruned rows are gone), so it survives wave pruning (ADR 0023).
 
 ### Tier 2 — semantic (propose the row, then write)
 Newly-opened issues with no census row: slot each in with an **inferred** wave,
@@ -391,8 +402,14 @@ a maintainer scaffolding a new repo inherits the bar.
 
 ## Anti-Patterns
 
-- **Deleting a closed issue's row.** Closed issues stay as `Done` rows — the
-  census is the full record, not just the open set.
+- **Deleting a closed row ad hoc — or keeping every closed row forever.** Both are
+  wrong now ([ADR 0023](https://github.com/dividedby/skills/blob/main/docs/adr/0023-closed-waves-collapse-then-prune-census-is-an-execution-view.md) supersedes the old never-delete rule). The census is an
+  *execution view*: a wholly-closed wave **collapses** into a `<details>` and its
+  rows **prune** to a one-line summary once a *newer* wave is active, with the
+  Burn-down cumulative count bumped. The wrong moves are pruning a row **before** its
+  wave is collapsed-and-superseded, pruning **without** bumping the cumulative count,
+  or collapsing an **open** wave. GitHub + git history are the archive — the census
+  carries the active backlog, not the full ledger.
 - **Flagging an aggregate-covered child as unfiled.** A child tracked by an
   epic/PRD parent row is represented; only genuinely unrepresented open issues
   are tier-2 candidates.
