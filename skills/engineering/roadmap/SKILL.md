@@ -1,5 +1,5 @@
 ---
-name: doc-regen
+name: roadmap
 description: >
   Reconcile a repo's human-readable roadmap (a master census of every issue) with
   live GitHub issue state, so the doc stays trustworthy enough to be the only thing
@@ -11,7 +11,7 @@ description: >
   or any time the census looks stale against `gh`.
 ---
 
-# Doc Regen
+# Roadmap
 
 A repo can make one Markdown roadmap its **execution source of record**: a master
 census with one row per issue (status, wave, owner, skill routing, deps) that is
@@ -32,7 +32,7 @@ through. Wire and trust **both**; the guard alone is a nudge, not a lock.
 It is deliberately **propose/edit-for-review** on the repo and **additive-only**
 on issues — same governance posture as
 [ADR 0003](https://github.com/dividedby/skills/blob/main/docs/adr/0003-skill-improvement-workflows-propose-via-issues.md)
-and [ADR 0017](https://github.com/dividedby/skills/blob/main/docs/adr/0017-doc-regen-write-posture.md): it edits the
+and [ADR 0017](https://github.com/dividedby/skills/blob/main/docs/adr/0017-roadmap-write-posture.md): it edits the
 working tree and writes issue *comments*, but never commits, never closes an
 issue, and never rewrites an issue body. A human reviews `git diff` and decides.
 
@@ -227,7 +227,7 @@ touches issues** — "looks done" is the human's call, by construction.
 As reconcile repairs the roadmap, keep the *issues* honest too, since the roadmap
 points the working agent at them for authoritative scope (and the work-the-roadmap
 protocol reads the full issue **including comments**). The write surface is
-strictly additive ([ADR 0017](https://github.com/dividedby/skills/blob/main/docs/adr/0017-doc-regen-write-posture.md)):
+strictly additive ([ADR 0017](https://github.com/dividedby/skills/blob/main/docs/adr/0017-roadmap-write-posture.md)):
 - **Add/update a comment** when a dep closes and unblocks an issue, when routing
   or sequencing changes, or to record a tier-2 slotting decision — so the next
   agent reads it on the issue, not just in the roadmap.
@@ -299,7 +299,7 @@ a maintainer scaffolding a new repo inherits the bar.
   *workflow envelope* enforces it: the loop wrapper grants no issue-write tools
   and runs a propose-only prompt, so the additive write surface is structurally
   unavailable. Same posture as `staleness-audit`'s apply station and
-  [ADR 0017](https://github.com/dividedby/skills/blob/main/docs/adr/0017-doc-regen-write-posture.md).
+  [ADR 0017](https://github.com/dividedby/skills/blob/main/docs/adr/0017-roadmap-write-posture.md).
   The additive-issue-write surface is for an interactive, watched run.
 - **Complements, does not replace, `roadmap-guard.py`.** The guard keeps the doc
   fresh *inside* a PR; this skill repairs *between-PR* drift.

@@ -57,7 +57,7 @@ _Avoid_: backlog, triage queue, scratchpad, inbox issue.
 The working-tree markdown doc (default `docs/plans/roadmap.md`) that is a repo's
 single **execution source of record** — one census row per issue (status, wave,
 owner, skill routing, deps). Authoritative by virtue of its **file-based
-integrity** (PreToolUse commit guard + SessionStart drift nudge + `/doc-regen`
+integrity** (PreToolUse commit guard + SessionStart drift nudge + `/roadmap`
 reconcile), which a GitHub issue cannot host. A durable GitHub issue is at most a
 read-only **Roadmap mirror** of it — a machine-owned issue whose body is
 **CI-rendered** from the doc on push (commit-if-changed), never the source of

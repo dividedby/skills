@@ -8,7 +8,7 @@
 > closes an issue updates that issue's row in the same branch — a PreToolUse hook
 > (`.claude/hooks/roadmap-guard.py`) enforces it. Out-of-band drift (issues
 > changed via `gh`/web between sessions) is caught by a SessionStart nudge
-> (`.claude/hooks/roadmap-drift-nudge.py`) and repaired with `/doc-regen`.
+> (`.claude/hooks/roadmap-drift-nudge.py`) and repaired with `/roadmap`.
 
 ## How to use this doc (read this as your instructions)
 
@@ -21,7 +21,7 @@ no other guidance is needed. Follow it top to bottom:
 2. **Read the issue in full — body *and* every comment.** Open the linked issue
    (`gh issue view <#> --comments`). The **issue body is authoritative** for
    scope and acceptance criteria; the **comments carry live guidance** —
-   unblock notes, routing, and sequencing that `/doc-regen` writes back as the
+   unblock notes, routing, and sequencing that `/roadmap` writes back as the
    roadmap reconciles. Do not act on the body alone; a comment may have changed
    the plan. This census row only *routes and orders* — it never restates scope.
 3. **Invoke the routed skill.** Use the skill(s) named in the row's `Skill(s)`
@@ -31,7 +31,7 @@ no other guidance is needed. Follow it top to bottom:
    `Deps` on anything your change unblocks.
 
 ## Burn-down (<date>)
-Reconciled against live `gh` (`/doc-regen`). **<total> issues — <closed> closed (<pct>%), <open> open.**
+Reconciled against live `gh` (`/roadmap`). **<total> issues — <closed> closed (<pct>%), <open> open.**
 
 | Bucket | Count | Issues |
 |---|---|---|
@@ -66,7 +66,7 @@ Open by wave: W1 n · W2 n · … · unscoped n.
   - **Ready (agent)** — loop-eligible: `ready-for-agent` (agent-owned, `Next`/`Backlog`,
     deps satisfied). Carries a *strong agent brief* (clear module + AC + TDD notes,
     a determinism/offline boundary, report-only where applicable, explicit
-    out-of-scope) — the bar to be safely looped; see `/doc-regen`'s "Surfacing
+    out-of-scope) — the bar to be safely looped; see `/roadmap`'s "Surfacing
     AFK-able work".
   - **Ready (human / HITL)** — `ready-for-human` (human-owned, ready to act).
   - **Blocked / deferred** — `Blocked` or `Parked` with an open dep/hold.
@@ -78,4 +78,4 @@ Any PR that opens/advances/closes an issue updates that issue's census row
 (minimally `Status`, plus `Deps` on anything it unblocks). Closed → `Status: Done`
 (keep the row). In-branch freshness enforced by `roadmap-guard.py`; out-of-band
 drift (issues changed via `gh`/web between sessions) is *detected* by the
-SessionStart `roadmap-drift-nudge.py` and *repaired* by `/doc-regen`.
+SessionStart `roadmap-drift-nudge.py` and *repaired* by `/roadmap`.

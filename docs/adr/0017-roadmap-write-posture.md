@@ -1,6 +1,6 @@
-# doc-regen edits the working tree and writes additive issue comments, but never commits or closes
+# roadmap edits the working tree and writes additive issue comments, but never commits or closes
 
-The `doc-regen` skill (issue [#154](https://github.com/dividedby/skills/issues/154))
+The `roadmap` skill (issue [#154](https://github.com/dividedby/skills/issues/154); renamed from `doc-regen`, see #200)
 reconciles a repo's roadmap census with live GitHub issue state. Its original
 proposal drew a hard boundary — *"never commits, never mutates issues on
 GitHub"* — putting it alongside the propose-only AFK loops of
@@ -16,7 +16,7 @@ issue. Keeping the roadmap honest *requires* keeping the issues honest too.
 
 ## Decision
 
-`doc-regen` has a **graded write posture**, mirroring the interactive-vs-loop
+`roadmap` has a **graded write posture**, mirroring the interactive-vs-loop
 split `staleness-audit` already uses for its apply station:
 
 1. **Working tree — edit for review, never commit.** All roadmap edits (and, in
@@ -27,7 +27,7 @@ split `staleness-audit` already uses for its apply station:
    **record blocker/dep changes**. It **may not close an issue** and **may not
    rewrite a body** — closing stays a human act on a tier-3 *recommendation*, and
    bodies are human-authored. Comments are additive and trivially reviewable.
-3. **Loop-suppression invariant.** If `doc-regen` is ever wired into an unattended
+3. **Loop-suppression invariant.** If `roadmap` is ever wired into an unattended
    loop, the issue-write surface is **suppressed → propose-only**, exactly as the
    `staleness-audit` cron suppresses its apply station. The additive-issue-write
    surface is for an interactive, watched run, never an AFK one.
@@ -35,7 +35,7 @@ split `staleness-audit` already uses for its apply station:
 ## Why this does not violate ADR 0003
 
 ADR 0003 governs the **unattended proposal loops** — the producer that runs AFK
-must only propose. `doc-regen` is a **maintainer-invoked, interactive** skill;
+must only propose. `roadmap` is a **maintainer-invoked, interactive** skill;
 its additive writes happen under a watching human who reviews the diff and the
 comments. The loop-suppression invariant preserves ADR 0003 exactly where it
 applies: the moment this skill runs unattended, it drops back to propose-only.
