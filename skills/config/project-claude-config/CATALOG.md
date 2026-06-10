@@ -1,6 +1,6 @@
 # Project Config Catalog
 
-Reference for `project-claude-config`, covering both concerns. Every harness recommendation must come from this catalog, be **fact-gated** (only proposed when the repo actually triggers it), and pass the **annoyance filter**; instruction-side keeps and cuts follow the earn-the-line rules below. Validate the exact keys/events you propose against current docs before showing the user (see SKILL.md Step 5).
+Reference for `project-claude-config`, covering both concerns. Every harness recommendation must come from this catalog, be **fact-gated** (only proposed when the repo actually triggers it), and pass the **annoyance filter**; instruction-side keeps and cuts follow the earn-the-line rules below. Validate the exact keys/events you propose against current docs before showing the user (SKILL.md's validate-and-approve step).
 
 Canonical docs (anchors for validation):
 - Hooks: https://code.claude.com/docs/en/hooks

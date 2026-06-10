@@ -15,17 +15,17 @@ Two concerns, always in this order:
 
 One bar everywhere: **every line costs context or runs every session, so it must earn its place.** Nothing here restates or weakens the global `~/.claude/` config. Propose before writing; nothing is written until approved.
 
-Be efficient: **delegate discovery to an Explore subagent** and work from condensed findings + `file:line` refs. Don't pull whole files into the parent context.
+Be efficient: **delegate discovery to an Explore subagent** and work from condensed findings + `file:line` refs. Don't pull whole files into the parent context (the one exception is in Step 2).
 
 ## Step 1 — Global baseline
 
-Read `~/.claude/CLAUDE.md`, `~/.claude/settings.json`, and the two safety hooks (`read-guard.py`, `bash-guard.py`) once. Treat all of it as **already in effect** — communication style, code-style defaults, the bypass-style `defaultMode`, the surgical PreToolUse hooks, model/effort/statusline, enabled plugins. Nothing you scaffold or keep may restate, duplicate, or weaken any of it. Key harness facts: hooks are **additive across scopes** (a re-declared global hook fires twice; the safety hooks can't be weakened from project config); `deny` rules union and win from any scope; scalars/`env` resolve most-specific-wins. **Carve-out:** a guard hook that must fire where the global harness is absent (an AFK/CI `claude -p` run — no `~/.claude/`) is correct to re-declare at project scope ([ADR 0013](../../../docs/adr/0013-project-scope-hooks-may-redeclare-global-guards-for-ci.md); the git guard in [CATALOG.md](CATALOG.md) is the worked example).
+Read `~/.claude/CLAUDE.md`, `~/.claude/settings.json`, and the two safety hooks (`read-guard.py`, `bash-guard.py`) once. Treat all of it as **already in effect** — communication style, code-style defaults, the bypass-style `defaultMode`, the surgical PreToolUse hooks, model/effort/statusline, enabled plugins. Nothing you scaffold or keep may restate, duplicate, or weaken any of it. The merge semantics that make this rule concrete (hooks additive across scopes, `deny` union, most-specific-wins scalars) and its one carve-out (a guard hook re-declared for runs that lack global config) live in [CATALOG.md](CATALOG.md) "Verified harness facts" — judge every hook against those facts, not from memory.
 
 ## Step 2 — Detect (subagent)
 
-Dispatch Explore to report, without pulling full bodies into the parent:
+Dispatch Explore to report:
 
-- **What exists:** `.claude/settings.json` (root; note any `settings.local.json` — read-only, personal, outranks the shared file), any nested `packages/*/.claude/settings.json` (NOT loaded — dead config), and every `CLAUDE.md` / `AGENTS.md` (root + nested), with section headers and anything that looks long, duplicative, or derivable.
+- **What exists.** For `.claude/settings.json` (root), return the **full content** — it is small and it is the audit object; key-path findings need the actual keys. Note any `settings.local.json` (read-only, personal, outranks the shared file) and any nested `packages/*/.claude/settings.json` (NOT loaded — dead config). For every `CLAUDE.md` / `AGENTS.md` (root + nested), return section headers plus anything that looks long, duplicative, or derivable — request excerpts only where a judgment call needs them, not full bodies.
 - **Fact triggers** for the catalog: configured formatter, fast typecheck/lint command, secret files (`.env*`, `*.pem`, `credentials/`), irreplaceable-data dirs (`data/`, `migrations/`), language/stack, package manager, CI workflows that run an agent headless.
 - **Repo shape:** monorepo layout (workspaces/packages/apps), build·test·lint·run tooling from manifests and README.
 
@@ -33,10 +33,10 @@ Dispatch Explore to report, without pulling full bodies into the parent:
 
 From the detect report, assign each concern a posture:
 
-- **Missing → scaffold** (additive). Follow [scaffold-stubs.md](scaffold-stubs.md): earn-the-line stubs built from repo facts, with a "here's what I inferred — confirm/correct" framing.
-- **Present → audit** (subtractive). Follow [audit-checklist.md](audit-checklist.md): a concise `cut` / `move` / `keep` / `fix-contradiction` / `add` / `flag` list with `file:line` or key-path refs.
+- **Missing or trivial → scaffold** (additive). An empty `{}` settings.json or an untouched boilerplate CLAUDE.md is greenfield, not audit material. Follow [scaffold-stubs.md](scaffold-stubs.md): earn-the-line stubs built from repo facts, with a "here's what I inferred — confirm/correct" framing.
+- **Present with real content → audit** (subtractive). Follow [audit-checklist.md](audit-checklist.md): a concise finding list (`cut` / `move-to-<doc>` / `keep` / `fix-contradiction` / `add` / `flag` — defined there) with `file:line` or key-path refs.
 
-Run the harness concern fully (Steps 3–5) before the instructions concern, so the instructions pass knows what the hooks now enforce.
+Work the harness concern before the instructions concern: settle the proposed hook set first, then scaffold/trim instructions against what those hooks would enforce. **One interview (Step 4) and one approval batch (Step 5) cover both concerns** — the ordering is internal, never a second round-trip to the user.
 
 ## Step 4 — Interview: gap-filler only, capped at the stub bar
 
@@ -44,10 +44,10 @@ The interview is **gated behind Explore** — never ask what the repo can answer
 
 ## Step 5 — Propose from the catalog, validate, get approval
 
-Every harness recommendation comes from [CATALOG.md](CATALOG.md): fact-gated (its trigger matched in Step 2) and past the annoyance filter; instruction-side keeps/cuts follow the catalog's instructions section. List catalog/anti-catalog entries you **deliberately rejected** and why. Recommend `deny`-only for permissions — never an allowlist.
+Every harness recommendation comes from [CATALOG.md](CATALOG.md): fact-gated (its trigger matched in Step 2) and past the annoyance filter; instruction-side keeps/cuts follow the catalog's Instructions section. List catalog/anti-catalog entries you **deliberately rejected** and why. Recommend `deny`-only for permissions — never an allowlist.
 
-Before showing the proposal, **WebFetch the catalog's canonical doc anchors** for whatever you're actually proposing (Hooks + Settings, plus Permissions or Memory as applicable) to confirm the specific events, matchers, and keys are current and non-deprecated. Scope the check to your proposal, not the whole catalog.
+Before showing the proposal, **WebFetch the catalog's canonical doc anchors for the harness items you're proposing** (Hooks + Settings, plus Permissions if a permission is proposed) to confirm the specific events, matchers, and keys are current and non-deprecated. Scope the check to your proposal, not the whole catalog; instruction-file proposals have no keys or events and need no fetch.
 
-Then show everything as **one batch** — proposed `settings.json` changes, proposed/trimmed instruction files, each with a one-line why — and await approval. **Route settings writes through the `update-config` skill** (never hand-edit JSON, never write `settings.local.json`); write instruction files directly after approval.
+Then show everything as **one batch** — proposed `settings.json` changes, proposed/trimmed instruction files, each with a one-line why — and await approval. If the user rejects a hook that had justified omitting or cutting an instruction line, restore that line before writing: the instruction is only dead weight while something enforces it. **Route settings writes through the `update-config` skill** (never hand-edit JSON, never write `settings.local.json`); write instruction files directly after approval.
 
 If any item is a genuine judgment call (a hook's value vs. annoyance, a contradiction to resolve), offer `/grill-me`. For domain glossary (`CONTEXT.md`) and ADRs, point at `/grill-with-docs` — this skill does not scaffold those.

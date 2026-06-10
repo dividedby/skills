@@ -39,8 +39,9 @@ To keep the single `SKILL.md` at principle level
 ([ADR 0002](./0002-design-skills-prescribe-at-principle-level.md)) despite
 the larger surface, weight lives in supporting files: the shared
 `CATALOG.md` is **broadened to both domains** (annoyance-filtered hook
-entries + earn-the-line instruction entries, each fact-gated with canonical
-doc anchors), and the two posture files load lazily.
+entries + earn-the-line instruction entries, each fact-gated; proposals are
+validated against the catalog's canonical doc anchors), and the two posture
+files load lazily.
 
 This supersedes the 2×2 as documented in the former `config/README.md`. It
 does not conflict with [ADR 0001](./0001-buckets-cluster-by-user-intent.md)
@@ -71,9 +72,9 @@ seams, not intents.
   (`docs/agents/installed-skills.md`) refresh on their own cadence once the
   new skill is installed.
 - [ADR 0013](./0013-project-scope-hooks-may-redeclare-global-guards-for-ci.md)
-  still names the old skills; as a point-in-time record it is not rewritten.
-  Its carve-out now lives in `project-claude-config`'s `CATALOG.md`
-  unchanged.
+  names the old skills; its body stays as a point-in-time record, with a
+  one-line amendment note pointing here (the ADR 0004 precedent). Its
+  carve-out now lives in `project-claude-config`'s `CATALOG.md` unchanged.
 - Risk accepted: one skill now covers detect → scaffold → critique →
   interview across two domains. The mitigation is structural (thin routing
   `SKILL.md`; catalog and posture files carry the weight, loaded lazily) —
