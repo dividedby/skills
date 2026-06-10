@@ -96,12 +96,16 @@ and the skill — see [`proposal-loop-harness.md`](./proposal-loop-harness.md).
 
 ## To propagate to another repo
 
-1. Copy the workflow envelope (it clones `dividedby/skills` fresh for the harness +
-   skill; nothing is vendored).
+1. Copy the workflow envelope. The envelope itself is the **only vendored piece**
+   (ADR 0014): the harness + skill it calls are cloned fresh from
+   `dividedby/skills` each run, so prompt/seam fixes reach every Consumer
+   automatically — but envelope changes (tool grants, `--model` pin,
+   `--max-budget-usd`, cron) do **not** propagate and need a PR per Consumer.
 2. Set `SKILL_DIR` to the cloned skill path
    (`$RUNNER_TEMP/<clone>/skills/engineering/staleness-audit`) so the prompt's
-   `@SKILL_DIR@` resolves; keep the read-only `gh` + `WebSearch`/`WebFetch` tool
-   scoping and `permissions: contents: read, issues: write`.
+   `@SKILL_DIR@` resolves; keep the full tool scoping from the Tools bullet above
+   (read-only `gh`, `WebSearch`/`WebFetch`, and the load-bearing `Bash(python3:*)`)
+   and `permissions: contents: read, issues: write`.
 3. Ensure the `CLAUDE_CODE_OAUTH_TOKEN` secret exists.
 4. Confirm the repo actually pins a toolchain — any ecosystem (Node, Python, Go, …),
    not just Node (otherwise the loop just files a `skipped` report each run —
