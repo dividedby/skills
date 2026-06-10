@@ -98,9 +98,18 @@ jobs:
           # leaves a trace (plain json buffers) and the final result event (with
           # total_cost_usd) lands before claude exits — cost captured even on failure.
           # pipefail propagates an agent failure; the Digest step still runs (always).
+          # --model is deliberately pinned to claude-sonnet-4-6 (not the floating
+          # `sonnet` alias) so an unattended run can't silently inherit the next
+          # Sonnet release — bump only after testing the prompts against the new
+          # model (#180, applied repo-wide).
+          # --max-budget-usd is the same per-run spend backstop the proposal loops
+          # carry (#181) — headroom included for the web-validated Validate
+          # station (#179); never trips a healthy run, caps a runaway well below
+          # an unbounded 20-minute spend.
           claude -p \
             --output-format stream-json --verbose \
-            --model sonnet \
+            --model claude-sonnet-4-6 \
+            --max-budget-usd 3.00 \
             --permission-mode acceptEdits \
             --allowedTools "Bash(gh issue list:*) Bash(gh issue view:*) Bash(gh search:*) Bash(gh api:*) Bash(git:*) Read Grep Glob WebSearch WebFetch" \
             --append-system-prompt "$(sed "s#@SKILL_DIR@#$SKILL_DIR#g" harness/prompts/staleness-audit.md)" \
