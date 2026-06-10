@@ -1,6 +1,6 @@
 # Roadmap reconcile auto-applies (branch → PR → auto-merge on a green gate); closes stay human
 
-[ADR 0017](./0017-roadmap-write-posture.md) made the `roadmap` skill (formerly
+[ADR 0017](./0017-doc-regen-write-posture.md) made the `roadmap` skill (formerly
 `doc-regen` — see #200) **propose-only**: it edits the working tree and
 never commits, a human reviews `git diff` and commits, and a loop suppresses even
 the additive issue writes. In practice the reconcile edit is **mechanical and

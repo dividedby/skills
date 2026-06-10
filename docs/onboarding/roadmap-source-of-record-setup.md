@@ -186,6 +186,6 @@ it's a near-guaranteed stumble if you chain the two steps.
 `roadmap` edits the working tree for review and writes **additive** issue
 comments (unblock/routing/sequencing notes); it **never commits, never closes an
 issue, never rewrites a body** — see
-[ADR 0017](../adr/0017-roadmap-write-posture.md). If you ever wire it into an
+[ADR 0017](../adr/0017-doc-regen-write-posture.md). If you ever wire it into an
 unattended loop, suppress the issue-write surface (propose-only), the same way the
 staleness-review loop suppresses its apply station.
