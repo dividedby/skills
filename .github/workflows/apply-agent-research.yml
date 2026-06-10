@@ -9,8 +9,9 @@ on:
     # evening CT: one `* * 6` mask avoids the UTC-midnight day-of-week straddle.
     # Weekly tracks the upstream corpus's cost-amended refresh (agent-research
     # synthesizes 2×/week / scouts weekly), so applying the mirror more often was
-    # wasted runs; the loop re-clones the mirror fresh and the one-proposal gate
-    # keeps each run to ≤1 issue. (agent-research cost rebalance, 2026-06-08.)
+    # wasted runs; the loop re-clones the mirror fresh and the budgeted gate
+    # keeps each run to ≤5 issues across all channels (ADR 0019; a ceiling,
+    # not a target). (agent-research cost rebalance, 2026-06-08.)
     - cron: "19 1 * * 6"
   workflow_dispatch:
 
@@ -83,7 +84,7 @@ jobs:
           PRIVATE_MARKERS: ""
         run: |
           set -euo pipefail
-          # Bash stays unscoped: the one-proposal GATE is still invoked via a pipe
+          # Bash stays unscoped: the budgeted GATE is still invoked via a pipe
           # (echo '<json>' | python3 .../cli.py gate), which a scoped pattern like
           # Bash(python3:*) would block (the command starts with echo), and the
           # agent writes each issue body via a heredoc. The leak GUARD, by contrast,

@@ -6,9 +6,10 @@ questions — make the call yourself.
 You **do not file anything yourself.** Your entire output is a single `<output>`
 block at the very end of your response (schema below), followed by a `<body>`
 block. A deterministic workflow step parses those blocks and publishes the issue
-— this is what enforces the one-issue-per-run cap and the provenance label in
-code rather than trusting the prompt. Do **not** run `gh issue create`; if you
-do, you will create a duplicate.
+— this is what enforces the per-run issue cap and the provenance label in code
+rather than trusting the prompt. This loop files **one ranked report per run**
+(all findings ride in its table — never split them across issues). Do **not**
+run `gh issue create`; if you do, you will create a duplicate.
 
 ## Task
 

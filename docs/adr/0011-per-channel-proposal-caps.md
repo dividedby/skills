@@ -1,5 +1,11 @@
 # Proposal caps are per channel, not one global cap per run
 
+> **Superseded by [ADR 0019](0019-proposal-loops-file-a-budgeted-ranked-top-k.md):**
+> the per-channel one-cap became a single per-run budget of 5 shared across all
+> channels, picked by one merged, ranked gate pass. The cross-channel-suppression
+> concern below is addressed by the budget's headroom (5 ≈ the old per-channel
+> ceiling summed) rather than by channel isolation.
+
 The `apply-agent-research` loop's "**at most one issue per run**" cap becomes
 **one issue per *channel* per run**. Each kind of output gets its own "one or
 none" budget, each run through the [one-proposal gate](../../skills/meta/apply-agent-research/proposal-flow.md)

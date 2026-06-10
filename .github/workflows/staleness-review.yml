@@ -89,8 +89,9 @@ jobs:
           # $SKILL_DIR/SKILL.md report-only and emits a
           # single <output> JSON block plus a raw <body>
           # block (see prompt). It does NOT file the issue — the Publish step does,
-          # via the harness, which enforces the one-issue-per-run cap and the label
-          # in code. No Edit/Write tools are granted, and gh access is scoped to
+          # via the harness, which enforces the per-run issue cap and the label
+          # in code (this loop stays a single ranked report per run — ADR 0019
+          # deliberately leaves staleness-review at one issue). No Edit/Write tools are granted, and gh access is scoped to
           # read-only subcommands, so the agent can neither mutate the repo nor file
           # an issue itself (report-only on the cron, ADR 0011).
           # --output-format stream-json --verbose: stream every event so a hung run
@@ -122,9 +123,9 @@ jobs:
         id: publish
         run: |
           set -euo pipefail
-          # Parse <output>/<body>, file <=1 labeled issue, write the rich step
-          # summary, emit issue_url. Fails loudly (exit 1) on a missing/garbled
-          # block — the failure() Summarise step below then surfaces the raw log.
+          # Parse <output>/<body>, file the single report issue, write the rich
+          # step summary, emit issue_url. Fails loudly (exit 1) on a missing/
+          # garbled block — the failure() Summarise step below surfaces the raw log.
           python3 harness/cli.py publish \
             --log "$RUNNER_TEMP/agent.log" \
             --label "$LABEL" \

@@ -119,11 +119,12 @@ Then layer on the Consumer specifics:
    - Invoke Claude using **this repo's existing convention** (e.g. match
      `anthropics/claude-code-base-action` if its other workflows use it).
 
-3. **Per-channel outputs ([ADR 0011](../adr/0011-per-channel-proposal-caps.md)) —
-   at most one issue _per channel_ per run, zero fine.** Into the repo's **own**
-   tracker (ensure each label idempotently in the workflow):
-   - **self-improvement** (`source:agent-research`) — one agent-meta improvement
-     from a KB note.
+3. **Channel outputs ([ADR 0019](../adr/0019-proposal-loops-file-a-budgeted-ranked-top-k.md)) —
+   at most **five issues per run, shared across all channels** via one budgeted
+   gate pass, zero fine (five is a ceiling, not a target).** Into the repo's
+   **own** tracker (ensure each label idempotently in the workflow):
+   - **self-improvement** (`source:agent-research`) — agent-meta improvements
+     from KB notes.
    - **skill-audit** (`source:skill-audit`) — the supply-side audit, step 4.
 
 4. **Supply-side audit of local skills**

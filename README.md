@@ -29,7 +29,7 @@ Setting up and auditing a project's Claude config — instruction files and the 
 
 ### Meta
 
-- **[apply-agent-research](./skills/meta/apply-agent-research/SKILL.md)** — Apply an external agent-research knowledge base to a repo's own agent-meta: read a public knowledge mirror plus the repo's own governance docs, then propose at most one improvement per channel as a labeled issue — never editing, committing, or merging.
+- **[apply-agent-research](./skills/meta/apply-agent-research/SKILL.md)** — Apply an external agent-research knowledge base to a repo's own agent-meta: read a public knowledge mirror plus the repo's own governance docs, then propose its few best improvements (at most five per run, each clearing a high independent bar) as labeled issues — never editing, committing, or merging.
 
 ## Proposal loops
 
