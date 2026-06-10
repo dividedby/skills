@@ -93,7 +93,10 @@ tree for review (never committed):
 - **Drop the roadmap.** Copy [`templates/roadmap.md`](templates/roadmap.md) to
   `ROADMAP`, fill the project name, and **backfill one census row per open
   issue** from `gh issue list` — then run the reconcile tiers below to set
-  statuses, waves, and deps so the doc lands populated, not empty.
+  statuses, waves, and deps so the doc lands populated, not empty. The
+  `## Burn-down` section drops pre-populated: it is recomputed from that first
+  census backfill the same way reconcile recomputes it every pass (Tier-1
+  mechanical).
 - **Wire the two hooks.** Copy [`templates/roadmap-guard.py`](templates/roadmap-guard.py)
   (PreToolUse) and [`templates/roadmap-drift-nudge.py`](templates/roadmap-drift-nudge.py)
   (SessionStart) into `.claude/hooks/`, `chmod +x`, and **edit each file's config
@@ -194,6 +197,12 @@ Deterministic repairs that need no judgment, applied directly:
 - A row whose blocking `Deps` have all closed → *italicize* the satisfied deps and
   flip `Blocked` → `Backlog`/`Next` per the doc's own ordering rules.
 - Recompute wave and `Next` markers per the roadmap's stated ordering.
+- **Recompute the `## Burn-down`** and stamp its date. It is fully derivable from
+  the reconciled census plus the one `gh` call already made — total / closed (pct)
+  / open, the five status-bucket counts and their issue lists, and the open-by-wave
+  line are all projections of the table onto the `Owner` + `Status` + label
+  vocabulary (see the roadmap Legend). So it carries no judgment: reconcile rewrites
+  it wholesale every pass rather than diffing it.
 
 ### Tier 2 — semantic (propose the row, then write)
 Newly-opened issues with no census row: slot each in with an **inferred** wave,
@@ -231,13 +240,59 @@ Summarize the three tiers (what was auto-written, what was proposed, what tier-3
 flags for the human). Tell the human to review `git diff <ROADMAP>` and commit.
 **Never commit, never close issues.**
 
+## Surfacing AFK-able work
+
+Reconcile keeps the census honest, but the highest-leverage move before
+dispatching an autonomous loop is **forward motion**: converting
+`needs-triage`/`Parked`/`ready-for-human` issues into `ready-for-agent` ones,
+often by carving an agent-doable slice out of something that looks blocked or
+human-only. That call stays the maintainer's; this skill only *surfaces* it.
+
+### The AFK-ability pass (report-only, mirrors Tier-3)
+A separate report-only pass with the same posture as tier-3 — it **never edits the
+roadmap and never touches issues**. For each open `needs-triage`/`Parked`/
+`ready-for-human` row, ask "is there a deterministic, judgment-free slice here?"
+and flag the candidates for the maintainer, each with a one-line **what would flip
+it** (the single decision or split that would make it `ready-for-agent`). This is
+a recommendation surface, not a write: the human makes the label/split call
+(ADR 0003/0017).
+
+### The strong agent brief (the bar to be safely looped)
+A flagged candidate is only worth looping once its issue clears this bar:
+- **Clear module + acceptance criteria + TDD notes** — the existing
+  `ready-for-agent` bar.
+- **A determinism / offline boundary.** Inject the clock/rng rather than reading
+  it; **stub external deps** (LLM/network/egress) behind an interface so the
+  *suite* never makes a live call. The live run is a separate child.
+- **A report-only boundary where applicable.** The agent measures/builds and
+  **stops**; the maintainer owns any speculative follow-up — so an unattended loop
+  never spawns judgment work.
+- **Explicit out-of-scope + a single named follow-up owner.**
+
+### Repeatable split patterns
+Named carves that turn a blocked/human-only row into an AFK-able slice plus a
+human sibling:
+- **Mechanism vs HITL-copy split** — plumbing/logic → `ready-for-agent`;
+  wording/taste → a `ready-for-human` sibling (e.g. build a prompt UI component
+  with placeholder copy now, revoice it later).
+- **Build vs live-run split** — TDD the machinery behind a stub now
+  (`ready-for-agent`); the live backfill/cron/egress run is a `ready-for-human`/ops
+  child.
+- **Re-measurement carve-out** — when the levers a `Tracking` issue asked for have
+  all shipped, the residual is often a deterministic *re-measurement* harness (a
+  pure analyzer + a thin runner) — pure agent work.
+
+The strong-agent-brief rubric is referenced from the roadmap template's Legend, so
+a maintainer scaffolding a new repo inherits the bar.
+
 ## Boundaries
 
 - **Static.** `gh` + working tree only — no product or live data, no network
   beyond the one `gh issue list` call.
 - **Never commits.** Edits the working tree for review; the human commits.
-- **Additive on issues; report-only on tier-3.** Comments and dep notes only;
-  no close, no body rewrite; tier-3 never writes at all.
+- **Additive on issues; report-only on tier-3 and the AFK-ability pass.** Comments
+  and dep notes only; no close, no body rewrite; tier-3 and the AFK-ability pass
+  never write at all — they recommend, the human decides.
 - **Loop-suppression is envelope-enforced, not self-detected.** When wired into
   an unattended loop, the issue-write surface is suppressed → propose-only — but
   the skill does **not** check an env var or flag itself to decide this. The

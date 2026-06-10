@@ -30,6 +30,19 @@ no other guidance is needed. Follow it top to bottom:
    blocks an issue-referencing commit otherwise): set `Status`, and update
    `Deps` on anything your change unblocks.
 
+## Burn-down (<date>)
+Reconciled against live `gh` (`/doc-regen`). **<total> issues — <closed> closed (<pct>%), <open> open.**
+
+| Bucket | Count | Issues |
+|---|---|---|
+| **Ready (agent)** — loop-eligible | N | #… |
+| **Ready (human / HITL)**          | N | #… |
+| **Blocked / deferred**            | N | #… |
+| **Tracking** (epic / PRD parents) | N | #… |
+| **Meta** (idea-inbox / onboarding)| N | #… |
+
+Open by wave: W1 n · W2 n · … · unscoped n.
+
 ## Priority waves
 | Wave | Theme | Issues | Gate to enter |
 | ---- | ----- | ------ | ------------- |
@@ -48,6 +61,17 @@ no other guidance is needed. Follow it top to bottom:
 - **Owner** — `agent` · `human` · `mixed`.
 - **Deps** — blocking issues; _italic_ = already closed (satisfied).
 - **Notes** — roadmap-only sequencing guidance. Scope/AC live in the issue, not here.
+- **Burn-down buckets** — a projection of the census onto the existing `Owner` +
+  `Status` + label vocabulary, recomputed every reconcile (no new data source):
+  - **Ready (agent)** — loop-eligible: `ready-for-agent` (agent-owned, `Next`/`Backlog`,
+    deps satisfied). Carries a *strong agent brief* (clear module + AC + TDD notes,
+    a determinism/offline boundary, report-only where applicable, explicit
+    out-of-scope) — the bar to be safely looped; see `/doc-regen`'s "Surfacing
+    AFK-able work".
+  - **Ready (human / HITL)** — `ready-for-human` (human-owned, ready to act).
+  - **Blocked / deferred** — `Blocked` or `Parked` with an open dep/hold.
+  - **Tracking** — `Tracking` epic/PRD parent rows.
+  - **Meta** — idea-inbox / workflow-onboarding rows.
 
 ## Self-update protocol
 Any PR that opens/advances/closes an issue updates that issue's census row
