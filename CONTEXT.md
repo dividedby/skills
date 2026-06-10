@@ -39,6 +39,31 @@ A markdown file inside a skill folder that the `SKILL.md` links to for
 detail (e.g. `banned-patterns.md`, `direction-doc-format.md`).
 _Avoid_: doc, reference, attachment.
 
+**Idea Inbox**:
+The single per-repo GitHub issue that is the canonical intake for **freeform,
+unstructured** ideas — raw, unscoped thoughts. Items enter
+**enriched** — the idea plus the ambient context/links available at file time, but
+not yet grilled or scoped — and leave by **draining**: an adaptive promotion that
+picks only the pipeline steps a given idea needs (`/grill-with-docs`, `/to-prd`,
+`/to-issues`, `/software-design`) and strives to emit a `ready-for-agent` issue
+(strong agent brief, HITL steps folded in where needed), moving the item to a
+`✅ Actioned` section with `→ #num`. **Structured, contract-bearing**
+filings (skill-request, skill-promotion, a fully-scoped bug) **bypass the Inbox**
+and file labeled issues directly. The unifying invariant is that every filing
+registers in the **Roadmap** — not that every filing funnels through the Inbox.
+_Avoid_: backlog, triage queue, scratchpad, inbox issue.
+
+**Roadmap**:
+The working-tree markdown doc (default `docs/plans/roadmap.md`) that is a repo's
+single **execution source of record** — one census row per issue (status, wave,
+owner, skill routing, deps). Authoritative by virtue of its **file-based
+integrity** (PreToolUse commit guard + SessionStart drift nudge + `/doc-regen`
+reconcile), which a GitHub issue cannot host. A durable GitHub issue is at most a
+read-only **Roadmap mirror** of it — a machine-owned issue whose body is
+**CI-rendered** from the doc on push (commit-if-changed), never the source of
+record and never written by the skill.
+_Avoid_: board, plan, tracker, backlog doc, project board.
+
 **Autonomous loop** (a.k.a. AFK loop):
 An unattended agent run that repeats a work cycle until a stop condition,
 guarded by a per-iteration feedback gate and an iteration/cost cap. The general
