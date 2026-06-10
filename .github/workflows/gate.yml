@@ -1,0 +1,45 @@
+name: gate
+
+# Single always-run merge gate. The per-area workflows (hook-self-tests,
+# harness-tests, apply-agent-research-lib-tests) are path-filtered so they don't
+# run on doc-only commits — which makes them unusable as *required* status checks
+# (a required check that never runs deadlocks the PR). This job has no path
+# filter, runs every stdlib self-test in the repo in one sub-second pass, and is
+# the single required check branch protection gates merges on (ADR 0022's green
+# gate). It also picks up the roadmap `templates/*.test.py` self-tests, which no
+# other workflow runs.
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: Run all standalone self-tests
+        run: |
+          set -e
+          shopt -s nullglob globstar
+          found=0
+          for t in .claude/hooks/*.test.py skills/**/templates/*.test.py; do
+            echo "== $t =="
+            python3 -B "$t"
+            found=1
+          done
+          if [ "$found" -eq 0 ]; then
+            echo "no standalone self-tests found — gate would pass having tested nothing"
+            exit 1
+          fi
+
+      - name: Run unittest suites
+        run: |
+          set -e
+          python3 -m unittest discover -s harness/tests
+          python3 -m unittest discover -s skills/meta/apply-agent-research/tests
