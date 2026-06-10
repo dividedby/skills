@@ -31,27 +31,27 @@ no other guidance is needed. Follow it top to bottom:
    `Deps` on anything your change unblocks.
 
 ## Burn-down (2026-06-10)
-Reconciled against live `gh` (`/roadmap`). **8 issues — 0 closed (0%), 8 open.**
+Reconciled against live `gh` (`/roadmap`). **9 issues — 1 closed (11%), 8 open.**
 **Closed (cumulative): 0.** ← integer total of all closed issues ever, including
 those whose rows have been pruned from collapsed waves; bumped, never recomputed
 from the table (pruned rows are gone), so the count survives wave pruning.
 
 | Bucket | Count | Issues |
 |---|---|---|
-| **Ready (agent)** — loop-eligible | 1 | #216 |
+| **Ready (agent)** — loop-eligible | 0 | — |
 | **Ready (human / HITL)**          | 1 | #58 |
 | **Blocked / deferred**            | 5 | #75 #98 #112 #125 #153 |
 | **Tracking** (epic / PRD parents) | 0 | — |
-| **Meta** (idea-inbox / onboarding)| 1 | #91 |
+| **Meta** (idea-inbox / onboarding)| 2 | #91 #220 |
 
-Open by wave: W1 2 · W2 5 · Meta 1 · unscoped 0.
+Open by wave: W1 1 · W2 5 · Meta 2 · unscoped 0.
 
 ## Priority waves
 | Wave | Theme | Issues | Gate to enter |
 | ---- | ----- | ------ | ------------- |
 | **W1** | Now — roadmap + urgent posture | #216 #58 | none — active now |
 | **W2** | Corroboration-gated skill backlog | #75 #98 #112 #125 #153 | a cross-repo +1 lands (ADR 0006); #75 enables the other four |
-| **Meta** | Standing intake / cross-cutting | #91 | n/a |
+| **Meta** | Standing intake / cross-cutting | #91 #220 | n/a |
 
 ## Master census (active waves inline)
 Open waves and the active census stay inline. A **wholly-closed** wave collapses
@@ -61,7 +61,7 @@ bumped (see Self-update protocol + ADR 0023).
 
 | # | Issue | Wave | Status | Owner | Skill(s) | Deps | Notes |
 | - | ----- | ---- | ------ | ----- | -------- | ---- | ----- |
-| 216 | Dogfood the roadmap pattern — bootstrap roadmap into skills itself (ADR 0023) | W1 | **Next** | agent | `/roadmap` | — | this bootstrap PR (in-progress) |
+| 216 | Dogfood the roadmap pattern — bootstrap roadmap into skills itself (ADR 0023) | W1 | **Done** | agent | `/roadmap` | — | bootstrapped & merged (#221) |
 | 58 | Decide CI auth/billing posture before the 2026-06-15 Agent SDK credit change (subscription token vs API key) | W1 | **Next** | human | — | — | deadline 2026-06-15 (urgent human decision) |
 | 75 | Demonstrate organic cross-repo skill-request +1 across two distinct Consumers | W2 | **Parked** | human | — | — | awaiting-corroboration; enabler for the W2 cluster |
 | 98 | Skill request: playbook-driven migration | W2 | **Parked** | loop | `write-a-skill` | #75 | awaiting-corroboration |
@@ -69,6 +69,7 @@ bumped (see Self-update protocol + ADR 0023).
 | 125 | New engineering skill: prefactor before the easy change | W2 | **Parked** | loop | `write-a-skill` | #75 | source:agent-research; awaiting-corroboration |
 | 153 | New engineering skill: agentic release-QA gate | W2 | **Parked** | loop | `write-a-skill` | #75 | awaiting-corroboration |
 | 91 | 💡 Idea Inbox | Meta | **Tracking** | human | — | — | 💡 Idea Inbox — standing intake row (ADR 0021) |
+| 220 | 🗺️ Roadmap (read-only mirror) | Meta | **Tracking** | machine | — | — | machine-owned CI render of this doc (ADR 0020); render target, not backlog |
 
 ## Legend
 - **Status** — `Next` (do now) · `Backlog` (ready, unstarted) · `Blocked`
