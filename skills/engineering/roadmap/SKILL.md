@@ -196,7 +196,11 @@ tree for review (never committed):
   [`templates/roadmap-mirror.py`](templates/roadmap-mirror.py) to
   `.github/scripts/` and [`templates/roadmap-mirror.yml`](templates/roadmap-mirror.yml)
   to `.github/workflows/`, then edit the `paths:` filter, `MIRROR_ISSUE`, and
-  `ROADMAP_PATH` to the repo's roadmap doc and the pinned mirror issue. The
+  `ROADMAP_PATH` to the repo's roadmap doc and the pinned mirror issue. Title
+  the pinned issue **`🗺️ Roadmap`** — the map emoji plus `Roadmap`, nothing
+  more. **"Read-only" never goes in the title**; the read-only status is carried
+  by the body banner that `render()` prepends, so it lives in the issue body, not
+  the heading. The
   workflow renders the doc into a machine-owned mirror issue body on every push
   that touches it, **commit-if-changed**. The render
   (`render()`) is pure and the only I/O is the injected `gh` seam, so its
