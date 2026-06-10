@@ -103,9 +103,13 @@ jobs:
           # claude exits — so cost is captured even on a failed run (#58) and the
           # cross-repo ledger scrapes it. Matches agent-research's 4 workflows.
           # pipefail propagates an agent failure; the cost is already in the log.
+          # --model is deliberately pinned to claude-sonnet-4-6 (not the floating
+          # `sonnet` alias) so an unattended run can't silently inherit the next
+          # Sonnet release — bump only after testing the prompts against the new
+          # model (#180).
           claude -p \
             --output-format stream-json --verbose \
-            --model sonnet \
+            --model claude-sonnet-4-6 \
             --permission-mode acceptEdits \
             --allowedTools "Bash Read Grep Glob" \
             --disallowedTools "Bash(gh issue create:*) Bash(gh issue comment:*)" \
