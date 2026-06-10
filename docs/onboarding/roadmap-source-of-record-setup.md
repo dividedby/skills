@@ -3,7 +3,7 @@
 This stands up a **human-readable roadmap as the execution source of record**:
 one Markdown doc with a master census (one row per issue) that is the single
 place you go to pick the next thing to work on, kept honest by two cheap hooks
-and reconciled by the [`doc-regen`](../../skills/engineering/doc-regen/SKILL.md)
+and reconciled by the [`roadmap`](../../skills/engineering/roadmap/SKILL.md)
 skill.
 
 The three parts compose into a closed loop:
@@ -13,14 +13,14 @@ The three parts compose into a closed loop:
    enforcement: an issue-referencing commit must touch the roadmap.
 3. **A SessionStart drift nudge** (`roadmap-drift-nudge.py`) — catches
    *out-of-band* drift (issues opened/closed via `gh`/web *between* sessions,
-   which the commit guard structurally can't see), and points at `/doc-regen`.
+   which the commit guard structurally can't see), and points at `/roadmap`.
 
-`doc-regen` is the reconcile half: the guard keeps the doc fresh *inside* a PR;
+`roadmap` is the reconcile half: the guard keeps the doc fresh *inside* a PR;
 the nudge tells you when *between-PR* drift has accumulated; the skill fixes it.
 
 ## The turn-key path
 
-In a repo with issues but no roadmap, run **`/doc-regen`**. It detects the empty
+In a repo with issues but no roadmap, run **`/roadmap`**. It detects the empty
 state and **bootstraps the whole pattern** — drops the roadmap template, backfills
 one census row per open issue, writes both hooks into `.claude/hooks/`, wires
 `settings.json`, and runs a first reconcile pass to populate statuses/waves/deps.
@@ -28,7 +28,7 @@ It writes everything to the working tree for review and **commits nothing**: you
 review `git diff` + the new untracked files and commit.
 
 If a legacy planning doc already exists (an older `ROADMAP.md`, a TODO/tracking
-doc), `/doc-regen` instead **migrates** it — proposing a mapping into the canonical
+doc), `/roadmap` instead **migrates** it — proposing a mapping into the canonical
 census before reshaping, preserving your prose.
 
 ### Migrate: a worked example
@@ -45,7 +45,7 @@ legacy entry to a census row and each legacy state to the closest canonical
 - [ ] #43 add the audit-log table       — needs design
 ```
 
-maps to the canonical census (and `/doc-regen` *proposes* this mapping before
+maps to the canonical census (and `/roadmap` *proposes* this mapping before
 writing it):
 
 | # | Issue | Wave | Status | Owner | Skill(s) | Deps | Notes |
@@ -84,7 +84,7 @@ each hook so adoption is "edit a few constants":
 The artifacts are pure Python stdlib
 ([ADR 0004](../adr/0004-runbook-helpers-are-python-stdlib.md)) and live as
 **templates** under the skill
-([`templates/`](../../skills/engineering/doc-regen/templates/)) — they are not
+([`templates/`](../../skills/engineering/roadmap/templates/)) — they are not
 active hooks in this repo; bootstrap copies them into a consumer.
 
 ### `settings.json` wiring
@@ -132,12 +132,12 @@ it's a near-guaranteed stumble if you chain the two steps.
 
 ## Manual setup (if you'd rather not let the skill scaffold)
 
-1. Copy [`templates/roadmap.md`](../../skills/engineering/doc-regen/templates/roadmap.md)
+1. Copy [`templates/roadmap.md`](../../skills/engineering/roadmap/templates/roadmap.md)
    to your chosen path; backfill one row per open issue.
 2. Copy the two hooks under `.claude/hooks/`, edit the config block (path / column
    indices / status vocab), `chmod +x`.
 3. Wire `settings.json` (snippet above).
-4. `npx skills@latest add dividedby/skills` → pick `doc-regen`.
+4. `npx skills@latest add dividedby/skills` → pick `roadmap`.
 5. **Smoke-test both halves:**
    - *Nudge:* run the parser test
      (`python3 .claude/hooks/roadmap-drift-nudge.test.py`) to confirm your column
@@ -159,13 +159,13 @@ it's a near-guaranteed stumble if you chain the two steps.
      contains `git commit … #999`, so if the guard is *already* wired in your
      session it may gate the very call you use to test it — see the SKILL.md
      Gotchas.)
-   - Finally, run `/doc-regen` once to reconcile.
+   - Finally, run `/roadmap` once to reconcile.
 
 ## Posture
 
-`doc-regen` edits the working tree for review and writes **additive** issue
+`roadmap` edits the working tree for review and writes **additive** issue
 comments (unblock/routing/sequencing notes); it **never commits, never closes an
 issue, never rewrites a body** — see
-[ADR 0017](../adr/0017-doc-regen-write-posture.md). If you ever wire it into an
+[ADR 0017](../adr/0017-roadmap-write-posture.md). If you ever wire it into an
 unattended loop, suppress the issue-write surface (propose-only), the same way the
 staleness-review loop suppresses its apply station.

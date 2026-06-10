@@ -4,7 +4,7 @@ The maintainer wanted the execution roadmap to "live as a durable issue in all
 repos" — glanceable from the GitHub UI without a clone or a session. But the
 roadmap's authority comes from **file-based integrity** a GitHub issue cannot
 host: the PreToolUse commit guard forces an issue-referencing commit to touch the
-doc, the SessionStart drift nudge diffs the doc against `gh`, and `/doc-regen`
+doc, the SessionStart drift nudge diffs the doc against `gh`, and `/roadmap`
 (now `/roadmap`) edits the doc for `git diff` review. A single issue body has no
 commit, no diff-review, no guard, and concurrent edits clobber instead of merge.
 
@@ -17,7 +17,7 @@ glance-from-the-web property without moving authority off the file. The mirror i
 refreshed by a small deterministic CI job, **never by the skill** — so it sits
 outside the skill's write-posture rules.
 
-This is **not** a body-rewrite in the sense [ADR 0017](./0017-doc-regen-write-posture.md)
+This is **not** a body-rewrite in the sense [ADR 0017](./0017-roadmap-write-posture.md)
 forbids: 0017 protects *human-authored* issue bodies from the skill. The mirror
 issue is a machine-owned artifact whose body *is* the render target; CI owns it.
 

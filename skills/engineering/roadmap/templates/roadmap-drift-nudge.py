@@ -2,7 +2,7 @@
 """SessionStart roadmap drift nudge (TEMPLATE — copy to a consumer's
 `.claude/hooks/` and edit the config block). Cheaply compares the census
 against current issue state; on drift, prints a one-line nudge to run
-/doc-regen. Advisory only (never blocks, never edits); throttled; fails open
+/roadmap. Advisory only (never blocks, never edits); throttled; fails open
 silently (offline / no gh / no roadmap). Stdlib only (ADR 0004).
 
 The census parser auto-derives the issue/status columns from the table *header*
@@ -182,7 +182,7 @@ def main() -> int:
         parts.append(f"{len(unfiled_open)} open issue(s) with no census row "
                      f"(#{', #'.join(map(str, unfiled_open))}) — some may be aggregate-covered")
     msg = ("Roadmap drift: " + ROADMAP + " may be stale vs `gh` issue state — "
-           + "; ".join(parts) + ". Run `/doc-regen` to reconcile (it edits the "
+           + "; ".join(parts) + ". Run `/roadmap` to reconcile (it edits the "
            "working tree for review and writes additive issue comments; it never commits).")
     print(json.dumps({"hookSpecificOutput":
           {"hookEventName": "SessionStart", "additionalContext": msg}}))
