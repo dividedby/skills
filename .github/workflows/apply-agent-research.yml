@@ -107,9 +107,13 @@ jobs:
           # `sonnet` alias) so an unattended run can't silently inherit the next
           # Sonnet release — bump only after testing the prompts against the new
           # model (#180).
+          # --max-budget-usd is a per-run spend backstop, sized ~2.5–3× the
+          # observed max from the cost ledger — never trips a healthy run, caps
+          # a runaway well below an unbounded 20-minute spend (#181).
           claude -p \
             --output-format stream-json --verbose \
             --model claude-sonnet-4-6 \
+            --max-budget-usd 3.00 \
             --permission-mode acceptEdits \
             --allowedTools "Bash Read Grep Glob" \
             --disallowedTools "Bash(gh issue create:*) Bash(gh issue comment:*)" \

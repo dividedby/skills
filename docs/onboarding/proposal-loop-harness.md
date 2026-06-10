@@ -103,9 +103,13 @@ jobs:
           # --model is pinned to an exact model ID (default claude-sonnet-4-6) so
           # cost is deterministic and the cost-hub projection holds — see
           # "Pin --model" below.
+          # --max-budget-usd is a per-run spend backstop — size it ~2.5–3× the
+          # loop's observed max cost from the ledger so it never trips a healthy
+          # run but caps a runaway well below the job's wall-clock timeout.
           claude -p \
             --output-format stream-json --verbose \
             --model claude-sonnet-4-6 \
+            --max-budget-usd 3.00 \
             --permission-mode acceptEdits \
             --allowedTools "<scoped to what the loop needs>" \
             --append-system-prompt "$(cat "$HARNESS/prompts/<loop>.md")" \
