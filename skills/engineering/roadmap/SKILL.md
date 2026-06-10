@@ -161,6 +161,20 @@ tree for review (never committed):
     (`python3 -B .claude/hooks/roadmap-drift-nudge.test.py`), and run the nudge
     once against the real roadmap to confirm it parses the live table.
 
+- **Install the read-only mirror (ADR 0020), optional but recommended.** Copy
+  [`templates/roadmap-mirror.py`](templates/roadmap-mirror.py) to
+  `.github/scripts/` and [`templates/roadmap-mirror.yml`](templates/roadmap-mirror.yml)
+  to `.github/workflows/`, then edit the `paths:` filter, `MIRROR_ISSUE`, and
+  `ROADMAP_PATH` to the repo's roadmap doc and the pinned mirror issue. The
+  workflow renders the doc into a machine-owned mirror issue body on every push
+  that touches it, **commit-if-changed**. The render
+  (`render()`) is pure and the only I/O is the injected `gh` seam, so its
+  self-test ([`roadmap-mirror.test.py`](templates/roadmap-mirror.test.py))
+  never makes a live call — ship and run it beside the script with `python3 -B`.
+  **The skill never writes the mirror; CI owns it** — the mirror body is a
+  machine-owned render target, not a human-authored body, so it sits outside the
+  skill's write-posture rules (ADR 0017 carve-out, ADR 0020).
+
 Bootstrap writes files but **commits nothing** — finish by telling the human to
 review `git diff` and the new untracked files, then commit.
 
