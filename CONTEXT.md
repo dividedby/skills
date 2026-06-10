@@ -28,7 +28,7 @@ A deterministic PreToolUse hook that blocks a class of dangerous commands by
 exiting non-zero (e.g. `bash-guard.py`, `pnpm-guard`, a git-guard). The
 **deterministic** counterpart to a **Convention** (a prose rule): a convention
 only lowers the odds an agent does the harmful thing, a guard hook makes it
-impossible. Proposed/audited via the `config/` harness skills' `CATALOG.md`, not
+impossible. Proposed/audited via the `config/` skill's (`project-claude-config`) `CATALOG.md`, not
 as a standalone skill. A project-scope guard may re-declare a global one when the
 run lacks global config (CI/AFK) — see
 [ADR 0013](./docs/adr/0013-project-scope-hooks-may-redeclare-global-guards-for-ci.md).

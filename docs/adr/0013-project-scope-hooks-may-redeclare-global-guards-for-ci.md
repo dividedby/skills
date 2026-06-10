@@ -1,5 +1,11 @@
 # Project-scope hooks may re-declare a global guard when the run lacks global config
 
+> **Amendment (2026-06-09) — the four config skills were consolidated.** The
+> skills named below (`init-project-harness`, `audit-project-harness`) no longer
+> exist as separate skills; they merged into `project-claude-config`
+> ([ADR 0018](./0018-config-is-one-state-routed-skill.md)). The carve-out this
+> ADR defines lives on unchanged in that skill's `CATALOG.md`.
+
 Both harness skills (`init-project-harness`, `audit-project-harness`) open by
 reading `~/.claude/settings.json`, treating the global guards (`bash-guard.py`,
 `read-guard.py`) as **already in effect**, and refuse to re-declare a global hook
