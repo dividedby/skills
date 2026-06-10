@@ -174,6 +174,24 @@ tree for review (never committed):
     (`python3 -B .claude/hooks/roadmap-drift-nudge.test.py`), and run the nudge
     once against the real roadmap to confirm it parses the live table.
 
+- **Stand up the Idea Inbox and register it as a Meta census row (ADR 0021).**
+  The roadmap pattern and the Idea Inbox are one intake system — the census is
+  the *execution* source of record, the Inbox is the canonical intake for
+  *unstructured* human-originated ideas — so a fresh-repo bootstrap stands both
+  up together. Scaffold the single per-repo Inbox issue carrying the reworked
+  **enriched-intake + self-prescribing-drain** content from
+  [`.github/ISSUE_TEMPLATE/idea-inbox.md`](../../../.github/ISSUE_TEMPLATE/idea-inbox.md)
+  (intake captures the idea *plus* its ambient context; drain is self-prescribed
+  in the issue body, picking only the pipeline steps each idea needs — no
+  separate skill), and **add it as one Meta-bucket row** in the master census
+  (the Legend's Meta bucket — `idea-inbox` / onboarding — already names it, so
+  this is a single row, not a new column or section). It's a `Tracking`-shaped,
+  human-owned standing row, not loop work. **No new reconcile sync code is
+  needed:** the Inbox is just one more open issue in the census, and the
+  existing SessionStart drift nudge already flags both **drained** issues (the
+  ones the Inbox spins out) and **directly-filed** issues (structured filings
+  that bypass the Inbox per ADR 0021), so reconcile slots them through the
+  ordinary tier-2 path — bootstrap only adds the Inbox to what it creates.
 - **Install the read-only mirror (ADR 0020), optional but recommended.** Copy
   [`templates/roadmap-mirror.py`](templates/roadmap-mirror.py) to
   `.github/scripts/` and [`templates/roadmap-mirror.yml`](templates/roadmap-mirror.yml)
