@@ -1,7 +1,7 @@
 # Proposal flow: dedup keys, the gate, and the leak guard
 
 The capability is in [SKILL.md](SKILL.md). This file is the mechanical flow that
-makes the "at most one, leak-safe, deduplicated" guarantees hold *without relying
+makes the "budgeted, leak-safe, deduplicated" guarantees hold *without relying
 on prompt discipline*. Two pure decisions enforce them, shipped with this skill at
 `lib/` and invoked by file path: `python3 <skill-dir>/lib/cli.py` (not `-m` — the
 skill folder is not an importable module; the script puts its own dir on the path).
@@ -59,37 +59,41 @@ the standalone check is still there:
     printf '%s' "$TITLE
     $BODY" | python3 <skill-dir>/lib/cli.py sanitize [--marker <private-name> ...]
 
-## The one-proposal gate — run once per channel
+## The proposal gate — run ONCE over every channel's candidates
 
-The cap is **per channel**, not global ([ADR 0011](../../../docs/adr/0011-per-channel-proposal-caps.md)):
-each channel (`self-improvement`, `skill-audit`, the skills-repo's
+The cap is a **shared per-run budget of 5**, ranked best-first across all
+channels ([ADR 0019](../../../docs/adr/0019-proposal-loops-file-a-budgeted-ranked-top-k.md),
+superseding the per-channel one-cap of ADR 0011). Gather candidates from every
+enabled channel (`self-improvement`, `skill-audit`, the skills-repo's
 `general-merit`, and the cross-repo `skill-request` / `skill-promotion` file-or-+1
-steps) gets its own gate pass over **only that channel's** candidates. The gate is
-generic over the candidate set it is handed, so this needs **no code change** —
-just invoke it once per channel-group. Feed each pass that channel's candidates
-plus the keys already open *in that channel*:
+steps), tag each with its channel, and run the gate **once** over the merged set
+plus the union of every channel's already-spoken-for keys:
 
-    echo '{"candidates": [{"dedup_key": "...", "priority": 3, "title": "..."}],
-           "open_issues": ["<keys already open or wontfix in THIS channel>"],
-           "min_priority": 1}' \
+    echo '{"candidates": [{"dedup_key": "...", "priority": 3, "title": "...", "channel": "self-improvement"}],
+           "open_issues": ["<keys already open or wontfix in ANY channel>"],
+           "min_priority": 1,
+           "budget": 5}' \
       | python3 <skill-dir>/lib/cli.py gate
 
+- **Be ruthlessly critical before the gate.** The budget is a ceiling, not a
+  target: inject only candidates you would defend individually — each must clear
+  the bar that would have made it *the* single proposal under the old one-cap
+  regime. A typical run files 0–2; filing 5 means 5 independently excellent
+  proposals. Filler erodes the maintainer's trust faster than silence.
 - `priority` is your integer ranking of the candidates (higher = stronger).
 - The gate drops any candidate whose key is already open and any below
-  `min_priority`, then picks the highest priority (ties break on the smallest
-  key — deterministic).
-- Output `{"file": {...}}` → file that one. `{"file": null}` → file nothing in
-  this channel; print `SKIPPED: <channel>: <one-line reason>` and move to the
-  next channel.
-
-Do **not** merge candidates from different channels into one gate pass — that
-reintroduces the cross-channel suppression ADR 0011 removed.
+  `min_priority`, deduplicates keys within the batch, ranks the survivors by
+  priority (ties break on the smallest key — deterministic), and returns at most
+  `budget` of them (the code clamps the budget to 5 regardless of what is asked).
+- Output `{"file": [...]}` → file each, in order. `{"file": []}` → file nothing;
+  print `SKIPPED: <channel>: <one-line reason>` per enabled channel that
+  contributed nothing.
 
 ## Filing
 
-Only when the gate returns a candidate, file it through the **guarded path** —
+For each candidate the gate returns, file it through the **guarded path** —
 never `gh issue create` directly (a Consumer workflow disallows that tool, so the
-guard cannot be bypassed). Write the body to a file ending with the dedup-key
+guard cannot be bypassed). Write each body to a file ending with the dedup-key
 marker and a Sources line, then:
 
     python3 <skill-dir>/lib/cli.py file \
@@ -101,6 +105,8 @@ marker and a Sources line, then:
 `file` sanitizes `title + body`, then runs `gh issue create` only on ALLOW,
 printing the new issue URL. For a cross-repo +1 on an existing demand/supply
 issue, `cli.py comment --issue <n> --body-file <path> --repo <owner/name>` is the
-same guarded shape over `gh issue comment`. Ensure the label exists first (the
-workflow does this idempotently). File **one** issue per channel, then stop — no
-second pass, no commits.
+same guarded shape over `gh issue comment`. Route each candidate to its own
+channel's destination and label (cross-repo candidates use the cross-repo token
+and `--repo`). Ensure each label exists first (the workflow does this
+idempotently). File **only** what the gate returned, then stop — no second pass,
+no commits.

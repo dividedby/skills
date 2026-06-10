@@ -69,11 +69,13 @@ too narrow" stance for this case (see the ADR 0003 amendment).
 - **Writes (output):** proposes via the tracker only. It **never auto-applies**:
   no skill edits, no PRs, and **no commits at all** (the integration map that was
   the one allowed auto-commit is dropped). Pure read → file issue.
-- **Caps are per channel, not global:** each channel gets its own "one issue or
-  none per run" budget, run independently through the one-proposal gate
-  ([ADR 0011](../adr/0011-per-channel-proposal-caps.md)) — the old single global
-  cap forced orthogonal concerns to compete for one slot. The "no menu, pick the
-  single best" discipline still holds *within* each channel.
+- **One budgeted gate pass across all channels:** the run files at most **five
+  issues total**, picked best-first by a single gate pass over every enabled
+  channel's merged candidates
+  ([ADR 0019](../adr/0019-proposal-loops-file-a-budgeted-ranked-top-k.md),
+  superseding the per-channel one-cap of ADR 0011). Five is a ceiling, not a
+  target — each candidate must independently clear the old single-best bar, and
+  a typical run files 0–2. The "no menu" discipline still holds per issue.
 - **Leak guard:** every filed `title + body` passes `sanitizer.check()` first.
   The KB is public, so the guard's job is no longer protecting the KB — it
   protects against leaking the **host repo's own** private content into a public
@@ -81,10 +83,10 @@ too narrow" stance for this case (see the ADR 0003 amendment).
 
 ## Channels
 
-A single run can file up to one issue per applicable channel (zero is the common
-case). The channels target different concerns and, for the cross-repo pair,
-different repos — they are not substitutes
-([ADR 0011](../adr/0011-per-channel-proposal-caps.md)):
+A single run can file at most five issues total across the applicable channels
+(zero is the common case). The channels target different concerns and, for the
+cross-repo pair, different repos — they share one ranked budget
+([ADR 0019](../adr/0019-proposal-loops-file-a-budgeted-ranked-top-k.md)):
 
 | Channel | Label | Destination | Basis |
 |---|---|---|---|
@@ -121,8 +123,8 @@ credential), so refreshed knowledge is applied promptly.
 The skills repo is one Consumer. Its loop runs as **its own scheduled GitHub
 Actions workflow** ([`.github/workflows/apply-agent-research.yml`](../../.github/workflows/apply-agent-research.yml)):
 checkout (own governance docs + skills are then local), shallow-clone the public
-mirror, ensure the channel labels idempotently, run the skill, file ≤1 issue per
-channel via the own-repo `GITHUB_TOKEN` (`issues:write`). No private cross-repo
+mirror, ensure the channel labels idempotently, run the skill, file the gate's ≤5
+budgeted issues via the own-repo `GITHUB_TOKEN` (`issues:write`). No private cross-repo
 credential; the VPS is not involved (agent-research ADR 0016).
 `apply-agent-research` lives in this repo, so no external install step is needed
 (unlike arch-review, which installs its skill from `mattpocock/skills`). Other

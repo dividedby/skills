@@ -1,6 +1,6 @@
 name: apply-agent-research lib tests
 
-# The sanitizer (leak prevention) and the one-proposal gate are the two hard
+# The sanitizer (leak prevention) and the budgeted proposal gate are the two hard
 # constraints that make the unattended apply-agent-research loop safe. The
 # SKILL.md points to their stdlib test suite but nothing ran it — a lib
 # regression during an unrelated edit could fail open silently. This converts

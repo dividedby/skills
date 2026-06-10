@@ -55,7 +55,7 @@ class SanitizeCommandTest(unittest.TestCase):
 
 
 class GateCommandTest(unittest.TestCase):
-    def test_emits_the_chosen_candidate_as_json(self):
+    def test_emits_the_chosen_candidates_as_json(self):
         payload = {
             "candidates": [
                 {"dedup_key": "deepen-x", "priority": 3, "title": "x"},
@@ -66,7 +66,24 @@ class GateCommandTest(unittest.TestCase):
         code, out = _run(["gate"], stdin=json.dumps(payload))
         self.assertEqual(code, 0)
         result = json.loads(out)
-        self.assertEqual(result["file"]["dedup_key"], "deepen-x")
+        self.assertEqual([c["dedup_key"] for c in result["file"]], ["deepen-x"])
+
+    def test_honors_budget(self):
+        payload = {
+            "candidates": [
+                {"dedup_key": "deepen-x", "priority": 3},
+                {"dedup_key": "deepen-y", "priority": 2},
+                {"dedup_key": "deepen-z", "priority": 1},
+            ],
+            "open_issues": [],
+            "budget": 2,
+        }
+        code, out = _run(["gate"], stdin=json.dumps(payload))
+        self.assertEqual(code, 0)
+        result = json.loads(out)
+        self.assertEqual(
+            [c["dedup_key"] for c in result["file"]], ["deepen-x", "deepen-y"]
+        )
 
     def test_files_nothing_when_candidate_already_open(self):
         payload = {
@@ -75,7 +92,7 @@ class GateCommandTest(unittest.TestCase):
         }
         code, out = _run(["gate"], stdin=json.dumps(payload))
         self.assertEqual(code, 0)
-        self.assertIsNone(json.loads(out)["file"])
+        self.assertEqual(json.loads(out)["file"], [])
 
     def test_honors_min_priority(self):
         payload = {
@@ -84,7 +101,7 @@ class GateCommandTest(unittest.TestCase):
             "min_priority": 3,
         }
         _, out = _run(["gate"], stdin=json.dumps(payload))
-        self.assertIsNone(json.loads(out)["file"])
+        self.assertEqual(json.loads(out)["file"], [])
 
 
 class GuardedFilingTest(unittest.TestCase):

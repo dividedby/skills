@@ -24,7 +24,7 @@ skill is, from the workflow stub. Two subcommands:
     python3 harness/cli.py digest --jsonl agent.jsonl \
         --result-out agent.log --cost-out agent.cost
 
-    # result log  ->  parse <output>/<body>, file <=1 labeled issue, summarise
+    # result log  ->  parse <output>/<body-N>, file <=5 labeled issues, summarise
     python3 harness/cli.py publish --log agent.log \
         --label source:architecture-review --cost-file agent.cost \
         --heading "Architecture review"
@@ -41,6 +41,11 @@ import tempfile
 # --- pure helpers (no I/O, unit-tested directly) ---------------------------
 
 _NA = "n/a"
+
+# Hard per-run cap on filed issues, enforced in code (not prompt adherence).
+# 5 is a ceiling, not a target — the prompts instruct agents to file only
+# proposals that would each have cleared the old one-per-run bar on their own.
+MAX_PROPOSALS = 5
 
 
 def extract_block(text, tag):
@@ -74,6 +79,45 @@ def parse_output(text):
         return json.loads(block)
     except json.JSONDecodeError as exc:
         raise ValueError(f"the <output> block was not valid JSON: {exc}") from exc
+
+
+def parse_proposals(output, text):
+    """Resolve a ``status: proposed`` output into ``[{title, oneLineSummary, body}]``.
+
+    Two accepted shapes:
+
+    - **Multi** — ``output["proposals"]`` is a non-empty array of
+      ``{title, oneLineSummary}``; each entry's body lives in a matching
+      ``<body-1>`` … ``<body-N>`` block (1-indexed, proposal order).
+    - **Single (legacy)** — top-level ``title``/``oneLineSummary`` with one
+      ``<body>`` block, as every loop emitted before the multi-proposal cap.
+
+    Raises ``ValueError`` on a missing title or a missing body block — loud
+    beats lossy (#117). Does NOT cap the list; the caller enforces
+    ``MAX_PROPOSALS`` so the truncation is visible at the filing site.
+    """
+    proposals = output.get("proposals")
+    if proposals is not None:
+        if not isinstance(proposals, list) or not proposals:
+            raise ValueError("status=proposed but 'proposals' is not a non-empty array")
+        resolved = []
+        for i, p in enumerate(proposals, start=1):
+            title = (p or {}).get("title") if isinstance(p, dict) else None
+            if not title:
+                raise ValueError(f"proposal {i} has no title")
+            body = extract_block(text, f"body-{i}")
+            if not body:
+                raise ValueError(f"proposal {i} ({title!r}) has no <body-{i}> block")
+            resolved.append(
+                {"title": title, "oneLineSummary": p.get("oneLineSummary", ""), "body": body}
+            )
+        return resolved
+
+    title = output.get("title")
+    body = extract_block(text, "body")
+    if not title or not body:
+        raise ValueError("status=proposed but title is empty or no <body> block was found")
+    return [{"title": title, "oneLineSummary": output.get("oneLineSummary", ""), "body": body}]
 
 
 def parse_digest(lines):
@@ -143,17 +187,24 @@ def _append(path, text):
         fh.write(text)
 
 
-def _summary_proposed(heading, cost, url, output):
+def _summary_proposed(heading, cost, filed, output, truncated=0):
     candidates = output.get("candidatesConsidered") or []
     lines = [
         f"## {heading}",
         "",
         f"**Cost:** {cost}",
         "",
-        f"**Created:** {url}",
+        f"**Created ({len(filed)}):**",
+        *[f"- {f['url']} — {f['oneLineSummary']}" for f in filed],
         "",
-        output.get("oneLineSummary", ""),
-        "",
+    ]
+    if truncated:
+        lines += [
+            f"**Truncated:** the agent emitted {truncated} proposal(s) beyond the "
+            f"{MAX_PROPOSALS}-per-run cap; they were not filed.",
+            "",
+        ]
+    lines += [
         "### Candidates considered",
         *[f"- {c}" for c in candidates],
         "",
@@ -177,13 +228,14 @@ def _summary_skipped(heading, cost, output):
 
 
 def _publish(args, out):
-    """result log -> parse <output>/<body>, file <=1 labeled issue, summarise.
+    """result log -> parse <output>/<body-N>, file <=MAX_PROPOSALS issues, summarise.
 
-    Filing and the provenance label live here, in code, so the one-issue-per-run
-    cap does not rest on prompt adherence. A missing/garbled block fails the run
-    (exit 1) without writing a summary — the workflow's ``if: failure()`` step
-    then surfaces the raw log. On a clean proposed/skipped run this writes the
-    step summary itself, so the stub needs no jq.
+    Filing, the provenance label, and the per-run issue cap live here, in code,
+    so none of it rests on prompt adherence: proposals beyond ``MAX_PROPOSALS``
+    are dropped (visibly, in the summary), never filed. A missing/garbled block
+    fails the run (exit 1) without writing a summary — the workflow's
+    ``if: failure()`` step then surfaces the raw log. On a clean proposed/skipped
+    run this writes the step summary itself, so the stub needs no jq.
     """
     cost = _NA
     if args.cost_file and os.path.exists(args.cost_file):
@@ -206,27 +258,37 @@ def _publish(args, out):
     if status != "proposed":
         raise ValueError(f"unknown status {status!r} in <output>")
 
-    title = output.get("title")
-    body = extract_block(text, "body")
-    if not title or not body:
-        raise ValueError("status=proposed but title is empty or no <body> block was found")
+    proposals = parse_proposals(output, text)  # raises ValueError -> exit 1
+    truncated = max(0, len(proposals) - MAX_PROPOSALS)
+    if truncated:
+        print(
+            f"WARNING: {len(proposals)} proposals emitted; filing only the "
+            f"first {MAX_PROPOSALS} (in-code cap)",
+            file=out,
+        )
+        proposals = proposals[:MAX_PROPOSALS]
 
     repo = args.repo or os.environ.get("GH_REPO")
     _ensure_label(args.label, args.label_color, args.label_description, repo)
 
-    with tempfile.NamedTemporaryFile(
-        "w", suffix=".md", delete=False, encoding="utf-8"
-    ) as bf:
-        bf.write(body)
-        body_path = bf.name
-    try:
-        url = _create_issue(title, body_path, args.label, repo)
-    finally:
-        os.unlink(body_path)
+    filed = []
+    for proposal in proposals:
+        with tempfile.NamedTemporaryFile(
+            "w", suffix=".md", delete=False, encoding="utf-8"
+        ) as bf:
+            bf.write(proposal["body"])
+            body_path = bf.name
+        try:
+            url = _create_issue(proposal["title"], body_path, args.label, repo)
+        finally:
+            os.unlink(body_path)
+        print(f"Published {url}", file=out)
+        filed.append({"url": url, "oneLineSummary": proposal["oneLineSummary"]})
 
-    print(f"Published {url}", file=out)
-    _append(args.output_file or os.environ.get("GITHUB_OUTPUT"), f"issue_url={url}\n")
-    _append(summary_file, _summary_proposed(args.heading, cost, url, output))
+    gh_output = args.output_file or os.environ.get("GITHUB_OUTPUT")
+    _append(gh_output, f"issue_url={filed[0]['url']}\n")
+    _append(gh_output, "issue_urls=" + ",".join(f["url"] for f in filed) + "\n")
+    _append(summary_file, _summary_proposed(args.heading, cost, filed, output, truncated))
     return 0
 
 
@@ -260,7 +322,9 @@ def main(argv=None, out=None):
     p_digest.add_argument("--cost-out", required=True, dest="cost_out")
     p_digest.set_defaults(func=_digest)
 
-    p_publish = sub.add_parser("publish", help="parse <output>/<body>, file <=1 issue, summarise")
+    p_publish = sub.add_parser(
+        "publish", help=f"parse <output>/<body-N>, file <={MAX_PROPOSALS} issues, summarise"
+    )
     p_publish.add_argument("--log", required=True, help="the agent result log from `digest`")
     p_publish.add_argument("--label", required=True)
     p_publish.add_argument("--label-color", default="5319E7", dest="label_color")

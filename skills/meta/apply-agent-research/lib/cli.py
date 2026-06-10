@@ -1,7 +1,7 @@
 """CLI seam over the pure helpers, for the ``apply-agent-research`` skill.
 
 The skill runs unattended in CI and must enforce the leak guard and the
-one-proposal cap *mechanically*, not by prompt discipline. This module exposes
+per-run proposal budget *mechanically*, not by prompt discipline. This module exposes
 the two pure decisions — ``sanitizer.check`` and ``proposal_gate.decide`` — as
 stdin/stdout subcommands so the workflow can gate on an exit code or parse a JSON
 decision from Bash. The decisions themselves hold no transport and live in
@@ -23,8 +23,9 @@ is what lets the helpers travel with the installed skill into a Consumer repo.
     # block iff the body trips the structural guard or names a private marker
     echo "<body>" | python3 <skill-dir>/lib/cli.py sanitize [--marker M ...]
 
-    # pick at most one candidate to file (exact-key dedup against open issues)
-    echo '{"candidates": [...], "open_issues": [...]}' \
+    # pick the ranked candidates to file, up to the run budget (default 1,
+    # hard-capped at 5; exact-key dedup against open issues)
+    echo '{"candidates": [...], "open_issues": [...], "budget": 5}' \
         | python3 <skill-dir>/lib/cli.py gate
 
     # guarded write: sanitize title+body, then `gh issue create` ONLY on ALLOW
@@ -64,6 +65,7 @@ def _gate(args, stdin, out):
         payload["candidates"],
         payload.get("open_issues", []),
         min_priority=payload.get("min_priority", 1),
+        budget=payload.get("budget", 1),
     )
     json.dump(result, out)
     out.write("\n")
@@ -125,7 +127,9 @@ def main(argv=None, stdin=None, out=None):
     _add_marker(p_sanitize)
     p_sanitize.set_defaults(func=_sanitize)
 
-    p_gate = sub.add_parser("gate", help="pick <=1 candidate to file, from stdin JSON")
+    p_gate = sub.add_parser(
+        "gate", help="pick the budgeted (<=5) ranked candidates to file, from stdin JSON"
+    )
     p_gate.set_defaults(func=_gate)
 
     p_file = sub.add_parser("file", help="guarded gh issue create (sanitize, then file on ALLOW)")

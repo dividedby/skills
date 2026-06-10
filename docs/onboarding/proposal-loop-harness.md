@@ -173,8 +173,10 @@ rarely; when it does, it is a **manual rollout** across the ~3 owned repos.
   `if: always()` so cost is captured on a failed agent run too.
 - **`python3 harness/cli.py publish --log F --label L [--label-color H]
   [--label-description T] [--cost-file F] [--heading H] [--repo R]`** —
-  publish-seam loops only. Parses the agent's `<output>` JSON + raw `<body>`, files
-  ≤1 issue under `L`, writes the rich step summary, and emits `issue_url` to
+  publish-seam loops only. Parses the agent's `<output>` JSON + raw `<body-N>`
+  blocks (or the legacy single `<body>`), files ≤5 issues under `L` (cap in code —
+  [ADR 0019](../adr/0019-proposal-loops-file-a-budgeted-ranked-top-k.md)), writes
+  the rich step summary, and emits `issue_url` / `issue_urls` to
   `$GITHUB_OUTPUT`. **Fails loudly (exit 1)** on a missing/garbled/unknown-status
   block — pair it with an `if: failure()` summarise step that surfaces the raw log.
   Reads `$GH_REPO` / `$GITHUB_STEP_SUMMARY` / `$GITHUB_OUTPUT` from the Actions env.
@@ -212,7 +214,7 @@ that caused it ([ADR 0004](../adr/0004-runbook-helpers-are-python-stdlib.md)).
   killed mid-flight by the next tick.
 - **Scoped `--allowedTools`, plus `--disallowedTools` for the filing tool.** Grant
   only what the loop needs (`Read Grep Glob`, `Bash(gh:*) Bash(git:*)`, etc.).
-  *Exception:* if the skill invokes the one-proposal **gate** via a pipe
+  *Exception:* if the skill invokes the budgeted proposal **gate** via a pipe
   (`echo '<json>' | python3 cli.py gate`), `Bash` must stay **unscoped** — a scoped
   `Bash(python3:*)` blocks a command that starts with `echo`. The no-commits
   invariant then rests on `contents: read` + the absence of `Edit`/`Write`, not on

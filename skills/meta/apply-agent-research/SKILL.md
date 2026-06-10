@@ -3,7 +3,8 @@ name: apply-agent-research
 description: >
   Apply an external agent-research knowledge base to a repo's own agent-meta:
   read a public knowledge mirror plus the host repo's own CONTEXT.md / CLAUDE.md
-  / docs/adr, then propose at most one improvement as a labeled issue — never
+  / docs/adr, then propose its few best improvements (at most five per run, and
+  only those that individually clear a high bar) as labeled issues — never
   editing, committing, or merging. Use when a scheduled loop (or a maintainer)
   wants to pull cross-repo agent practice into this repo's hooks, instruction
   files, CI, or skills, proposing via the tracker for a human to decide.
@@ -18,13 +19,14 @@ knowledge it reads or whose repo it improves. The knowledge base is a *source*,
 not a trigger: a run with nothing new in the KB can still propose from the repo's
 own gaps, and a run may legitimately propose nothing.
 
-It **proposes, it never applies.** The only mutation it may make is filing **at
-most one** issue. No skill edits, no PRs, **no commits** — the producer/decider
+It **proposes, it never applies.** The only mutation it may make is filing issues
+— **at most five per run**, shared across every channel, and five is a ceiling,
+not a target. No skill edits, no PRs, **no commits** — the producer/decider
 split (see [ADR 0003](../../../docs/adr/0003-skill-improvement-workflows-propose-via-issues.md))
-is what makes unattended operation safe. A human reviews the issue and decides.
+is what makes unattended operation safe. A human reviews each issue and decides.
 
 See [proposal-flow.md](proposal-flow.md) for the mechanical flow — dedup keys, the
-leak guard and one-proposal gate, and the issue body shape.
+leak guard and budgeted proposal gate, and the issue body shape.
 
 The leak guard and the gate are enforced by code, not prompt discipline: the skill
 **bundles** them under [`lib/`](lib/) (the pure `sanitizer` / `proposal_gate`
@@ -87,21 +89,25 @@ proposal.
 
 ## Output
 
-**At most one issue per channel per run** (zero per channel is fine), each picked
-by the **one-proposal gate** run independently over that channel's candidates —
-see [proposal-flow.md](proposal-flow.md) and
-[ADR 0011](../../../docs/adr/0011-per-channel-proposal-caps.md). The base channels,
-into the host repo's **own** tracker:
+**At most five issues per run, shared across every channel** (zero is fine),
+picked by the **budgeted proposal gate** run ONCE over the merged, ranked
+candidates from all enabled channels — see [proposal-flow.md](proposal-flow.md)
+and [ADR 0019](../../../docs/adr/0019-proposal-loops-file-a-budgeted-ranked-top-k.md)
+(superseding the per-channel one-cap of ADR 0011). The base channels, into the
+host repo's **own** tracker:
 
-- **self-improvement** (`source:agent-research`) — one agent-meta improvement
-  with a concrete before/after, citing the KB knowledge note that motivated it.
+- **self-improvement** (`source:agent-research`) — agent-meta improvements,
+  each with a concrete before/after, citing the KB knowledge note that motivated it.
 - **skill-audit** (`source:skill-audit`) — see the supply-side audit below.
 
 The cross-repo channels (`skill-request`, `skill-promotion`, into
-`dividedby/skills`) are described under their flows, below. Within every channel
-the rule is unchanged: **never file a menu of options; make the call and file the
-single best candidate, or skip.** Every filed body passes the **leak guard**
-before filing. Zero across all channels is a fine run.
+`dividedby/skills`) are described under their flows, below. The rule per
+candidate is unchanged: **never file a menu of options.** Every candidate
+injected into the gate must independently clear the bar that would have made it
+*the* single proposal under the old one-per-channel regime — a typical run files
+0–2, and filing five means five independently excellent proposals. Every filed
+body passes the **leak guard** before filing. Zero across all channels is a
+fine run.
 
 ## Supply-side audit (Consumers with local skills)
 
@@ -128,8 +134,9 @@ same matcher, pointed at what the host *already built* instead of what it
 
 ## Quality bar
 
-- **One recommendation, not a menu.** Pick *the* best candidate. A forced finding
-  is worse than none — if nothing clears the bar, skip and say why.
+- **Recommendations, not a menu.** Each filed issue makes one call. A forced
+  finding is worse than none — if nothing clears the bar, skip and say why. The
+  five-per-run budget is a ceiling, never a quota to fill.
 - **Concrete before/after.** Name the surface, quote what's there now (in prose,
   not as pasted code or path tokens that trip the guard), and state the exact
   change. Prescription proportional to diagnosis.
@@ -166,15 +173,16 @@ Beyond improving itself, here the skill also —
   **ensure the `skill-promotion` label exists** (the workflow does this
   idempotently, as it does for `skill-request`).
 
-The self-improvement, general-merit, and skill-request-drain candidates are
-*separate channels*, each capped at one issue per run by its own gate pass — not
-one shared slot ([ADR 0011](../../../docs/adr/0011-per-channel-proposal-caps.md)).
+The self-improvement, general-merit, and skill-request-drain candidates remain
+*separate channels* — distinct concerns, labels, and destinations — but they
+compete in one merged, budgeted gate pass
+([ADR 0019](../../../docs/adr/0019-proposal-loops-file-a-budgeted-ranked-top-k.md)).
 
 ## Invariants
 
-- At most one issue **per channel** per run; the gate enforces each channel
-  independently ([ADR 0011](../../../docs/adr/0011-per-channel-proposal-caps.md));
-  zero per channel is acceptable.
+- At most **five issues per run, shared across all channels**; the gate enforces
+  the budget in code ([ADR 0019](../../../docs/adr/0019-proposal-loops-file-a-budgeted-ranked-top-k.md));
+  zero is acceptable, and five is a ceiling, not a target.
 - The skill writes **nothing** to the repo — no edits, no commits, no PRs. It
   proposes via an issue and stops.
 - Every filed body passes the real leak guard; no private content reaches a public

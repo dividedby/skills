@@ -4,7 +4,7 @@
 > decentralized-pull redesign (agent-research ADR 0019,
 > [`cross-repo-knowledge-application`](../design/cross-repo-knowledge-application.md))
 > moved consumption into the published `apply-agent-research` skill that each
-> Consumer runs on *itself*. The skill enforces the leak guard and one-proposal
+> Consumer runs on *itself*. The skill enforces the leak guard and budgeted-proposal
 > cap mechanically, so it must invoke the gate/sanitizer CLI **wherever it is
 > installed** — a path `runbooks/` (present only in this repo) cannot satisfy. The
 > two surviving helpers + the `cli.py` seam therefore now live **under the skill**

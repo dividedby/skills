@@ -8,7 +8,7 @@ skills@latest add` into `~/.claude/skills/`), matching the existing
 `improve-codebase-architecture.yml` pattern that clones `mattpocock/skills`
 fresh each run. It does **not** commit a frozen vendored copy into its own tree.
 
-Why: the leak guard and one-proposal gate are **code**, not prompt discipline. A
+Why: the leak guard and budgeted proposal gate are **code**, not prompt discipline. A
 committed copy silently diverges from upstream — a stale leak guard could let
 private content reach the public tracker, the worst failure this system has.
 Fetching fresh keeps the guard current and removes any re-sync chore.

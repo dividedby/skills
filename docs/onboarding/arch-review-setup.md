@@ -61,8 +61,8 @@ first**; this doc is only the deltas.
   hand-escape inside a JSON string, and a single unescaped `"` invalidates the
   whole block (see #117). The **harness `publish` seam** (`harness/cli.py publish`,
   fetched fresh — [ADR 0014](../adr/0014-harness-is-fetched-fresh-only-the-workflow-envelope-is-vendored.md))
-  parses the JSON, copies the `<body>` verbatim, and runs `gh issue create` — so
-  the one-proposal-per-run cap and the provenance label live **in code**, not in
+  parses the JSON, copies each `<body-N>` verbatim, and runs `gh issue create` — so
+  the five-proposals-per-run cap and the provenance label live **in code**, not in
   prompt-adherence, and a missing/garbled block **fails the run loudly** rather
   than skipping silently. It is a *tested stdlib parser*, replacing the brittle
   `sed`/`jq` hand-escaping that caused #117/#211. It writes the step summary
@@ -98,7 +98,7 @@ downstream repo clones `dividedby/skills` into a temp dir for it — see
 3. Ensure the `CLAUDE_CODE_OAUTH_TOKEN` secret exists.
 4. (Recommended) add a `CONTEXT.md` + `docs/adr/` so proposals speak the repo's
    own language.
-5. `workflow_dispatch` once to verify it files ≤1 issue (or skips), then let the
+5. `workflow_dispatch` once to verify it files ≤5 issues (or skips), then let the
    cron take over.
 
 A repo can run **both** this loop and the

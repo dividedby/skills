@@ -159,10 +159,12 @@ class PublishCommandTest(unittest.TestCase):
         self.assertIn("source:architecture-review", create)
         self.assertIn("owner/name", create)
         with open(self.output) as fh:
-            self.assertIn("issue_url=https://x/issues/1", fh.read())
+            gh_out = fh.read()
+        self.assertIn("issue_url=https://x/issues/1", gh_out)
+        self.assertIn("issue_urls=https://x/issues/1", gh_out)
         with open(self.summary) as fh:
             s = fh.read()
-        self.assertIn("**Created:** https://x/issues/1", s)
+        self.assertIn("https://x/issues/1 — do x", s)
         self.assertIn("- x", s)
 
     def test_proposed_body_round_trips_unescaped(self):
@@ -223,6 +225,91 @@ class PublishCommandTest(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertEqual(captured["body"], body)
         self.assertIn("| target | file |", captured["body"])
+
+    def _multi_log(self, n):
+        proposals = [
+            {"title": f"deepening: p{i}", "oneLineSummary": f"summary {i}"}
+            for i in range(1, n + 1)
+        ]
+        bodies = "\n".join(f"<body-{i}>\nBody {i} text.\n</body-{i}>" for i in range(1, n + 1))
+        self._log(
+            "<output>\n"
+            + json.dumps(
+                {"status": "proposed", "proposals": proposals, "candidatesConsidered": ["c"]}
+            )
+            + "\n</output>\n"
+            + bodies
+            + "\n"
+        )
+
+    def _fake_gh(self, captured):
+        def fake_run(cmd, **kw):
+            if cmd[:3] == ["gh", "issue", "create"]:
+                path = cmd[cmd.index("--body-file") + 1]
+                with open(path, encoding="utf-8") as fh:
+                    captured.append({"title": cmd[cmd.index("--title") + 1], "body": fh.read()})
+                return SimpleNamespace(returncode=0, stdout=f"https://x/issues/{len(captured)}\n")
+            return SimpleNamespace(returncode=0)
+
+        return fake_run
+
+    def test_multi_proposal_files_each_with_matching_body(self):
+        self._multi_log(3)
+        captured = []
+        with mock.patch("cli.subprocess.run", side_effect=self._fake_gh(captured)):
+            code, out = self._publish()
+        self.assertEqual(code, 0)
+        self.assertEqual(len(captured), 3)
+        self.assertEqual(captured[1]["title"], "deepening: p2")
+        self.assertEqual(captured[1]["body"], "Body 2 text.")
+        with open(self.output) as fh:
+            gh_out = fh.read()
+        self.assertIn("issue_url=https://x/issues/1", gh_out)
+        self.assertIn(
+            "issue_urls=https://x/issues/1,https://x/issues/2,https://x/issues/3", gh_out
+        )
+        with open(self.summary) as fh:
+            s = fh.read()
+        self.assertIn("**Created (3):**", s)
+        self.assertIn("https://x/issues/2 — summary 2", s)
+
+    def test_more_than_cap_truncates_to_max(self):
+        self._multi_log(7)
+        captured = []
+        with mock.patch("cli.subprocess.run", side_effect=self._fake_gh(captured)):
+            code, out = self._publish()
+        self.assertEqual(code, 0)
+        self.assertEqual(len(captured), cli.MAX_PROPOSALS)
+        self.assertIn("WARNING: 7 proposals emitted", out)
+        with open(self.summary) as fh:
+            self.assertIn("**Truncated:**", fh.read())
+
+    def test_multi_proposal_missing_body_block_fails_loudly(self):
+        self._log(
+            "<output>\n"
+            + json.dumps(
+                {
+                    "status": "proposed",
+                    "proposals": [
+                        {"title": "p1", "oneLineSummary": "s1"},
+                        {"title": "p2", "oneLineSummary": "s2"},
+                    ],
+                    "candidatesConsidered": ["c"],
+                }
+            )
+            + "\n</output>\n<body-1>\nonly one body\n</body-1>\n"
+        )
+        with mock.patch("cli.subprocess.run") as run:
+            code, _ = self._publish()
+        self.assertEqual(code, 1)
+        run.assert_not_called()
+
+    def test_empty_proposals_array_fails_loudly(self):
+        self._log('<output>\n{"status": "proposed", "proposals": []}\n</output>\n')
+        with mock.patch("cli.subprocess.run") as run:
+            code, _ = self._publish()
+        self.assertEqual(code, 1)
+        run.assert_not_called()
 
     def test_skipped_files_nothing_and_summarises(self):
         self._log('<output>\n{"status": "skipped", "reason": "all quiet"}\n</output>\n')

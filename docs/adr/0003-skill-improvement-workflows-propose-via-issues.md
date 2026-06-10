@@ -29,6 +29,11 @@ The one-issue-per-run cap is deliberate: it forces each run to pick *the* best
 proposal rather than spraying a backlog, and keeps the human review trickle
 digestible.
 
+> **Amended by [ADR 0019](0019-proposal-loops-file-a-budgeted-ranked-top-k.md):**
+> the cap is now a budgeted ranked top-k (≤5 per run, in code), with the same
+> per-proposal bar — the propose-only posture and producer/decider split here
+> are unchanged.
+
 **The gap-scanner files into a public tracker.** This repo is public, so its
 issues are public, but the gap-scanner reads **private** repos. Its issues must
 therefore describe the recurring *need* and the proposed skill in **generalized

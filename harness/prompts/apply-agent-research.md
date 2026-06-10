@@ -2,8 +2,9 @@
 
 You are running unattended in GitHub Actions. No user is watching. Do not ask
 questions — make the call yourself. Your job is to apply the `apply-agent-research`
-skill to **this** repo and file **at most one issue per channel**, or none (see
-the skill's `proposal-flow.md` and ADR 0011 in the skills repo).
+skill to **this** repo and file **at most five issues per run, shared across all
+channels** — and usually far fewer, or none (see the skill's `proposal-flow.md`
+and ADR 0019 in the skills repo). Five is a ceiling, not a target.
 
 This one prompt serves **both** the skills repo (the tracker **host**) and every
 downstream **Consumer**; it reads its wiring from the environment the workflow stub
@@ -57,8 +58,10 @@ of sync with the cross-repo writes it gates.
 
 ## Channels (run only the ones your role enables)
 
-Each channel is capped **independently** — ≤1 issue per channel per run, zero fine.
-A forced finding is worse than none.
+All channels share **one per-run budget of 5 issues**, allocated best-first by a
+single gate pass over the merged candidates — zero is fine, and a typical run
+files 0–2. A forced finding is worse than none: every candidate must
+independently clear the bar that would have made it the run's single best.
 
 - **self-improvement** (`source:agent-research`, **always enabled**) — one agent-meta
   improvement (a `CLAUDE.md` rule, a hook/setting, a CI workflow, or an existing
@@ -129,17 +132,22 @@ A forced finding is worse than none.
    never a paste; not-already-covered; `$GH_REPO`; the marker) **or `+1`**, exactly
    like step 3 but with `--label skill-promotion`.
 
-5. **Gate, per channel.** Run the one-proposal gate **once per channel** over only
-   that channel's candidates + that channel's open keys, exactly as
+5. **Gate ONCE, over all channels merged.** Tag each candidate with its channel,
+   merge every enabled channel's candidates, and run the budgeted gate **once**
+   with `"budget": 5` and the union of every channel's spoken-for keys, exactly as
    `proposal-flow.md` describes:
    `printf '%s' '<json>' | python3 "$SKILL_DIR/lib/cli.py" gate` (run from the repo
-   root). The leak guard is **not** a standalone step — it is folded into the guarded
-   filing path (step 6), which sanitizes `title + body` and files **only on ALLOW**.
+   root). Be ruthlessly critical *before* the gate: inject only candidates you
+   would defend individually — the budget is a ceiling, not a quota, and filler
+   erodes the maintainer's trust faster than silence. The leak guard is **not** a
+   standalone step — it is folded into the guarded filing path (step 6), which
+   sanitizes `title + body` and files **only on ALLOW**.
 
-6. **File or skip, per channel — via the guarded shim only.** Direct `gh issue
-   create` / `gh issue comment` are disallowed by the workflow's tool policy; file
-   through `cli.py file` / `cli.py comment`, which run the leak guard on `title +
-   body` and act **only on ALLOW**. **Pass every private marker:** expand
+6. **File what the gate returned (or skip) — via the guarded shim only.** Direct
+   `gh issue create` / `gh issue comment` are disallowed by the workflow's tool
+   policy; file through `cli.py file` / `cli.py comment`, which run the leak guard
+   on `title + body` and act **only on ALLOW**. Route each filed candidate to its
+   own channel's destination/label/token. **Pass every private marker:** expand
    `$PRIVATE_MARKERS` (space-separated) to one `--marker <token>` per token on every
    `file` / `comment` call (none when it is empty). Write each body to a file (e.g. a
    heredoc into `$RUNNER_TEMP/body.md`) ending in the `dedup-key` marker + a short
@@ -158,9 +166,9 @@ A forced finding is worse than none.
 
    On `BLOCK: <reason>` it files nothing and exits non-zero — revise the body to drop
    the structural trigger (a fenced block, a pasted import, a `path/like.this` token,
-   or a marker hit) and re-run; never route around it. For every channel that returns
-   nothing, print `SKIPPED: <channel>: <reason>`. **At most one issue per channel.
-   Zero is acceptable.**
+   or a marker hit) and re-run; never route around it. For every channel that
+   contributed nothing, print `SKIPPED: <channel>: <reason>`. **At most five issues
+   per run across all channels — the gate enforces it. Zero is acceptable.**
 
    End your run with a one-line-per-channel summary (the filed issue URL or
    `SKIPPED: <channel>: <reason>`) so the workflow step summary reflects the outcome.
@@ -181,4 +189,5 @@ A forced finding is worse than none.
 - `dividedby/skills` owns the `skill-request` and `skill-promotion` labels; a
   Consumer applies them, never creates them. Each repo owns its own `source:*`
   labels.
-- At most one issue per channel. No questions. There is no user.
+- At most five issues per run across all channels, gate-enforced; five is a
+  ceiling, not a target. No questions. There is no user.
