@@ -58,6 +58,27 @@ an edit would land un-actionable in this repo's tracker.
    future reader can see the basis for the proposal. Prefer primary
    sources (specs, framework docs, well-known authors) over listicles.
 
+   **Reality gate.** A claim about how a tool, flag, API, model, or version
+   behaves counts as *verified* only if you fetched the primary source
+   in-session and can quote it — not recalled from memory, not paraphrased,
+   not reconstructed from what the source "probably says". Inventing or
+   approximating a source quote is a disqualifying error: drop the finding
+   entirely rather than file it on a fabricated basis.
+
+   **Deterministic analyzers are first-class evidence.** Running the target
+   ecosystem's deterministic analyzers and reading their output in-session
+   counts as verified evidence — no web fetch needed, because the claim is
+   machine-derived from the repo in front of you. Illustrative menu (use
+   whatever the ecosystem actually offers): duplication (`jscpd` —
+   token-based, ~200 formats, JSON reporter), complexity hotspots (`lizard`
+   across many languages, `scc` for fast per-file estimates), dead code
+   (`vulture` or `ruff`'s unused-code rules for Python, `golang.org/x/tools`'
+   `deadcode` for Go, `cargo-machete` for unused Rust dependencies),
+   architecture boundaries and import cycles (`import-linter`, `pydeps` for
+   Python; `fallow audit`/`fallow health` for TypeScript/JavaScript). These
+   are examples, not requirements — never block a run on a tool the
+   environment lacks.
+
 4. Pick your top candidates — **at most five**, none a loose duplicate of any
    prior proposal — and be **ruthlessly critical** about each:
 
@@ -92,6 +113,12 @@ an edit would land un-actionable in this repo's tracker.
    - **Prescription proportional to diagnosis.** If you can't write a
      concrete fix that matches the weight of your problem statement,
      either sharpen the diagnosis or skip this candidate.
+   - **Verification per claim.** Each load-bearing claim about a tool, flag,
+     API, model, or version carries either `verified in-session: <the actual
+     quoted text or analyzer output>` or names the exact check still
+     outstanding — in which case state plainly that confidence is low and cap
+     the proposal's confidence accordingly. Never present an unverified claim
+     with the same weight as a verified one.
    - **Sources section** listing the research links you used.
 
 6. If every reasonable candidate is already covered by a prior
