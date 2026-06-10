@@ -63,11 +63,11 @@ jobs:
           # label creation). See docs/design/skill-request-flow.md and
           # docs/design/skill-promotion-flow.md.
           gh label create "skill-request" \
-            --color "0E8A16" \
+            --color "006B75" \
             --description "Cross-repo demand: a Consumer wants a capability no skill exists for yet (aggregates; see ADR 0006)" \
             >/dev/null 2>&1 || true
           gh label create "skill-promotion" \
-            --color "1D76DB" \
+            --color "D93FB3" \
             --description "Cross-repo supply: a Consumer offers a local skill it built for adoption (see ADR 0010, skill-promotion-flow.md)" \
             >/dev/null 2>&1 || true
 
