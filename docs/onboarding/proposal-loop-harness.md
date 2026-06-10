@@ -100,11 +100,12 @@ jobs:
           set -euo pipefail
           # stream-json + tee so the final `result` event (carrying total_cost_usd)
           # reaches the log before claude exits — cost is captured even on failure.
-          # --model is pinned (default sonnet) so cost is deterministic and the
-          # cost-hub projection holds — see "Pin --model" below.
+          # --model is pinned to an exact model ID (default claude-sonnet-4-6) so
+          # cost is deterministic and the cost-hub projection holds — see
+          # "Pin --model" below.
           claude -p \
             --output-format stream-json --verbose \
-            --model sonnet \
+            --model claude-sonnet-4-6 \
             --permission-mode acceptEdits \
             --allowedTools "<scoped to what the loop needs>" \
             --append-system-prompt "$(cat "$HARNESS/prompts/<loop>.md")" \
@@ -238,11 +239,15 @@ that caused it ([ADR 0004](../adr/0004-runbook-helpers-are-python-stdlib.md)).
   `result` event lands in the log before `claude` exits; cost is then captured even
   on a failed run. The hub reads logs via a least-privilege `Actions: Read` PAT it
   holds — see the onboarding doc's manual steps for the token the human must mint.
-- **Pin `--model` — default `sonnet`.** Always pass an explicit `--model`; never
-  rely on the `CLAUDE_CODE_OAUTH_TOKEN` default. An unpinned loop runs whatever the
-  subscription default happens to be, which can silently flip (e.g. to opus) and
-  blow the budget without a code change, and makes the cost hub's projection
-  unreliable (its per-run repricing assumes a known model). **`sonnet` is the
+- **Pin `--model` — default `claude-sonnet-4-6`.** Always pass an explicit
+  `--model`, using an exact model ID rather than a floating alias like `sonnet`;
+  never rely on the `CLAUDE_CODE_OAUTH_TOKEN` default. An unpinned loop runs
+  whatever the subscription default happens to be, which can silently flip (e.g.
+  to opus) and blow the budget without a code change, and makes the cost hub's
+  projection unreliable (its per-run repricing assumes a known model). A floating
+  alias has the same staleness class in miniature: it silently inherits the next
+  release of that tier, untested, in an unattended loop — bump the pin only after
+  testing the prompts against the new model (#180). **Sonnet is the
   default choice** for these propose-only loops — the #161 cost/quality benchmark
   found model is the cost lever but barely moves output quality for synthesis/
   apply/audit-shaped work; reserve `opus` for a loop that is *demonstrably*

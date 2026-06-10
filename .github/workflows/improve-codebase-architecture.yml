@@ -82,9 +82,13 @@ jobs:
           # leaves a trace (plain json buffers) and the final result event (with
           # total_cost_usd) lands before claude exits — cost captured even on failure.
           # pipefail propagates an agent failure; the Digest step still runs (always).
+          # --model is deliberately pinned to claude-sonnet-4-6 (not the floating
+          # `sonnet` alias) so an unattended run can't silently inherit the next
+          # Sonnet release — bump only after testing the prompts against the new
+          # model (#180).
           claude -p \
             --output-format stream-json --verbose \
-            --model sonnet \
+            --model claude-sonnet-4-6 \
             --permission-mode acceptEdits \
             --allowedTools "Bash(gh issue list:*) Bash(gh issue view:*) Bash(gh search:*) Bash(gh api:*) Bash(git:*) Read Grep Glob WebSearch WebFetch" \
             --append-system-prompt "$(cat harness/prompts/improve-codebase-architecture.md; printf '\n\n'; cat .github/arch-review-context.md)" \
