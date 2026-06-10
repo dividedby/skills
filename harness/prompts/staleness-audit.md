@@ -35,17 +35,28 @@ no slash command to invoke here; this prompt is the concrete wiring.
    conventions across, e.g., Node (`.nvmrc` / `.node-version`, `engines.node` in
    `package.json`), Python (`requires-python` / `python` in `pyproject.toml`,
    `.python-version`, `.tool-versions`), Go (the `go` directive in `go.mod`), CI
-   matrices, and container `FROM` tags. Classify each gap via
-   `@SKILL_DIR@/lib/version_gap.py` (call it by path — do not re-derive the gap math
-   in prose), and render one ranked, **recommend-only** markdown table:
+   matrices, and container `FROM` tags.
+
+   Then run the skill's **validate** station: for each finding, use
+   `WebSearch`/`WebFetch` to resolve `latest` upstream and fetch the pinned
+   major's end-of-life **date** (prefer an authoritative source — the project's
+   release page or `endoflife.date`). Classify each gap via
+   `@SKILL_DIR@/lib/version_gap.py`, decide EOL pastness via
+   `@SKILL_DIR@/lib/eol.py`, and feed `eol_passed` into `@SKILL_DIR@/lib/rank.py`
+   for the ordering (call each by path — do not re-derive the gap math, the
+   pastness check, or the ranking in prose). When a specific lookup genuinely
+   fails, degrade that finding to `unverified: no web access` — never guess a
+   version or EOL date; `unverified` is the per-lookup fallback, not the default.
+   Render one ranked, **recommend-only** markdown table:
 
    ```
    target | file | current | latest | gap | EOL | risk | action | migration
    ```
 
-   The skill is **observe-and-recommend**: no web calls, no file edits. `latest`,
-   `EOL`, and `migration` read `unverified` / blank at this slice. Do **not** edit
-   the repo and do **not** apply any change — there is no apply path on this cron.
+   `latest`, `EOL`, and `migration` carry the validated values (or the per-row
+   `unverified` fallback). The loop is **observe-and-recommend**: web access is
+   for **reads only**. Do **not** edit the repo and do **not** apply any change —
+   the skill's apply station is suppressed; there is no apply path on this cron.
 
 3. **Draft the report as a `<body>` block (see the output contract).** Do not file
    it — just write it. The body must contain the rendered table verbatim, a short
