@@ -18,6 +18,26 @@ The three parts compose into a closed loop:
 `roadmap` is the reconcile half: the guard keeps the doc fresh *inside* a PR;
 the nudge tells you when *between-PR* drift has accumulated; the skill fixes it.
 
+### Roadmap vs. Idea Inbox: source of record vs. intake
+
+These are two different surfaces, and onboarding wires both:
+
+- The **Roadmap** (`roadmap.md`) is the **execution source of record** — the one
+  doc you read to pick the next thing to work on. Every open issue lands here as
+  a census row.
+- The **Idea Inbox** (a single `idea-inbox`-labelled GitHub issue, one per repo —
+  see `.github/ISSUE_TEMPLATE/idea-inbox.md`) is the **intake** for freeform,
+  unstructured ideas. Items enter *enriched* (idea + ambient context/links) and
+  leave by *draining* into tracked issues.
+
+The invariant tying them together: **every filing registers in the Roadmap — not
+every filing funnels through the Inbox**
+([ADR 0021](../adr/0021-idea-inbox-is-the-unstructured-intake-everything-registers-in-the-roadmap.md)).
+Structured, contract-bearing filings (skill-request, skill-promotion, a
+fully-scoped bug) bypass the Inbox and file labeled issues directly; the drift
+nudge still slots them into the census. Pick work from the Roadmap, not the
+Inbox.
+
 ## The turn-key path
 
 In a repo with issues but no roadmap, run **`/roadmap`**. It detects the empty

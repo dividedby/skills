@@ -35,3 +35,22 @@ read it. See `docs/agents/installed-skills.md`.
 ### Skill editorial intent
 
 Skills in this repo prescribe at the principle level; code examples are illustrative sketches, not literal rules. See [`docs/adr/0002-design-skills-prescribe-at-principle-level.md`](./docs/adr/0002-design-skills-prescribe-at-principle-level.md).
+
+### Intake convention
+
+When I say **"file an idea"** or **"file an issue"** (unqualified), append an
+**enriched row** to this repo's [**Idea Inbox**](./CONTEXT.md) issue (label
+`idea-inbox`, one per repo): the raw idea **plus the ambient context/links
+available right now** — the source file/issue/PR that prompted it and a sentence
+of why — as an unchecked item at the TOP of `## Ideas`. Do not grill or scope it
+yet; that happens at drain. The issue body carries the full operating
+instructions (see `.github/ISSUE_TEMPLATE/idea-inbox.md`).
+
+When I say **"file a *tracked* issue"** — or hand you a **plainly-scoped bug** —
+skip the Inbox and file a `needs-triage` issue directly via `gh`.
+
+Both paths still register in the [**Roadmap**](./CONTEXT.md), the execution
+source of record: every filing registers there, but **not** every filing funnels
+through the Inbox (ADR [0021](./docs/adr/0021-idea-inbox-is-the-unstructured-intake-everything-registers-in-the-roadmap.md)). The SessionStart drift nudge flags any open
+issue missing from the census, so drained and directly-filed issues both get
+slotted by `/roadmap` with no extra step. Intake is this convention, not a skill.
