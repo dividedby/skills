@@ -412,15 +412,18 @@ Deterministic repairs that need no judgment, applied directly:
   (pct), the five status-bucket counts and their issue lists, and the open-by-wave
   line are all projections of the table onto the `Owner` + `Status` + label
   vocabulary (see the roadmap Legend). So it carries no judgment: reconcile rewrites
-  it wholesale every pass rather than diffing it. `roadmap-guard` enforces this
-  consistency in-branch — it denies a commit whose Burn-down `open` count disagrees
-  with the census Status column (issue #227). The one **carried-forward** field is
-  the **cumulative closed-count integer** — it is *bumped* by the prune, not recomputed
-  from the table (pruned rows are gone), so it survives wave pruning (ADR 0023).
+  it wholesale every pass rather than diffing it. Likewise recompute **per-wave points
+  (completed/total) from the census `Points` + `Status` columns** — completed is the
+  sum of points on `Done` rows in the wave, total the sum across the wave (ADR 0026).
+  `roadmap-guard` enforces this consistency in-branch — it denies a commit whose
+  Burn-down `open` count disagrees with the census Status column (issue #227). The two
+  **carried-forward** fields are the **cumulative closed-count integer** and the
+  **cumulative completed-points integer** — both *bumped* by the prune, not recomputed
+  from the table (pruned rows are gone), so they survive wave pruning (ADR 0023/0026).
 
 ### Tier 2 — semantic (propose the row, then write)
 Newly-opened issues with no census row: slot each in with an **inferred** wave,
-cluster, owner, skill routing, and deps. Because these are judgment calls, **state
+points, cluster, owner, skill routing, and deps. Because these are judgment calls, **state
 the proposed row and the reasoning first**, then write it. Do **not** flag a child
 that is already aggregate-covered by an epic/PRD parent row as "unfiled". The
 nudge can't see aggregate coverage from the table alone, so when you create an

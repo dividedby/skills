@@ -9,7 +9,7 @@
 > in `docs/agents/idea-inbox.md` (see the breadcrumb at the top of the raw doc).
 
 ## Burn-down (<date>)
-**<total> issues — <closed> closed (<pct>%), <open> open.** Closed (cumulative): <N>. Open by wave: W1 n · … · unscoped n.
+**<total> issues — <closed> closed (<pct>%), <open> open.** Closed (cumulative): <N>. Open by wave: W1 n · … · unscoped n. Points by wave: W1 <done>/<total> · … · unscoped <done>/<total>. Completed (cumulative): <P> pts.
 
 | Bucket | Count | Issues |
 |---|---|---|
@@ -25,9 +25,9 @@ wave collapses into a `<details>`; once a *newer* wave is active, the collapsed
 wave's rows are **pruned** to a one-line summary and the Burn-down cumulative count
 is bumped (see Legend; ADR 0023).
 
-| # | Issue | Wave | Status | Owner | Skill(s) | Deps | Notes |
-| - | ----- | ---- | ------ | ----- | -------- | ---- | ----- |
-| NN | <short title> | W1 | **Next** | agent | `/tdd` | — | — |
+| # | Issue | Wave | Points | Status | Owner | Skill(s) | Deps | Notes |
+| - | ----- | ---- | ------ | ------ | ----- | -------- | ---- | ----- |
+| NN | <short title> | W1 | 3 | **Next** | agent | `/tdd` | — | — |
 
 <details>
 <summary>Closed wave W0 — &lt;theme&gt; (closed; superseded by W1)</summary>
@@ -43,6 +43,9 @@ this `<details>` instead of the summary line.)
 - **Wave** — priority ordering; the census is read top wave (`W1`) first, then
   down. A wave row carries its theme and gate inline (e.g. `W1 — Now (gate: none)`);
   the `—` / `Meta` pseudo-waves hold cross-cutting and standing rows.
+- **Points** — Fibonacci effort estimate (`1` · `2` · `3` · `5` · `8`); `—` when
+  unestimated. Per-item; rolled up per wave in Burn-down (completed/total), never
+  date/sprint-based (ADR 0026).
 - **Status** — `Next` (do now) · `Backlog` (ready, unstarted) · `Blocked`
   (waiting on a dep) · `Parked` (deferred/needs-design/wontfix) · `Tracking`
   (epic/PRD parent) · `Done` (closed). A single token from this set; deep context
@@ -64,8 +67,13 @@ this `<details>` instead of the summary line.)
 - **Closed (cumulative)** — a running integer of all-time closed issues, bumped on
   each prune so the total survives row deletion (it is *not* recomputable from the
   table once rows are pruned).
+- **Completed (cumulative) points** — a running integer of all-time completed
+  points, bumped on each wave prune like the closed-count, so it survives row
+  deletion (not recomputable from the table once rows are pruned; ADR 0026).
 - **Burn-down buckets** — a projection of the census onto the `Owner` + `Status` +
-  label vocabulary, recomputed from the census every reconcile (no new data source):
+  label vocabulary, recomputed from the census every reconcile (no new data source).
+  Per-wave points (completed/total) likewise recompute from the `Points` + `Status`
+  columns every reconcile (no new data source):
   - **Ready (agent)** — loop-eligible: `ready-for-agent` (agent-owned, `Next`/`Backlog`,
     deps satisfied). Carries a *strong agent brief* (clear module + AC + TDD notes,
     a determinism/offline boundary, report-only where applicable, explicit

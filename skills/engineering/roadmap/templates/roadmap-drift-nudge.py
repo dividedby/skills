@@ -31,6 +31,8 @@ THROTTLE_SECONDS = 6 * 60 * 60
 GH_TIMEOUT = 8
 ISSUE_COL: int | None = None   # override: zero-based issue-number column (None ⇒ auto-derive from header)
 STATUS_COL: int | None = None  # override: zero-based status column (None ⇒ auto-derive from header)
+# Inserting a column before Status (e.g. `Points`, ADR 0026) is absorbed automatically
+# when STATUS_COL is None (auto-derive by header); if you pin STATUS_COL numerically, bump it.
 DONE_TOKEN = "done"  # substring in the status cell that means closed/done; matched
                      # case-insensitively and emoji-aware (e.g. set to "✅")
 # Header cells the auto-deriver matches (lowercased, exact) to find each column.
