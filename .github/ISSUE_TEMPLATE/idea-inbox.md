@@ -5,7 +5,7 @@ title: "💡 Idea Inbox"
 labels: idea-inbox
 ---
 
-<!-- agent-protocol: reconcile=<roadmap skill>; drain=docs/agents/idea-inbox.md -->
+<!-- agent-protocol: reconcile=/roadmap; drain=docs/agents/idea-inbox.md -->
 
 ## Ideas
 

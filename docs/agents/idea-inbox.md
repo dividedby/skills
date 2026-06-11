@@ -14,7 +14,7 @@ The Inbox body's first line is a hidden HTML-comment breadcrumb, the same shape 
 the Roadmap's (schema owned by `skills/engineering/roadmap/SKILL.md`):
 
 ```
-<!-- agent-protocol: reconcile=<roadmap skill>; drain=docs/agents/idea-inbox.md -->
+<!-- agent-protocol: reconcile=/roadmap; drain=docs/agents/idea-inbox.md -->
 ```
 
 `drain=docs/agents/idea-inbox.md` points an agent that reads the raw body — without

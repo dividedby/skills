@@ -68,14 +68,14 @@ discovery path for an agent that reads the raw body without entering via the
 skill. The schema is owned here (ADR 0024 defers it to this file):
 
 ```
-<!-- agent-protocol: reconcile=<roadmap skill>; drain=docs/agents/idea-inbox.md -->
+<!-- agent-protocol: reconcile=/roadmap; drain=docs/agents/idea-inbox.md -->
 ```
 
 - It is **invisible** in the rendered GitHub/mirror view (an HTML comment), so it
   costs the human nothing while giving a raw-body reader an explicit path.
-- `reconcile=<roadmap skill>` points at *this* skill (the literal `<roadmap skill>`
-  token is the documented form — an agent resolves it to this skill by name);
-  `drain=docs/agents/idea-inbox.md` points at the inbox-drain doc.
+- `reconcile=/roadmap` names this skill's invocation directly — an agent reading the
+  raw body resolves it to this skill; `drain=docs/agents/idea-inbox.md` points at the
+  inbox-drain doc.
 - It is **two fields, `;`-separated**, the same shape in the Roadmap and the Idea
   Inbox bodies. Keep it as the first line so a raw reader hits it before anything else.
 
@@ -319,7 +319,7 @@ now seeds (the canonical target #228 established):
   in this skill now; the body keeps only the read-only-mirror banner, the one-line
   `## Burn-down`, the `## Census`, and a single consolidated `## Legend` (ADR 0024).
 - **Add the breadcrumb** as the **first line** if absent:
-  `<!-- agent-protocol: reconcile=<roadmap skill>; drain=docs/agents/idea-inbox.md -->`.
+  `<!-- agent-protocol: reconcile=/roadmap; drain=docs/agents/idea-inbox.md -->`.
 - **Backfill over-cap cells to thin pointers** — after relocating orphan narrative
   (above), trim each Notes/Status cell to a single ≤120-char line and Status to a
   single Legend token (ADR 0025). The deep context now lives on the relocated issue.

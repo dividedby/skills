@@ -1,4 +1,4 @@
-<!-- agent-protocol: reconcile=<roadmap skill>; drain=docs/agents/idea-inbox.md -->
+<!-- agent-protocol: reconcile=/roadmap; drain=docs/agents/idea-inbox.md -->
 # skills — Execution Roadmap (source of record)
 
 > **Read-only mirror.** This is the human-facing execution roadmap: the master
