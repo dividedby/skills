@@ -368,10 +368,26 @@ The core loop. Gather state once, then work three tiers of increasing judgment
 and decreasing write-authority.
 
 ### Gather state
-One `gh issue list --state all --json number,state,title,labels`; read and parse
+One `gh issue list --state open --json number,state,labels,title`; read and parse
 the census (the parser keys off column *index*, per the hook's config — do not
 re-derive it from a hardcoded schema); `git log` / `git diff` / grep the working
 tree for the tier-3 cross-check. One network call to `gh`; no product or live data.
+
+**Derive closed-state — never bulk-load it.** The open set plus the census is
+enough; closed-ness falls out by set-difference (issue #239), so the closed archive
+is never queried:
+- `unfiled_open` = an open number with **no** census row → tier-2 candidate.
+- `stale_closed` = a census row **not** marked `Done` whose number is **absent**
+  from the open set → it was closed; tier-1 flips it to `Done`.
+- A census row whose number **is** in the open set → still open; run its label/title
+  drift checks for routing.
+
+"Absent from the open set" means closed *or* transferred *or* deleted; treating
+absent-as-closed is correct for the flip-to-`Done` repair. If certainty is wanted
+before an auto-flip, confirm only the absent numbers with a targeted
+`gh api repos/{owner}/{repo}/issues/{n}` (REST, bounded by census size) — optional,
+not required (issue #239). The drift-nudge hook (`roadmap-drift-nudge.py`) uses this
+**same** derivation, so hook and skill stay in parity.
 
 ### Tier 1 — mechanical (write to the working tree)
 Deterministic repairs that need no judgment, applied directly:
@@ -552,6 +568,12 @@ a maintainer scaffolding a new repo inherits the bar.
 
 ## Anti-Patterns
 
+- **Bulk-loading closed issue state (`gh issue list --state all`).** Closed state
+  never needs to be queried — reconcile already enumerates every *open* issue, and
+  closed-ness falls out by set-difference against the census (a non-`Done` census row
+  whose number is absent from the open set was closed). Pulling `--state all` drags
+  in the whole closed archive, unbounded by repo history, for nothing. Fetch
+  `--state open` and derive the rest (issue #239); keep the drift-nudge hook in parity.
 - **Deleting a closed row ad hoc — or keeping every closed row forever.** Both are
   wrong now ([ADR 0023](https://github.com/dividedby/skills/blob/main/docs/adr/0023-closed-waves-collapse-then-prune-census-is-an-execution-view.md) supersedes the old never-delete rule). The census is an
   *execution view*: a wholly-closed wave **collapses** into a `<details>` and its

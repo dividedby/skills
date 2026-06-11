@@ -75,7 +75,7 @@ class TestAutoDeriveAndEmoji(unittest.TestCase):
 
     def test_emoji_done_token_marks_closed_as_not_stale(self):
         rows = nudge.parse_census(EMOJI_SAMPLE)
-        states = {12: "open", 34: "closed"}
+        states = {12: "open"}  # 34 closed ⇒ absent from the open-only set (issue #239)
         original = nudge.DONE_TOKEN
         nudge.DONE_TOKEN = "✅"
         try:
@@ -133,23 +133,29 @@ class TestCollapsedClosedWave(unittest.TestCase):
     def test_collapsed_closed_rows_are_not_drift(self):
         # Both closed-and-Done rows inside the `<details>` are in sync with GitHub,
         # so neither shows as stale, and the lone open row is filed → no drift.
+        # 34/56 are closed ⇒ absent from the open-only set (issue #239).
         rows = nudge.parse_census(COLLAPSED_WAVE_SAMPLE)
-        states = {12: "open", 34: "closed", 56: "closed"}
+        states = {12: "open"}
         self.assertEqual(nudge.compute_drift(rows, states), ([], []))
 
     def test_pruned_closed_wave_does_not_resurface_as_unfiled(self):
         # After a wave is pruned (its rows gone), its closed issues have no census
-        # row. compute_drift only flags *open* issues with no row, so closed pruned
-        # issues stay silent — the prune is safe against the nudge (ADR 0023).
+        # row AND are absent from the open-only set. compute_drift only flags *open*
+        # issues with no row, so closed pruned issues stay silent — the prune is safe
+        # against the nudge (ADR 0023).
         rows = {12: "next"}  # W1 rows pruned; only the active W2 row remains
-        states = {12: "open", 34: "closed", 56: "closed"}
+        states = {12: "open"}  # 34/56 closed ⇒ absent (issue #239)
         self.assertEqual(nudge.compute_drift(rows, states), ([], []))
 
 
 class TestComputeDrift(unittest.TestCase):
-    def test_stale_closed_when_gh_closed_but_census_not_done(self):
+    # `states` enumerates only OPEN issues (issue #239): a census row is stale_closed
+    # precisely when its number is absent from `states` and it is not yet Done.
+    def test_stale_closed_when_census_absent_from_open(self):
+        # Both census rows were closed on GitHub ⇒ absent from the open set; only the
+        # non-Done one (12) is stale. This is the core #239 set-difference derivation.
         rows = {12: "next", 34: "done"}
-        states = {12: "closed", 34: "closed"}
+        states: dict[int, str] = {}  # nothing open; 12 and 34 both closed
         stale, unfiled = nudge.compute_drift(rows, states)
         self.assertEqual(stale, [12])   # 34 is already Done — not stale
         self.assertEqual(unfiled, [])
@@ -158,12 +164,20 @@ class TestComputeDrift(unittest.TestCase):
         rows = {12: "next"}
         states = {12: "open", 99: "open"}
         stale, unfiled = nudge.compute_drift(rows, states)
-        self.assertEqual(stale, [])
+        self.assertEqual(stale, [])     # no regression on unfiled_open
         self.assertEqual(unfiled, [99])
+
+    def test_still_open_census_row_not_flagged_stale(self):
+        # A non-Done census row whose number IS in the open set must not be flagged
+        # stale_closed — it is genuinely still open (guards against over-flagging
+        # under the absent-means-closed derivation, issue #239).
+        rows = {12: "next", 34: "blocked"}
+        states = {12: "open", 34: "open"}
+        self.assertEqual(nudge.compute_drift(rows, states), ([], []))
 
     def test_clean_when_in_sync(self):
         rows = {12: "next", 34: "done"}
-        states = {12: "open", 34: "closed"}
+        states = {12: "open"}  # 34 closed-and-Done ⇒ absent from the open set
         self.assertEqual(nudge.compute_drift(rows, states), ([], []))
 
     def test_aggregate_covered_excluded_from_unfiled(self):
