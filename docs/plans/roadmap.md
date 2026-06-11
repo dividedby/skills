@@ -9,14 +9,14 @@
 > in `docs/agents/idea-inbox.md` (see the breadcrumb at the top of the raw doc).
 
 ## Burn-down (2026-06-11)
-**17 issues — 8 closed (47%), 9 open.** Closed (cumulative): 0. Open by wave: W1 1 · W3 1 · W2 5 · Meta 2 · unscoped 0.
+**17 issues — 9 closed (53%), 8 open.** Closed (cumulative): 0. Open by wave: W1 1 · W3 0 · W2 5 · Meta 2 · unscoped 0.
 
 | Bucket | Count | Issues |
 |---|---|---|
 | **Ready (agent)** — loop-eligible | 0 | — |
 | **Ready (human / HITL)**          | 1 | #58 |
 | **Blocked / deferred**            | 5 | #75 #98 #112 #125 #153 |
-| **Tracking** (epic / PRD parents) | 1 | #225 |
+| **Tracking** (epic / PRD parents) | 0 | — |
 | **Meta** (idea-inbox / onboarding)| 2 | #91 #220 |
 
 ## Priority waves
@@ -37,13 +37,6 @@ is bumped (see Legend; ADR 0023).
 | - | ----- | ---- | ------ | ----- | -------- | ---- | ----- |
 | 216 | Dogfood the roadmap pattern — bootstrap roadmap into skills itself (ADR 0023) | W1 | **Done** | agent | `/roadmap` | — | bootstrapped & merged (#221) |
 | 58 | Decide CI auth/billing posture before the 2026-06-15 Agent SDK credit change (subscription token vs API key) | W1 | **Next** | human | — | — | deadline 2026-06-15 (urgent human decision) |
-| 225 | PRD: Thin the Idea Inbox + Roadmap (progressive-disclosure body split) | W3 | **Tracking** | mixed | `/to-prd` | — | epic/PRD parent for the thinning slices #226–#231 |
-| 226 | ADRs: migration auto-merge carve-out + progressive-disclosure body split + thin-pointer census cell | W3 | **Done** | mixed | `grill-with-docs` | — | merged via PR #232 (ADRs 0022 amend + 0024 + 0025) |
-| 227 | Guard: enforce census cell-cap + Burn-down/census consistency | W3 | **Done** | agent | `/tdd` | — | guard now enforces cell-cap + Burn-down consistency; unblocks #231 |
-| 228 | Roadmap canonical layout: thin human body + breadcrumb + Burn-down recompute | W3 | **Done** | agent | `write-a-skill` | _#226_ | thin template body + breadcrumb schema in SKILL.md |
-| 229 | Inbox canonical layout: single-source drain doc + thin template + breadcrumb | W3 | **Done** | agent | `write-a-skill` | _#226_ | drain doc + thin template + breadcrumb landed |
-| 230 | /roadmap migrate route: restructure the intake pair in one human-reviewed PR | W3 | **Done** | agent | `write-a-skill` | _#226_ _#228_ _#229_ | migrate-intake-pair route added to SKILL.md; consumer rollout out of scope |
-| 231 | Pilot: migrate the skills repo's own Idea Inbox #91 + Roadmap #220 | W3 | **Done** | mixed | `/roadmap` | _#227_ _#228_ _#229_ _#230_ | HITL pilot migration; thinned this doc + proposed #91 body; #220 re-renders via CI |
 | 75 | Demonstrate organic cross-repo skill-request +1 across two distinct Consumers | W2 | **Parked** | human | — | — | awaiting-corroboration; enabler for the W2 cluster |
 | 98 | Skill request: playbook-driven migration | W2 | **Parked** | loop | `write-a-skill` | #75 | awaiting-corroboration |
 | 112 | Skill request: audit a codebase for agent legibility | W2 | **Parked** | loop | `write-a-skill` | #75 | awaiting-corroboration |
@@ -52,6 +45,21 @@ is bumped (see Legend; ADR 0023).
 | 91 | 💡 Idea Inbox | Meta | **Tracking** | human | — | — | 💡 Idea Inbox — standing intake row (ADR 0021) |
 | 220 | 🗺️ Roadmap (read-only mirror) | Meta | **Tracking** | machine | — | — | machine-owned CI render of this doc (ADR 0020); render target, not backlog |
 | 239 | /roadmap reconcile: derive closed-state from census + open set instead of bulk-loading --state all | Meta | **Done** | agent | `/roadmap` | — | hook + SKILL.md now fetch `--state open` and set-difference closed-ness |
+
+<details>
+<summary>Closed wave W3 — Idea Inbox/Roadmap thinning (progressive-disclosure body split)</summary>
+
+| # | Issue | Wave | Status | Owner | Skill(s) | Deps | Notes |
+| - | ----- | ---- | ------ | ----- | -------- | ---- | ----- |
+| 225 | PRD: Thin the Idea Inbox + Roadmap (progressive-disclosure body split) | W3 | **Done** | mixed | `/to-prd` | — | epic/PRD parent #226–#231; all slices delivered, closed |
+| 226 | ADRs: migration auto-merge carve-out + progressive-disclosure body split + thin-pointer census cell | W3 | **Done** | mixed | `grill-with-docs` | — | merged via PR #232 (ADRs 0022 amend + 0024 + 0025) |
+| 227 | Guard: enforce census cell-cap + Burn-down/census consistency | W3 | **Done** | agent | `/tdd` | — | guard now enforces cell-cap + Burn-down consistency; unblocks #231 |
+| 228 | Roadmap canonical layout: thin human body + breadcrumb + Burn-down recompute | W3 | **Done** | agent | `write-a-skill` | _#226_ | thin template body + breadcrumb schema in SKILL.md |
+| 229 | Inbox canonical layout: single-source drain doc + thin template + breadcrumb | W3 | **Done** | agent | `write-a-skill` | _#226_ | drain doc + thin template + breadcrumb landed |
+| 230 | /roadmap migrate route: restructure the intake pair in one human-reviewed PR | W3 | **Done** | agent | `write-a-skill` | _#226_ _#228_ _#229_ | migrate-intake-pair route added to SKILL.md; consumer rollout out of scope |
+| 231 | Pilot: migrate the skills repo's own Idea Inbox #91 + Roadmap #220 | W3 | **Done** | mixed | `/roadmap` | _#227_ _#228_ _#229_ _#230_ | HITL pilot migration; thinned this doc + proposed #91 body; #220 re-renders via CI |
+
+</details>
 
 ## Legend
 - **Wave** — priority ordering; the census is read top wave (`W1`) first, then
