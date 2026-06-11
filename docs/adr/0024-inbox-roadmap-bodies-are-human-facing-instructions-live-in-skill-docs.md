@@ -33,7 +33,7 @@ rediscover them by entering through the skill (backstopped by a hidden breadcrum
    `/roadmap` self-loads the reconcile protocol, and drain stays a convention that
    points at `docs/agents/idea-inbox.md`. That is backstopped by a hidden
    HTML-comment **breadcrumb** at the top of each body, of the form
-   `<!-- agent-protocol: reconcile=<roadmap skill>; drain=docs/agents/idea-inbox.md -->`
+   `<!-- agent-protocol: reconcile=/roadmap; drain=docs/agents/idea-inbox.md -->`
    — invisible in the rendered GitHub view, an explicit path for an agent that reads
    the raw body **without** entering via the skill. The concrete breadcrumb schema
    string is specified once in SKILL.md (issue #228), not in this ADR.
