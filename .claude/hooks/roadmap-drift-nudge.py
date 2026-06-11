@@ -117,11 +117,17 @@ def parse_census(text: str) -> dict[int, str]:
 
 def compute_drift(rows: dict[int, str], states: dict[int, str]):
     """Pure. Returns (stale_closed, unfiled_open):
-    - stale_closed: issues closed on GitHub but not yet Done in the census.
-    - unfiled_open: issues open on GitHub with no census row."""
+    - stale_closed: census rows not yet Done whose number is absent from the open
+      set → the issue was closed (or transferred/deleted; treating absent-as-closed
+      is fine for a flag-to-Done nudge — see issue #239 optional REST hardening).
+    - unfiled_open: issues open on GitHub with no census row.
+
+    `states` enumerates only **open** issues (`{number: "open"}`). Closed state is
+    never queried; it falls out by set-difference against the census (issue #239),
+    so a row is stale_closed precisely when its number is not in `states`."""
     done = DONE_TOKEN.lower()  # status is already lowercased; emoji pass through unchanged
     stale_closed = sorted(n for n, st in rows.items()
-                          if states.get(n) == "closed" and done not in st)
+                          if n not in states and done not in st)
     unfiled_open = sorted(n for n, st in states.items()
                           if st == "open" and n not in rows
                           and n not in AGGREGATE_COVERED)
@@ -145,8 +151,10 @@ def _stamp() -> None:
 
 def _issue_states():
     try:
+        # Enumerate only OPEN issues; closed state is derived by set-difference
+        # against the census (issue #239), so the closed archive is never pulled.
         out = subprocess.check_output(
-            ["gh", "issue", "list", "--state", "all", "--limit", "400",
+            ["gh", "issue", "list", "--state", "open", "--limit", "400",
              "--json", "number,state"],
             text=True, stderr=subprocess.DEVNULL, timeout=GH_TIMEOUT)
         return {it["number"]: it["state"].lower() for it in json.loads(out)}

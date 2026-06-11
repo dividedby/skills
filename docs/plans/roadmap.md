@@ -31,7 +31,7 @@ no other guidance is needed. Follow it top to bottom:
    `Deps` on anything your change unblocks.
 
 ## Burn-down (2026-06-11)
-Reconciled against live `gh` (`/roadmap`). **16 issues — 6 closed (38%), 10 open.**
+Reconciled against live `gh` (`/roadmap`). **17 issues — 7 closed (41%), 10 open.**
 **Closed (cumulative): 0.** ← integer total of all closed issues ever, including
 those whose rows have been pruned from collapsed waves; bumped, never recomputed
 from the table (pruned rows are gone), so the count survives wave pruning.
@@ -52,7 +52,7 @@ Open by wave: W1 1 · W3 2 · W2 5 · Meta 2 · unscoped 0.
 | **W1** | Now — roadmap + urgent posture | #216 #58 | none — active now |
 | **W3** | Idea Inbox/Roadmap thinning (progressive-disclosure body split) | #225 #226 #227 #228 #229 #230 #231 | none — active now; #226 (ADRs) unblocks the layout slices |
 | **W2** | Corroboration-gated skill backlog | #75 #98 #112 #125 #153 | a cross-repo +1 lands (ADR 0006); #75 enables the other four |
-| **Meta** | Standing intake / cross-cutting | #91 #220 | n/a |
+| **Meta** | Standing intake / cross-cutting | #91 #220 #239 | n/a |
 
 ## Master census (active waves inline)
 Open waves and the active census stay inline. A **wholly-closed** wave collapses
@@ -78,6 +78,7 @@ bumped (see Self-update protocol + ADR 0023).
 | 153 | New engineering skill: agentic release-QA gate | W2 | **Parked** | loop | `write-a-skill` | #75 | awaiting-corroboration |
 | 91 | 💡 Idea Inbox | Meta | **Tracking** | human | — | — | 💡 Idea Inbox — standing intake row (ADR 0021) |
 | 220 | 🗺️ Roadmap (read-only mirror) | Meta | **Tracking** | machine | — | — | machine-owned CI render of this doc (ADR 0020); render target, not backlog |
+| 239 | /roadmap reconcile: derive closed-state from census + open set instead of bulk-loading --state all | Meta | **Done** | agent | `/roadmap` | — | hook + SKILL.md now fetch `--state open` and set-difference closed-ness |
 
 ## Legend
 - **Status** — `Next` (do now) · `Backlog` (ready, unstarted) · `Blocked`
