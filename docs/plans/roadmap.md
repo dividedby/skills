@@ -9,11 +9,11 @@
 > in `docs/agents/idea-inbox.md` (see the breadcrumb at the top of the raw doc).
 
 ## Burn-down (2026-06-11)
-**17 issues — 9 closed (53%), 8 open.** Closed (cumulative): 0. Open by wave: W1 1 · W3 0 · W2 5 · Meta 2 · unscoped 0.
+**18 issues — 9 closed (50%), 9 open.** Closed (cumulative): 0. Open by wave: W1 2 · W3 0 · W2 5 · Meta 2 · unscoped 0.
 
 | Bucket | Count | Issues |
 |---|---|---|
-| **Ready (agent)** — loop-eligible | 0 | — |
+| **Ready (agent)** — loop-eligible | 1 | #244 |
 | **Ready (human / HITL)**          | 1 | #58 |
 | **Blocked / deferred**            | 5 | #75 #98 #112 #125 #153 |
 | **Tracking** (epic / PRD parents) | 0 | — |
@@ -22,7 +22,7 @@
 ## Priority waves
 | Wave | Theme | Issues | Gate to enter |
 | ---- | ----- | ------ | ------------- |
-| **W1** | Now — roadmap + urgent posture | #216 #58 | none — active now |
+| **W1** | Now — roadmap + urgent posture | #216 #58 #244 | none — active now |
 | **W3** | Idea Inbox/Roadmap thinning (progressive-disclosure body split) | #225 #226 #227 #228 #229 #230 #231 | none — active now; #226 (ADRs) unblocks the layout slices |
 | **W2** | Corroboration-gated skill backlog | #75 #98 #112 #125 #153 | a cross-repo +1 lands (ADR 0006); #75 enables the other four |
 | **Meta** | Standing intake / cross-cutting | #91 #220 #239 | n/a |
@@ -37,6 +37,7 @@ is bumped (see Legend; ADR 0023).
 | - | ----- | ---- | ------ | ----- | -------- | ---- | ----- |
 | 216 | Dogfood the roadmap pattern — bootstrap roadmap into skills itself (ADR 0023) | W1 | **Done** | agent | `/roadmap` | — | bootstrapped & merged (#221) |
 | 58 | Decide CI auth/billing posture before the 2026-06-15 Agent SDK credit change (subscription token vs API key) | W1 | **Next** | human | — | — | deadline 2026-06-15 (urgent human decision) |
+| 244 | Roadmap: point estimates per census item + per-Wave velocity rollup | W1 | **Next** | agent | `/tdd` | — | Fibonacci points + completed/total wave rollup (ADR 0026); impl on branch |
 | 75 | Demonstrate organic cross-repo skill-request +1 across two distinct Consumers | W2 | **Parked** | human | — | — | awaiting-corroboration; enabler for the W2 cluster |
 | 98 | Skill request: playbook-driven migration | W2 | **Parked** | loop | `write-a-skill` | #75 | awaiting-corroboration |
 | 112 | Skill request: audit a codebase for agent legibility | W2 | **Parked** | loop | `write-a-skill` | #75 | awaiting-corroboration |

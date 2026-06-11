@@ -33,6 +33,19 @@ SAMPLE = """\
 """
 
 
+# Same census with a `Points` column inserted after `Wave` (ADR 0026). Header
+# auto-derivation resolves Status by name, so the inserted column shifts no index
+# and the number→status mapping must be identical to the no-Points SAMPLE.
+SAMPLE_WITH_POINTS = """\
+## Master census (all open issues)
+| # | Issue | Wave | Points | Status | Owner | Skill(s) | Deps | Notes |
+| - | ----- | ---- | ------ | ------ | ----- | -------- | ---- | ----- |
+| 12 | first thing | W1 | 3 | **Next** | agent | `/tdd` | — | — |
+| 34 | a closed one | W1 | 5 | Done | agent | `/tdd` | _#12_ | — |
+| 56 | blocked thing | W2 | — | `Blocked` | human | — | #12 | wait on 12 |
+"""
+
+
 class TestParseCensus(unittest.TestCase):
     def test_extracts_number_and_status(self):
         rows = nudge.parse_census(SAMPLE)
@@ -51,6 +64,14 @@ class TestParseCensus(unittest.TestCase):
     def test_auto_derives_columns_from_default_header(self):
         # With ISSUE_COL/STATUS_COL left None, the columns are read from the header.
         self.assertEqual(nudge.resolve_cols(SAMPLE), (0, 3))
+
+    def test_inserted_points_column_does_not_change_status_mapping(self):
+        # A `Points` column after `Wave` (ADR 0026) is absorbed by header
+        # auto-derivation: Status resolves to index 4 here vs 3 in SAMPLE, but the
+        # number→status mapping is identical — the insertion breaks no parse.
+        self.assertEqual(nudge.resolve_cols(SAMPLE_WITH_POINTS), (0, 4))
+        self.assertEqual(nudge.parse_census(SAMPLE_WITH_POINTS),
+                         nudge.parse_census(SAMPLE))
 
 
 # A real-world divergent census: 9 columns, status LAST (index 8), `✅` = done,

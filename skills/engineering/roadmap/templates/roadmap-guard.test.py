@@ -172,6 +172,47 @@ class TestDecideContentChecks(unittest.TestCase):
         self.assertEqual(guard.decide("git log '#12'", {ROADMAP}, bad), 0)
 
 
+_HEADER_POINTS = (
+    "| # | Issue | Wave | Points | Status | Owner | Skill(s) | Deps | Notes |\n"
+    "| - | ----- | ---- | ------ | ------ | ----- | -------- | ---- | ----- |\n"
+)
+
+
+def _census_points(*rows: str) -> str:
+    return _HEADER_POINTS + "".join(r if r.endswith("\n") else r + "\n" for r in rows)
+
+
+class TestPointsColumn(unittest.TestCase):
+    """A `Points` column inserted after `Wave` (ADR 0026) must leave the guard's
+    header-keyed column resolution and Burn-down open-count check intact."""
+
+    def test_status_resolved_by_header_with_points_present(self):
+        # Status now lives at index 4 (was 3); _census_cols resolves it by name.
+        idx, issue_col = guard._census_cols(_HEADER_POINTS)
+        self.assertEqual(issue_col, 0)
+        self.assertEqual(idx["status"], 4)
+
+    def test_burndown_open_count_correct_with_points(self):
+        # Two non-Done rows + one Done row → open count 2; the Points cells (incl.
+        # `—`) sit before Status and must not perturb the open-row derivation.
+        text = ("## Burn-down (2026-06-11)\n**3 issues — 1 closed (33%), 2 open.**\n\n"
+                + _census_points(
+                    "| 1 | A | W1 | 3 | **Next** | agent | `/tdd` | — | n |",
+                    "| 2 | B | W1 | — | **Blocked** | agent | `/tdd` | — | n |",
+                    "| 3 | C | W1 | 5 | **Done** | agent | `/tdd` | — | n |",
+                ))
+        self.assertTrue(guard._burndown_consistent(text))
+        self.assertEqual(guard.decide("git commit -m '#1'", {ROADMAP}, text), 0)
+
+    def test_burndown_disagreement_still_flagged_with_points(self):
+        text = ("## Burn-down (2026-06-11)\n**3 issues — 1 closed (33%), 5 open.**\n\n"
+                + _census_points(
+                    "| 1 | A | W1 | 3 | **Next** | agent | `/tdd` | — | n |",
+                    "| 2 | B | W1 | 2 | **Done** | agent | `/tdd` | — | n |",
+                ))
+        self.assertFalse(guard._burndown_consistent(text))
+
+
 class TestBaseBranchList(unittest.TestCase):
     def test_string_base_normalized_to_list(self):
         with mock.patch.object(guard, "BASE_BRANCH", "main"):
