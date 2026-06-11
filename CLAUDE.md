@@ -43,8 +43,9 @@ When I say **"file an idea"** or **"file an issue"** (unqualified), append an
 `idea-inbox`, one per repo): the raw idea **plus the ambient context/links
 available right now** — the source file/issue/PR that prompted it and a sentence
 of why — as an unchecked item at the TOP of `## Ideas`. Do not grill or scope it
-yet; that happens at drain. The issue body carries the full operating
-instructions (see `.github/ISSUE_TEMPLATE/idea-inbox.md`).
+yet; that happens at drain. The capture and drain protocol lives once in
+[`docs/agents/idea-inbox.md`](./docs/agents/idea-inbox.md) (the issue body is
+human-facing and carries no operating instructions — ADR 0024).
 
 When I say **"file a *tracked* issue"** — or hand you a **plainly-scoped bug** —
 skip the Inbox and file a `needs-triage` issue directly via `gh`.

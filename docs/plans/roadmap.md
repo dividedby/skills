@@ -31,14 +31,14 @@ no other guidance is needed. Follow it top to bottom:
    `Deps` on anything your change unblocks.
 
 ## Burn-down (2026-06-11)
-Reconciled against live `gh` (`/roadmap`). **16 issues — 4 closed (25%), 12 open.**
+Reconciled against live `gh` (`/roadmap`). **16 issues — 5 closed (31%), 11 open.**
 **Closed (cumulative): 0.** ← integer total of all closed issues ever, including
 those whose rows have been pruned from collapsed waves; bumped, never recomputed
 from the table (pruned rows are gone), so the count survives wave pruning.
 
 | Bucket | Count | Issues |
 |---|---|---|
-| **Ready (agent)** — loop-eligible | 1 | #229 |
+| **Ready (agent)** — loop-eligible | 0 | — |
 | **Ready (human / HITL)**          | 1 | #58 |
 | **Blocked / deferred**            | 7 | #75 #98 #112 #125 #153 #230 #231 |
 | **Tracking** (epic / PRD parents) | 1 | #225 |
@@ -68,7 +68,7 @@ bumped (see Self-update protocol + ADR 0023).
 | 226 | ADRs: migration auto-merge carve-out + progressive-disclosure body split + thin-pointer census cell | W3 | **Done** | mixed | `grill-with-docs` | — | merged via PR #232 (ADRs 0022 amend + 0024 + 0025) |
 | 227 | Guard: enforce census cell-cap + Burn-down/census consistency | W3 | **Done** | agent | `/tdd` | — | guard now enforces cell-cap + Burn-down consistency; unblocks #231 |
 | 228 | Roadmap canonical layout: thin human body + breadcrumb + Burn-down recompute | W3 | **Done** | agent | `write-a-skill` | _#226_ | thin template body + breadcrumb schema in SKILL.md |
-| 229 | Inbox canonical layout: single-source drain doc + thin template + breadcrumb | W3 | **Next** | agent | `write-a-skill` | _#226_ | ADRs landed — unblocked |
+| 229 | Inbox canonical layout: single-source drain doc + thin template + breadcrumb | W3 | **Done** | agent | `write-a-skill` | _#226_ | drain doc + thin template + breadcrumb landed |
 | 230 | /roadmap migrate route: restructure the intake pair in one human-reviewed PR | W3 | **Blocked** | agent | `write-a-skill` | _#226_ #228 #229 | needs #228/#229; consumer rollout out of scope |
 | 231 | Pilot: migrate the skills repo's own Idea Inbox #91 + Roadmap #220 | W3 | **Blocked** | mixed | `/roadmap` | _#227_ #228 #229 #230 | HITL pilot — human-reviewed migration PR; the end-to-end tracer |
 | 75 | Demonstrate organic cross-repo skill-request +1 across two distinct Consumers | W2 | **Parked** | human | — | — | awaiting-corroboration; enabler for the W2 cluster |
