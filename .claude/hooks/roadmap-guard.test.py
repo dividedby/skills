@@ -82,6 +82,96 @@ class TestFailOpen(unittest.TestCase):
         self.assertEqual(guard.decide("git commit -m '#9'", None), 0)
 
 
+_HEADER = (
+    "| # | Issue | Wave | Status | Owner | Skill(s) | Deps | Notes |\n"
+    "| - | ----- | ---- | ------ | ----- | -------- | ---- | ----- |\n"
+)
+
+
+def _census(*rows: str) -> str:
+    return _HEADER + "".join(r if r.endswith("\n") else r + "\n" for r in rows)
+
+
+class TestCellViolations(unittest.TestCase):
+    def test_over_cap_cell_flagged(self):
+        # Tracer: a Notes cell past the ~120-char cap is flagged.
+        long_note = "x" * 130
+        text = _census(f"| 12 | A | W1 | **Next** | agent | `/tdd` | — | {long_note} |")
+        self.assertTrue(guard._cell_violations(text))
+
+    def test_at_cap_single_line_cell_allowed(self):
+        note = "y" * guard.CELL_CAP  # exactly at the cap
+        text = _census(f"| 12 | A | W1 | **Next** | agent | `/tdd` | — | {note} |")
+        self.assertFalse(guard._cell_violations(text))
+
+    def test_multi_line_cell_flagged(self):
+        # A <br>-spanned cell is a multi-line cell and is flagged regardless of length.
+        text = _census("| 12 | A | W1 | **Next** | agent | `/tdd` | — | one<br>two |")
+        self.assertTrue(guard._cell_violations(text))
+
+    def test_empty_census_allowed(self):
+        self.assertFalse(guard._cell_violations(""))
+
+    def test_header_only_no_rows_allowed(self):
+        self.assertFalse(guard._cell_violations(_HEADER))
+
+
+class TestBurndownConsistent(unittest.TestCase):
+    def _doc(self, open_count: int, *rows: str) -> str:
+        burndown = (f"## Burn-down (2026-06-11)\n"
+                    f"**{open_count + 1} issues — 1 closed (5%), {open_count} open.**\n\n")
+        return burndown + _census(*rows)
+
+    def test_matching_count_allowed(self):
+        text = self._doc(
+            2,
+            "| 1 | A | W1 | **Next** | agent | `/tdd` | — | n |",
+            "| 2 | B | W1 | **Blocked** | agent | `/tdd` | — | n |",
+            "| 3 | C | W1 | **Done** | agent | `/tdd` | — | n |",
+        )
+        self.assertTrue(guard._burndown_consistent(text))
+
+    def test_disagreeing_count_flagged(self):
+        # Burn-down says 5 open but the census has 2 open rows.
+        text = self._doc(
+            5,
+            "| 1 | A | W1 | **Next** | agent | `/tdd` | — | n |",
+            "| 2 | B | W1 | **Backlog** | agent | `/tdd` | — | n |",
+        )
+        self.assertFalse(guard._burndown_consistent(text))
+
+    def test_missing_burndown_line_fails_open(self):
+        text = _census("| 1 | A | W1 | **Next** | agent | `/tdd` | — | n |")
+        self.assertTrue(guard._burndown_consistent(text))
+
+    def test_empty_input_fails_open(self):
+        self.assertTrue(guard._burndown_consistent(""))
+
+
+class TestDecideContentChecks(unittest.TestCase):
+    def test_decide_denies_on_over_cap_cell(self):
+        bad = _census(f"| 12 | A | W1 | **Next** | agent | `/tdd` | — | {'x' * 130} |")
+        self.assertEqual(guard.decide("git commit -m '#12'", {ROADMAP}, bad), 2)
+
+    def test_decide_denies_on_inconsistent_burndown(self):
+        bad = ("## Burn-down (2026-06-11)\n**9 issues — 1 closed, 8 open.**\n\n"
+               + _census("| 1 | A | W1 | **Next** | agent | `/tdd` | — | n |"))
+        self.assertEqual(guard.decide("git commit -m '#12'", {ROADMAP}, bad), 2)
+
+    def test_decide_allows_clean_roadmap(self):
+        good = ("## Burn-down (2026-06-11)\n**2 issues — 1 closed, 1 open.**\n\n"
+                + _census("| 1 | A | W1 | **Next** | agent | `/tdd` | — | n |"))
+        self.assertEqual(guard.decide("git commit -m '#12'", {ROADMAP}, good), 0)
+
+    def test_decide_content_none_skips_checks(self):
+        # No roadmap text available → content checks are skipped (fail open).
+        self.assertEqual(guard.decide("git commit -m '#12'", {ROADMAP}, None), 0)
+
+    def test_decide_unenforced_ignores_content(self):
+        bad = _census(f"| 12 | A | W1 | **Next** | agent | `/tdd` | — | {'x' * 130} |")
+        self.assertEqual(guard.decide("git log '#12'", {ROADMAP}, bad), 0)
+
+
 class TestBaseBranchList(unittest.TestCase):
     def test_string_base_normalized_to_list(self):
         with mock.patch.object(guard, "BASE_BRANCH", "main"):
