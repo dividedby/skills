@@ -104,7 +104,16 @@ correctness sin — see Anti-Patterns):
 Then route:
 
 1. **Canonical roadmap present at the configured path** (it exists and parses as
-   a census) → **reconcile**. The common case; the rest is just keeping it honest.
+   a census) → **reconcile** — *unless* its body is still in the **legacy layout**
+   (prose-heavy census cells over the ~120-char cap, embedded `How to use this
+   doc` / `Self-update protocol` operating-instruction sections, an unbounded
+   inbox `Actioned` list with no rolling window). A census can parse as canonical
+   yet predate the thin layout (ADRs 0024/0025); that pair routes to **migrate the
+   intake pair** (below), a one-time human-reviewed thinning, before normal
+   reconcile resumes. The legacy-layout tell is structural, not about issue state:
+   look for the removed instruction sections, over-cap cells, or a missing
+   breadcrumb. The common case is the already-thin body → reconcile, just keeping
+   it honest.
 2. **A census exists at a non-default path** (found by the signature glob above)
    → **relocate, never duplicate**. `git mv` it to the canonical default
    `docs/plans/roadmap.md`, update every reference (hook config blocks,
@@ -247,10 +256,11 @@ tree for review (never committed):
 Bootstrap writes files but **commits nothing** — finish by telling the human to
 review `git diff` and the new untracked files, then commit.
 
-## Migrate — adapt a legacy doc into the canonical format
+## Migrate (legacy doc) — adapt a legacy planning artifact into the canonical format
 
-Run when an older planning artifact exists. The goal is to *preserve* the human's
-content while reshaping it onto the census:
+Run when an older planning artifact exists that does *not* match the census
+signature (an `ROADMAP.md`, a `docs/plan*`, a TODO/tracking doc). The goal is to
+*preserve* the human's content while reshaping it onto the census:
 
 - Read the legacy doc and map its entries onto canonical rows (issue #, status,
   wave, owner, skill, deps), inferring the closest canonical `Status` for each
@@ -261,6 +271,96 @@ content while reshaping it onto the census:
   status mappings) for review *first*, then write it.
 - Once the canonical roadmap exists, fall through to reconcile to fill gaps
   against live issue state, and wire the hooks as in bootstrap.
+- This route produces a thin canonical body straight away, so it does **not** also
+  need the intake-pair thinning below. (The route below is for a pair that is
+  *already* canonical-as-a-census but predates the thin **layout**.)
+
+## Migrate (intake pair) — thin a legacy-layout Roadmap + Inbox in one human-reviewed PR
+
+Run when the repo's intake pair already parses as canonical (a census table, a
+per-repo `idea-inbox` issue) but its **layout predates the thin format** of ADRs
+[0024](https://github.com/dividedby/skills/blob/main/docs/adr/0024-inbox-roadmap-bodies-are-human-facing-instructions-live-in-skill-docs.md)
+/ [0025](https://github.com/dividedby/skills/blob/main/docs/adr/0025-census-cells-are-thin-pointers.md):
+prose-heavy census cells over the ~120-char cap, embedded `How to use this doc` /
+`Self-update protocol` operating-instruction blocks, an unbounded inbox `Actioned`
+list, or a missing breadcrumb. This is a **one-time** reshape that brings both
+artifacts of the [ADR 0021](https://github.com/dividedby/skills/blob/main/docs/adr/0021-idea-inbox-is-the-unstructured-intake-everything-registers-in-the-roadmap.md)
+intake pair onto the new layout. **It is the only route that touches the inbox** —
+ongoing reconcile never does (see Boundaries).
+
+This route is **distinct from reconcile and bootstrap**: reconcile keeps an
+already-thin census honest and auto-merges; bootstrap stands the pattern up in a
+fresh repo; this thins an existing legacy-layout pair and is **human-reviewed, not
+auto-merged**.
+
+### Non-lossy first — relocate orphan narrative before any trim
+
+The thinning is **lossy** (it deletes prose), so context preservation comes
+*before* deletion, never after:
+
+- For every census **cell** about to be trimmed and every **Actioned** item about
+  to be pruned, check whether its narrative is **already on the linked issue `#N`**
+  (body or a comment). If it is, the trim drops nothing — proceed.
+- If the narrative is **orphan** (not already on the issue), **post it as an
+  additive comment on `#N` first**, then trim. Relocation precedes the trim; it
+  never follows it (ADRs 0025 §3, 0022 amendment). A cell or item with **no linked
+  issue** cannot be relocated — surface it for the human rather than dropping it.
+- This is the judgment a green gate cannot make — whether the relocated comment
+  *faithfully* captures the trimmed prose — which is exactly why this PR is
+  human-reviewed (below).
+
+### Restructure the roadmap body
+
+Reshape the roadmap to the thin layout that [`templates/roadmap.md`](templates/roadmap.md)
+now seeds (the canonical target #228 established):
+
+- **Strip the embedded operating instructions** — delete the `How to use this
+  doc` and `Self-update protocol` sections from the body. The protocol lives here
+  in this skill now; the body keeps only the read-only-mirror banner, the one-line
+  `## Burn-down`, the `## Census`, and a single consolidated `## Legend` (ADR 0024).
+- **Add the breadcrumb** as the **first line** if absent:
+  `<!-- agent-protocol: reconcile=<roadmap skill>; drain=docs/agents/idea-inbox.md -->`.
+- **Backfill over-cap cells to thin pointers** — after relocating orphan narrative
+  (above), trim each Notes/Status cell to a single ≤120-char line and Status to a
+  single Legend token (ADR 0025). The deep context now lives on the relocated issue.
+- **Recompute the `## Burn-down`** from the reshaped census Status column and stamp
+  its date, exactly as Tier-1 reconcile does — so `roadmap-guard`'s
+  Burn-down/census consistency check passes in-branch (#227).
+
+### Restructure the sibling inbox in the same PR
+
+Per ADR 0021 the inbox and roadmap are the coupled intake pair, so one migrate run
+reshapes both:
+
+- **Extract the drain protocol** to `docs/agents/idea-inbox.md` if it isn't already
+  there (the canonical single source #229 established), and **strip the embedded
+  `🤖 operating instructions` block** from the inbox body.
+- **Add the breadcrumb** as the inbox body's first line if absent (same schema).
+- **Prune `Actioned` to the rolling window** (~8 most recent; ADR 0024 / the drain
+  doc) — but only **after** relocating any orphan Actioned narrative to its linked
+  issue per the non-lossy step above. Older items drop off; their record survives
+  on the `→ #N` they link.
+- Leave the live `## Ideas` list intact — the thinning is about instructions and
+  the Actioned window, not the un-actioned ideas.
+
+### Land it — one human-reviewed PR, exempt from auto-merge
+
+Both artifacts ship in a **single PR** ([ADR 0022 amendment](https://github.com/dividedby/skills/blob/main/docs/adr/0022-roadmap-reconcile-auto-applies-on-a-green-gate.md)):
+branch off the default branch → commit the reshaped roadmap **and** inbox (plus the
+extracted drain doc) → open a PR → **do NOT enable auto-merge**. A human approves
+and merges. The green gate (hook self-tests, `check-skill-registration`, any CI)
+still runs — it verifies *structure*: bodies parse, cells are under cap, Burn-down
+is consistent — but it **cannot verify context preservation** across the lossy
+trim, which is the whole reason a human reviews. This is the **one carve-out** from
+ADR 0022's auto-merge posture; it is a one-time event and changes nothing in the
+reconcile path, which keeps auto-merging behind the green gate. The PR body should
+call out that it is a human-reviewed migration exempt from auto-merge, and list the
+issues that received relocated narrative comments so the reviewer can spot-check
+fidelity.
+
+The migrate-intake-pair route reshapes the **layout**; it does not re-route, re-wave,
+or re-scope rows (that is reconcile/Tier-2 judgment). After it merges, the next
+ordinary `/roadmap` run reconciles the now-thin pair as usual.
 
 ## Reconcile — repair drift in three tiers
 
@@ -406,8 +506,16 @@ a maintainer scaffolding a new repo inherits the bar.
 - **Reconcile auto-applies behind a green gate; never direct-pushes.** It branches,
   commits, opens a PR, and enables auto-merge — the green gate merges it. The
   default branch is never written directly ([ADR 0022](https://github.com/dividedby/skills/blob/main/docs/adr/0022-roadmap-reconcile-auto-applies-on-a-green-gate.md)).
-  (Bootstrap and migrate, which touch human-authored artifacts, still scaffold to
-  the working tree for review — see those sections.)
+  (Bootstrap and the legacy-doc migrate, which touch human-authored artifacts, still
+  scaffold to the working tree for review — see those sections.)
+- **Reconcile never touches the inbox; only the intake-pair migrate does.** Ongoing
+  reconcile is a census projection of the roadmap alone — it never edits the Idea
+  Inbox issue. The **one** route that reshapes the inbox is the one-time
+  intake-pair migrate (above), which thins Roadmap + Inbox together because ADR 0021
+  makes them the coupled pair. That migrate run is **human-reviewed and exempt from
+  auto-merge** — the single carve-out from ADR 0022's auto-merge posture (ADR 0022
+  amendment), because relocating trimmed narrative faithfully is a judgment the green
+  gate cannot make.
 - **Additive on issues; closing stays human.** Comments and dep notes only — no
   close, no body rewrite. Tier-3 is an *active doneness investigation* that may add
   a verdict comment but never closes; the AFK-ability pass is report-only and never
