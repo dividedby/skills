@@ -48,3 +48,26 @@ rule is untouched for the proposal-loop family.
   invariants **do** still hold (now the agent-powered-but-human-gated close).
 - The green gate is load-bearing — a repo wiring this must have the hook self-tests
   (and any CI) actually run on the reconcile PR, or auto-merge has nothing to gate.
+
+## Amendment (2026-06-11): the one-time layout migration is human-reviewed, not auto-merged
+
+The auto-merge posture above governs the **ongoing reconcile** path: a mechanical
+census projection of live `gh` state, landed behind the green gate with no human
+click. That posture is unchanged.
+
+It does **not** cover the **one-time migration** that thins an existing
+legacy-layout intake pair (Roadmap + Idea Inbox) into the new format (ADRs 0024 /
+0025). That migration is **lossy**: it trims prose-heavy census cells to thin
+pointers and prunes the inbox Actioned list to a rolling window, relocating any
+narrative not already on the linked issue to an issue comment first. A green gate
+(hook self-tests, `check-skill-registration`, any CI) verifies **structure and
+tests** — that the bodies parse, that cells are under cap, that the Burn-down is
+consistent — but it **cannot verify context preservation** across a lossy bulk
+edit: whether the relocated narrative actually captures what the trimmed prose held
+is a judgment a check can't make.
+
+Therefore the migration PR is **human-reviewed and exempt from auto-merge**: branch
+→ PR (**no** auto-merge enabled) → human approves → merge. This carves out a
+distinct **one-time event**; it changes nothing in the reconcile path — ongoing
+reconcile PRs continue to auto-merge behind the green gate exactly as decided above.
+The migrate route that produces this PR is specified in issue #230.
