@@ -49,6 +49,40 @@ categorically different thing from auto-applying a judgment proposal.
 The bootstrap and migrate modes, which edit human-authored artifacts, still
 **checkpoint their judgment for review** before writing (see those sections).
 
+## The body is human-facing; the protocol lives here
+
+Per [ADR 0024](https://github.com/dividedby/skills/blob/main/docs/adr/0024-inbox-roadmap-bodies-are-human-facing-instructions-live-in-skill-docs.md),
+the roadmap **body is the human-facing surface** — a read-only-mirror banner, a
+one-line `## Burn-down`, the `## Census`, and a single consolidated `## Legend`,
+nothing more. The agent **operating instructions live here, in this skill**, not
+in the body: there is no `How to use this doc` and no `Self-update protocol`
+section to load every time an agent acts. Status/Owner/Skill/Wave vocabulary is
+stated **once**, in the Legend. The closed-wave lifecycle and the self-update
+contract (an issue-referencing PR updates that issue's row in the same branch) are
+documented in this skill (Reconcile tiers + Boundaries) — not duplicated into the
+body.
+
+The body carries exactly one machine-readable affordance: a hidden
+**breadcrumb** HTML comment as the **first line** of the doc, the backstop
+discovery path for an agent that reads the raw body without entering via the
+skill. The schema is owned here (ADR 0024 defers it to this file):
+
+```
+<!-- agent-protocol: reconcile=<roadmap skill>; drain=docs/agents/idea-inbox.md -->
+```
+
+- It is **invisible** in the rendered GitHub/mirror view (an HTML comment), so it
+  costs the human nothing while giving a raw-body reader an explicit path.
+- `reconcile=<roadmap skill>` points at *this* skill (the literal `<roadmap skill>`
+  token is the documented form — an agent resolves it to this skill by name);
+  `drain=docs/agents/idea-inbox.md` points at the inbox-drain doc.
+- It is **two fields, `;`-separated**, the same shape in the Roadmap and the Idea
+  Inbox bodies. Keep it as the first line so a raw reader hits it before anything else.
+
+The mirror is **unchanged** by this layout. `roadmap-mirror.render()` stays a
+faithful render of the working-tree doc (ADR 0020) — the breadcrumb renders to
+nothing, the thinner body renders verbatim; render behavior is not touched.
+
 ## The front door — detect state, then route
 
 The first thing every run does is decide *which mode* it is in. **Resolve the
@@ -255,12 +289,16 @@ Deterministic repairs that need no judgment, applied directly:
 - A row whose blocking `Deps` have all closed → *italicize* the satisfied deps and
   flip `Blocked` → `Backlog`/`Next` per the doc's own ordering rules.
 - Recompute wave and `Next` markers per the roadmap's stated ordering.
-- **Recompute the `## Burn-down`** and stamp its date. It is fully derivable from
-  the reconciled census plus the one `gh` call already made — total / closed (pct)
-  / open, the five status-bucket counts and their issue lists, and the open-by-wave
+- **Recompute the `## Burn-down`** from the **census `Status` column in the
+  working-tree doc** (never hand-bumped) and stamp its date. It is fully derivable
+  from the reconciled census plus the one `gh` call already made — the `open` count
+  is the number of census rows whose `Status` is not `Done`, and total / closed
+  (pct), the five status-bucket counts and their issue lists, and the open-by-wave
   line are all projections of the table onto the `Owner` + `Status` + label
   vocabulary (see the roadmap Legend). So it carries no judgment: reconcile rewrites
-  it wholesale every pass rather than diffing it. The one **carried-forward** field is
+  it wholesale every pass rather than diffing it. `roadmap-guard` enforces this
+  consistency in-branch — it denies a commit whose Burn-down `open` count disagrees
+  with the census Status column (issue #227). The one **carried-forward** field is
   the **cumulative closed-count integer** — it is *bumped* by the prune, not recomputed
   from the table (pruned rows are gone), so it survives wave pruning (ADR 0023).
 
