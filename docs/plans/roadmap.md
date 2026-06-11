@@ -30,26 +30,27 @@ no other guidance is needed. Follow it top to bottom:
    blocks an issue-referencing commit otherwise): set `Status`, and update
    `Deps` on anything your change unblocks.
 
-## Burn-down (2026-06-10)
-Reconciled against live `gh` (`/roadmap`). **9 issues — 1 closed (11%), 8 open.**
+## Burn-down (2026-06-11)
+Reconciled against live `gh` (`/roadmap`). **16 issues — 1 closed (6%), 15 open.**
 **Closed (cumulative): 0.** ← integer total of all closed issues ever, including
 those whose rows have been pruned from collapsed waves; bumped, never recomputed
 from the table (pruned rows are gone), so the count survives wave pruning.
 
 | Bucket | Count | Issues |
 |---|---|---|
-| **Ready (agent)** — loop-eligible | 0 | — |
-| **Ready (human / HITL)**          | 1 | #58 |
-| **Blocked / deferred**            | 5 | #75 #98 #112 #125 #153 |
-| **Tracking** (epic / PRD parents) | 0 | — |
+| **Ready (agent)** — loop-eligible | 1 | #227 |
+| **Ready (human / HITL)**          | 2 | #58 #226 |
+| **Blocked / deferred**            | 9 | #75 #98 #112 #125 #153 #228 #229 #230 #231 |
+| **Tracking** (epic / PRD parents) | 1 | #225 |
 | **Meta** (idea-inbox / onboarding)| 2 | #91 #220 |
 
-Open by wave: W1 1 · W2 5 · Meta 2 · unscoped 0.
+Open by wave: W1 1 · W3 7 · W2 5 · Meta 2 · unscoped 0.
 
 ## Priority waves
 | Wave | Theme | Issues | Gate to enter |
 | ---- | ----- | ------ | ------------- |
 | **W1** | Now — roadmap + urgent posture | #216 #58 | none — active now |
+| **W3** | Idea Inbox/Roadmap thinning (progressive-disclosure body split) | #225 #226 #227 #228 #229 #230 #231 | none — active now; #226 (ADRs) unblocks the layout slices |
 | **W2** | Corroboration-gated skill backlog | #75 #98 #112 #125 #153 | a cross-repo +1 lands (ADR 0006); #75 enables the other four |
 | **Meta** | Standing intake / cross-cutting | #91 #220 | n/a |
 
@@ -63,6 +64,13 @@ bumped (see Self-update protocol + ADR 0023).
 | - | ----- | ---- | ------ | ----- | -------- | ---- | ----- |
 | 216 | Dogfood the roadmap pattern — bootstrap roadmap into skills itself (ADR 0023) | W1 | **Done** | agent | `/roadmap` | — | bootstrapped & merged (#221) |
 | 58 | Decide CI auth/billing posture before the 2026-06-15 Agent SDK credit change (subscription token vs API key) | W1 | **Next** | human | — | — | deadline 2026-06-15 (urgent human decision) |
+| 225 | PRD: Thin the Idea Inbox + Roadmap (progressive-disclosure body split) | W3 | **Tracking** | mixed | `/to-prd` | — | epic/PRD parent for the thinning slices #226–#231 |
+| 226 | ADRs: migration auto-merge carve-out + progressive-disclosure body split + thin-pointer census cell | W3 | **Next** | mixed | `grill-with-docs` | — | PR #232 open — human review (HITL), not auto-merged |
+| 227 | Guard: enforce census cell-cap + Burn-down/census consistency | W3 | **Next** | agent | `/tdd` | — | ready-for-agent; parallel — gates only the pilot #231 |
+| 228 | Roadmap canonical layout: thin human body + breadcrumb + Burn-down recompute | W3 | **Blocked** | agent | `write-a-skill` | #226 | needs the ADRs (#226) landed |
+| 229 | Inbox canonical layout: single-source drain doc + thin template + breadcrumb | W3 | **Blocked** | agent | `write-a-skill` | #226 | needs the ADRs (#226) landed |
+| 230 | /roadmap migrate route: restructure the intake pair in one human-reviewed PR | W3 | **Blocked** | agent | `write-a-skill` | #226 #228 #229 | migrate route; consumer rollout out of scope |
+| 231 | Pilot: migrate the skills repo's own Idea Inbox #91 + Roadmap #220 | W3 | **Blocked** | mixed | `/roadmap` | #227 #228 #229 #230 | HITL pilot — human-reviewed migration PR; the end-to-end tracer |
 | 75 | Demonstrate organic cross-repo skill-request +1 across two distinct Consumers | W2 | **Parked** | human | — | — | awaiting-corroboration; enabler for the W2 cluster |
 | 98 | Skill request: playbook-driven migration | W2 | **Parked** | loop | `write-a-skill` | #75 | awaiting-corroboration |
 | 112 | Skill request: audit a codebase for agent legibility | W2 | **Parked** | loop | `write-a-skill` | #75 | awaiting-corroboration |
