@@ -43,7 +43,7 @@ in `~/.claude/skills/`:
 `apply-agent-research`, `autonomous-loop`, `caveman`, `context-firewall`,
 `diagnose`, `find-skills`, `frontend-design`, `grill-me`,
 `grill-with-docs`, `handoff`, `improve-codebase-architecture`,
-`playwright-cli`, `project-claude-config`, `prototype`, `roadmap`,
+`playwright-cli`, `project-claude-config`, `prototype`,
 `setup-matt-pocock-skills`, `software-design`, `staleness-audit`, `tdd`,
 `to-issues`, `to-prd`, `triage`, `write-a-skill`, `writing-beats`,
 `writing-fragments`, `writing-shape`, `zoom-out`.

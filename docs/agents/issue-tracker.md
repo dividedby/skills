@@ -13,6 +13,15 @@ Issues and PRDs for this repo live as GitHub issues. Use the `gh` CLI for all op
 
 Infer the repo from `git remote -v` — `gh` does this automatically when run inside a clone.
 
+## Label conventions
+
+When filing or triaging a new issue, apply:
+- A **state** label (`needs-triage` if unclear, or `ready-for-agent`/`ready-for-human` if the scope is known)
+- A **category** label (`bug`, `enhancement`, `chore`, or `epic`)
+- A **size** label (`size:S`, `size:M`, `size:L`, or `size:XL`) as a best-effort estimate
+
+See `docs/agents/labels.md` for the full label reference.
+
 ## When a skill says "publish to the issue tracker"
 
 Create a GitHub issue.

@@ -50,19 +50,9 @@ picks only the pipeline steps a given idea needs (`/grill-with-docs`, `/to-prd`,
 `✅ Actioned` section with `→ #num`. **Structured, contract-bearing**
 filings (skill-request, skill-promotion, a fully-scoped bug) **bypass the Inbox**
 and file labeled issues directly. The unifying invariant is that every filing
-registers in the **Roadmap** — not that every filing funnels through the Inbox.
+becomes a tracked GitHub issue — not that every filing funnels through the Inbox.
 _Avoid_: backlog, triage queue, scratchpad, inbox issue.
 
-**Roadmap**:
-The working-tree markdown doc (default `docs/plans/roadmap.md`) that is a repo's
-single **execution source of record** — one census row per issue (status, wave,
-owner, skill routing, deps). Authoritative by virtue of its **file-based
-integrity** (PreToolUse commit guard + SessionStart drift nudge + `/roadmap`
-reconcile), which a GitHub issue cannot host. A durable GitHub issue is at most a
-read-only **Roadmap mirror** of it — a machine-owned issue whose body is
-**CI-rendered** from the doc on push (commit-if-changed), never the source of
-record and never written by the skill.
-_Avoid_: board, plan, tracker, backlog doc, project board.
 
 **Autonomous loop** (a.k.a. AFK loop):
 An unattended agent run that repeats a work cycle until a stop condition,
