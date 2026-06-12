@@ -10,11 +10,10 @@ this doc plus the breadcrumb are the discovery path.
 
 ## Discovery — the breadcrumb
 
-The Inbox body's first line is a hidden HTML-comment breadcrumb, the same shape as
-the Roadmap's (schema owned by `skills/engineering/roadmap/SKILL.md`):
+The Inbox body's first line is a hidden HTML-comment breadcrumb:
 
 ```
-<!-- agent-protocol: reconcile=/roadmap; drain=docs/agents/idea-inbox.md -->
+<!-- agent-protocol: drain=docs/agents/idea-inbox.md -->
 ```
 
 `drain=docs/agents/idea-inbox.md` points an agent that reads the raw body — without

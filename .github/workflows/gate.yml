@@ -5,9 +5,7 @@ name: gate
 # run on doc-only commits — which makes them unusable as *required* status checks
 # (a required check that never runs deadlocks the PR). This job has no path
 # filter, runs every stdlib self-test in the repo in one sub-second pass, and is
-# the single required check branch protection gates merges on (ADR 0022's green
-# gate). It also picks up the roadmap `templates/*.test.py` self-tests, which no
-# other workflow runs.
+# the single required check branch protection gates merges on.
 
 on:
   pull_request:
