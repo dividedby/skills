@@ -39,7 +39,7 @@ Skills in this repo prescribe at the principle level; code examples are illustra
 ### Intake convention
 
 When I say **"file an idea"** or **"file an issue"** (unqualified), append an
-**enriched row** to this repo's [**Idea Inbox**](./CONTEXT.md) issue (label
+**enriched row** to this repo's [**Idea Inbox**](https://github.com/dividedby/skills/issues/91) issue (label
 `idea-inbox`, one per repo): the raw idea **plus the ambient context/links
 available right now** — the source file/issue/PR that prompted it and a sentence
 of why — as an unchecked item at the TOP of `## Ideas`. Do not grill or scope it
