@@ -3,10 +3,9 @@
 The canonical, single source for how an agent operates the repo's **Idea Inbox**
 issue (label `idea-inbox`, one per repo). The Inbox body is **human-facing** — the
 live `## Ideas` list plus a collapsed `✅ Actioned` window — and carries no
-operating instructions; those live here, discovered via the body's breadcrumb
-([ADR 0024](../adr/0024-inbox-roadmap-bodies-are-human-facing-instructions-live-in-skill-docs.md)).
-The Inbox stays a **convention**, not a skill or a hook ([ADR 0021](../adr/0021-idea-inbox-is-the-unstructured-intake-everything-registers-in-the-roadmap.md)):
-this doc plus the breadcrumb are the discovery path.
+operating instructions; those live here, discovered via the body's breadcrumb.
+The Inbox stays a **convention**, not a skill or a hook: this doc plus the
+breadcrumb are the discovery path.
 
 ## Discovery — the breadcrumb
 
