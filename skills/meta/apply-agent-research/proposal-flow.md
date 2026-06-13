@@ -105,8 +105,9 @@ marker and a Sources line, then:
 `file` sanitizes `title + body`, then runs `gh issue create` only on ALLOW,
 printing the new issue URL. For a cross-repo +1 on an existing demand/supply
 issue, `cli.py comment --issue <n> --body-file <path> --repo <owner/name>` is the
-same guarded shape over `gh issue comment`. Route each candidate to its own
-channel's destination and label (cross-repo candidates use the cross-repo token
-and `--repo`). Ensure each label exists first (the workflow does this
-idempotently). File **only** what the gate returned, then stop — no second pass,
-no commits.
+same guarded shape over `gh issue comment`; the sanitizer covers the body only —
+the title is caller-owned and unguarded, so the body must carry no title-scoped
+private content. Route each candidate to its own channel's destination and label
+(cross-repo candidates use the cross-repo token and `--repo`). Ensure each label
+exists first (the workflow does this idempotently). File **only** what the gate
+returned, then stop — no second pass, no commits.

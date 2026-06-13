@@ -94,6 +94,8 @@ def _file(args, stdin, out):
         cmd += ["--label", label]
     if args.repo:
         cmd += ["--repo", args.repo]
+    # stderr intentionally uncaptured: gh writes diagnostics to stderr directly,
+    # which a CI log captures without any plumbing on our side.
     return subprocess.run(cmd).returncode
 
 
@@ -105,6 +107,8 @@ def _comment(args, stdin, out):
     cmd = ["gh", "issue", "comment", args.issue, "--body-file", args.body_file]
     if args.repo:
         cmd += ["--repo", args.repo]
+    # stderr intentionally uncaptured: gh writes diagnostics to stderr directly,
+    # which a CI log captures without any plumbing on our side.
     return subprocess.run(cmd).returncode
 
 
