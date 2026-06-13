@@ -36,8 +36,22 @@ CASES = [
     ("---\nname: demo\ndescription: unterminated\n", True, True, BLOCK),  # never closed
 ]
 
+# (skill_md_body, registered_in_plugin, linked_in_readme, should_be_blocked, warning_substring_or_none)
+# Cases that also verify warning output (or its absence).
+WARNING_CASES = [
+    # known key -> no warning
+    (GOOD_FRONTMATTER, True, True, ALLOW, None),
+    # known optional key -> no warning
+    ("---\nname: demo\ndescription: A demo skill.\ndisable-model-invocation: true\n---\n",
+     True, True, ALLOW, None),
+    # unknown key -> warning emitted, still not blocked
+    ("---\nname: demo\ndescription: A demo skill.\ntypo-key: true\n---\n",
+     True, True, ALLOW, "unrecognised frontmatter key `typo-key`"),
+]
 
-def run(body: str, registered: bool, linked: bool) -> int:
+
+def run(body: str, registered: bool, linked: bool):
+    """Return (returncode, stderr_text)."""
     with tempfile.TemporaryDirectory() as d:
         root = Path(d)
         skill_dir = root / "skills" / "bucket" / "demo"
@@ -58,23 +72,40 @@ def run(body: str, registered: bool, linked: bool) -> int:
             [sys.executable, str(HOOK)],
             input="{}", capture_output=True, text=True, env=env,
         )
-        return proc.returncode
+        return proc.returncode, proc.stderr
 
 
 def main() -> int:
     failures = []
     for body, registered, linked, should_block in CASES:
-        code = run(body, registered, linked)
+        code, _ = run(body, registered, linked)
         blocked = code == 2
         if blocked != should_block:
             want = "BLOCK" if should_block else "ALLOW"
             got = "BLOCK" if blocked else f"ALLOW(exit {code})"
             failures.append(f"  body={body!r} reg={registered} link={linked}: want {want}, got {got}")
 
+    for body, registered, linked, should_block, warn_substr in WARNING_CASES:
+        code, stderr = run(body, registered, linked)
+        blocked = code == 2
+        if blocked != should_block:
+            want = "BLOCK" if should_block else "ALLOW"
+            got = "BLOCK" if blocked else f"ALLOW(exit {code})"
+            failures.append(f"  [warning-case] body={body!r}: want {want}, got {got}")
+        if warn_substr is not None and warn_substr not in stderr:
+            failures.append(
+                f"  [warning-case] body={body!r}: expected warning containing {warn_substr!r} but stderr was {stderr!r}"
+            )
+        if warn_substr is None and "WARNING" in stderr:
+            failures.append(
+                f"  [warning-case] body={body!r}: expected no warning but got stderr {stderr!r}"
+            )
+
+    total = len(CASES) + len(WARNING_CASES)
     if failures:
         print("check-skill-registration self-test FAILED:\n" + "\n".join(failures))
         return 1
-    print(f"check-skill-registration self-test passed ({len(CASES)} cases)")
+    print(f"check-skill-registration self-test passed ({total} cases)")
     return 0
 
 
