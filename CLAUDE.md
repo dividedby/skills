@@ -19,7 +19,7 @@ Issues live in GitHub Issues via the `gh` CLI. See `docs/agents/issue-tracker.md
 
 ### Triage labels
 
-Default vocabulary: `needs-triage`, `ready-for-agent`, `ready-for-human`, `blocked`, `wontfix`. See `docs/agents/triage-labels.md`.
+Default vocabulary: `needs-triage`, `ready-for-agent`, `ready-for-human`, `blocked`, `wontfix`. See `docs/agents/labels.md`.
 
 ### Domain docs
 

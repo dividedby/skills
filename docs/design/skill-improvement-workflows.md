@@ -117,7 +117,7 @@ workflow already uses (`source:architecture-review`):
 
 Create the label on first use, idempotently, the way the arch-review workflow
 does (`gh label create … || true`). These are **provenance** labels, distinct
-from the triage roles in `docs/agents/triage-labels.md` — the triage labels
+from the triage roles in `docs/agents/labels.md` — the triage labels
 still gate the human merge. (This resolves ADR 0003's placeholder "e.g.
 `self-improvement`" to the `source:`-prefixed form for consistency.)
 

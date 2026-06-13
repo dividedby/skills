@@ -47,7 +47,7 @@ end-to-end, adapting to what *this* idea needs:
 3. **Labels** — when filing issues, apply labels from `docs/agents/labels.md`: state
    (`needs-triage` to start), category (`bug` / `enhancement` / `chore` / `epic`),
    and a size estimate (`size:S` / `size:M` / `size:L` / `size:XL`). The compact
-   vocabulary reference is `docs/agents/triage-labels.md`.
+   vocabulary reference is `docs/agents/labels.md`.
 
 4. **Aim for a strong agent brief** — strive to emit a `ready-for-agent` issue that
    clears the strong-agent-brief bar (clear module + acceptance criteria + TDD
