@@ -153,6 +153,23 @@ review, which disciplines), not the env-expressible wiring that lets
 ([ADR 0016](./docs/adr/0016-arch-review-prompt-is-skeleton-plus-local-repo-context-include.md)).
 _Avoid_: prompt fragment, local prompt, scope file.
 
+**Lens**:
+One rubric applied during an arch-review pass. The loop runs three, in order:
+simplification (local — asks "does this need to exist?" before anything else),
+depth (fetched fresh from mattpocock/skills — deepens what survives), and
+legibility (local — improves physical agent navigability of what remains). A
+finding belongs to exactly one lens; precedence resolves contradictions.
+_Avoid_: check, dimension, mode.
+
+**Legibility**:
+How easily an agent can locate, grep, and safely change code by physical structure
+— file size, naming conventions, greppability of key symbols, and CLI-surface
+visibility. Distinct from **depth** (module leverage: how much behavior a module's
+interface hides) and **simplification** (whether the code needs to exist at all).
+A legibility proposal addresses code that may be minimal and well-structured but
+is physically hard for an agent to navigate.
+_Avoid_: navigability, readability.
+
 **Workflow envelope** (a.k.a. stub):
 The thin, committed `.github/workflows/*.yml` that GitHub Actions must read from
 the default branch: `on:` cron, `permissions:`, secret/token names, tool
