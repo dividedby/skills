@@ -5,7 +5,7 @@ My personal Claude Code skills.
 ## Install
 
 ```bash
-npx skills@latest add dividedby/skills
+pnpm dlx skills@latest add dividedby/skills
 ```
 
 Pick the skills you want when prompted. Re-run to update.
