@@ -1,0 +1,34 @@
+name: ADR index
+
+# Keep docs/adr/INDEX.md current: regenerate on any change under docs/adr/
+# and fail if the committed index is stale. Stdlib-only, sub-second.
+# Path-filtered so unrelated commits don't trigger it.
+
+on:
+  push:
+    paths:
+      - "docs/adr/**"
+      - "tools/generate_adr_index.py"
+  pull_request:
+    paths:
+      - "docs/adr/**"
+      - "tools/generate_adr_index.py"
+  workflow_dispatch:
+
+jobs:
+  adr-index:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: Check ADR index is up to date
+        run: |
+          python3 tools/generate_adr_index.py
+          git diff --exit-code docs/adr/INDEX.md || {
+            echo "docs/adr/INDEX.md is stale — run: python3 tools/generate_adr_index.py and commit the result"
+            exit 1
+          }
