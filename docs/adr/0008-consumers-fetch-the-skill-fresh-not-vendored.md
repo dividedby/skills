@@ -3,7 +3,7 @@
 A [Consumer](../../CONTEXT.md) with no plugin system (e.g.
 `dividedby/agent-research`) obtains
 [`apply-agent-research`](../../skills/meta/apply-agent-research/SKILL.md) by
-**fetching it fresh from `dividedby/skills` each run** (clone-or-`npx
+**fetching it fresh from `dividedby/skills` each run** (clone-or-`pnpm dlx
 skills@latest add` into `~/.claude/skills/`), matching the existing
 `improve-codebase-architecture.yml` pattern that clones `mattpocock/skills`
 fresh each run. It does **not** commit a frozen vendored copy into its own tree.
