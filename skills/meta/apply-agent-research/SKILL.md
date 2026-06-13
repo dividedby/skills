@@ -134,6 +134,13 @@ same matcher, pointed at what the host *already built* instead of what it
 
 ## Quality bar
 
+Before any candidate reaches the proposal gate, apply the five-question
+**adversarial pre-gate filter** defined in
+[proposal-flow.md](proposal-flow.md#the-proposal-gate--run-once-over-every-channels-candidates):
+catalog overlap, restatement dilution, frequency fit, strength of KB evidence,
+and before/after concreteness. A candidate that cannot answer all five is
+dropped before the gate sees it.
+
 - **Recommendations, not a menu.** Each filed issue makes one call. A forced
   finding is worse than none — if nothing clears the bar, skip and say why. The
   five-per-run budget is a ceiling, never a quota to fill.
