@@ -28,6 +28,90 @@ skeleton prompt itself: it is fetched fresh from the upstream `dividedby/skills`
 harness, and this loop has no channel to file a proposal against that repo — such
 an edit would land un-actionable in this repo's tracker.
 
+## Three lenses, in precedence order
+
+Every finding belongs to exactly one lens. Apply them in this order; precedence
+resolves contradictions.
+
+### Simplification lens (first — ask "does this need to exist?")
+
+Before deepening or improving legibility, ask whether the code should exist at all.
+Hunt over-engineering to delete or simplify. Five principle-level categories:
+
+- **delete** — dead code, unused flexibility, speculative features with no callers.
+  If nothing actively uses it, removing it is the safest refactor.
+- **stdlib** — hand-rolled implementations of things the language's standard
+  library already ships. The correct fix is deletion, not improvement.
+- **native** — dependencies or custom code doing what the platform or runtime
+  already provides natively. Same prescription: remove the indirection.
+- **yagni** — an abstraction with exactly one implementation, a config knob nobody
+  sets, a protocol layer with a single caller. Premature generality that earned no
+  second use case.
+- **shrink** — the same logic, materially fewer lines. Not style nits; a
+  functionally equivalent expression the reader can hold in one pass.
+
+**Never propose deepening a module that simplification would delete.** A module
+that fails simplification belongs in a simplification proposal, not a depth one.
+
+### Depth lens (second — deepen what survives)
+
+**The depth concepts — deep/shallow modules, seams, the deletion test, and the
+rubric for applying them — are defined in the _Depth rubric_ block appended to
+this prompt below** (fetched fresh from `mattpocock/skills`). Read it before
+judging depth; it is the binding reference. This skeleton does not restate those
+concepts; it only explains how to apply the rubric here.
+
+Applying the depth rubric in this unattended propose flow:
+
+- Apply it only to code that survives simplification — do not propose deepening
+  something a simplification pass would remove.
+- Map modules and their interfaces first (Task step 2) before scoring depth. A
+  judgment made without mapping the system tends to flag surface symptoms rather
+  than the structural move that fixes them.
+- The research and reality-gate requirements (Task step 3) apply equally here —
+  cite primary sources; do not fabricate quotes.
+- If a file is both shallow and oversized, file it as a **depth** finding and fold
+  the legibility angle in as supporting context (not a second proposal).
+
+### Legibility lens (third — physical agent legibility)
+
+Legibility concerns how easily an agent can locate, grep, and safely change code
+by physical structure — independent of whether the code is deep or minimal. Four
+dimensions:
+
+- **oversized files** — a changeable unit that doesn't fit a focused agent context.
+  When a file is so large that a targeted edit requires reading the entire thing to
+  avoid breaking an unrelated section, splitting by cohesion is a legibility gain.
+- **non-conventional names** — the statistically-obvious name for a module,
+  function, or variable would let an agent locate code without searching. A name
+  that diverges from the ecosystem's strong convention forces a discovery step that
+  a rename would eliminate.
+- **weak greppability** — key symbols or path references a literal `grep` cannot
+  locate (e.g., dynamic construction, opaque aliases, string interpolation of
+  import paths). A symbol that can't be found by searching its own name is a
+  legibility hazard.
+- **gated CLI surfacing** — applies **only** where the repo already exposes a CLI.
+  If a capability is invoked internally but not surfaced as a flag, an agent
+  exploring the repo's public interface will miss it. **Skip this dimension
+  entirely when the repo has no CLI.**
+
+A legibility proposal is distinct from a simplification or depth proposal: the
+code may be minimal and well-structured but still physically hard to navigate.
+
+### Lens precedence and tagging
+
+- **One finding, one lens.** Assign each finding to the lens whose core concern
+  drives the proposal. Do not file the same finding under two lenses.
+- Precedence: a finding that qualifies as simplification goes there first, even if
+  it also has a depth or legibility angle. A finding that survives simplification
+  and qualifies as depth goes there before legibility.
+- If a file is both shallow and oversized: **depth** wins; note the size in the
+  proposal body as supporting context.
+- **Tag every proposal body** with the HTML-comment marker
+  `<!-- lens: simplification|depth|legibility -->` (exactly one of the three
+  values), alongside the existing `<!-- capability: … -->` and
+  `<!-- dedup-key: … -->` markers.
+
 ## Task
 
 1. List prior proposals labelled `source:architecture-review` (both open and
@@ -46,14 +130,15 @@ an edit would land un-actionable in this repo's tracker.
 2. **Map before you judge.** Go up a level of abstraction first: build a
    quick map of the relevant modules and how they relate, in the repo's own
    vocabulary (read `CONTEXT.md` and any ADRs under `docs/adr/` first if
-   they exist; treat ADRs as binding). Then invoke the
-   `/improve-codebase-architecture` skill to find fresh deepening
-   opportunities. You are reading the code not just to understand it but to
-   spot the moves that make a real improvement land cleanly.
+   they exist; treat ADRs as binding). Then apply the three lenses in order
+   — simplification first, depth second, legibility last — to find
+   candidates. Precedence is a filter: only code that survives simplification
+   is eligible for depth; only code that survives both is eligible for
+   legibility.
 
 3. **Research before proposing.** Before settling on a candidate, use
    `WebSearch` / `WebFetch` to check current thinking on the area you're
-   proposing to deepen — module/seam boundaries, testing strategy, and the
+   proposing to improve — module/seam boundaries, testing strategy, and the
    patterns relevant to that area. Cite 1–3 sources in the issue body so a
    future reader can see the basis for the proposal. Prefer primary
    sources (specs, framework docs, well-known authors) over listicles.
@@ -119,6 +204,9 @@ an edit would land un-actionable in this repo's tracker.
      outstanding — in which case state plainly that confidence is low and cap
      the proposal's confidence accordingly. Never present an unverified claim
      with the same weight as a verified one.
+   - **Lens marker.** Include `<!-- lens: simplification|depth|legibility -->`
+     (exactly one value) in the body alongside the `<!-- capability: … -->` and
+     `<!-- dedup-key: … -->` markers.
    - **Sources section** listing the research links you used.
 
 6. If every reasonable candidate is already covered by a prior

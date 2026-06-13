@@ -21,33 +21,53 @@ first**; this doc is only the deltas.
 - **Input:** none to fetch — the input *is* the checked-out repo. The skill reads
   `CONTEXT.md` + `docs/adr/` for domain language; without them it still runs, just
   blind to the repo's vocabulary.
-- **Split prompt: fetched-fresh skeleton + local Repo-context include**
-  ([ADR 0016](../adr/0016-arch-review-prompt-is-skeleton-plus-local-repo-context-include.md)).
+- **Split prompt: fetched-fresh skeleton + fetched depth rubric + local Repo-context include**
+  ([ADR 0016](../adr/0016-arch-review-prompt-is-skeleton-plus-local-repo-context-include.md),
+  [ADR 0020](../adr/0020-arch-review-fetches-depth-rubric-fresh-and-adds-simplification-legibility-lenses.md)).
   Unlike `apply-agent-research`'s single env-parametrized prompt, this loop's
   per-repo variation *is content* — what to review, which disciplines bind — which
-  has no env representation. So the prompt is two parts joined by the envelope:
+  has no env representation. So the prompt is three parts joined by the envelope:
   - The **skeleton** (`harness/prompts/improve-codebase-architecture.md`, fetched
     fresh) carries everything shared: the unattended/publish-seam framing, the
-    proposal discipline (Task steps 1–6), and the lockstep `<output>`/`<body>`
-    schema. It is **scope-free** — its `## Scope` section forward-references the
-    appended Repo-context block.
+    three-lens structure (simplification, depth, legibility), the proposal
+    discipline (Task steps 1–6), and the lockstep `<output>`/`<body>` schema. It
+    is **scope-free** and does not model the depth concepts — it forward-references
+    the depth rubric appended below.
+  - The **depth rubric** (`mattpocock/skills` → `LANGUAGE.md` + `DEEPENING.md`,
+    fetched fresh from `main` at run time) carries the depth concepts: deep/shallow
+    modules, seams, and the deletion test. The workflow fetches these files in a
+    dedicated step before invoking the agent and **hard-fails the run if either
+    fetch fails** — an unattended run with a missing rubric would produce unsound
+    depth proposals. The rubric floats at `main` (no SHA pin): consumers
+    automatically track mattpocock's latest depth thinking, and an upstream rename
+    or deletion surfaces immediately as a hard-fail rather than silently drifting.
+    **Supply-chain implication:** a third-party maintainer's changes enter this
+    loop's unattended runs unreviewed each week. This is a deliberate choice made
+    by the `dividedby/skills` maintainer; consumers who want review-before-run
+    should pin a SHA in the envelope.
   - The **include** (`.github/arch-review-context.md`, vendored per repo) carries
     the irreducibly repo-specific substance: primary/fallback/out-of-scope review
     scope and the binding disciplines/ADRs (plus any repo-specific emit hints). It
     names its own path so the agent knows it is editable.
-  - The **envelope concatenates** them into the system prompt:
-    `--append-system-prompt "$(cat harness/prompts/improve-codebase-architecture.md; printf '\n\n'; cat .github/arch-review-context.md)"`.
-    The agent never consumes the include's path itself — the envelope does the
-    concatenation — which is why the path is a fixed convention, **not** an env var.
-  - **A missing include hard-fails the run.** The envelope `test -f`s
-    `.github/arch-review-context.md` before invoking the agent, exactly like the
-    existing `test -f …/SKILL.md` gate. Scope is load-bearing: a scope-free
-    skeleton reviews blindly, so adopting this loop *requires* shipping the
-    include. (This removes the harness's graceful degradation when a repo lacks
+  - The **envelope concatenates** all three into the system prompt (skeleton →
+    labeled depth rubric → repo-context include). The agent never consumes these
+    paths directly — the envelope does the concatenation.
+  - **A missing include or failed rubric fetch hard-fails the run.** The envelope
+    `test -f`s `.github/arch-review-context.md` before invoking the agent, exactly
+    like the existing `test -f …/SKILL.md` gate. Scope is load-bearing: a
+    scope-free skeleton reviews blindly, so adopting this loop *requires* shipping
+    the include. (This removes the harness's graceful degradation when a repo lacks
     `CONTEXT.md` — an intentional trade.)
   - **Self-edit affordance is local-only:** the agent may propose edits to its own
-    in-repo files including the include, but **not** the upstream-owned skeleton
-    (this loop has no channel to file against `dividedby/skills`).
+    in-repo files including the include, but **not** the upstream-owned skeleton or
+    the fetched depth rubric (this loop has no channel to file against
+    `dividedby/skills` or `mattpocock/skills`).
+  - **Three lenses ship to all consumers via the shared skeleton.** The
+    simplification lens (delete/stdlib/native/yagni/shrink) and the legibility lens
+    (oversized files, non-conventional names, greppability, CLI surfacing) are
+    modeled in the skeleton at principle level; the depth lens is forward-referenced
+    to the fetched rubric. Every consumer of this skeleton gets all three lenses
+    without any local changes.
 - **No cross-repo writes**, so **no `SKILLS_TRACKER_TOKEN`** — only
   `CLAUDE_CODE_OAUTH_TOKEN`. `permissions: contents: read, issues: write` and
   `GITHUB_TOKEN` suffice.

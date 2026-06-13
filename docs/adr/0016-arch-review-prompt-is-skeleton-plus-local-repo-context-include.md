@@ -1,5 +1,12 @@
 # The improve-codebase-architecture prompt is a fetched-fresh skeleton plus a local repo-context include
 
+> **Amended by [ADR 0020](0020-arch-review-fetches-depth-rubric-fresh-and-adds-simplification-legibility-lenses.md).**
+> The workflow now fetches the depth rubric (LANGUAGE.md + DEEPENING.md) fresh from
+> `mattpocock/skills@main` at run time and concatenates it between the skeleton and the
+> local include. The skeleton no longer models depth concepts in prose; instead it
+> forward-references the appended rubric. Two new local lenses (simplification,
+> legibility) are added to the skeleton.
+
 [ADR 0014](0014-harness-is-fetched-fresh-only-the-workflow-envelope-is-vendored.md)
 put the proposal-loop **prompts** on the fetch-fresh rail so one upstream fix
 reaches every loop. [ADR 0015](0015-apply-agent-research-prompt-is-consumer-portable-via-env.md)
