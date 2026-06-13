@@ -3,9 +3,10 @@ name: flow-pr
 description: >
   Flow-aware end-to-end PR helper — cuts a feature branch from the repo's
   default branch, commits → pushes → opens a PR with the default branch as
-  base, gates on CI, then merges to the default branch. When the default
-  branch is not main, promotion (default→main) is a separate always-confirmed
-  mode. Invokable as a slash command or by the model on a done+green signal.
+  base, reviews and fixes the diff (via `/review`), gates on CI, then merges
+  to the default branch. When the default branch is not main, promotion
+  (default→main) is a separate always-confirmed mode. Invokable as a slash
+  command or by the model on a done+green signal.
 ---
 
 # Flow PR
@@ -17,7 +18,7 @@ to the default branch. It is the policy layer on top of existing mechanics.
 What it defers:
 
 - **Commit message policy** → defer to `/commit`.
-- **Code review** → defer to `/review`.
+- **Code-review logic** → defer to `/review`. flow-pr *runs* it as the step-4 review gate (see Feature mode), but does not implement review itself.
 - **Issue filing** → defer to the repo's intake convention.
 - **Merge mechanics detail** → `~/.claude/branching-flow.md` is the
   authoritative source; this skill references it, never duplicates it.
@@ -74,12 +75,21 @@ are satisfied.
    If a PR for the branch already exists, update it instead of opening a new
    one (idempotent — check with `gh pr list --head <branch>` first).
 
-4. **Gate on CI.** Poll `gh pr checks` until all checks pass. Do not merge
+4. **Review gate (default on).** Review the PR diff and apply fixes, deferring
+   the review itself to `/review`. Loop review → fix → re-review until `/review`
+   reports no actionable findings or a **2-pass cap** is hit. If actionable
+   findings remain at the cap, **halt and surface them — do not merge.** Skip
+   only on explicit caller opt-out (`/flow-pr skip-review`, or a stated "skip
+   review"); flow-pr does **not** auto-classify the diff to decide this — size
+   and file-type are poor proxies for review need (a small code change can be
+   high-risk; in a docs-centric repo, prose itself can be wrong).
+
+5. **Gate on CI.** Poll `gh pr checks` until all checks pass. Do not merge
    with red or pending CI.
 
-5. **Merge.** `gh pr merge --merge` (merge-commit only; see Constraints).
+6. **Merge.** `gh pr merge --merge` (merge-commit only; see Constraints).
 
-6. **Post-merge sync.** After a successful merge:
+7. **Post-merge sync.** After a successful merge:
    - `git checkout <default-branch> && git pull` — bring local default branch
      up to date with the merge commit.
    - `git branch -d <feature-branch>` — delete the local feature branch.
