@@ -175,10 +175,10 @@ Prefer the CI sequence: if CI runs `npm ci && npm run lint && npm test`, that is
 the verify command — a bump is only "green" if it passes what CI would.
 
 **If no verify command is discoverable, auto-apply is disabled** — there is no way
-to prove a bump is safe. Every finding downgrades to **`unverified: no verify
-command`** and the report is recommend-only. `apply_policy.decide` enforces this:
-with `verify_available=False` it returns that reason for *every* finding,
-regardless of gap.
+to prove a bump is safe. The report is recommend-only. `apply_policy.decide`
+enforces this: findings already decided by `low_confidence` or `is_floor` keep
+their own reason; all remaining findings downgrade to **`unverified: no verify
+command`** (`verify_available=False` applies only after those two checks).
 
 **With a verify command, apply one bump at a time.** For each finding, in urgency
 order, ask `apply_policy.decide`; act only on `"apply"`. Then, per bump:
