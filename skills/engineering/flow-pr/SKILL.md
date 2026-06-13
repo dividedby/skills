@@ -78,7 +78,13 @@ are satisfied.
    with red or pending CI.
 
 5. **Merge.** `gh pr merge --merge` (merge-commit only; see Constraints).
-   GitHub auto-deletes the branch if the repo has auto-delete enabled.
+
+6. **Post-merge sync.** After a successful merge:
+   - `git checkout <default-branch> && git pull` — bring local default branch
+     up to date with the merge commit.
+   - `git branch -d <feature-branch>` — delete the local feature branch.
+     (The remote branch is auto-deleted by GitHub's auto-delete-on-merge
+     setting; the local branch is not.)
 
 ---
 
