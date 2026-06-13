@@ -17,7 +17,7 @@ to the default branch. It is the policy layer on top of existing mechanics.
 What it defers:
 
 - **Commit message policy** → defer to `/commit`.
-- **Code review** → defer to `/pr-review`.
+- **Code review** → defer to `/review`.
 - **Issue filing** → defer to the repo's intake convention.
 - **Merge mechanics detail** → `~/.claude/branching-flow.md` is the
   authoritative source; this skill references it, never duplicates it.
