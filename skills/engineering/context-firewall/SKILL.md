@@ -71,8 +71,11 @@ process), *not* a `claude -p`: you're already in a session, so use it. The
 `claude -p` firewall-per-item is the **headless-process** case, where there is no
 session to dispatch within (CI, cron, runners) — there a fresh process per run
 gives the boundary for free; a single interactive session or a monolithic run
-does not, so the in-session sub-agent supplies it. See
-[FIREWALL-PATTERNS.md](FIREWALL-PATTERNS.md).
+does not, so the in-session sub-agent supplies it. A gearbox builder/architect
+delegation already *is* a do-and-report firewall — under gearbox the per-item
+boundary comes from the router, and this skill's remaining job is the
+orchestrator-side half: the budget checkpoint and flush/compact in steps 3–4.
+See [FIREWALL-PATTERNS.md](FIREWALL-PATTERNS.md).
 
 ### 3. Budget checkpoint between items
 
