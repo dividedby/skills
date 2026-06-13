@@ -17,6 +17,7 @@ class TestParseVersion(unittest.TestCase):
         ("~18.17.0", (18, 17, 0)),       # tilde
         (" 18.17.1 ", (18, 17, 1)),      # whitespace
         ("20.x", (20, 0, 0)),            # x-range -> wildcard reads as 0
+        ("18.17.1-rc.1", (18, 17, 1)),   # pre-release suffix stripped
         ("lts/iron", None),              # codename, unparseable
         ("", None),
         ("not-a-version", None),
