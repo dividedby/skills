@@ -5,6 +5,7 @@ import json, os, sys
 from pathlib import Path
 
 REQUIRED_FRONTMATTER = ("name", "description")
+ALLOWED_FRONTMATTER_KEYS = {"name", "description", "disable-model-invocation"}
 
 
 def frontmatter_fields(text):
@@ -64,6 +65,10 @@ for s in skill_dirs:
         for key in REQUIRED_FRONTMATTER:
             if not fields.get(key):
                 problems.append(f"  - {s}/SKILL.md frontmatter is missing or has an empty `{key}:` field")
+        unknown = sorted(k for k in fields if k not in ALLOWED_FRONTMATTER_KEYS)
+        for key in unknown:
+            print(f"skill-registration WARNING: {s}/SKILL.md has unrecognised frontmatter key `{key}`",
+                  file=sys.stderr)
 
 # Reverse: registered entries with no SKILL.md on disk
 on_disk = set(skill_dirs)
