@@ -1,0 +1,206 @@
+#!/usr/bin/env python3
+"""Generate docs/adr/INDEX.md from the ADR files in docs/adr/.
+
+Each ADR row lists: number, title, first-paragraph summary, and the skill
+files that cite it (derived by scanning skills/ for references to the ADR
+number or path).
+
+Deterministic and idempotent: re-running against unchanged ADR/skill files
+produces no diff.
+
+    python3 tools/generate_adr_index.py              # writes docs/adr/INDEX.md
+    python3 tools/generate_adr_index.py --check      # exits non-zero if stale
+"""
+
+from __future__ import annotations
+
+import argparse
+import re
+import sys
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+ADR_DIR = REPO_ROOT / "docs" / "adr"
+SKILLS_DIR = REPO_ROOT / "skills"
+INDEX_PATH = ADR_DIR / "INDEX.md"
+
+# Matches the ADR filename prefix, e.g. "0001"
+_ADR_NUMBER_RE = re.compile(r"^(\d{4})-")
+
+# Matches references to a specific ADR number: "ADR 0001", "ADR-0001",
+# "adr/0001", or the literal filename "0001-".
+def _adr_ref_pattern(number: str) -> re.Pattern[str]:
+    return re.compile(
+        rf"(?i)(?:adr[\s\-]?0*{int(number)}(?!\d)|adr/{number}|{number}-)"
+    )
+
+
+def _parse_adr(path: Path) -> tuple[str, str, str]:
+    """Return (number, title, first_paragraph) for an ADR file."""
+    m = _ADR_NUMBER_RE.match(path.name)
+    if not m:
+        raise ValueError(f"unexpected ADR filename: {path.name}")
+    number = m.group(1)
+
+    text = path.read_text(encoding="utf-8")
+    lines = text.splitlines()
+
+    # Extract title: first non-empty line, strip leading "# "
+    title = ""
+    title_idx = 0
+    for i, line in enumerate(lines):
+        stripped = line.strip()
+        if stripped:
+            title = stripped.lstrip("#").strip()
+            title_idx = i
+            break
+
+    # First paragraph: first contiguous non-empty block after the title line,
+    # skipping any blank lines immediately following the title.
+    # If a section header (## ...) appears before any paragraph body, use the
+    # next paragraph after it.
+    para_lines: list[str] = []
+    in_para = False
+    for line in lines[title_idx + 1 :]:
+        stripped = line.strip()
+        if not stripped:
+            if in_para:
+                break  # end of first paragraph
+            continue
+        # Skip section headers; if we haven't started a paragraph yet, keep going
+        if stripped.startswith("#"):
+            if in_para:
+                break
+            continue
+        in_para = True
+        para_lines.append(stripped)
+
+    # Collapse the paragraph into a single line, collapsing internal newlines
+    first_para = " ".join(para_lines)
+    # Truncate long summaries at sentence boundary or 200 chars
+    if len(first_para) > 200:
+        # Try to break at sentence end within 200 chars
+        cutoff = first_para.rfind(". ", 0, 200)
+        if cutoff != -1:
+            first_para = first_para[: cutoff + 1]
+        else:
+            first_para = first_para[:197] + "..."
+
+    return number, title, first_para
+
+
+def _find_skill_files() -> list[Path]:
+    """Return all markdown files under skills/, excluding .pytest_cache."""
+    return sorted(
+        p
+        for p in SKILLS_DIR.rglob("*.md")
+        if ".pytest_cache" not in p.parts
+    )
+
+
+def _skill_label(skill_path: Path) -> str:
+    """Return a short display label for a skill file, e.g. 'apply-agent-research/SKILL'."""
+    rel = skill_path.relative_to(SKILLS_DIR)
+    parts = rel.parts
+    # Drop the bucket prefix (engineering/, config/, meta/) and the filename extension
+    if len(parts) >= 3:
+        # bucket/skill-name/file.md -> skill-name/file
+        display = "/".join(parts[1:])
+    else:
+        display = "/".join(parts)
+    return display.removesuffix(".md")
+
+
+def _cite_map(skill_files: list[Path], adr_numbers: list[str]) -> dict[str, list[str]]:
+    """For each ADR number, return the sorted list of skill labels that cite it."""
+    result: dict[str, list[str]] = {n: [] for n in adr_numbers}
+    patterns = {n: _adr_ref_pattern(n) for n in adr_numbers}
+    for sf in skill_files:
+        text = sf.read_text(encoding="utf-8", errors="replace")
+        label = _skill_label(sf)
+        for number, pat in patterns.items():
+            if pat.search(text):
+                result[number].append(label)
+    # Each list is already in sorted(skill_files) order (alphabetical)
+    return result
+
+
+def generate(adr_dir: Path, skills_dir: Path) -> str:
+    """Generate the INDEX.md content and return it as a string."""
+    adr_files = sorted(
+        p for p in adr_dir.glob("*.md") if p.name != "INDEX.md"
+    )
+    if not adr_files:
+        raise RuntimeError(f"no ADR files found in {adr_dir}")
+
+    adrs: list[tuple[str, str, str]] = []
+    for path in adr_files:
+        adrs.append(_parse_adr(path))
+
+    adr_numbers = [a[0] for a in adrs]
+    skill_files = _find_skill_files()
+    citations = _cite_map(skill_files, adr_numbers)
+
+    lines: list[str] = [
+        "# ADR Index",
+        "",
+        "<!-- Generated by tools/generate_adr_index.py — do not edit by hand. -->",
+        "",
+        "| # | Title | Summary | Cited by |",
+        "| --- | --- | --- | --- |",
+    ]
+
+    for number, title, summary in adrs:
+        adr_filename = next(
+            p.name for p in adr_files if p.name.startswith(number + "-")
+        )
+        title_link = f"[{number}]({adr_filename})"
+        cited = citations[number]
+        if cited:
+            cited_str = ", ".join(f"`{c}`" for c in cited)
+        else:
+            cited_str = "—"
+        # Escape pipe characters in summary/title to avoid breaking the table
+        summary_escaped = summary.replace("|", "\\|")
+        title_escaped = title.replace("|", "\\|")
+        lines.append(f"| {title_link} | {title_escaped} | {summary_escaped} | {cited_str} |")
+
+    lines.append("")
+    lines.append(
+        f"*{len(adrs)} ADRs listed. Regenerate with `python3 tools/generate_adr_index.py`.*"
+    )
+    lines.append("")
+    return "\n".join(lines)
+
+
+def main(argv: list[str] | None = None) -> int:
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument(
+        "--check",
+        action="store_true",
+        help="exit non-zero if INDEX.md is stale (do not write)",
+    )
+    args = ap.parse_args(argv)
+
+    content = generate(ADR_DIR, SKILLS_DIR)
+
+    if args.check:
+        if not INDEX_PATH.exists():
+            print("ERROR: docs/adr/INDEX.md does not exist; run the generator.",
+                  file=sys.stderr)
+            return 1
+        current = INDEX_PATH.read_text(encoding="utf-8")
+        if current != content:
+            print("ERROR: docs/adr/INDEX.md is stale; run: python3 tools/generate_adr_index.py",
+                  file=sys.stderr)
+            return 1
+        print("docs/adr/INDEX.md is up to date.")
+        return 0
+
+    INDEX_PATH.write_text(content, encoding="utf-8")
+    print(f"wrote {INDEX_PATH.relative_to(REPO_ROOT)}", file=sys.stderr)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
