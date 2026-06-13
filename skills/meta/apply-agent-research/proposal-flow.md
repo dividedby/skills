@@ -75,6 +75,31 @@ plus the union of every channel's already-spoken-for keys:
            "budget": 5}' \
       | python3 <skill-dir>/lib/cli.py gate
 
+- **Adversarial pre-gate filter.** Before injecting a candidate, challenge it
+  on each of the five rejection criteria below. A candidate that cannot answer
+  all five is not ready — drop it rather than letting the gate see it. This
+  converts implicit judgment into an explicit, repeatable filter, separating
+  the role of proposal-generator from proposal-judge:
+
+  1. **Catalog overlap** — Does this duplicate any published skill, installed
+     skill, or a wontfixed proposal? Overlap is judged by the *principle the
+     maintainer stated when closing* the prior issue, not by dedup key alone. A
+     candidate that is conceptually the same refused thing under a different key
+     must still be dropped.
+  2. **Restatement dilution** — Does this skill mostly restate what existing
+     skills already own, with only a thin novel core? If the genuinely new
+     surface sits under one pillar and the rest is already covered, the novel
+     part is a refinement to an existing skill, not a standalone one.
+  3. **Frequency fit** — Would the maintainer encounter this scenario regularly
+     enough to reach for the skill? A skill relevant only in rare workflows
+     dilutes the catalog for the common case.
+  4. **Strength of KB evidence** — Is the knowledge note strong and specific
+     enough to motivate *exactly* this proposal, or does the proposal
+     over-generalize beyond what the note actually supports?
+  5. **Before/after concreteness** — Is the specific agent-meta surface named
+     (CLAUDE.md rule, hook, CI step, skill), and is the before/after concrete
+     enough that an implementer could produce the change without ambiguity?
+
 - **Be ruthlessly critical before the gate.** The budget is a ceiling, not a
   target: inject only candidates you would defend individually — each must clear
   the bar that would have made it *the* single proposal under the old one-cap
