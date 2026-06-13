@@ -110,6 +110,22 @@ input to *which* skill to propose next: more corroborating repos raises build
 priority. Demand sets build order; it does not by itself justify a skill —
 usefulness of a *built* skill is still settled by adoption (no adoption tracker).
 
+### Triage: external prior-art scan before accept/park/reject
+
+When the maintainer triages a `skill-request` (moving it out of `needs-triage`
+or off `awaiting-corroboration`), they run a GitHub-wide prior-art / redundancy
+scan via the installed [`cba-searching`](../agents/installed-skills.md) skill
+**before** deciding accept (`ready-for-agent`), park (`awaiting-corroboration`),
+or reject (`wontfix`). This is the **external** counterpart to the Consumer-side
+internal check above: the internal filter (ADR 0009) asks "does this ecosystem
+already provide it?"; the scan asks "does the wider open-source world already
+ship it well, such that we should adopt or reference that instead of writing a
+new skill?" A request that clears the internal filter can still be redundant
+with a mature public project; the scan surfaces that as a `wontfix` (or a
+park-and-reference) the maintainer would otherwise miss. The scan is a
+triage-time human aid, not an in-loop filing-time gate — see
+[ADR 0021](../adr/0021-skill-request-triage-runs-external-prior-art-scan.md).
+
 ### Triaged-but-parked: the `awaiting-corroboration` label
 
 Once a maintainer has *triaged* a `skill-request` and accepted it as a valid gap
