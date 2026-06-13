@@ -18,7 +18,7 @@ to the default branch. It is the policy layer on top of existing mechanics.
 What it defers:
 
 - **Commit message policy** → defer to `/commit`.
-- **Code-review logic** → defer to `/review`. flow-pr *runs* it as the step-4 review gate (see Feature mode), but does not implement review itself.
+- **Code-review logic** → defer to `/review`. flow-pr *runs* it as the review gate (see Feature mode), but does not implement review itself.
 - **Issue filing** → defer to the repo's intake convention.
 - **Merge mechanics detail** → `~/.claude/branching-flow.md` is the
   authoritative source; this skill references it, never duplicates it.
