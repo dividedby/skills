@@ -44,14 +44,7 @@ Match the runtime to the run; teach selection, not a new mechanism:
 - **One-shot serialized burn-down** — a finite run to completion over a fixed
   backlog (how #64→#66 ran). Stops when the backlog empties.
 
-**Route per-item work by where you're running.** When a session exists — you're
-in the Claude Code CLI, interactive or under `/loop` — firewall each item with an
-**in-session sub-agent** (the Agent tool, no new process). Reach for a **headless
-process** (a fresh `claude -p`) only where there is *no* session — CI, cron,
-runners — which is also where it earns the iteration-as-context-boundary for free.
-The CLI agent is *in* a session: don't spawn `claude -p` from it. (Preserving the
-Agent SDK credit, #58, is a secondary reason; the routing is environment-fit
-first.)
+Route per-item work to an in-session sub-agent when a session exists; headless `claude -p` only where there is none — see `/context-firewall` step 2.
 
 ---
 
@@ -112,8 +105,8 @@ owns this format) — this skill gates durability, it never authors the brief.
 It is **distinct from per-item reconciliation**, which is a separate,
 *per-pickup* responsibility done inside the firewalled sub-agent: at each item's
 pickup the sub-agent reads the live full issue body + comments and halts on a
-material discrepancy against the brief (see [RUNNING-AFK.md](RUNNING-AFK.md) step
-4a). Element 5 checks the brief's *shape* once; reconciliation checks the brief's
+material discrepancy against the brief (see the **Reconcile the brief against the live
+issue first** step in [RUNNING-AFK.md](RUNNING-AFK.md)). Element 5 checks the brief's *shape* once; reconciliation checks the brief's
 *currency against the live issue* every pickup. Don't conflate them.
 
 ---

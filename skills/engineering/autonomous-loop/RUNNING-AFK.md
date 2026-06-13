@@ -134,10 +134,4 @@ The guardrails are what let steps 4–6 run while you step away: the git-guard
 (guardrail 1) blocks irreversible ops no matter what a sub-agent decides, and
 every item is on a PR, gated, and persisted before the next begins.
 
-When *would* you skip `/context-firewall` in this flow? When the runtime is
-already fresh-context-per-issue — a **headless process** (a scheduled `claude -p`
-per issue) where there's no session to dispatch within. There each process is its
-own firewall and the orchestrator never accumulates. The firewall earns its keep
-precisely because a single-session runtime doesn't give it for free — which is
-why, inside a session, you firewall with an **in-session sub-agent** rather than
-spawning `claude -p`.
+Route per-item work to an in-session sub-agent when a session exists; headless `claude -p` only where there is none — see `/context-firewall` step 2.
