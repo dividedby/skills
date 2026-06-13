@@ -121,7 +121,7 @@ nor `wontfix` fits. Mark these with **`awaiting-corroboration`**:
 - It records that the request is triaged, valid, and waiting on cross-repo +1
   before a build decision — so future triage doesn't re-evaluate it from scratch.
 - Do **not** reuse `needs-triage` for this. That label means "maintainer needs to
-  evaluate" (`docs/agents/triage-labels.md`); keeping it on an already-evaluated
+  evaluate" (`docs/agents/labels.md`); keeping it on an already-evaluated
   request overloads it and contradicts its definition.
 - Promotion out of the parked state: a second Consumer's +1, or an explicit
   maintainer decision to build despite single-Consumer demand. Either drops

@@ -79,6 +79,20 @@ over:
 
 The labels do that work. A glanceable title is faster to scan in the issue list.
 
+## Role aliases
+
+Skills and docs speak in terms of canonical triage *roles*. This table maps those role names to the actual label strings used in the issue tracker.
+
+| Role             | Label             |
+| ---------------- | ----------------- |
+| Needs evaluation | `needs-triage`    |
+| AFK-ready        | `ready-for-agent` |
+| Human required   | `ready-for-human` |
+| Blocked          | `blocked`         |
+| Won't action     | `wontfix`         |
+
+When a skill mentions a role (e.g. "apply the AFK-ready triage label"), use the corresponding label string from this table. Edit state-label rows to match whatever vocabulary you actually use in a given repo.
+
 ## Remove stock
 
 Every repo removes these unused GitHub stock defaults on setup:
