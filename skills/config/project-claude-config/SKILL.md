@@ -19,7 +19,7 @@ Be efficient: **delegate discovery to an Explore subagent** and work from conden
 
 ## Step 1 — Global baseline
 
-Read `~/.claude/CLAUDE.md`, `~/.claude/settings.json`, and the two safety hooks (`read-guard.py`, `bash-guard.py`) once. Treat all of it as **already in effect** — communication style, code-style defaults, the bypass-style `defaultMode`, the surgical PreToolUse hooks, model/effort/statusline, enabled plugins. Nothing you scaffold or keep may restate, duplicate, or weaken any of it. The merge semantics that make this rule concrete (hooks additive across scopes, `deny` union, most-specific-wins scalars) and its one carve-out (a guard hook re-declared for runs that lack global config) live in [CATALOG.md](CATALOG.md) "Verified harness facts" — judge every hook against those facts, not from memory.
+Read `~/.claude/CLAUDE.md` and `~/.claude/settings.json` once. Treat all of it as **already in effect** — communication style, code-style defaults, the bypass-style `defaultMode`, the five PreToolUse global guards (read-guard, bash-guard, git-guard, secret-guard, typecheck-guard), model/effort/statusline, enabled plugins. Nothing you scaffold or keep may restate, duplicate, or weaken any of it. Hook provenance lives in `~/repos/claude-config/hooks/README.md` — read that, not the `.py` files. The merge semantics (hooks additive across scopes, `deny` union, most-specific-wins scalars), the CI/AFK carve-out, and the namesake-defer rule (a global guard yields to a same-named project hook — check this before classifying a re-declared hook as waste) live in [CATALOG.md](CATALOG.md) "Verified harness facts" — judge every hook against those facts, not from memory.
 
 ## Step 2 — Detect (subagent)
 

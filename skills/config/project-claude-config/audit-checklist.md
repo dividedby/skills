@@ -17,7 +17,8 @@ Every finding uses one of these, with a ref (`settings.json` key-path or `file:l
 
 Against [CATALOG.md](CATALOG.md) "Harness" — the verified facts, catalog triggers, and anti-catalog:
 
-- Re-declared global hooks → `cut` (additive scopes; fires twice) — **except** under the CI/AFK guard carve-out defined in the catalog's Verified harness facts, which is correct to keep.
+- Re-declared global hooks → `cut` (additive scopes; fires twice) — **except** (a) under the CI/AFK guard carve-out (must run where global config is absent) or (b) the repo ships `.claude/hooks/<name>.py` and the global guard yields via namesake-defer — both defined in the catalog's Verified harness facts.
+- Heredoc commit bodies (i.e. `git commit -m "$(cat <<'EOF'...)"`) → `fix-contradiction` — blocked by `git-guard`; the fix is `git commit -F <file>`.
 - Permissions: `deny`-only is the rule; any `allow` list → `fix-contradiction`.
 - Missing triggered catalog hooks → `add`.
 

@@ -17,8 +17,15 @@ Canonical docs (anchors for validation):
 4. **Earns its place** — either replaces a CLAUDE.md instruction (turning "remember to X" into automatic enforcement) or closes a concrete risk.
 
 ### Verified harness facts (bake into reasoning)
-- **Hooks are additive across scopes** — a project hook never replaces a global one, it adds. So re-declaring a global hook makes it fire twice (→ `cut`), and the global safety hooks (`read-guard`, `bash-guard`) cannot be weakened from project config. No dedup is documented; treat duplication as real waste.
-- **CI/AFK carve-out to the no-re-declare rule** ([ADR 0013](../../../docs/adr/0013-project-scope-hooks-may-redeclare-global-guards-for-ci.md)) — the rule above assumes the global harness *travels with every run*. It doesn't: an AFK/CI run of `claude -p` has no `~/.claude/`, so the global `bash-guard` git protections are absent. A project-scope **guard hook** that must fire in that context is **not** duplication — it is the only copy that runs. On a developer's machine the double-fire is redundant-but-harmless (same exit-2 block, one extra log line), so re-declaring is correct, not a `cut`. Detect the context by proxy, not by introspecting whether a global twin will fire.
+- **Five global PreToolUse guards are always in effect** (provenance: `~/repos/claude-config/hooks/README.md`):
+  1. `read-guard` — blocks reads of secret files
+  2. `bash-guard` — blocks destructive shell ops
+  3. `git-guard` — blocks bundled `git add`+`git commit` in one call, and heredoc commit bodies
+  4. `secret-guard` — blocks writing a credential/PEM key into a file and force-adding a credential-shaped path
+  5. `typecheck-guard` — gates `git commit` on a passing typecheck; no-op unless the repo has a `tsconfig` and the commit touches TS
+- **Hooks are additive across scopes** — a project hook never replaces a global one, it adds. So re-declaring a global hook makes it fire twice (→ `cut`), and the five global guards cannot be weakened from project config. No dedup is documented; treat duplication as real waste.
+- **Namesake-defer (ADR 0013)** — a global guard **yields** if the repo ships `.claude/hooks/<name>.py`; that project copy also runs in CI. This is distinct from the CI/AFK carve-out below: here the global guard steps aside for the project copy even on a developer's machine.
+- **CI/AFK carve-out to the no-re-declare rule** ([ADR 0013](../../../docs/adr/0013-project-scope-hooks-may-redeclare-global-guards-for-ci.md)) — the rule above assumes the global harness *travels with every run*. It doesn't: an AFK/CI run of `claude -p` has no `~/.claude/`, so the global guards are absent. A project-scope guard hook that must fire in that context is **not** duplication — it is the only copy that runs. On a developer's machine the double-fire is redundant-but-harmless (same exit-2 block, one extra log line), so re-declaring is correct, not a `cut`. Detect the context by proxy, not by introspecting whether a global twin will fire.
 - **`deny` permissions union and win from any scope, un-overridable** → project `deny` rules are robust. (Allowlists stay banned — global safety architecture.)
 - **`env`/scalars: most-specific wins.** Plugin merge is undocumented → recommend cautiously.
 - **Project settings load root-only.** A nested `packages/*/.claude/settings.json` is NOT loaded → flag as dead config.
@@ -43,7 +50,7 @@ Canonical docs (anchors for validation):
 - **Notification / Stop sounds / desktop pings** — pure annoyance, no project value.
 - **Blocking PreToolUse gates on every `Bash` call** — duplicates/competes with the global `bash-guard`, slows every command. (A **narrow** matcher scoped to one dangerous command class — the git guard above — is not this; it gates only matching commands and is justified by the CI/AFK carve-out.)
 - **Re-adding a `permissions.allow` list** — banned; the global bypass-mode + surgical hooks are the backstop.
-- **Re-declaring the global safety hooks** (`read-guard`/`bash-guard`) **verbatim** — additive, so they'd fire twice for no gain. (Exception: a narrow guard that must run where global config is absent — see the CI/AFK carve-out and the git guard above. That isn't re-declaring the global hook verbatim; it's the only copy that runs in CI.)
+- **Re-declaring any of the five global guards verbatim** — additive, so they'd fire twice for no gain. (Two exceptions: a narrow guard that must run where global config is absent — see the CI/AFK carve-out and the git guard above; or a repo that ships `.claude/hooks/<name>.py` and the global guard yields via namesake-defer — that project copy is the authoritative one.)
 - **Auto-commit / auto-push / auto-deploy on `Stop`** — surprising and hard to reverse; outward-facing actions need a human.
 - **Overriding scalar globals** (`model`, `defaultMode`, `effortLevel`, statusline, notif flags) in a project file — personal/global preferences; a project override is a contradiction to flag, not an addition.
 
