@@ -20,7 +20,7 @@ Pick the skills you want when prompted. Re-run to update.
 - **[flow-pr](./skills/engineering/flow-pr/SKILL.md)** — End-to-end flow-aware PR helper: reads the repo's default branch as the integration target, cuts a feature branch, commits → pushes → opens PR against the default branch, reviews and fixes the diff (via `/review`), gates on CI green, then merges. Promotion (default→main) is always-confirmed and only applies when the default branch is not main.
 - **[frontend-design](./skills/engineering/frontend-design/SKILL.md)** — Design, refine, and audit production-grade frontend interfaces across React, Next.js, Tailwind, and vanilla HTML/CSS/JS that avoid generic AI aesthetics.
 - **[software-design](./skills/engineering/software-design/SKILL.md)** — Turns a PRD and published backlog into named modules, located seams, and a testing strategy that makes issues TDD-ready.
-- **[staleness-audit](./skills/engineering/staleness-audit/SKILL.md)** — Audit a repo's pinned toolchain versions (Node now; wider ecosystem later) for staleness and emit a ranked, recommend-only report — the complement to Dependabot's library bumps.
+- **[staleness-audit](./skills/engineering/staleness-audit/SKILL.md)** — Audit a repo's pinned toolchain versions (Node, Python, Go, container and CI matrices) for staleness and emit a ranked report — safe in-major bumps auto-applied behind a verify gate, cross-major / EOL jumps stay recommendations; the complement to Dependabot's library bumps.
 
 ### Config
 
