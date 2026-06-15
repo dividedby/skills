@@ -25,5 +25,6 @@
 | [0020](0020-arch-review-fetches-depth-rubric-fresh-and-adds-simplification-legibility-lenses.md) | arch-review fetches the depth rubric fresh from an external upstream and adds local simplification + legibility lenses | [ADR 0016](0016-arch-review-prompt-is-skeleton-plus-local-repo-context-include.md) established the arch-review prompt as a fetched-fresh, scope-free skeleton paired with a per-repo Repo-context inc... | — |
 | [0021](0021-skill-request-triage-runs-external-prior-art-scan.md) | skill-request triage runs an external prior-art scan | Skill-request triage runs a GitHub-wide prior-art scan via the installed `cba-searching` skill before the maintainer accepts, parks, or rejects a request. | — |
 | [0022](0022-doc-it-vs-grill-with-docs-authoring-auditing-boundary.md) | doc-it and grill-with-docs have non-overlapping scopes: auditing vs authoring | Two skills touch documentation: `doc-it` generates and patches **reference docs** (README, API docs, onboarding, CHANGELOG) and audits existing ADRs / `CONTEXT.md` for staleness; `grill-with-docs` ... | `doc-it/SKILL` |
+| [0023](0023-setup-dividedby-skills-vs-project-claude-config-seam.md) | setup-dividedby-skills and project-claude-config have non-overlapping scopes | Two skills in the `config/` bucket both operate on a target repo's configuration. | `config/README`, `setup-dividedby-skills/SKILL` |
 
-*21 ADRs listed. Regenerate with `python3 tools/generate_adr_index.py`.*
+*22 ADRs listed. Regenerate with `python3 tools/generate_adr_index.py`.*
