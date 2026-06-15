@@ -49,6 +49,9 @@ agent-ready issues. It never re-implements logic that a sub-skill already owns.
   working system.
 - **Prefer one strong synthesis over many thin artifacts.** Skip or merge an
   artifact when there is no real signal, and note why.
+- **Complement, don't duplicate, standing automation.** Phase 0 enumerates
+  existing CI/scheduled audit loops; each phase is then scoped to what the
+  standing automation misses, not run in full regardless.
 
 ## Phase table
 
@@ -61,9 +64,9 @@ agent-ready issues. It never re-implements logic that a sub-skill already owns.
 | 4 | Security & compliance | inline reasoning (no dedicated skill — see playbook) |
 | 5 | Frontend, UX & docs | `frontend-design` · `doc-it` |
 | 6 | Prior art & competitors | `cba-searching` |
-| 7 | Backlog triage & rewrite | `triage` · repo label vocabulary |
+| 7 | Backlog integration & triage | `triage` · repo label vocabulary |
 | 8 | Synthesis into PRDs & epics | `to-prd` |
-| 9 | Decomposition into agent-ready issues | `to-issues` · `software-design` |
+| 9 | Decomposition & full-backlog triage | `to-issues` · `software-design` · `triage` |
 | 10 | Multi-role self-check & safety rails | owned by this skill |
 
 ## Hard rules
@@ -75,6 +78,10 @@ agent-ready issues. It never re-implements logic that a sub-skill already owns.
 - Prefer one strong synthesis artifact (master audit report) over many thin
   stand-alone docs. Skip or merge domain artifacts that show no material signal,
   and record a one-line rationale for each omission.
+- Phases 7–9 are NOT complete until new findings are integrated INTO the
+  existing backlog as one reprioritized, fully-triaged whole. New issues must
+  never be filed as a flat list alongside existing issues without dedup, epic
+  folding, and state-label triage applied across the full combined set.
 
 ## Depth boosters and per-phase detail
 
