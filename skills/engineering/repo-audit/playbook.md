@@ -13,18 +13,46 @@ self-check protocol. The spine lives in `SKILL.md`.
 **Skill:** `project-claude-config`
 
 Detect and, if needed, scaffold the project's Claude/agent config
-(`.claude/`, `CLAUDE.md` / `AGENTS.md`, hooks). Run an intake grilling step:
-project goals, constraints, non-goals, risk tolerance, target environments and
-users. Map the repo layout (backend, frontend, shared libs, infra, tests,
-CI/CD, docs, ADRs).
+(`.claude/`, `CLAUDE.md` / `AGENTS.md`, hooks). Map the repo layout (backend,
+frontend, shared libs, infra, tests, CI/CD, docs, ADRs).
+
+**Ground-truth summary — synthesize vs. grill.** Before asking the user
+anything, check whether the repo carries strong, current ground-truth docs:
+a `CLAUDE.md` / `AGENTS.md` covering project goals and constraints, a domain
+glossary or `CONTEXT.md`, and ADRs that are not obviously stale. If those docs
+exist and are internally consistent, *synthesize* the ground-truth summary
+directly from them — faster and at least as accurate as grilling. Reserve
+grilling (project goals, constraints, non-goals, risk tolerance, target
+environments and users) for repos that lack those docs, or where the docs
+appear stale or contradictory. When staleness or contradiction surfaces later
+in the audit, feed it back as a docs-reconciliation finding (see depth-booster
+4 and Phase 5); it need not block Phase 0 completion.
+
+**Standing-automation inventory.** Enumerate every CI and scheduled workflow
+in the repo (`.github/workflows/` or equivalent). Identify any standing audit
+loops — scheduled jobs that already run staleness checks, architecture review,
+agent-research scanning, or similar audit phases. For each planned audit phase
+(1–9), decide:
+
+- **Run** — no meaningful overlap; proceed in full.
+- **Narrow** — a standing loop covers part of this phase; focus on what the
+  loop misses (e.g. a per-PR architecture check won't catch cross-cutting
+  seams).
+- **Skip (covered by X)** — the standing loop covers this phase adequately;
+  note which workflow and why.
+
+Surface this per-phase decision table as part of the Phase 0 output, and let
+it inform the depth question put to the user: existing coverage changes what a
+full manual audit adds.
 
 **Typical artifact:** An updated `CLAUDE.md` / `AGENTS.md` with project
 overview, repo layout, and a "ground truth" system summary (main domains, key
-user journeys, "do not break" areas). This grounds all later phases in an
+user journeys, "do not break" areas), plus the standing-automation inventory
+and per-phase run/narrow/skip table. This grounds all later phases in an
 agreed-upon baseline.
 
 **Feeds later phases:** Every subsequent phase reads the ground-truth summary
-to calibrate scope and risk tolerance.
+and the run/narrow/skip table to calibrate scope and risk tolerance.
 
 ---
 
@@ -154,7 +182,7 @@ reinventing solved problems) and may prompt Phase 7 issue closures.
 
 ---
 
-### Phase 7 — Backlog triage & rewrite
+### Phase 7 — Backlog integration & triage
 
 **Skills:** `triage` · repo label vocabulary
 
@@ -162,16 +190,37 @@ Ingest all open GitHub issues, PRs, and discussions. Cluster by theme
 (architecture, bugs, UX/frontend, infra/CI, docs, experiments). Rewrite
 unclear or noisy issues with clear problem statements, goals, and acceptance
 criteria. Close or merge duplicates, stale requests, and out-of-scope items.
-Reprioritize based on risk, impact, dependencies, and the emerging roadmap from
-earlier phases. Apply the repo's label vocabulary consistently (use `triage`
-skill for state routing).
 
-**Typical artifact:** A refreshed backlog (closed/merged items, rewritten and
-reprioritized issues) plus `docs/backlog-notes.md` documenting triage rationale
-and priority semantics.
+The following three steps are required, in order, before Phase 7 is considered
+complete:
 
-**Feeds later phases:** The refreshed backlog is direct input for Phase 8
-(which work clusters into PRD-worthy initiatives?) and Phase 9 (issue briefs).
+**1. Dedup first.** Every new finding from earlier phases (1–6) is
+cross-checked against all open issues. Where there is meaningful overlap, fold
+the finding into the existing issue (add context, update the description, link
+the audit source) rather than creating a parallel entry. A new issue is only
+warranted when no existing issue covers the same root cause or scope.
+
+**2. One unified backlog.** New findings and existing issues are not two lists
+— they are one. After dedup, order all surviving issues (pre-existing and
+net-new) into a single priority sequence based on risk, impact, dependencies,
+and the emerging roadmap from earlier phases. There is no "audit findings"
+section sitting beside the regular backlog; everything lives in one ordered
+set.
+
+**3. Epic folding.** Group related issues — whether pre-existing or new — into
+shared epics. Use existing epics where they fit; create new ones where a
+coherent initiative spans multiple issues. Child issues are listed as
+checklists in the epic body so the full initiative scope is visible in one
+place.
+
+**Typical artifact:** A unified, reprioritized backlog (closed/merged items,
+rewritten and reprioritized issues, epics with child checklists) plus
+`docs/backlog-notes.md` documenting triage rationale, priority semantics, and
+the dedup log.
+
+**Feeds later phases:** The unified backlog is the direct input for Phase 8
+(which initiatives are PRD-worthy?) and Phase 9 (issue decomposition and
+full-backlog triage).
 
 ---
 
@@ -195,23 +244,40 @@ there are fewer than three initiatives with meaningful sequencing constraints.
 
 ---
 
-### Phase 9 — Decomposition into agent-ready issues
+### Phase 9 — Decomposition & full-backlog triage
 
-**Skills:** `to-issues` · `software-design`
+**Skills:** `to-issues` · `software-design` · `triage`
 
 Use `to-issues` to decompose each PRD into vertical slices with explicit
 dependency chains. Apply `software-design` where useful for internal design
 sketches of complex tasks, edge-case coverage, and failure-mode analysis.
-For each issue, produce an agent-ready brief: user story or task description,
-links to relevant files/docs/PRDs, constraints (security, performance, UX,
-"do not break X"), and HITL tasks (explicit step-by-step instructions or
-questions for humans). Tag each issue as agent-ready, human-only, or
-agent+human pairing.
+For each new issue, produce an agent-ready brief: user story or task
+description, links to relevant files/docs/PRDs, constraints (security,
+performance, UX, "do not break X"), and HITL tasks (explicit step-by-step
+instructions or questions for humans).
 
-**Typical artifact:** A curated issue set with strong titles, briefs, and clear
-context. Optionally, agent brief and HITL checklist templates for future issues.
+**Triage over the full combined set.** Once new issues are decomposed and
+merged into the unified backlog from Phase 7, run the `triage` skill's state
+machine over every workable issue — new and pre-existing alike. Every workable
+issue gets exactly one state label and the comment that label requires:
 
-**Feeds Phase 10:** The full issue set is the final input to the self-check.
+- `ready-for-agent` — a strong agent brief (context, acceptance criteria,
+  constraints, HITL tasks). Maximize this category.
+- `blocked` — a named, linked blocker and a concrete unblock path. No issue
+  may sit in `blocked` without both.
+- `ready-for-human` — agent-led instructions or explicit questions for the
+  human owner.
+
+**Close-candidates surfaced.** Where audit findings reveal that an existing
+issue describes work that is already done, flag it explicitly. Propose closure
+with a one-line rationale; close on confirmation.
+
+**Typical artifact:** The final unified issue set — all issues triaged to a
+state label with the required brief or comment, epics updated, close-candidates
+flagged. Optionally, agent brief and HITL checklist templates for future use.
+
+**Feeds Phase 10:** The final full issue set (new + existing, fully triaged) is
+the input to the self-check.
 
 ---
 
@@ -236,6 +302,20 @@ Cross-check for contradictions and inconsistencies across reports, PRDs, and
 issues. Flag unsafe changes (security, data loss, reliability risks). Surface
 gaps between docs and code. Re-run targeted phases when contradictions are
 found or major blind spots are detected.
+
+**Completion gate (explicit pass/fail).** The five-role review above is
+necessary but not sufficient. The self-check FAILS — and phases must be
+revisited — if any of the following are true:
+
+- Any new issue was filed without being integrated into the unified backlog
+  (i.e. dedup, epic folding, and ordering were not applied).
+- Any workable issue lacks a state label, or lacks the required brief or
+  comment for that label.
+- Any issue carrying `blocked` lacks a named, linked blocker and an unblock
+  path.
+
+The self-check passes only when every item in the unified backlog satisfies
+these conditions.
 
 **Typical artifact:** `docs/audit-summary.md` — main findings and decisions,
 top initiatives with rationale, how the backlog and roadmap were derived, and
