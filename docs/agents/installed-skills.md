@@ -44,9 +44,15 @@ in `~/.claude/skills/`:
 `context-firewall`, `diagnose`, `find-skills`, `flow-pr`, `frontend-design`,
 `grill-me`, `grill-with-docs`, `handoff`, `improve-codebase-architecture`,
 `playwright-cli`, `project-claude-config`, `prototype`,
-`setup-matt-pocock-skills`, `software-design`, `staleness-audit`, `tdd`,
+`setup-dividedby-skills`, `software-design`, `staleness-audit`, `tdd`,
 `to-issues`, `to-prd`, `triage`, `write-a-skill`, `writing-beats`,
 `writing-fragments`, `writing-shape`, `zoom-out`.
+
+`setup-dividedby-skills` and `triage` are this repo's own skills (config bucket,
+issues #292 / #293), installed globally in place of the former upstream
+`setup-matt-pocock-skills` and `mattpocock/skills` `triage`, which were
+uninstalled once these replacements shipped (#294). The `triage` name is
+unchanged — the global install now resolves to this repo's version.
 
 ## Installed plugins
 
