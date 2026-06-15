@@ -30,13 +30,20 @@ These are the authoritative sources. Adapt repo-specific references (e.g. the In
 
 ## Step 1 — Detect (what already exists)
 
-Dispatch Explore to report:
+Dispatch Explore to report on everything **except labels** (labels are diffed directly — see below):
 
 - **Convention docs:** does `docs/agents/` exist? Which of `issue-tracker.md`, `labels.md`, `domain.md`, `idea-inbox.md` are present?
 - **CLAUDE.md / AGENTS.md:** does a `## Conventions` block exist? What sections does it contain?
 - **Idea Inbox issue:** search open+closed issues for `label:idea-inbox`. Note the issue number if found.
-- **Labels:** run `gh label list --limit 100 --json name,color,description` and compare against the full label table in `docs/agents/labels.md` (CORE state, category, size; LOOP/NETWORK if applicable; stock labels to remove). Report: missing labels, color/description drift, stock labels still present.
 - **Branching/merge settings:** `gh api repos/{owner}/{repo} --jq '{allow_squash_merge,allow_rebase_merge,allow_merge_commit,delete_branch_on_merge,default_branch}'`. Compare against universal mechanics. Check whether this repo is already listed in `~/.claude/branching-flow.md`.
+
+**Labels — diff directly on the lead, do not delegate.** Label drift is a deterministic set/string comparison, and a delegated prose summary miscounts (it'll report the wrong label count). Run the live list yourself and diff it against the canonical table in `docs/agents/labels.md` — compare exact name/color/description strings, not impressions:
+
+```
+gh label list --repo {owner}/{repo} --limit 100 --json name,color,description --jq 'sort_by(.name)[] | "\(.name)\t\(.color)\t\(.description)"'
+```
+
+Report: (a) canonical labels **missing** from the repo, (b) labels present with color/description **drift** (canonical vs actual), (c) **stock** labels still present (`documentation`, `duplicate`, `good first issue`, `help wanted`, `invalid`, `question`). Honor the tiering rule in `labels.md` (CORE everywhere; LOOP/NETWORK only on full-tier repos — a repo carrying any `source:*` label is full-tier).
 
 Condense findings to a state summary; do not dump raw output.
 
