@@ -10,6 +10,7 @@
     "./skills/engineering/staleness-audit",
     "./skills/config/project-claude-config",
     "./skills/config/setup-dividedby-skills",
+    "./skills/config/triage",
     "./skills/meta/apply-agent-research"
   ]
 }
