@@ -9,6 +9,7 @@
     "./skills/engineering/software-design",
     "./skills/engineering/staleness-audit",
     "./skills/config/project-claude-config",
+    "./skills/config/setup-dividedby-skills",
     "./skills/meta/apply-agent-research"
   ]
 }
