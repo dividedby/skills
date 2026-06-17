@@ -91,9 +91,10 @@ jobs:
           # block (see prompt). It does NOT file the issue — the Publish step does,
           # via the harness, which enforces the per-run issue cap and the label
           # in code (this loop stays a single ranked report per run — ADR 0019
-          # deliberately leaves staleness-review at one issue). No Edit/Write tools are granted, and gh access is scoped to
-          # read-only subcommands, so the agent can neither mutate the repo nor file
-          # an issue itself (report-only on the cron, ADR 0011).
+          # deliberately leaves staleness-review at one issue). No Edit/Write tools
+          # are granted and gh access is scoped to read-only subcommands (list/view/
+          # search), so the agent can neither mutate the repo nor file an issue itself
+          # (report-only on the cron, ADR 0011).
           # --output-format stream-json --verbose: stream every event so a hung run
           # leaves a trace (plain json buffers) and the final result event (with
           # total_cost_usd) lands before claude exits — cost captured even on failure.
@@ -111,7 +112,7 @@ jobs:
             --model claude-sonnet-4-6 \
             --max-budget-usd 3.00 \
             --permission-mode acceptEdits \
-            --allowedTools "Bash(gh issue list:*) Bash(gh issue view:*) Bash(gh search:*) Bash(gh api:*) Bash(git:*) Bash(python3:*) Read Grep Glob WebSearch WebFetch" \
+            --allowedTools "Bash(gh issue list:*) Bash(gh issue view:*) Bash(gh search:*) Bash(git:*) Bash(python3:*) Read Grep Glob WebSearch WebFetch" \
             --append-system-prompt "$(sed "s#@SKILL_DIR@#$SKILL_DIR#g" harness/prompts/staleness-audit.md)" \
             "Run the monthly staleness-review pass. Follow the instructions in the system prompt." \
             | tee "$RUNNER_TEMP/agent.jsonl"

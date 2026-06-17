@@ -84,19 +84,20 @@ jobs:
           PRIVATE_MARKERS: ""
         run: |
           set -euo pipefail
-          # Bash stays unscoped: the budgeted GATE is still invoked via a pipe
-          # (echo '<json>' | python3 .../cli.py gate), which a scoped pattern like
-          # Bash(python3:*) would block (the command starts with echo), and the
-          # agent writes each issue body via a heredoc. The leak GUARD, by contrast,
-          # is no longer a standalone step the agent must remember: it is folded into
-          # the guarded filing path (cli.py file/comment sanitizes, then shells to gh
-          # ONLY on ALLOW). --disallowedTools removes the casual `gh issue create` /
-          # `gh issue comment` bypass so filing goes through that guarded path. This
-          # is defense-in-depth, not a sandbox (an agent with arbitrary Bash could
-          # still subvert it); what it buys is that the *wired* filing path cannot
-          # skip the guard — the realistic forgetting-failure. The no-commits/edits
-          # invariant holds via contents:read + no Edit/Write, not via Bash scoping.
-          # See agent-research#127 (the prior unscoped-Bash rationale, now narrowed).
+          # Bash is scoped to the exact subcommands the loop runs; bare Bash is NOT
+          # granted (least-privilege, #307). The per-run GATE runs as
+          # `echo '<json>' | python3 .../cli.py gate` and the optional dry-run guard
+          # as `printf ... | python3 .../cli.py sanitize`, so echo/printf/python3 are
+          # allowlisted (echo/printf are output builtins — no reach beyond the Write
+          # tool). Issue bodies are written to a tempfile via the Write tool, then
+          # passed with --body-file to the guarded `python3 .../cli.py file|comment`.
+          # The leak GUARD is folded into that guarded filing path (cli.py file/comment
+          # sanitizes, then shells to gh ONLY on ALLOW). --disallowedTools removes the
+          # casual `gh issue create` / `gh issue comment` bypass so filing goes through
+          # that guarded path. This is defense-in-depth: the *wired* filing path cannot
+          # skip the guard (the realistic forgetting-failure), AND a scoped Bash
+          # prevents routing around it via `gh api -X POST`. The no-commits/edits
+          # invariant holds via contents:read + no Edit tool on the repo tree.
           # --output-format stream-json --verbose: stream every event to the log so
           # a hung/timed-out run leaves a trace (plain json buffers and goes dark),
           # AND the final result event (with total_cost_usd) reaches the log before
@@ -115,7 +116,7 @@ jobs:
             --model claude-sonnet-4-6 \
             --max-budget-usd 3.00 \
             --permission-mode acceptEdits \
-            --allowedTools "Bash Read Grep Glob" \
+            --allowedTools "Bash(gh issue list:*) Bash(gh issue view:*) Bash(gh search:*) Bash(git:*) Bash(python3:*) Bash(echo:*) Bash(printf:*) Read Grep Glob Write" \
             --disallowedTools "Bash(gh issue create:*) Bash(gh issue comment:*)" \
             --append-system-prompt "$(cat harness/prompts/apply-agent-research.md)" \
             "Run the scheduled apply-agent-research pass. SKILLS_TRACKER_TOKEN is unset, so this is the HOST instance (host mode). The knowledge mirror is cloned at ${MIRROR_DIR} (read-only), the published-skill catalog + installed-skill snapshot are at ${SKILLS_SRC} (the checkout itself), and the installed skill is at ${SKILL_DIR}. PRIVATE_MARKERS is empty (public repo). Follow the instructions in the system prompt." \
