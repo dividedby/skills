@@ -42,6 +42,9 @@ jobs:
       - name: Install Claude Code
         run: |
           set -euo pipefail
+          # Unpinned trusted-vendor dependency (#308): no per-version installer URL or
+          # checksum is published to consume; accepted on the same trust root as the
+          # CLAUDE_CODE_OAUTH_TOKEN issuer that authorizes this job.
           curl -fsSL https://claude.ai/install.sh | bash
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
