@@ -53,6 +53,25 @@ agent-ready issues. It never re-implements logic that a sub-skill already owns.
   existing CI/scheduled audit loops; each phase is then scoped to what the
   standing automation misses, not run in full regardless.
 
+## Prerequisites
+
+This skill sequences other skills, several of which are **not in this repo** — they live in the maintainer's global environment (`~/.claude/skills/`). The canonical snapshot of what's expected to be present is [`docs/agents/installed-skills.md`](../../../docs/agents/installed-skills.md).
+
+External (installed) skills used by the phases below:
+
+| Skill | Phase(s) |
+|-------|----------|
+| `improve-codebase-architecture` | 2 |
+| `ponytail` plugin (ponytail-audit lens) | 2 |
+| `tdd` | 3 |
+| `cba-searching` | 6 |
+| `to-prd` | 8 |
+| `to-issues` | 9 |
+
+Skills used by the phases that **are** in this repo (no install needed): `project-claude-config` (Phase 0), `staleness-audit` (Phase 1), `software-design` (Phases 2, 9), `frontend-design` (Phase 5), `doc-it` (Phase 5), `triage` (Phases 7, 9).
+
+If a phase's skill is absent from the running environment, surface it explicitly at the start of that phase and either skip the phase (with a recorded rationale) or apply the skill's documented reasoning inline — consistent with the Phase 0 narrow/skip protocol.
+
 ## Phase table
 
 | # | Phase | Primary skill(s) |
