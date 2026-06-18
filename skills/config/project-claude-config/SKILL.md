@@ -1,6 +1,6 @@
 ---
 name: project-claude-config
-description: Get a project's Claude config right in one state-routed pass — scaffold what's missing and critique what's present across both the harness (.claude/settings.json hooks, deny-only permissions, env) and the instruction files (CLAUDE.md / AGENTS.md), interviewing only for facts the repo can't reveal. Use for greenfield setup, auditing an established repo, or the common partial case (some config exists, some doesn't). Manual/slash invocation only.
+description: Scaffold and audit a project's Claude harness and instruction files in one state-routed pass. Manual/slash invocation only.
 disable-model-invocation: true
 ---
 
@@ -13,13 +13,13 @@ Two concerns, always in this order:
 1. **Harness** — `.claude/settings.json` (hooks, `env`, deny-only permissions, light plugins). First, because a hook that enforces something automatically beats a CLAUDE.md line asking the agent to remember it.
 2. **Instructions** — `CLAUDE.md` / `AGENTS.md`. Second, so this pass can skip or cut any line the harness now enforces.
 
-One bar everywhere: **every line costs context or runs every session, so it must earn its place.** Nothing here restates or weakens the global `~/.claude/` config. Propose before writing; nothing is written until approved.
+Every line costs context or runs every session — it must earn its place. Nothing scaffolded or kept may restate or weaken the global `~/.claude/` config. Propose before writing; nothing is written until approved.
 
-Be efficient: **delegate discovery to an Explore subagent** and work from condensed findings + `file:line` refs. Don't pull whole files into the parent context (the one exception is in Step 2).
+Delegate discovery to an Explore subagent and work from condensed findings + `file:line` refs — don't pull whole files into the parent context (the one exception is in Step 2).
 
 ## Step 1 — Global baseline
 
-Read `~/.claude/CLAUDE.md` and `~/.claude/settings.json` once. Treat all of it as **already in effect** — communication style, code-style defaults, the bypass-style `defaultMode`, the five PreToolUse global guards (read-guard, bash-guard, git-guard, secret-guard, typecheck-guard), model/effort/statusline, enabled plugins. Nothing you scaffold or keep may restate, duplicate, or weaken any of it. Hook provenance lives in `~/repos/claude-config/hooks/README.md` — read that, not the `.py` files. The merge semantics (hooks additive across scopes, `deny` union, most-specific-wins scalars), the CI/AFK carve-out, and the namesake-defer rule (a global guard yields to a same-named project hook — check this before classifying a re-declared hook as waste) live in [CATALOG.md](CATALOG.md) "Verified harness facts" — judge every hook against those facts, not from memory.
+Read `~/.claude/CLAUDE.md` and `~/.claude/settings.json` once. Treat all of it as **already in effect** — communication style, code-style defaults, the bypass-style `defaultMode`, the five PreToolUse global guards (read-guard, bash-guard, git-guard, secret-guard, typecheck-guard), model/effort/statusline, enabled plugins. Hook provenance lives in `~/repos/claude-config/hooks/README.md` — read that, not the `.py` files. The merge semantics (hooks additive across scopes, `deny` union, most-specific-wins scalars), the CI/AFK carve-out, and the namesake-defer rule live in [CATALOG.md](CATALOG.md) "Verified harness facts" — judge every hook against those facts, not from memory.
 
 ## Step 2 — Detect (subagent)
 
@@ -40,7 +40,7 @@ Work the harness concern before the instructions concern: settle the proposed ho
 
 ## Step 4 — Interview: gap-filler only, capped at the stub bar
 
-The interview is **gated behind Explore** — never ask what the repo can answer. Ask only for facts the repo cannot reveal: what the project is for, intent and goals, conventions not yet visible in code, what the maintainer wants enforced. Cap it at the **stub bar**: enough to write earn-the-line stubs plus a confirm/correct summary — not config completeness. In practice this means the interview is heaviest on greenfield, near-silent on a mature repo (where questions are reserved for contradictions the audit surfaces).
+The interview is **gated behind Explore** — ask only for facts the repo cannot reveal: what the project is for, intent and goals, conventions not yet visible in code, what the maintainer wants enforced. Cap it at the **stub bar**: enough to write earn-the-line stubs plus a confirm/correct summary — not config completeness. In practice the interview is heaviest on greenfield and near-silent on a mature repo (where questions are reserved for contradictions the audit surfaces).
 
 ## Step 5 — Propose from the catalog, validate, get approval
 
@@ -48,6 +48,6 @@ Every harness recommendation comes from [CATALOG.md](CATALOG.md): fact-gated (it
 
 Before showing the proposal, **WebFetch the catalog's canonical doc anchors for the harness items you're proposing** (Hooks + Settings, plus Permissions if a permission is proposed) to confirm the specific events, matchers, and keys are current and non-deprecated. Scope the check to your proposal, not the whole catalog; instruction-file proposals have no keys or events and need no fetch.
 
-Then show everything as **one batch** — proposed `settings.json` changes, proposed/trimmed instruction files, each with a one-line why — and await approval. If the user rejects a hook that had justified omitting or cutting an instruction line, restore that line before writing: the instruction is only dead weight while something enforces it. **Route settings writes through the `update-config` skill** (never hand-edit JSON, never write `settings.local.json`); write instruction files directly after approval.
+Then show everything as **one batch** — proposed `settings.json` changes, proposed/trimmed instruction files, each with a one-line why — and await approval. If the user rejects a hook that had justified omitting or cutting an instruction line, restore that line before writing. **Route settings writes through the `update-config` skill** (never hand-edit JSON, never write `settings.local.json`); write instruction files directly after approval.
 
 If any item is a genuine judgment call (a hook's value vs. annoyance, a contradiction to resolve), offer `/grill-me`. For domain glossary (`CONTEXT.md`) and ADRs, point at `/grill-with-docs` — this skill does not scaffold those.
