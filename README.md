@@ -28,7 +28,7 @@ Pick the skills you want when prompted. Re-run to update.
 Setting up and auditing a project's Claude config — instruction files and the settings/hooks harness. See the [bucket README](./skills/config/README.md) for the internal seams.
 
 - **[project-claude-config](./skills/config/project-claude-config/SKILL.md)** — One state-routed pass over a project's Claude config: scaffold what's missing and critique what's present across both the harness (`.claude/settings.json`) and the instruction files (`CLAUDE.md` / `AGENTS.md`), interviewing only for facts the repo can't reveal.
-- **[setup-dividedby-skills](./skills/config/setup-dividedby-skills/SKILL.md)** — Install the dividedby operating conventions into a target repo: scaffold docs/agents convention files and the CLAUDE.md Conventions block, create the Idea Inbox issue, reconcile GitHub labels to match labels.md, and apply the branching/merge policy — all behind a mandatory report-then-confirm gate.
+- **[setup-dividedby-skills](./skills/config/setup-dividedby-skills/SKILL.md)** — Install the dividedby conventions on top of setup-matt-pocock-skills — size labels, intake/idea-inbox, branching policy, the Conventions block, and HITL verification gates. Every network mutation is gated behind an explicit confirm step. Manual/slash invocation only.
 - **[triage](./skills/config/triage/SKILL.md)** — Move issues through a state machine on our label vocabulary: show what needs attention, triage a specific issue with the appropriate outcome comment, and route skill-request issues through the ADR-0021 prior-art scan.
 
 ### Meta
