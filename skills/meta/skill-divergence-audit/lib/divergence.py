@@ -44,9 +44,15 @@ def classify_skill(our_skill, upstream_skills):
     """Classify a single *our* skill against the upstream skill set.
 
     ``our_skill`` is a dict with at minimum:
-        ``name``     — the skill slug (str)
-        ``pillars``  — a frozenset/set/list of named concept-pillars the skill
-                       covers (e.g. {"scan", "classify", "render"})
+        ``name``        — the skill slug (str)
+        ``pillars``     — a frozenset/set/list of named concept-pillars the
+                          skill covers (e.g. {"scan", "classify", "render"})
+        ``contradicts`` — optional set/list of upstream pillar names our skill
+                          explicitly opposes.  When the intersection of
+                          ``contradicts`` and the matched upstream's pillars is
+                          non-empty, the skill is classified as ``DIVERGED``
+                          (highest-priority signal, takes precedence over
+                          OUTDATED_HERE / ALIGNED).
 
     ``upstream_skills`` is a list of dicts with the same shape, drawn from
     Matt's repo and/or the agent-research KB (source field identifies which).
@@ -55,6 +61,7 @@ def classify_skill(our_skill, upstream_skills):
     """
     our_name = our_skill["name"].lower()
     our_pillars = set(p.lower() for p in our_skill.get("pillars", []))
+    our_contradicts = set(p.lower() for p in our_skill.get("contradicts", []))
 
     matches = [
         s for s in upstream_skills
@@ -68,6 +75,11 @@ def classify_skill(our_skill, upstream_skills):
     upstream_pillars = set()
     for m in matches:
         upstream_pillars.update(p.lower() for p in m.get("pillars", []))
+
+    # DIVERGED takes highest precedence: our skill explicitly contradicts a
+    # named upstream pillar.
+    if our_contradicts & upstream_pillars:
+        return "DIVERGED"
 
     if not upstream_pillars:
         # Upstream exists but declares no pillars — treat as aligned.
@@ -129,6 +141,19 @@ def diff(our_skills, upstream_skills):
             detail = f"{name!r} is aligned with upstream"
             source = "both"
             pillars = []
+        elif category == "DIVERGED":
+            our_contradicts = set(p.lower() for p in skill.get("contradicts", []))
+            upstream_pillars = set()
+            for m in upstream_skills:
+                if m["name"].lower() == name.lower():
+                    upstream_pillars.update(p.lower() for p in m.get("pillars", []))
+            conflicting = sorted(our_contradicts & upstream_pillars)
+            detail = (
+                f"{name!r} directly contradicts upstream pillar(s): "
+                + ", ".join(repr(p) for p in conflicting)
+            )
+            source = "both"
+            pillars = conflicting
         else:
             # OUTDATED_HERE
             our_pillars = set(p.lower() for p in skill.get("pillars", []))

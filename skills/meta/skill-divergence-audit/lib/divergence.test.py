@@ -72,6 +72,24 @@ class TestClassifySkill(unittest.TestCase):
         ]
         self.assertEqual(classify_skill(ours, up), "OUTDATED_HERE")
 
+    def test_diverged_when_contradicts_intersects_upstream_pillars(self):
+        # Our skill explicitly contradicts a pillar the upstream names → DIVERGED
+        ours = {"name": "foo", "pillars": ["scan"], "contradicts": ["classify"]}
+        up = [upstream_skill("foo", ["scan", "classify"])]
+        self.assertEqual(classify_skill(ours, up), "DIVERGED")
+
+    def test_diverged_takes_precedence_over_outdated(self):
+        # We are also missing "render", but DIVERGED wins because contradicts hits
+        ours = {"name": "foo", "pillars": ["scan"], "contradicts": ["classify"]}
+        up = [upstream_skill("foo", ["scan", "classify", "render"])]
+        self.assertEqual(classify_skill(ours, up), "DIVERGED")
+
+    def test_no_diverged_when_contradicts_does_not_intersect_upstream(self):
+        # contradicts names a pillar upstream does not have → normal ALIGNED
+        ours = {"name": "foo", "pillars": ["scan", "classify"], "contradicts": ["nonexistent"]}
+        up = [upstream_skill("foo", ["scan", "classify"])]
+        self.assertEqual(classify_skill(ours, up), "ALIGNED")
+
 
 # ---------------------------------------------------------------------------
 # classify_upstream

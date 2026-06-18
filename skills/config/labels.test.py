@@ -163,6 +163,9 @@ class TestLoopNetworkLabels(unittest.TestCase):
     def test_source_staleness_review(self):
         self.assertIn("source:staleness-review", self._names())
 
+    def test_source_skill_audit(self):
+        self.assertIn("source:skill-audit", self._names())
+
     def _assert_no_leak(self, core_heading: str, tier_label: str):
         core = _extract_section(self.text, core_heading)
         self.assertTrue(core.strip(), f"{core_heading} section missing or empty")

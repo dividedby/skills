@@ -46,6 +46,10 @@ end-to-end, adapting to what *this* idea needs:
      work is concrete enough for `/to-issues` to carve into implementation tickets.
    A single spike that unblocks all downstream work is fine. Skip this step when
    the idea is already concrete — one decision, one clear owner.
+   When an idea is decision-mapped into spikes, move the inbox row to
+   `✅ Actioned` with `→ #<spike-1> #<spike-2> …` pointing at every filed spike;
+   the spike chain resolves into the eventual implementation ticket, which closes
+   the loop on the original idea.
 3. **Pick only the steps it needs** — do not run the whole pipeline by rote. Choose
    from:
    - `/grill-with-docs` — when the idea is fuzzy or contends with the domain model
