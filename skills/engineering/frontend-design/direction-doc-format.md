@@ -2,9 +2,9 @@
 
 The contract for `docs/design/direction.md` — the living current-state
 document `/frontend-design` reads or creates in **Bootstrap** (Step 1 of
-the Iteration Loop). This file is the `/frontend-design` analog of
-`/software-design`'s `issue-shape.md`: it defines the shape of the artifact
-the skill writes, not the artifact itself.
+the Iteration Loop). This file is the `/frontend-design` analog of `/software-design`'s TDD-ready
+issue format: it defines the shape of the artifact the skill writes, not the
+artifact itself.
 
 `docs/design/direction.md` is the single source of truth for the committed
 aesthetic direction. Step 5 (Design Language Instantiation) reads from it

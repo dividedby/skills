@@ -19,10 +19,9 @@ the discipline that makes running unattended safe. See `CONTEXT.md` for the
 [RUNNING-AFK.md](RUNNING-AFK.md) for the HITL→AFK hardening detail.
 
 Deferrals: spec/backlog authoring → `/to-issues` and `/triage`; durable
-TDD-ready issue bodies → `/software-design` (`issue-shape.md`); loop runtime
-mechanics → `/loop` or `/schedule`/CI-cron. This skill checks input durability
-(element 5) and owns the five elements below — it never authors the backlog or
-builds a new runtime.
+TDD-ready issue bodies → `/software-design`; loop runtime mechanics → `/loop`
+or `/schedule`/CI-cron. This skill checks input durability (element 5) and owns
+the five elements below — it never authors the backlog or builds a new runtime.
 
 ## Select the runtime (don't build one)
 
@@ -81,13 +80,13 @@ makes stopping safe.
 ### 5. Brief-durability precondition
 
 A **pre-run shape check**, run once before the first iteration: check each brief
-survives a cold pickup per the **Durability** criteria in
-[issue-shape.md](../software-design/issue-shape.md) — names are behaviours/
-interfaces/types (not file paths or line numbers), acceptance criteria state
-*what* in observable Given/When/Then form (not *how* via implementation steps)
-and are independently verifiable, scope boundary explicit where non-obvious. A
-brief that fails bounces back to its author (`/software-design`'s `issue-shape.md`
-owns this format) — this skill gates durability, it never authors the brief.
+survives a cold pickup per the **Durability** criteria `/software-design` enforces
+— names are behaviours/interfaces/types (not file paths or line numbers),
+acceptance criteria state *what* in observable Given/When/Then form (not *how*
+via implementation steps) and are independently verifiable, scope boundary
+explicit where non-obvious. A brief that fails bounces back to its author
+(`/software-design` owns this format) — this skill gates durability, it never
+authors the brief.
 
 This is **distinct from per-item reconciliation**, which runs inside the
 firewalled sub-agent at each item's pickup: the sub-agent reads the live full
