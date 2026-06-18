@@ -10,7 +10,7 @@ A **composed** pass — run **after** `setup-matt-pocock-skills` — that layers
 
 **What Matt's skill gives you:** issue tracker, triage labels (incl. `needs-info`), domain doc layout, and the `## Agent skills` instruction block.
 
-**What this skill adds:** `size:*` labels, intake/idea-inbox, branching/merge policy, the `## Conventions` block (incl. skill-editorial-intent and HITL/verification gates), and reconciliation of the label set to the dividedby CORE posture (which suppresses `needs-info`).
+**What this skill adds:** `size:*` labels, intake/idea-inbox, branching/merge policy, the `## Conventions` block, and reconciliation of the label set and label-convention doc to the dividedby CORE posture.
 
 Every network mutation — label create/edit/delete, merge-setting PATCH, Inbox issue creation, default-branch change — is preceded by a plan you must explicitly confirm. Nothing is written or mutated until you approve.
 
@@ -36,8 +36,10 @@ These are authoritative. Adapt repo-specific references (Inbox issue URL, repo n
 
 Dispatch Explore to report on:
 
-- **CLAUDE.md / AGENTS.md:** does a `## Conventions` block exist? Which sections?
+- **CLAUDE.md / AGENTS.md:** does a `## Conventions` block exist? Which sections? Does the Triage labels pointer reference `docs/agents/triage-labels.md` or `docs/agents/labels.md`?
 - **Idea Inbox issue:** search open+closed issues for `label:idea-inbox`. Note the issue number if found.
+- **`docs/agents/triage-labels.md`:** does it exist? Does it contain the dividedby CORE/LOOP-NETWORK/CHANNELS tiering structure, or is it Matt's version?
+- **`docs/agents/idea-inbox.md`:** does it exist?
 - **Branching/merge settings:** `gh api repos/{owner}/{repo} --jq '{allow_squash_merge,allow_rebase_merge,allow_merge_commit,delete_branch_on_merge,default_branch}'`. Compare against universal mechanics. Check whether this repo is already listed in `~/.claude/branching-flow.md`.
 
 **Labels — diff directly on the lead, do not delegate.** Run the live list and diff it against `docs/agents/labels.md`:
@@ -51,6 +53,12 @@ Report:
 - `needs-info` present (it must be **removed** — Matt's setup installs it; the dividedby posture suppresses it)
 - CORE `idea-inbox` label missing or drifted
 - Stock labels still present (`documentation`, `duplicate`, `good first issue`, `help wanted`, `invalid`, `question`)
+
+**Stale cross-reference scan.** After the label diff, read the target's `docs/agents/*.md` files and the `## Conventions` block in the instruction file. Search for:
+- any reference to `needs-info`
+- Matt-specific role→label wording that the dividedby convention removes
+
+Record each hit (file + line) in the detect report. These will be reconciled in Concern D (triage-labels.md overwrite) and Concern A (Conventions block update).
 
 Condense findings to a state summary; do not dump raw output.
 
@@ -68,6 +76,8 @@ Locate the `## Conventions` heading in the target's instruction file.
 - **skip** if complete and current.
 
 The block includes: Issue tracker, Triage labels, Domain docs, Intake convention (with the live Inbox URL), Skill editorial intent, and HITL/verification gate posture.
+
+The **Triage labels** pointer in the Conventions block must point at `docs/agents/triage-labels.md` (Matt's filename, overwritten with dividedby content by Concern D — see below). Do **not** point at `docs/agents/labels.md`; that file does not exist in the target. If the block was seeded with a `docs/agents/labels.md` reference, update it to `docs/agents/triage-labels.md`.
 
 ### Concern B — Idea Inbox issue
 
@@ -89,7 +99,27 @@ Additionally:
 
 Note: `bug` and `enhancement` likely exist as GitHub defaults with wrong colors — treat as **update**, not create.
 
-### Concern D — Branching/merge policy
+### Concern D — `docs/agents/triage-labels.md` (dividedby content)
+
+Matt's skill creates this file with content from his template (which includes `needs-info` and uses his role→label map). Overwrite it with the dividedby label convention, seeded from `dividedby/skills docs/agents/labels.md`, adapting repo-specific references (replace `dividedby/skills` with the target repo name in the CHANNELS note).
+
+Note: the seeded doc is the **full convention reference** — it describes all tiers (CORE, LOOP-NETWORK, CHANNELS). Only CORE labels are actually created on GitHub (Concern C). A reader should not infer that LOOP/CHANNELS labels were installed.
+
+Also reconcile any stale references found in the detect scan: if `docs/agents/issue-tracker.md`, `docs/agents/domain.md`, or any other file in `docs/agents/` contains `needs-info` or Matt-specific role→label wording, update those lines to match the dividedby convention. Surface each such edit in the HITL plan before executing.
+
+- **update** if the file exists but does not contain the dividedby CORE/LOOP-NETWORK/CHANNELS tiering structure (i.e. it's Matt's version).
+- **skip** if the file already carries the dividedby content (idempotent re-run).
+
+This is a file write in the target repo, not a network mutation — but surface it in the plan so the user can approve.
+
+### Concern E — `docs/agents/idea-inbox.md`
+
+The Conventions block's Intake pointer references this file; Concern B creates the Inbox *issue*, but the *doc* must also exist.
+
+- **create** if `docs/agents/idea-inbox.md` is absent: seed from `dividedby/skills docs/agents/idea-inbox.md`, adapting the CHANNELS note (replace `dividedby/skills` with the target repo name) and any other repo-specific references.
+- **skip** if already present.
+
+### Concern F — Branching/merge policy
 
 From `~/.claude/branching-flow.md`:
 - **Classify role:** library/tool (trunk-based, default `main`) or deployed app (two-branch, default `staging`). Ask if ambiguous.
@@ -103,7 +133,7 @@ From `~/.claude/branching-flow.md`:
 
 **Show the full plan before any network mutation or file write.**
 
-Present it as a structured list, grouped by concern (A–D), with one line per action showing posture (create / update / skip / delete) and a brief what/why. Flag destructive actions (label deletes, `needs-info` removal, default-branch change) explicitly.
+Present it as a structured list, grouped by concern (A–F), with one line per action showing posture (create / update / skip / delete) and a brief what/why. Flag destructive actions (label deletes, `needs-info` removal, default-branch change) explicitly.
 
 **Do not proceed until the user types explicit confirmation** (e.g. "go", "approved", "yes"). A non-response or an ambiguous reply is not approval. If the user modifies the plan, update the action list before proceeding.
 
@@ -155,7 +185,17 @@ For `needs-info` and stock label **deletes** — check for open issues carrying 
 gh label delete "<name>" --yes
 ```
 
-**D — Branching/merge policy:**
+**D — `docs/agents/triage-labels.md`:**
+
+Read `dividedby/skills docs/agents/labels.md` (already read in Before starting). Adapt it: replace `dividedby/skills` with the target repo name in the CHANNELS ownership note. Write the adapted content to `docs/agents/triage-labels.md` in the target, overwriting Matt's version. This is a local file write (target clone) — no network call.
+
+Also apply any stale-reference fixes identified in the detect scan: update `needs-info` references and Matt-specific role→label wording in any `docs/agents/*.md` file that carries them.
+
+**E — `docs/agents/idea-inbox.md`:**
+
+Read `dividedby/skills docs/agents/idea-inbox.md` (already read in Before starting). Adapt it: replace `dividedby/skills` with the target repo name if referenced. Write the adapted content to `docs/agents/idea-inbox.md` in the target. This is a local file write — no network call.
+
+**F — Branching/merge policy:**
 
 Edit `~/.claude/branching-flow.md` to add the target repo under its tier (local file write — no separate confirmation needed since it was in the plan).
 
@@ -179,9 +219,10 @@ gh api -X PATCH repos/{owner}/{repo} -f default_branch=<branch>
 
 After execution, re-run the key checks:
 
-- `gh label list --limit 100 --json name,color,description` — confirm CORE label set matches `docs/agents/labels.md` with no drift; confirm `needs-info` is absent.
+- `gh label list --limit 100 --json name,color,description` — confirm CORE label set matches `dividedby/skills docs/agents/labels.md` (the authoritative source) with no drift; confirm `needs-info` is absent. Confirm `docs/agents/triage-labels.md` in the target contains the dividedby CORE/LOOP-NETWORK/CHANNELS tiering structure (not Matt's version).
 - `gh api repos/{owner}/{repo} --jq '{allow_squash_merge,allow_rebase_merge,allow_merge_commit,delete_branch_on_merge,default_branch}'` — confirm universal mechanics applied.
-- Confirm the Conventions block is present and the Inbox link resolves.
+- Confirm the Conventions block is present, the Inbox link resolves, and the Triage labels pointer references `docs/agents/triage-labels.md` (not `docs/agents/labels.md`).
+- Confirm `docs/agents/idea-inbox.md` exists in the target.
 
 Report a short summary: what was created, what was updated, what was skipped. Surface any drift — do not silently leave it.
 
