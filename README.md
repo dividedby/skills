@@ -34,6 +34,7 @@ Setting up and auditing a project's Claude config — instruction files and the 
 ### Meta
 
 - **[apply-agent-research](./skills/meta/apply-agent-research/SKILL.md)** — Apply an external agent-research knowledge base to a repo's own agent-meta: read a public knowledge mirror plus the repo's own governance docs, then propose its few best improvements (at most five per run, each clearing a high independent bar) as labeled issues — never editing, committing, or merging.
+- **[skill-divergence-audit](./skills/meta/skill-divergence-audit/SKILL.md)** — Recurring, report-only audit that diffs this repo's published skills against Matt Pocock's repo and the agent-research KB, classifies each gap, and proposes realignment issues — at most five per run, never editing, committing, or merging.
 
 ## Proposal loops
 
