@@ -1,7 +1,8 @@
 ---
 name: autonomous-loop
 description: >
-  Take a briefed backlog to a safely-running unattended ("AFK") agent loop.
+  Take a briefed backlog to a safely-running unattended ("AFK") agent loop —
+  the discipline of running unattended, not a loop runtime.
   Use when setting up or running a loop over a backlog, running an agent while
   away from the keyboard, or hardening a loop so it can run unattended.
   Applying loops (commit / open PRs / merge on a green gate) are first-class;

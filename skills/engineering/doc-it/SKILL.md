@@ -5,7 +5,7 @@ description: >
   docs, onboarding guide, CHANGELOG) from source — applying changes directly.
   Audits existing ADRs and CONTEXT.md for staleness and drift, but reports
   findings only; never edits decision records. Use when reference docs are
-  missing, stale, or out of sync with the code.
+  missing or out of sync with the code.
 ---
 
 # Doc-It
