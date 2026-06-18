@@ -9,48 +9,48 @@ description: >
 
 # Frontend Design
 
-Orchestrates a 7-step loop from prose direction → committed
-`docs/design/direction.md` + paired ADR → instantiated `tokens.css` →
-generated components → audited output across React, Next.js, Tailwind,
-and vanilla HTML/CSS/JS.
+A 7-step loop: prose direction → committed `docs/design/direction.md` + paired
+ADR → `tokens.css` → components → audited output. Works across React, Next.js,
+Tailwind, and vanilla HTML/CSS/JS.
 
-Substance lives in three supporting files: [banned-patterns.md](banned-patterns.md)
-(tiered anti-pattern catalogue with paired alternatives),
-[direction-doc-format.md](direction-doc-format.md) (9-field spec +
-bootstrap mechanics + ADR pairing), [design-tokens.md](design-tokens.md)
-(color / type / motion / spacing+depth taxonomy).
+Supporting files (loaded per step, not upfront):
+[banned-patterns.md](banned-patterns.md) — tiered anti-pattern catalogue with paired alternatives;
+[direction-doc-format.md](direction-doc-format.md) — 9-field spec, bootstrap mechanics, ADR pairing;
+[design-tokens.md](design-tokens.md) — color / type / motion / spacing+depth taxonomy.
 
-## Overview
+## Scope
 
 **Use for:** greenfield UIs, re-themes, design reviews, accessibility
-audits, design-token foundations, component generation. Defaults: WCAG
-2.2 AA minimum, keyboard + screen-reader paths, `prefers-reduced-motion`
-respected, fluid from 320 px up, Next.js RSC-safe unless interactivity
-is needed. **Skip for:** pure logic / data-layer, CLI, prose, structural
-refactors with no visible change. **Existing codebases:** read current
-tokens and components before proposing; never silently overwrite, but do
-**challenge inherited tokens, stack, or aesthetic** when they predate
-this skill and conflict with the brief. Name the mismatch, propose the
-better fit, let the user accept or override.
+audits, design-token foundations, component generation.
 
-## Invocation & Inputs
+**Defaults:** WCAG 2.2 AA minimum, keyboard + screen-reader paths,
+`prefers-reduced-motion` respected, fluid from 320 px up, Next.js RSC-safe
+unless interactivity is needed.
 
-Auto-invoke on phrases in `description`, or any task that visibly creates
-or edits UI. Collect — ask, never invent: **Stack**, **Intent**, **Brand**,
-**Content structure**, **Constraints**, **Aesthetic direction**. "Surprise
-me" on direction → Bootstrap with soft-refusal handling.
+**Skip for:** pure logic / data-layer, CLI, prose, structural refactors
+with no visible change.
+
+**Existing codebases:** read current tokens and components before proposing;
+never silently overwrite, but **challenge inherited tokens, stack, or
+aesthetic** when they predate this skill and conflict with the brief. Name
+the mismatch, propose the better fit, let the user accept or override.
+
+## Inputs
+
+Collect before proceeding — ask, never invent: **Stack**, **Intent**,
+**Brand**, **Content structure**, **Constraints**, **Aesthetic direction**.
+"Surprise me" on direction → Bootstrap with soft-refusal handling.
 
 ## Iteration Loop
 
 ### 1. Bootstrap
 
 Check `docs/design/direction.md`. If present and complete (all 9 fields,
-paired ADR exists), reuse. If present but **thin, vague, or predates
-this skill** (missing fields, no paired ADR, prose-only aesthetic
-hand-waves), treat it as a *candidate to challenge* — carry it into
-Step 2 as one option alongside a revised proposal, not as a settled
-default. If missing, grill the 9 fields per
-[direction-doc-format.md](direction-doc-format.md) —
+paired ADR exists), reuse. If present but **thin, vague, or predates this
+skill** (missing fields, no paired ADR, prose-only aesthetic hand-waves),
+treat it as a *candidate to challenge* — carry it into Step 2 as one option
+alongside a revised proposal, not as a settled default. If missing, grill
+the 9 fields per [direction-doc-format.md](direction-doc-format.md) —
 ordering, "good enough" bars, 2-attempt cap, `Tentative:` prefix,
 soft/hard/partial refusal handling. On completion, write **both**
 `docs/design/direction.md` and `docs/adr/NNNN-frontend-design-direction.md`
@@ -116,13 +116,10 @@ the direction doc's *Banned-pattern overrides*.
 default-detection triggers — state the direction-derived justification
 *before* emitting one.
 
-## Warning Behavior
+## Warning Format
 
-Tiered, with paired alternatives. Full catalogue: [banned-patterns.md](banned-patterns.md).
-
-- **BLOCK** — refuse by default; override needs a brand-specific reason in the direction doc.
-- **WARN** — single-line callout with the *instead reach for…* alternative; user accepts inline.
-- **INFORM** — note in post-generation audit only.
+Tiered behavior defined in [banned-patterns.md](banned-patterns.md). Emit
+warnings in this format:
 
 ```
 ⚠️  [pattern] ([tier]) conflicts with the "[direction]" direction.
