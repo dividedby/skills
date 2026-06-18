@@ -48,7 +48,7 @@ Apply the **deletion test** to anything suspect: would deleting it concentrate c
 
 **Vocabulary to use (`codebase-design`):** module, interface, depth, seam, adapter, leverage, locality. Every finding names the module(s) and describes the deepening opportunity in these terms.
 
-**Security as an optional input.** For repos handling auth, user data, or external APIs, layer a security scan over the architecture walk: data-flow boundaries, auth surfaces, token/secret handling, CI workflow permissions. High-severity findings (auth bypass, secret exposure, privilege escalation) are filed as standalone `ready-for-agent` issues and elevate the epic that owns that surface.
+**Security as an optional input.** For repos handling auth, user data, or external APIs, layer a security scan over the architecture walk: data-flow boundaries, auth surfaces, token/secret handling, CI workflow permissions. High-severity findings (auth bypass, secret exposure, privilege escalation) are high-priority leverage findings — mark them top-priority and expedite them through the Stage 3 synthesis + integration gate like all other findings; they elevate the epic that owns that surface but are not filed standalone before Stage 3.
 
 **Test coverage as an optional input.** Where coverage appears thin, map which architectural seams have no test surface through them. Feed into the deepening findings — an untestable seam is a shallowness signal, not just a coverage gap.
 

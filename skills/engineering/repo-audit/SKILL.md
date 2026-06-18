@@ -1,6 +1,7 @@
 ---
 name: repo-audit
-description: User-invoked audit that hunts high-leverage improvements in a repo and produces a small set of epics with an ordered roadmap — reconciled against the existing backlog, not filed beside it.
+description: >
+  User-invoked audit that hunts high-leverage improvements in a repo and produces a small set of epics with an ordered roadmap — reconciled against the existing backlog, not filed beside it.
 disable-model-invocation: true
 ---
 
@@ -52,7 +53,7 @@ Look for obvious hot paths, N+1 queries, unnecessary work, and scaling risks vis
 
 Walk the codebase using the Explore method from `improve-codebase-architecture`: move organically through the code, noting where you experience friction — concepts that require bouncing between many small modules, interfaces nearly as complex as their implementations, logic scattered across callers with no locality, untestable seams. Apply the **deletion test** to anything that looks shallow.
 
-Use `codebase-design` vocabulary throughout: **module**, **interface**, **depth**, **seam**, **adapter**, **leverage**, **locality**. A finding here must name the module(s) involved and describe the deepening opportunity in these terms. For a full architectural deep-dive a maintainer can run separately, see `improve-codebase-architecture` (user-invoked, produces an HTML report).
+Use `codebase-design` vocabulary throughout (module, interface, depth, seam, and related terms). A finding here must name the module(s) involved and describe the deepening opportunity in those terms. For a full architectural deep-dive a maintainer can run separately, see `improve-codebase-architecture` (user-invoked, produces an HTML report).
 
 **Optional inputs:**
 - Security check — run where the repo handles auth, user data, or external APIs.
@@ -150,7 +151,7 @@ Verify the hard gate held. This is not a five-role review — it is a gate verif
 1. Every existing open issue the audit touched is explicitly dispositioned in the Stage 3 output.
 2. The output contains at least one epic and a roadmap. If it does not, the audit has failed — revisit Stage 3.
 3. No issue below the altitude bar shipped as a standalone ticket.
-4. Every decomposed issue has a state label (`ready-for-agent`, `blocked`, or `ready-for-human`) and the comment that label requires.
+4. Every decomposed issue carries the correct state label (`ready-for-agent`, `blocked`, or `ready-for-human`).
 
 **Completion criterion:** all four checks pass, or failing ones are fixed and re-verified before declaring done.
 
