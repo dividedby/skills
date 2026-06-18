@@ -67,7 +67,7 @@ Locate the `## Conventions` heading in the target's instruction file.
 - **update** if the block exists but is missing sections or has stale links.
 - **skip** if complete and current.
 
-The block includes: Issue tracker, Triage labels, Domain docs, Installed skills (if relevant), Intake convention (with the live Inbox URL), Skill editorial intent, and HITL/verification gate posture.
+The block includes: Issue tracker, Triage labels, Domain docs, Intake convention (with the live Inbox URL), Skill editorial intent, and HITL/verification gate posture.
 
 ### Concern B — Idea Inbox issue
 
