@@ -40,19 +40,22 @@ Matt Pocock's skill suite (`mattpocock/skills`, upstream of this repo's
 `dividedby/skills`) and this repo's own published skills are installed globally
 in `~/.claude/skills/`:
 
-`apply-agent-research`, `autonomous-loop`, `caveman`, `cba-searching`,
-`context-firewall`, `diagnose`, `find-skills`, `flow-pr`, `frontend-design`,
-`grill-me`, `grill-with-docs`, `handoff`, `improve-codebase-architecture`,
-`playwright-cli`, `project-claude-config`, `prototype`,
-`setup-dividedby-skills`, `software-design`, `staleness-audit`, `tdd`,
-`to-issues`, `to-prd`, `triage`, `write-a-skill`, `writing-beats`,
-`writing-fragments`, `writing-shape`, `zoom-out`.
+`apply-agent-research`, `ask-matt`, `autonomous-loop`, `cba-searching`,
+`codebase-design`, `context-firewall`, `decision-mapping`, `diagnosing-bugs`,
+`doc-it`, `domain-modeling`, `find-skills`, `flow-pr`, `frontend-design`,
+`grill-with-docs`, `grilling`, `handoff`, `implement`,
+`improve-codebase-architecture`, `playwright-cli`, `project-claude-config`,
+`prototype`, `repo-audit`, `review`, `setup-dividedby-skills`,
+`setup-matt-pocock-skills`, `software-design`, `staleness-audit`, `tdd`,
+`teach`, `to-issues`, `to-prd`, `triage`, `writing-beats`, `writing-fragments`,
+`writing-great-skills`, `writing-shape`.
 
 `setup-dividedby-skills` and `triage` are this repo's own skills (config bucket,
-issues #292 / #293), installed globally in place of the former upstream
-`setup-matt-pocock-skills` and `mattpocock/skills` `triage`, which were
-uninstalled once these replacements shipped (#294). The `triage` name is
-unchanged — the global install now resolves to this repo's version.
+issues #292 / #293) installed globally; `setup-matt-pocock-skills` remains
+installed alongside them — the uninstall planned in #294 was superseded by the
+lean-on-Matt posture ([ADR 0024](../adr/0024-lean-on-upstream-skills-soft-depend-over-reinvent.md)),
+which keeps Matt's suite as a soft-dependency. The dividedby `triage` is the
+version that resolves for the `triage` name in this repo's workflow.
 
 ## Installed plugins
 
@@ -70,7 +73,9 @@ From `claude-plugins-official` (`anthropics/claude-plugins-official`):
 Shipped with the Claude Code binary itself (not `~/.claude/` files), available in
 every session: `claude-api`, `code-review`, `fewer-permission-prompts`, `init`,
 `keybindings-help`, `loop`, `review`, `run`, `schedule`, `security-review`,
-`simplify`, `update-config`, `verify`. These cover capabilities a remote run would
+`simplify`, `update-config`, `verify`. (`review` and `code-review` also exist as
+installed `~/.claude/skills/` entries above — the binary-shipped versions are
+distinct skills of the same name.) These cover capabilities a remote run would
 not otherwise see — notably `verify` (run-the-app verification of a change) and
 `run` (launch/drive the app), the nearest neighbors to any release-QA or
 verification skill-request.

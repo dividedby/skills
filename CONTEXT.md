@@ -215,3 +215,22 @@ baseline input to a **Proposal loop** (read directly, never re-propose a capabil
 whose bar-to-revisit is unmet) and the durable home for a `wontfix` rationale that
 issue bodies only cross-reference.
 _Avoid_: wontfix doc, rejected-skill note, out-of-scope file.
+
+## Upstream soft-dependencies
+
+This repo defers to `mattpocock/skills` for the capabilities listed below rather
+than reinventing them — the default posture is delete-and-soft-depend per
+[ADR 0024](./docs/adr/0024-lean-on-upstream-skills-soft-depend-over-reinvent.md).
+Soft-dependency means expected to be installed alongside this plugin; these skills
+are never vendored here.
+
+**Foundation:** `codebase-design`, `domain-modeling`, `writing-great-skills`
+
+**Workflow:** `diagnosing-bugs`, `prototype`, `to-prd` / `to-issues` / `tdd` /
+`implement`, `grilling` / `grill-with-docs`
+
+`resolving-merge-conflicts` is intentionally **not** listed — it is not currently
+installed in the maintainer environment, so we declare no contract on it until it is.
+
+**Authoring standard.** Every kept or reworked skill in this repo is (re)written to
+the `writing-great-skills` standard.
