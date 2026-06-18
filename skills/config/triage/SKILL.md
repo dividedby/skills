@@ -45,15 +45,15 @@ gh issue list --state open --label "needs-triage" --json number,title,createdAt 
 
 ## Triage a specific issue
 
-1. **Gather context.** Read the full issue — body, comments, labels, dates. Parse any prior triage notes to avoid re-asking resolved questions. Explore the codebase via domain glossary and ADRs in the area.
+1. **Gather context.** Read the full issue — body, comments, labels, dates. Parse any prior triage notes to avoid re-asking resolved questions. Explore the codebase via domain glossary and ADRs in the area. `gh` CLI read/comment/label conventions: `docs/agents/issue-tracker.md`.
 
 2. **Intake routing.** If the issue describes something that belongs in the capture/drain path, reference `docs/agents/idea-inbox.md`. Do not re-file Inbox ideas as tracked issues.
 
 3. **Skill-request path.** If the issue carries `skill-request`, follow **Skill-request triage** below instead of the generic path.
 
-4. **Bug reproduction step.** If the category is `bug`, capture a minimal reproduction before proceeding: the exact steps, observed behaviour, and expected behaviour. Record this in a comment on the issue if not already present. An agent cannot reliably fix a bug it cannot reproduce.
+4. **Recommend.** State your category, state, and size recommendation with reasoning. Wait for direction.
 
-5. **Recommend.** State your category, state, and size recommendation with reasoning. Wait for direction.
+5. **Bug reproduction step.** If the recommended category is `bug`, capture a minimal reproduction before proceeding to apply the outcome: the exact steps, observed behaviour, and expected behaviour. Record this in a comment on the issue if not already present. An agent cannot reliably fix a bug it cannot reproduce.
 
 6. **Apply the outcome** and label:
 
@@ -72,7 +72,7 @@ gh issue list --state open --label "needs-triage" --json number,title,createdAt 
 When an issue carries `skill-request`:
 
 1. Run `/cba-searching` (installed skill — `docs/agents/installed-skills.md`) to check whether the wider open-source world already ships this capability well. Feed the issue description as the target concept.
-2. Route on the scan verdict per `docs/design/skill-request-flow.md` (ADR 0021): accept (`ready-for-agent`), park (`awaiting-corroboration`), or reject (`wontfix`).
+2. Route on the scan verdict per `docs/design/skill-request-flow.md` (ADR 0021): accept (`ready-for-agent`), park (`awaiting-corroboration` — supplemental label defined by that flow, not part of core triage vocab), or reject (`wontfix`).
 
 Do not re-derive the accept/park/reject semantics here — delegate to that flow.
 
@@ -85,7 +85,7 @@ Post a comment on the issue structured as:
 <One sentence.>
 
 ### Read first
-- <file or doc> — <why>
+- <interface, behaviour, or type> — <why>
 
 ### Decided (do not re-litigate)
 - <decision already made>
@@ -97,7 +97,7 @@ Post a comment on the issue structured as:
 - <anything ambiguous the agent must surface before implementing>
 ```
 
-**Interface-not-procedure.** Briefs must survive code churn: name behaviours, interfaces, and types — not file paths or line numbers. A brief that says "edit `lib/foo.py` line 42" is fragile; one that says "the `FooProcessor` interface must reject empty inputs" is durable.
+**Interface-not-procedure.** Briefs must survive code churn: name behaviours, interfaces, and types — not file paths or line numbers. A brief that says "edit the hook at line 42" is fragile; one that says "the bash-guard hook must block destructive shell ops" is durable.
 
 **AI-authored briefs** must include an `> AI-generated brief — review before handing to agent` blockquote at the top of the comment.
 
