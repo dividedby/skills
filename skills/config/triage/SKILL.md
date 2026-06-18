@@ -1,125 +1,118 @@
 ---
 name: triage
-description: Triage issues through a state machine driven by our label vocabulary. Use when the maintainer wants to see what needs attention, triage a specific issue, move an issue to a new state, or manage issue workflow on this repo's GitHub tracker.
+description: Triage issues through a state machine driven by the dividedby label vocabulary. Use when the maintainer wants to see what needs attention, triage a specific issue, move an issue to a new state, or manage issue workflow on this repo's GitHub tracker.
 ---
 
 # Triage
 
 Move issues on the project issue tracker through a small state machine. Every triaged issue carries exactly one state label, one category label, and one size label.
 
-## Reference docs
+## Label vocabulary
 
-- `docs/agents/labels.md` — full label vocabulary (state, category, size, channel)
-- `docs/agents/issue-tracker.md` — `gh` CLI conventions for reading, commenting, labelling
-- `docs/agents/idea-inbox.md` — inbox intake/drain convention
-- `docs/design/skill-request-flow.md` + ADR 0021 — skill-request triage path
+Full label definitions live in `docs/agents/labels.md`. The working set:
 
-## State machine
+**State** (apply exactly one): `needs-triage` / `ready-for-agent` / `ready-for-human` / `blocked` / `wontfix`
 
-**State labels** (apply exactly one):
+**Category** (apply exactly one): `bug` / `enhancement` / `chore` / `epic`
 
-- `needs-triage` — maintainer needs to evaluate
-- `ready-for-agent` — fully specified, ready for an AFK agent
-- `ready-for-human` — needs human implementation
-- `blocked` — waiting on an external dependency or decision
-- `wontfix` — will not be actioned
+**Size** (apply exactly one): `size:S` / `size:M` / `size:L` / `size:XL`
 
-**Category labels** (apply exactly one): `bug` / `enhancement` / `chore` / `epic`
+Normal flow: unlabelled → `needs-triage` → one of `ready-for-agent`, `ready-for-human`, `blocked`, or `wontfix`. The maintainer can override at any time — flag transitions that look unusual and confirm before proceeding.
 
-**Size labels** (apply exactly one): `size:S` / `size:M` / `size:L` / `size:XL`
+**Conflicting state labels.** If an issue carries two or more state labels, surface the conflict and ask which one to keep before doing anything else. Never silently pick one.
 
-Normal flow: an unlabelled issue goes to `needs-triage` first; from there it moves to `ready-for-agent`, `ready-for-human`, `blocked`, or `wontfix`. The maintainer can override at any time — flag transitions that look unusual and confirm before proceeding.
+## Branches
 
-**Conflicting state labels.** If an issue already carries two or more state labels, surface the conflict and ask the maintainer which one to keep before doing anything else. Never silently pick one.
+The maintainer invokes `/triage` in natural language. Three branches:
 
-## Invocation
+- "Show me what needs attention" → **Show attention queue**
+- "Triage #N" or "Let's look at #N" → **Triage a specific issue**
+- "Move #N to ready-for-agent" → **Quick state override**
 
-The maintainer invokes `/triage` and describes what they want in natural language. Interpret the request and act. Examples:
+## Show attention queue
 
-- "Show me anything that needs my attention"
-- "Let's triage #42"
-- "Move #42 to ready-for-agent"
+Query the tracker and present two buckets, oldest first:
 
-## Show what needs attention
-
-Query the issue tracker and present two buckets, oldest first:
-
-1. **Unlabelled** — never triaged (no state or category label).
+1. **Unlabelled** — no state or category label (never triaged).
 2. **`needs-triage`** — evaluation in progress.
 
 Show counts and a one-line summary per issue. Let the maintainer pick.
 
-```
+```bash
 gh issue list --state open --label "needs-triage" --json number,title,createdAt \
   --jq 'sort_by(.createdAt) | .[] | "[#\(.number)] \(.title)"'
 ```
 
-For the unlabelled bucket, list issues that carry none of the known state or category labels. Oldest first.
-
 ## Triage a specific issue
 
-1. **Gather context.** Read the full issue — body, comments, labels, reporter, dates. Parse any prior triage notes so you don't re-ask resolved questions. Explore the codebase using the project's domain glossary and ADRs in the area.
+1. **Gather context.** Read the full issue — body, comments, labels, dates. Parse any prior triage notes to avoid re-asking resolved questions. Explore the codebase via domain glossary and ADRs in the area. `gh` CLI read/comment/label conventions: `docs/agents/issue-tracker.md`.
 
-2. **Check Idea Inbox.** If the issue body or title describes something that belongs in the intake/drain path (`docs/agents/idea-inbox.md`), flag it. Do not re-file inbox ideas as tracked issues.
+2. **Intake routing.** If the issue describes something that belongs in the capture/drain path, reference `docs/agents/idea-inbox.md`. Do not re-file Inbox ideas as tracked issues.
 
-3. **Check for skill-request.** If the issue carries the `skill-request` label, do not follow the generic path — see **Skill-request triage** below.
+3. **Skill-request path.** If the issue carries `skill-request`, follow **Skill-request triage** below instead of the generic path.
 
-4. **Recommend.** Tell the maintainer your category, state, and size recommendation with reasoning. Wait for direction.
+4. **Recommend.** State your category, state, and size recommendation with reasoning. Wait for direction.
 
-5. **Apply the outcome:**
-   - `ready-for-agent` → post a strong agent brief (see below) and apply labels.
-   - `ready-for-human` → post a brief-style comment explaining why it can't be delegated (judgment calls, external access, design decisions, manual testing) and apply labels.
+5. **Bug reproduction step.** If the recommended category is `bug`, capture a minimal reproduction before proceeding to apply the outcome: the exact steps, observed behaviour, and expected behaviour. Record this in a comment on the issue if not already present. An agent cannot reliably fix a bug it cannot reproduce.
+
+6. **Apply the outcome** and label:
+
+   ```bash
+   gh issue edit <number> --add-label "<state>,<category>,<size>" --remove-label "<old-state>"
+   ```
+
+   - `ready-for-agent` → post an agent brief (see **Agent brief** below) and apply labels.
+   - `ready-for-human` → post a comment explaining why it cannot be delegated (judgment calls, external access, design decisions, manual testing) and apply labels.
    - `blocked` → post a comment stating what is blocking and on what (issue number, external dependency, or open decision) and apply labels.
-   - `wontfix` → post a rationale comment and apply labels.
+   - `wontfix` → post a rationale comment, apply labels, and file a durable rejection entry (see **Rejection KB** below).
    - `needs-triage` → apply the label. Optional comment if there is partial progress.
-
-Apply labels via:
-
-```
-gh issue edit <number> --add-label "<state>,<category>,<size>" --remove-label "<old-state>"
-```
 
 ## Skill-request triage
 
-When triaging a `skill-request`-labelled issue, route through the documented flow in `docs/design/skill-request-flow.md` (ADR 0021). The decision path is:
+When an issue carries `skill-request`:
 
-1. Run the `cba-searching` prior-art scan (installed skill — `docs/agents/installed-skills.md`) to check whether the wider open-source world already ships the capability well.
-2. Based on the scan verdict, accept (`ready-for-agent`), park (`awaiting-corroboration`), or reject (`wontfix`) per the accept/park/reject semantics in `skill-request-flow.md`.
+1. Run `/cba-searching` (installed skill — `docs/agents/installed-skills.md`) to check whether the wider open-source world already ships this capability well. Feed the issue description as the target concept.
+2. Route on the scan verdict per `docs/design/skill-request-flow.md` (ADR 0021): accept (`ready-for-agent`), park (`awaiting-corroboration` — supplemental label defined by that flow, not part of core triage vocab), or reject (`wontfix`).
 
-Do not re-derive the internals of that flow here — delegate to it.
+Do not re-derive the accept/park/reject semantics here — delegate to that flow.
 
-## Strong agent brief (ready-for-agent)
+## Agent brief
 
-Post a comment structured as:
+Post a comment on the issue structured as:
 
 ```markdown
 ### Goal
 <One sentence.>
 
 ### Read first
-- <file or doc> — <why>
-- …
+- <interface, behaviour, or type> — <why>
 
 ### Decided (do not re-litigate)
 - <decision already made>
-- …
 
 ### Must do
 - <concrete deliverable>
-- …
 
 ### Discrepancies to resolve
-- <anything ambiguous the agent must surface before implementing, not silently decide>
+- <anything ambiguous the agent must surface before implementing>
 ```
 
-Model the quality of the briefs on issues #292 and #293 in this repo: goal is one sentence; read-first cites specific file paths; decided locks in choices so the agent doesn't re-open them; must-do maps directly to acceptance criteria; discrepancies names anything where the spec leaves the agent room to go wrong silently.
+**Interface-not-procedure.** Briefs must survive code churn: name behaviours, interfaces, and types — not file paths or line numbers. A brief that says "edit the hook at line 42" is fragile; one that says "the bash-guard hook must block destructive shell ops" is durable.
 
-Omit sections that are empty (e.g. no discrepancies → omit that section).
+**AI-authored briefs** must include an `> AI-generated brief — review before handing to agent` blockquote at the top of the comment.
+
+Omit sections that are empty (no discrepancies → omit that section). Model goal/read-first/must-do quality on issues #292 and #293 in this repo.
+
+## Rejection KB
+
+When closing an issue as `wontfix`, file a durable rationale entry in `.out-of-scope/` at the repo root — a short Markdown file named after the rejected concept (e.g. `.out-of-scope/live-reload-hook.md`). This is the single source of truth for why a class of work was rejected, so future requests in the same space get a grounded answer without re-litigating the decision.
+
+Each entry states: what was rejected, why (the concrete reason, not "out of scope"), and the bar to revisit. Link the originating issue under `## Prior requests`.
 
 ## Quick state override
 
-If the maintainer says "move #42 to ready-for-agent", trust them and apply the label directly. Confirm what you are about to do (label changes, comment, close), then act. Skip deep context-gathering. If moving to `ready-for-agent` without a full triage session, ask whether they want to write an agent brief.
+If the maintainer says "move #N to ready-for-agent", trust them and apply the label directly. Confirm what you are about to do (label changes, comment, close), then act. Skip deep context-gathering. If moving to `ready-for-agent` without a full triage session, ask whether they want an agent brief.
 
-## Resuming a previous session
+## Resuming a session
 
-If prior triage comments exist on the issue, read them before continuing. Don't re-ask resolved questions.
+If prior triage comments exist on the issue, read them before continuing. Do not re-ask resolved questions.
