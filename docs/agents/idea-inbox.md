@@ -36,7 +36,21 @@ end-to-end, adapting to what *this* idea needs:
    pointing at the existing issue, (b) fits INTO an open issue → comment there
    instead of filing new, or (c) BLOCKS / DEPENDS ON an open issue → record that
    relationship.
-2. **Pick only the steps it needs** — do not run the whole pipeline by rote. Choose
+2. **Decision-map** — when the idea is loose or tangled (multiple unknowns, unclear
+   entry point, or competing approaches), decompose it into a **sequence of
+   investigation tickets** before picking pipeline steps. Each ticket resolves one
+   decision that the next ticket depends on:
+   - Name the first decision the work hinges on.
+   - File it as a `chore`/`needs-triage` spike: "Investigate X to determine Y."
+   - Repeat for each downstream decision, in dependency order, until the remaining
+     work is concrete enough for `/to-issues` to carve into implementation tickets.
+   A single spike that unblocks all downstream work is fine. Skip this step when
+   the idea is already concrete — one decision, one clear owner.
+   When an idea is decision-mapped into spikes, move the inbox row to
+   `✅ Actioned` with `→ #<spike-1> #<spike-2> …` pointing at every filed spike;
+   the spike chain resolves into the eventual implementation ticket, which closes
+   the loop on the original idea.
+3. **Pick only the steps it needs** — do not run the whole pipeline by rote. Choose
    from:
    - `/grill-with-docs` — when the idea is fuzzy or contends with the domain model
      (CONTEXT.md / ADRs); build shared understanding first.
@@ -44,12 +58,12 @@ end-to-end, adapting to what *this* idea needs:
    - `/to-issues` — to carve it into independently-grabbable tracked work.
    - `/software-design` — when the work spans modules/seams and needs a design pass.
    A small, clear idea may need only `/to-issues`.
-3. **Labels** — when filing issues, apply labels from `docs/agents/labels.md`: state
+4. **Labels** — when filing issues, apply labels from `docs/agents/labels.md`: state
    (`needs-triage` to start), category (`bug` / `enhancement` / `chore` / `epic`),
    and a size estimate (`size:S` / `size:M` / `size:L` / `size:XL`). The compact
    vocabulary reference is `docs/agents/labels.md`.
 
-4. **Aim for a strong agent brief** — strive to emit a `ready-for-agent` issue that
+5. **Aim for a strong agent brief** — strive to emit a `ready-for-agent` issue that
    clears the strong-agent-brief bar (clear module + acceptance criteria + TDD
    notes; a determinism/offline boundary that stubs external deps; a report-only
    boundary where applicable; explicit out-of-scope + a single named follow-up
@@ -57,7 +71,7 @@ end-to-end, adapting to what *this* idea needs:
    step-by-step instructions and QA checkpoints for the human-in-the-loop parts —
    rather than handing an agent unbounded judgment. Split a blocked/human-only idea
    into an AFK-able slice plus a human sibling when that's the cleaner carve.
-5. **Move to Actioned** — once the idea becomes an issue/PR (or is resolved as a
+6. **Move to Actioned** — once the idea becomes an issue/PR (or is resolved as a
    dup/relation), move it into `✅ Actioned`, check it, and append `→ #<num>`.
 
 Never delete an idea silently — either drain it or move it with a one-line
