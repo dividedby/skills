@@ -30,6 +30,7 @@ Setting up and auditing a project's Claude config — instruction files and the 
 - **[project-claude-config](./skills/config/project-claude-config/SKILL.md)** — One state-routed pass over a project's Claude config: scaffold what's missing and critique what's present across both the harness (`.claude/settings.json`) and the instruction files (`CLAUDE.md` / `AGENTS.md`), interviewing only for facts the repo can't reveal.
 - **[setup-dividedby-skills](./skills/config/setup-dividedby-skills/SKILL.md)** — Install the dividedby conventions on top of setup-matt-pocock-skills — size labels, intake/idea-inbox, branching policy, the Conventions block, and HITL verification gates. Every network mutation is gated behind an explicit confirm step. Manual/slash invocation only.
 - **[triage](./skills/config/triage/SKILL.md)** — Move issues through a state machine on our label vocabulary: show what needs attention, triage a specific issue with the appropriate outcome comment, and route skill-request issues through the ADR-0021 prior-art scan.
+- **[workflow-onboarding](./skills/config/workflow-onboarding/SKILL.md)** — Install the loop-specific surface (LOOP/NETWORK labels + installed-skills snapshot) on a repo being onboarded into a proposal loop; runs after setup-dividedby-skills, every mutation gated behind explicit confirmation.
 
 ### Meta
 

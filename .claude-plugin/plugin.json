@@ -12,6 +12,7 @@
     "./skills/config/project-claude-config",
     "./skills/config/setup-dividedby-skills",
     "./skills/config/triage",
+    "./skills/config/workflow-onboarding",
     "./skills/meta/apply-agent-research",
     "./skills/meta/skill-divergence-audit"
   ]
