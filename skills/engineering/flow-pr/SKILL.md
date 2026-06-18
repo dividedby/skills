@@ -11,56 +11,45 @@ description: >
 
 # Flow PR
 
-This skill owns the **end-to-end PR lifecycle** for a unit of work: default
-branch detection, branch cutting, commit → push → PR open, CI gate, and merge
-to the default branch. It is the policy layer on top of existing mechanics.
+End-to-end PR lifecycle for a unit of work: default branch detection, branch
+cutting, commit → push → PR open, review gate, CI gate, and merge. The policy
+layer on top of existing mechanics.
 
-What it defers:
-
-- **Commit message policy** → defer to `/commit`.
-- **Code-review logic** → defer to `/review`. flow-pr *runs* it as the review gate (see Feature mode), but does not implement review itself.
-- **Issue filing** → defer to the repo's intake convention.
-- **Merge mechanics detail** → `~/.claude/branching-flow.md` is the
-  authoritative source; this skill references it, never duplicates it.
+Defers:
+- **Commit message policy** → `/commit`
+- **Code-review logic** → `/review` (flow-pr *runs* it as the review gate; does not implement it)
+- **Issue filing** → repo's intake convention
+- **Merge mechanics** → [`merge-mechanics.md`](merge-mechanics.md)
 
 ---
 
 ## Default branch detection
 
-The repo's **default branch is always the integration target** — the safe
-merge destination for feature work. Read it dynamically:
+The repo's **default branch is always the integration target**. Read it dynamically:
 
 ```
 gh repo view --json defaultBranchRef --jq '.defaultBranchRef.name'
 ```
 
-No role classification needed. Examples:
-- `main` (lib/tool) → feature PRs merge to `main`; promotion doesn't apply.
-- `staging` (deployed app) → feature PRs merge to `staging`; promotion
-  (`staging → main`) is a separate always-confirmed step.
+Examples:
+- `main` (library/tool) → feature PRs merge to `main`; promotion doesn't apply.
+- `staging` (deployed app) → feature PRs merge to `staging`; promotion (`staging → main`) is a separate always-confirmed step.
 
-**Override (rare).** If a repo uses a non-default branch as its integration
-target (unusual), add a one-liner to the repo's `CLAUDE.md`:
-`Flow-PR integration branch: <branch>`. The skill reads this before the API
-call and uses it instead.
+**Override (rare).** If a repo uses a non-default branch as its integration target, add to the repo's `CLAUDE.md`: `Flow-PR integration branch: <branch>`. The skill reads this before the API call and uses it instead.
 
 ---
 
 ## Feature mode (default path)
 
-Runs when the user signals done/ship, or when the autonomy triggers below
-are satisfied.
+Runs when the user signals done/ship, or when all autonomy triggers below are satisfied.
 
-1. **Branch check.** If already on a `feature/*` branch, stay on it. If on
-   the default branch, cut a `feature/<slug>` branch from it first. Never
-   commit directly onto the default branch.
+1. **Branch check.** If already on a `feature/*` branch, stay on it. If on the default branch, cut a `feature/<slug>` branch from it first. Never commit directly onto the default branch.
 
-2. **Commit → push.** Use `/commit` for commit message policy. Push the
-   feature branch to origin.
+2. **Commit → push.** Use `/commit` for commit message policy. Push the feature branch to origin.
 
-3. **Open PR.** `gh pr create --base <default-branch>`. The base is always the
-   default branch — never hardcode `main` if the default is `staging`.
-   PR body uses the standard format:
+3. **Open PR.** `gh pr create --base <default-branch>`. The base is always the dynamic default branch — never hardcode `main` if the default is `staging`.
+
+   PR body format:
 
    ```
    ## Summary
@@ -72,96 +61,57 @@ are satisfied.
    🤖 Generated with [Claude Code](https://claude.ai/claude-code)
    ```
 
-   If a PR for the branch already exists, update it instead of opening a new
-   one (idempotent — check with `gh pr list --head <branch>` first).
+   If a PR for the branch already exists, update it instead of opening a new one. Check with `gh pr list --head <branch>` first (idempotent).
 
-4. **Review gate (default on).** Review the PR diff and apply fixes, deferring
-   the review itself to `/review`. Loop review → fix → re-review until `/review`
-   reports no actionable findings or a **2-pass cap** is hit. If actionable
-   findings remain at the cap, **halt and surface them — do not merge.** Skip
-   only on explicit caller opt-out (`/flow-pr skip-review`, or a stated "skip
-   review"); flow-pr does **not** auto-classify the diff to decide this — size
-   and file-type are poor proxies for review need (a small code change can be
-   high-risk; in a docs-centric repo, prose itself can be wrong).
+4. **Review gate (default on).** Invoke `/review` on the PR diff and apply fixes. Loop review → fix → re-review until `/review` reports no actionable findings or a **2-pass cap** is hit. If actionable findings remain at the cap, halt and surface them — do not merge.
 
-5. **Gate on CI.** Poll `gh pr checks` until all checks pass. Do not merge
-   with red or pending CI.
+   Skip only on explicit caller opt-out (`/flow-pr skip-review` or a stated "skip review"). Do not auto-classify the diff to decide — diff size and file type are poor proxies for review need.
 
-6. **Merge.** `gh pr merge --merge` (merge-commit only; see Constraints).
+5. **CI gate.** Poll `gh pr checks` until all checks pass. Do not merge with red or pending CI.
 
-7. **Post-merge sync.** After a successful merge:
-   - `git checkout <default-branch> && git pull` — bring local default branch
-     up to date with the merge commit.
-   - `git branch -d <feature-branch>` — delete the local feature branch.
-     (The remote branch is auto-deleted by GitHub's auto-delete-on-merge
-     setting; the local branch is not.)
+6. **Merge.** `gh pr merge --merge` (merge-commit only; see [`merge-mechanics.md`](merge-mechanics.md)).
+
+7. **Post-merge sync.**
+   - `git checkout <default-branch> && git pull`
+   - `git branch -d <feature-branch>` (remote branch is auto-deleted by GitHub; local is not)
 
 ---
 
 ## Promotion mode
 
-Applies only when the default branch is **not** `main` (e.g. `staging`). When
-the default branch is `main`, promotion doesn't exist — feature merges ARE the
-final step.
+Applies only when the default branch is **not** `main`. When the default branch is `main`, feature merges are the final step and promotion doesn't exist.
 
-Separate from feature mode and **always user-confirmed** before running.
+Always user-confirmed before running.
 
-- Triggered only by explicit invocation: `/flow-pr promote` or an explicit
-  user request. Never auto-triggered.
-- Opens a promotion PR: `gh pr create --base main` from the default branch
-  (e.g. `staging → main`).
-- Always ask the user before executing — do not infer that "ship it" means
-  promote to `main`.
-- Merge commit only; never squash.
+- Triggered only by explicit invocation: `/flow-pr promote` or an explicit user request. Never auto-triggered.
+- Opens `gh pr create --base main` from the default branch (e.g. `staging → main`).
+- Merge-commit only; never squash or rebase.
 
 ---
 
-## Autonomy and trigger semantics
+## Autonomy triggers
 
 **Fire when all hold:**
-- User explicitly signals done/ship, OR
-- A coherent unit of work is logically complete AND
-- The verify gate is green (tests, typecheck, CI) AND
+- User explicitly signals done/ship, OR a coherent unit of work is logically complete, AND
+- The verify gate is green (tests, typecheck, CI), AND
 - The working tree is a reviewable diff (not mid-edit noise).
 
-**Do NOT fire:**
+**Do not fire:**
 - After individual file edits.
 - Mid-task or on work-in-progress.
 - When the verify gate is red or failing.
 - Before the unit is logically complete.
-- On structural work without first proposing and getting go-ahead (honors the
-  "discuss before non-trivial" rule).
+- On structural work without first proposing and getting go-ahead.
 
-The green verify gate is the primary self-exclusion mechanism for partial or
-broken states. A passing gate is not optional — it is what makes autonomous
-merge trustworthy.
+A passing verify gate is what makes autonomous merge trustworthy — it is not optional.
 
 ---
 
 ## GraphQL flap resilience
 
-`gh pr create` and `gh pr merge` route through GraphQL, which can
-intermittently 401 even when auth is healthy.
+`gh pr create` and `gh pr merge` route through GraphQL, which can intermittently 401 even when auth is healthy.
 
-- On `gh pr create` failure: fall back to REST —
-  `gh api -X POST repos/{owner}/{repo}/pulls -f title=... -f body=... -f head=... -f base=...`
-- On `gh pr merge` failure: fall back to local
-  `git merge --no-ff <feature-branch>` + `git push` from the integration
-  branch (GitHub marks the PR merged).
-- Check `gh auth status` before assuming a real auth failure. Note:
-  `gh auth status` can report healthy without live-validating the token.
-- A GraphQL flap leaves REST working; if REST also 401s, it is a real auth
-  issue — do not re-run; surface to the user.
-
----
-
-## Constraints
-
-- **Merge-commit only.** Never `--squash` or `--rebase`. Policy enforced at
-  repo level; this skill enforces it at invocation time too.
-- **Never direct-push** to the default branch.
-- **Never merge red CI.** Poll and wait; halt if checks do not pass.
-- **Never auto-promote to `main`.** Promotion is always an explicit,
-  user-confirmed action.
-- **Policy reference:** `~/.claude/branching-flow.md` is the source of truth
-  for merge mechanics. This skill does not restate that policy — it enforces it.
+- **`gh pr create` failure:** fall back to REST — `gh api -X POST repos/{owner}/{repo}/pulls -f title=... -f body=... -f head=... -f base=...`
+- **`gh pr merge` failure:** fall back to local `git merge --no-ff <feature-branch>` + `git push` from the integration branch (GitHub marks the PR merged).
+- Check `gh auth status` before assuming a real auth failure. Note: `gh auth status` can report healthy without live-validating the token.
+- If REST also 401s after a GraphQL flap, it is a real auth issue — surface to the user, do not re-run.
