@@ -7,7 +7,6 @@ returns the install plan.  Guards the canonical set against accidental mutation.
 Run: python3 -B skills/config/workflow-onboarding/loop-labels.test.py
 """
 import re
-import sys
 import unittest
 from pathlib import Path
 

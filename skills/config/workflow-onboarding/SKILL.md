@@ -23,7 +23,7 @@ Every network mutation — label creates — is preceded by a plan you must expl
 Identify the target repo:
 - `cd` into the clone, or set the target explicitly (`gh repo view` to confirm owner/name).
 - Confirm `setup-dividedby-skills` has already run (CORE labels present, `docs/agents/triage-labels.md` contains the dividedby tiering structure).
-- Read the canonical LOOP/NETWORK section from **`dividedby/skills docs/agents/labels.md`** — the pure function in `skills/config/workflow-onboarding/loop-labels.test.py` defines the authoritative install plan from that source.
+- Read the canonical LOOP/NETWORK section from **`dividedby/skills docs/agents/labels.md`** — that registry is the authoritative source; the pure function in `skills/config/workflow-onboarding/loop-labels.test.py` parses it into an install plan and guards it against accidental mutation.
 
 ---
 
@@ -68,14 +68,7 @@ One action per label: **create**, **update**, or **skip**. Do not plan any CHANN
 
 ### Concern B — `docs/agents/installed-skills.md`
 
-- **create** if absent: seed from `dividedby/skills docs/agents/installed-skills.md`. Adapt any repo-specific references (the preamble refers to this repo's own skills — update or note that the target maintainer should refresh it to reflect their own global install). The target maintainer refreshes it via:
-
-  ```
-  ls ~/.claude/skills/
-  python3 -m json.tool ~/.claude/plugins/installed_plugins.json
-  claude --version   # for built-in CLI skills
-  ```
-
+- **create** if absent: seed from `dividedby/skills docs/agents/installed-skills.md`.
 - **skip** if already present.
 
 This is a local file write in the target clone, not a network mutation — surface it in the plan so the user can approve.
@@ -100,17 +93,7 @@ Execute the approved plan concern by concern.
 
 **A — LOOP/NETWORK labels:**
 
-For each **create**:
-```
-gh label create "<name>" --color "<hex>" --description "<desc>" --repo {owner}/{repo}
-```
-
-For each **update**:
-```
-gh label edit "<name>" --color "<hex>" --description "<desc>" --repo {owner}/{repo}
-```
-
-Use `--force` on `gh label create` to make it idempotent (creates or updates):
+For each **create** or **update** (idempotent — creates or updates in one shot):
 ```
 gh label create "<name>" --color "<hex>" --description "<desc>" --repo {owner}/{repo} --force
 ```
@@ -119,7 +102,17 @@ Do not create CHANNELS labels. If the plan somehow includes `skill-request`, `sk
 
 **B — `docs/agents/installed-skills.md`:**
 
-Read `dividedby/skills docs/agents/installed-skills.md`. Adapt the preamble to reference the target repo. Write to `docs/agents/installed-skills.md` in the target clone. Note in a code comment or the seeded doc that the maintainer should refresh the skill lists to match their own global install using the commands in the Refreshing section.
+Read `dividedby/skills docs/agents/installed-skills.md`. Adapt the preamble to reference the target repo, then write to `docs/agents/installed-skills.md` in the target clone.
+
+**Done when:** (a) the seeded doc's preamble names the target repo, not `dividedby/skills`, and (b) a "Refreshing" note tells the target maintainer to update the skill list to match their own global install using:
+
+```
+ls ~/.claude/skills/
+python3 -m json.tool ~/.claude/plugins/installed_plugins.json
+claude --version   # for built-in CLI skills
+```
+
+Do not copy the `dividedby/skills` skill list verbatim — it reflects the source maintainer's global install, not the target's.
 
 ---
 
