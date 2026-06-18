@@ -10,36 +10,23 @@ description: >
 
 # Staleness Audit
 
-This skill audits the versions a repo **pins its toolchain to** — the runtime and
-language versions in dotfiles and manifests — and reports which have fallen
-behind upstream. It is the deliberate complement to Dependabot: Dependabot bumps
-**library dependencies** inside a manifest; this audit covers the **toolchain
-pins** Dependabot leaves alone (`.nvmrc`, `engines`, language-version files).
+Audits the versions a repo **pins its toolchain to** — the runtime and language
+versions in dotfiles and manifests — and reports which have fallen behind
+upstream. Dependabot bumps **library dependencies** inside a manifest; this
+audit covers the **toolchain pins** Dependabot leaves alone (`.nvmrc`, `engines`,
+language-version files).
 
-The skill has one spine, and every later capability thickens a station on it
-rather than adding a new path:
+The spine is **scan → classify → validate → apply → render**.
 
-**scan → classify → validate → apply → render → register**
-
-It walks the repo's **toolchain pins** across the ecosystem — Node, Python, Go,
-asdf/mise, CI matrices, and container tags — resolves each finding against
-upstream to fill in latest version / EOL / migration, then — only behind a verify
-gate —
-auto-applies the *safe* (in-major) bumps one at a time, reverting any that break
-the build, and emits a single urgency-ranked report of what was applied and what
-is still recommended.
-
-## The spine
-
-### Scan — find the pins, don't guess them
+## Scan — find the pins, don't guess them
 
 A pin is **any place the repo declares the version of a tool it builds or runs
-on**. That is the rule. The files below are the illustrative v1 surface — the
-common places that concept lands across ecosystems — not a frozen catalogue;
-match the repo's real conventions over this list (a monorepo may pin per-package,
-a shop may have its own dotfile). Read each, extract the pinned string verbatim,
-and record `(target, file, current)` — what is pinned, where, and to what. Scan
-only; resolving "latest" is a later station (it stays blank here).
+on**. The files below are the illustrative v1 surface — the common places that
+concept lands across ecosystems — not a frozen catalogue; match the repo's real
+conventions over this list (a monorepo may pin per-package, a shop may have its
+own dotfile). Read each, extract the pinned string verbatim, and record
+`(target, file, current)` — what is pinned, where, and to what. Scan only;
+resolving "latest" is the validate station (it stays blank here).
 
 **Two roles: a version you satisfy vs a floor you impose.** Tag each finding with
 its role, because the two have *opposite* freshness goals and the apply gate keys
@@ -102,20 +89,20 @@ owner, and their absence is itself a staleness risk. Carry a **Deferred to
 Dependabot** note in the report regardless: library dependency bumps are out of
 this audit's scope by design.
 
-### Classify — the gap is a pure decision, not prose
+## Classify — the gap is a pure decision, not prose
 
-The size of each gap drives both the report's ranking and (in later slices) what
-may be auto-applied, so it **must not depend on model judgment**. It lives as
-executable code: [`lib/version_gap.py`](lib/version_gap.py), a pure stdlib helper
-(ADR 0004) that maps a `(current, latest)` pair to `major | minor | patch | none
-| unknown`. Invoke it by file path; never re-derive the gap math in prose.
+The size of each gap drives both the report's ranking and what may be
+auto-applied, so it **must not depend on model judgment**. It lives as executable
+code: [`lib/version_gap.py`](lib/version_gap.py), a pure stdlib helper (ADR 0004)
+that maps a `(current, latest)` pair to `major | minor | patch | none | unknown`.
+Invoke it by file path; never re-derive the gap math in prose.
 
 The gap is computed against the `latest` resolved by the next station. The
 classifier is unit-tested ([`lib/version_gap.test.py`](lib/version_gap.test.py)),
 so the only non-deterministic input to a finding's classification is the upstream
 `latest` the validate step fetches.
 
-### Validate — resolve each finding against upstream
+## Validate — resolve each finding against upstream
 
 For each finding, confirm three things from upstream, using web search/fetch:
 
@@ -152,15 +139,14 @@ access`**, and **suppress any apply path** for it — an unverified finding is a
 recommendation only, never something a later slice may auto-apply. A partial
 audit that is honest about what it could not verify beats a confident wrong one.
 
-### Apply — verify-gated, one safe bump at a time
+## Apply — verify-gated, one safe bump at a time
 
 Only the **safe** bumps are auto-applied, and only behind a working verify gate.
-The decision "may this finding be auto-applied, and if not, what downgrade?" is a
-pure decision — it must not depend on model judgment, or a cross-major or EOL jump
-could slip into an unattended apply — so it lives as executable code:
+The decision "may this finding be auto-applied, and if not, what downgrade?" must
+not depend on model judgment — a cross-major or EOL jump could otherwise slip into
+an unattended apply. It lives as executable code:
 [`lib/apply_policy.py`](lib/apply_policy.py) (`decide(finding)`). Call it per
-finding; never re-derive the gate in prose. This station owns only the *mechanics*
-the agent executes around that decision.
+finding; never re-derive the gate in prose.
 
 **Discover the verify command** in priority order, preferring the CI sequence so
 the gate matches what the project actually trusts as green:
@@ -171,8 +157,8 @@ the gate matches what the project actually trusts as green:
 3. CI verify steps — the commands a workflow runs on PRs (`.github/workflows/*`).
 4. A language default as a last resort (`npm test`, `npm ci && npm test`).
 
-Prefer the CI sequence: if CI runs `npm ci && npm run lint && npm test`, that is
-the verify command — a bump is only "green" if it passes what CI would.
+If CI runs `npm ci && npm run lint && npm test`, that is the verify command — a
+bump is only "green" if it passes what CI would.
 
 **If no verify command is discoverable, auto-apply is disabled** — there is no way
 to prove a bump is safe. The report is recommend-only. `apply_policy.decide`
@@ -222,7 +208,7 @@ verify result. This is the deterministic floor: source-distrust is decided ahead
 of every other disposition, so model judgment can never promote a grep match into
 an unattended mutation.
 
-### Render — one urgency-ranked report
+## Render — one urgency-ranked report
 
 Emit a single markdown table, one row per finding, with these columns:
 
@@ -252,27 +238,7 @@ are out of scope by design. If the scan found no Dependabot/Renovate config,
 escalate the note to a flagged gap — name the missing config and recommend
 standing one up, since the library deps it would own are otherwise unwatched.
 
-### Register
-
-The skill is registered in `.claude-plugin/plugin.json` and linked from the
-top-level `README.md`, per repo convention (the `check-skill-registration` Stop
-hook enforces it).
-
-## Scope at this slice
-
-- **The full v1 toolchain surface.** Node, Python, Go, asdf/mise `.tool-versions`,
-  CI matrices, container `FROM` tags, plus best-effort installer hints — all on the
-  same `scan` step, not separate skills. Library dependency versions stay out of
-  scope (Deferred to Dependabot).
-- **Auto-apply only the safe, verified bumps.** In-major (patch/minor) bumps on
-  owned files are applied behind a verify gate, one at a time, with per-bump
-  revert. Cross-major / EOL jumps, any unverified finding, any low-confidence
-  installer finding, and any consumer-imposed floor (`engines`, `devEngines`,
-  `requires-python` lower bound, peer ranges) are recommend-only — the apply
-  station may only ever act on a *verified, satisfy-role* finding from a declared
-  pin file that it can prove green.
-
-## Anti-Patterns
+## Anti-patterns
 
 - **Re-deriving the gap, the EOL-pastness check, the ranking, or the apply gate in
   prose.** All four are tested pure functions ([`version_gap.py`](lib/version_gap.py),
@@ -282,24 +248,20 @@ hook enforces it).
   access` and suppress apply — never fabricate upstream data.
 - **Auto-applying a cross-major, EOL, or installer-grepped finding.** Cross-major
   and EOL jumps carry breaking-change migration; an installer hint has no reliable
-  owned file. All three are recommendations, never mechanical bumps — let
-  `apply_policy.decide` gate it (`low_confidence` for installer matches).
+  owned file. All three are recommendations, never mechanical bumps.
 - **Bumping a consumer-imposed floor toward latest.** `engines`, `devEngines`, a
   `requires-python` lower bound, and peer ranges are floors the repo imposes on
-  others — raising one toward "latest" is not remediation, it sheds consumers. A
-  floor is `is_floor` (recommend-only, both directions); its real signals are
+  others — raising one toward "latest" sheds consumers. A floor's real signals are
   past-EOL and being *higher than what the repo itself runs* (the
   bleeding-edge-on-others defect — recommend lowering it).
 - **Treating a non-version tag as a pin.** `FROM scratch`, an untagged image, or
   `:latest` declares no version to fall behind — skip it, don't flag a phantom gap.
 - **Flagging a library dependency.** A package version in `dependencies` /
-  `requirements.txt` / `go.mod`'s `require` block is Dependabot's job, not a
-  toolchain pin — Deferred to Dependabot.
+  `requirements.txt` / `go.mod`'s `require` block is Dependabot's job —
+  Deferred to Dependabot.
 - **Bumping without a verify gate, or batching bumps.** No discoverable verify
   command means no apply at all. With one, apply a single bump per verify so a
   failure pins to the bump that caused it; keep on pass, revert on fail.
 - **Hardcoding a file catalogue as the rule.** Pins are a concept; match the
   repo's real layout, with the common files as illustrative starting points
   (ADR 0002).
-- **Overlapping Dependabot.** Library bumps are Dependabot's job; this audit is
-  for the toolchain pins it does not touch.

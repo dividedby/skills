@@ -11,7 +11,7 @@ description: >
 
 # Context Firewall
 
-A long run that processes many items in **one** context degrades the items it
+A long run that processes many items in one context degrades the items it
 reaches late: once the window fills past its **smart zone**, recall blurs,
 instructions get dropped, and the harness eventually forces a lossy mid-stream
 compaction. This skill restructures the run so each item gets a clean context
@@ -54,28 +54,24 @@ sub-agent firewall shapes, budget-checkpoint placement, and compaction mechanics
 
 ### 1. Identify the per-item unit
 
-Find the repeatable **work item**: the chunk processed once per pass with
-**independent inputs** and a compact, mergeable result. If items share mutable
-state or need full ordered history they aren't independent — say so rather than
+Find the repeatable **work item** — one briefed, independently-runnable chunk
+with its own inputs and a compact, mergeable result. If items share mutable
+state or need full ordered history they aren't independent; say so rather than
 forcing a firewall that loses needed context.
 
 ### 2. Firewall each item in a fresh sub-agent context
 
-Dispatch each work item to a sub-agent (the existing Agent/sub-agent
-mechanism — **no new runtime**) that loads only that item's inputs and
-returns a compact result. The orchestrator never sees the raw work, only the
-distilled return. This is **within-item** hygiene: per-item bloat is discarded
-with the sub-agent. In a session — the Claude Code CLI, interactive or under
-`/loop` — that sub-agent is an **in-session sub-agent** (the Agent tool, no new
-process), *not* a `claude -p`: you're already in a session, so use it. The
-`claude -p` firewall-per-item is the **headless-process** case, where there is no
-session to dispatch within (CI, cron, runners) — there a fresh process per run
-gives the boundary for free; a single interactive session or a monolithic run
-does not, so the in-session sub-agent supplies it. A gearbox builder/architect
-delegation already *is* a do-and-report firewall — under gearbox the per-item
-boundary comes from the router, and this skill's remaining job is the
-orchestrator-side half: the budget checkpoint and flush/compact in steps 3–4.
-See [FIREWALL-PATTERNS.md](FIREWALL-PATTERNS.md).
+Dispatch each work item to a sub-agent (the existing Agent/sub-agent mechanism
+— **no new runtime**) that loads only that item's inputs and returns a compact
+result. The orchestrator never sees the raw work, only the distilled return.
+This is **within-item** hygiene: per-item bloat is discarded with the sub-agent.
+
+Route by environment: when a session exists (interactive, `/loop`), use an
+**in-session sub-agent** (Agent tool, no new process). When there is no session
+(CI, cron, runners), a **headless process** gives the boundary for free. Under
+gearbox, a builder/architect delegation already *is* a do-and-report firewall —
+the remaining job is the orchestrator-side half: budget checkpoint and
+flush/compact in steps 3–4. See [FIREWALL-PATTERNS.md](FIREWALL-PATTERNS.md).
 
 ### 3. Budget checkpoint between items
 

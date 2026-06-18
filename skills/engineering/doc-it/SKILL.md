@@ -5,19 +5,15 @@ description: >
   docs, onboarding guide, CHANGELOG) from source — applying changes directly.
   Audits existing ADRs and CONTEXT.md for staleness and drift, but reports
   findings only; never edits decision records. Use when reference docs are
-  missing, stale, or out of sync with the code.
+  missing or out of sync with the code.
 ---
 
 # Doc-It
 
 This skill scans a repo and brings its **reference documentation** — the
 README, API docs, onboarding guide, and CHANGELOG — into sync with the source.
-It applies changes to reference docs directly. It audits existing ADRs and
-`CONTEXT.md` for staleness and prose drift, but those are **report-only**:
-findings surface as a list for a human to act on. Decision records are never
-auto-edited.
 
-The skill runs in one pass with a clear posture split:
+Two postures, fixed:
 
 - **Apply** — generate missing reference docs, patch stale ones.
 - **Report-only** — surface ADR / `CONTEXT.md` staleness findings; never
@@ -86,7 +82,7 @@ CHANGELOG format, match it exactly.
 One principle holds across all four types: **link to existing ADRs for
 decisions, do not restate or invent them.** If a design choice is documented
 in an ADR, the reference doc points there rather than paraphrasing the
-rationale.
+rationale. A reference doc that duplicates a decision record will drift from it.
 
 ### Apply — write the reference docs
 
@@ -97,7 +93,8 @@ a section needed updating.
 
 Never apply to:
 
-- ADRs or `CONTEXT.md` — audit findings only (above).
+- ADRs or `CONTEXT.md` — decision records are load-bearing; auto-edits risk
+  corrupting the rationale. Audit findings only (above).
 - Claude-config files (`CLAUDE.md`, `.claude/settings.json`, hooks) — deferred
   to `project-claude-config`.
 - Files outside the local repo.
@@ -115,34 +112,15 @@ Emit a single structured summary:
 
 **This skill improves what exists; it does not author what is new.**
 
-- **Generates reference docs** (README, API docs, onboarding, CHANGELOG) from
-  source — applies directly.
-- **Audits** existing ADRs and `CONTEXT.md` for staleness and drift — reports
-  only, never edits.
 - **Defers new-decision authorship** to `grill-with-docs`. If a doc gap turns
-  out to need a new architectural decision (not just a missing fact), name it
-  and stop — don't invent the decision. See
+  out to need a new architectural decision (not just a missing fact), surface
+  it as an open question and stop — don't invent the decision. See
   [ADR 0022](../../../docs/adr/0022-doc-it-vs-grill-with-docs-authoring-auditing-boundary.md)
   for the clean seam between these two skills.
 - **Defers Claude-config docs** to `project-claude-config`.
 - **No network.** The scan surface is local repo files only. Deterministic;
   AFK-safe.
-
-## Anti-Patterns
-
-- **Editing ADRs or CONTEXT.md.** Findings are reported, never applied.
-  Decision records are load-bearing; auto-edits risk corrupting the rationale.
-- **Inventing a new decision.** If the code implies a new architectural choice
-  that isn't documented, surface it as an open question, not a new ADR section
-  in a reference doc.
-- **Restating ADR rationale in a reference doc.** Link; don't paraphrase. A
-  reference doc that duplicates a decision record will drift from it.
-- **Patching Claude-config files.** `CLAUDE.md`, hooks, and `settings.json`
-  are `project-claude-config`'s domain.
-- **Wholesale reformatting a doc to fix one stale section.** Match existing
-  conventions; only change what is actually stale.
-- **Using network sources.** The scan is local. No fetching latest versions,
-  external schemas, or remote changelogs — those are not deterministic.
-- **Generating a template library.** At most one inline sketch per doc type
-  (see the Draft station). A template library and a high/low-signal example
-  library are out of scope (named follow-up in issue #288).
+- **No template library.** At most one inline sketch per doc type (see the
+  Draft station). A template library and a high/low-signal example library are
+  out of scope (named follow-up in issue #288).
+- **Used as a delegate from `repo-audit`** when a full doc pass is warranted.
