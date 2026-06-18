@@ -117,24 +117,20 @@ Before any module/seam work, scan every open issue. An issue is
    spacing, focus state, hover, animation, accessibility, responsive
    breakpoints.
 
-For each frontend-flavored issue, stamp the `**Frontend design**` routing
+For each frontend-flavored issue, stamp a `**Frontend design**` routing
 block into the body — even if the backlog is small enough that the rest of
 the skill will early-exit. Uniformity beats optimisation.
 
-The **Frontend design** block fields:
+The block carries: Stack (from the project's package manifest), Intent
+(paraphrase of the Behavior line), Aesthetic direction (path to
+`docs/design/direction.md`), Token authority (path read from that file),
+and Review (required only when AC explicitly mention a11y / contrast /
+design audit). Full field spec lives in
+`skills/engineering/frontend-design/direction-doc-format.md`.
 
-```
-**Frontend design** (invoke `/frontend-design` before `/tdd`):
-- Stack: <read from the project's package manifest / framework config>
-- Intent: <paraphrase the Behavior: line>
-- Aesthetic direction: see docs/design/direction.md
-- Token authority: <path from docs/design/direction.md, or "recorded in docs/design/direction.md">
-- Review: required           ← only when AC explicitly mention a11y / contrast / design audit
-```
-
-Write the field values mechanically. Do not open `docs/design/direction.md`.
-Do not ask the user about typography, color, or motion. Backend-only issues
-get no stamp.
+Write field values mechanically from the project's manifest and direction
+doc. Do not ask the user about typography, color, or motion. Backend-only
+issues get no stamp.
 
 ### 3. Cluster issues by domain concept
 
@@ -162,22 +158,34 @@ For each module, surface:
 - **Depends on** — other modules or seams
 - **Must not depend on** — e.g., transport layer, persistence
 
-### 5. Confirm with user
+### 5. Invoke `/domain-modeling` for ubiquitous-language grounding
 
-Render the module map as a short summary. Ask:
+Hand `/domain-modeling`:
+
+- The candidate module names from step 4
+- All interface operation names and event names the design session surfaced
+- The current `CONTEXT.md` glossary as reference
+
+Expect back:
+
+- Confirmation or correction of each term against the project's ubiquitous
+  language (e.g. "OrderPlaced not OrderCreated — see CONTEXT.md §Events")
+- A flagged list of any surfaced terms not yet in `CONTEXT.md`, each
+  needing `/grill-with-docs` extraction before or after this session
+
+Incorporate the canonical terms before presenting the module map to the
+user. Any flagged new terms are surfaced in step 7.
+
+### 6. Confirm with user
+
+Render the module map — using only the canonical terms confirmed in step 5
+— as a short summary. Ask:
 
 - Does the responsibility split feel right?
 - Are there missing modules or collapsed responsibilities?
 - Do the seam locations match where change is expected?
 
-Iterate. Do not proceed to step 6 without approval.
-
-### 6. Invoke `/domain-modeling` for ubiquitous-language grounding
-
-Invoke `/domain-modeling` to ground every module name, interface operation,
-and event name in the project's ubiquitous language. Any term the design
-session surfaced that isn't yet in `CONTEXT.md` gets flagged here for
-`/grill-with-docs` extraction.
+Iterate. Do not proceed to step 7 without approval.
 
 ### 7. Surface durable items for extraction
 
@@ -194,31 +202,16 @@ not write them yourself**. Surface them and defer to the responsible skill:
 ### 8. Rewrite issue bodies into the TDD-ready format
 
 For each issue, rewrite the body. Each rewritten issue is one observable
-behavior, in this shape:
-
-```
-**Module**: <module name>
-
-**Behavior**: As a <actor>, I can <behavior> so that <value>.
-
-**Acceptance criteria**:
-- Given <precondition>, when <action>, then <observable outcome>
-- ...
-
-**Frontend design** (invoke `/frontend-design` before `/tdd`):
-- ...                ← frontend-flavored issues only; see step 2
-
-**TDD notes**:
-- Entry point: <public function / command / endpoint — name, not file path>
-- Test first: <most critical behavior>
-- Edge cases: <list>
-- Fake strategy: <what to fake, at which seam>
-- Must NOT test: <internal details to avoid coupling>
-```
+behavior. Required fields, in order: **Module** (canonical name from step
+5), **Behavior** (actor / behavior / value), **Acceptance criteria**
+(Given/When/Then, independently verifiable), **Frontend design** (stamped
+in step 2; omit for backend-only issues), **TDD notes** (entry point by
+name not path, test-first target, edge cases, fake strategy, must-NOT-test
+list).
 
 Name behaviours, interfaces, and types — not file paths or line numbers.
 State *what* the system should do in observable Given/When/Then form, not
-*how* to wire it. Make acceptance criteria independently verifiable.
+*how* to wire it.
 
 Split any issue that mixes modules. After splitting and rewriting, order
 the full set: **tracer bullet first** (the issue that proves the path works
@@ -236,39 +229,16 @@ The Design Plan records modules, seams, testing strategy, invariants, and a
 one-line issue index linking to each rewritten issue. It does not duplicate
 issue bodies — the issue tracker is authoritative for those.
 
-Design Plan template:
-
-```markdown
-# Design Plan: <Feature Name>
-
-> Status: approved | shipped
-> Created: YYYY-MM-DD
-> Epic: <PRD link or parent issue>
-
-## Context
-<One paragraph: problem, audience, why now. Domain vocabulary only.>
-
-## Domain Vocabulary Used
-<Terms from CONTEXT.md this plan relies on.>
-
-## Module Map
-| Module | Responsibility | Interface (operations) | Seams |
-
-## Seams
-| Seam | What crosses it | Adapter in tests | Adapter in prod |
-
-## Invariants and Contracts
-<Rules that must hold regardless of implementation.>
-
-## Testing Strategy
-| Module | Test entry point | Test level | Fake strategy |
-
-## Issue Index
-| Issue | Module | One-line description |
-
-## Open Questions
-<Questions needing resolution before or during implementation.>
-```
+The Design Plan file (`docs/design/<feature>.md`) contains, in order:
+title, status/date/epic header; **Context** (one paragraph, domain
+vocabulary only); **Domain Vocabulary Used** (terms from CONTEXT.md this
+plan relies on); **Module Map** (module → responsibility → interface
+operations → seams); **Seams** (what crosses each boundary, adapter in
+tests vs prod); **Invariants and Contracts** (rules that must hold
+regardless of implementation); **Testing Strategy** (module → test entry
+point → test level → fake strategy); **Issue Index** (issue → module →
+one-line description); **Open Questions** (unresolved before or during
+implementation).
 
 Wait for explicit approval. Apply inline edits the user requests. Then
 write everything in one pass via the tracker (`gh issue edit`) and the
@@ -295,7 +265,7 @@ After the last issue ships, mark the Design Plan `status: shipped`.
 [ ] Domain vocabulary read from CONTEXT.md before naming anything
 [ ] Frontend-flavored issues stamped (step 2) regardless of backlog size
 [ ] /codebase-design invoked for module/seam framework (step 4)
-[ ] /domain-modeling invoked for ubiquitous-language grounding (step 6)
+[ ] /domain-modeling invoked before user confirmation; canonical terms incorporated (step 5)
 [ ] Each module has exactly one reason to change
 [ ] No issue mixes responsibilities from two modules
 [ ] Issues ordered: tracer bullet → core behavior → edge cases → integration
