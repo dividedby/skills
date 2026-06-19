@@ -110,15 +110,25 @@ requires it.
 - Default branch matches the repo's role classification.
   Source: `setup-dividedby-skills` SKILL.md Concern F.
 
-### Claude harness (`.claude/settings.json` + hooks)
+### Claude harness (`.claude/settings.json`)
 
-- `.claude/settings.json` exists with the deny-only permissions model and the
-  hook entries expected by `project-claude-config`.
-- The five standard PreToolUse hooks are wired (read-guard, bash-guard,
-  git-guard, secret-guard, typecheck-guard) per the `project-claude-config`
-  catalog.
-  Source: `project-claude-config` SKILL.md; ADR 0023 (project-claude-config owns
-  the harness; setup-dividedby-skills explicitly excludes it).
+- `.claude/settings.json` exists (where the repo needs one) with the deny-only
+  permissions model and any repo-specific `env`/permission entries
+  `project-claude-config` prescribes.
+- **The hooks are global, not per-repo.** The five PreToolUse guards (read-guard,
+  bash-guard, git-guard, secret-guard, typecheck-guard) live in `~/.claude/` and
+  are already in effect for every interactive session. A repo must **not**
+  re-declare them at project scope — hooks are additive across scopes, so a
+  re-declared global hook fires twice. Their absence from a repo's
+  `.claude/settings.json` is **not** a gap.
+- **CI/AFK carve-out (loop repos only):** a repo that runs headless `claude -p`
+  in CI has no `~/.claude/`, so it re-declares the guard(s) that run needs at
+  project scope — primarily `git-guard` — so they still fire unattended. For a
+  loop repo, a *missing* project-scope `git-guard` is the real gap; for a
+  non-loop repo, no project-scope hooks are expected at all.
+  Source: ADR 0023 (project-claude-config owns the harness); ADR 0013 (project
+  scope may re-declare a global guard for CI/AFK); `project-claude-config`
+  SKILL.md / CATALOG.md.
 
 ### Pointer docs (`docs/agents/issue-tracker.md` and `docs/agents/domain.md`)
 
