@@ -68,8 +68,8 @@ This is **within-item** hygiene: per-item bloat is discarded with the sub-agent.
 
 Route by environment: when a session exists (interactive, `/loop`), use an
 **in-session sub-agent** (Agent tool, no new process). When there is no session
-(CI, cron, runners), a **headless process** gives the boundary for free. Under
-gearbox, a builder/architect delegation already *is* a do-and-report firewall —
+(CI, cron, runners), a **headless process** gives the boundary for free. A
+builder/architect delegation already *is* a do-and-report firewall —
 the remaining job is the orchestrator-side half: budget checkpoint and
 flush/compact in steps 3–4. See [FIREWALL-PATTERNS.md](FIREWALL-PATTERNS.md).
 

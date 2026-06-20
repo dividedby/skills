@@ -59,9 +59,6 @@ version that resolves for the `triage` name in this repo's workflow.
 
 ## Installed plugins
 
-`gearbox` — tiered model-routing sub-agents (scout/grunt/builder/architect + a
-verifier), each a fresh context; plus the orchestrator routing policy.
-
 `ponytail` — forces the laziest working solution (YAGNI; stdlib/native before
 dependencies); intensity levels lite/full/ultra, plus a ponytail-review pass.
 
