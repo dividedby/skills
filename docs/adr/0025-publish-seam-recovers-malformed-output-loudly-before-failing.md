@@ -56,8 +56,12 @@ distinction between:
 - *missing* (no `<output>`, no `<body-N>` → nothing salvageable → loud failure)
 - *recovered-with-degradation* (warned loudly, proposals filed, run exits 0)
 
-One file on the fetch-fresh harness rail reaches all three proposal loops on
-their next run — no envelope change is required.
+One file on the fetch-fresh harness rail reaches both publish-seam loops
+(`improve-codebase-architecture` and `staleness-review`) on their next run — no
+envelope change is required. The third loop, `apply-agent-research`, files
+through the skill's own guarded `cli.py` (not the harness `publish` seam), so it
+is unaffected by this change; whether that path shares the same brittleness is a
+separate audit.
 
 ## Consequences
 
