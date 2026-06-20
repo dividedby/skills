@@ -1,5 +1,7 @@
 # arch-review fetches the depth rubric fresh from an external upstream and adds local simplification + legibility lenses
 
+> **Amended 2026-06-20.** Upstream (`mattpocock/skills`) restructured the depth rubric on 2026-06-17: `improve-codebase-architecture/LANGUAGE.md` → `codebase-design/SKILL.md`; `improve-codebase-architecture/DEEPENING.md` → `codebase-design/DEEPENING.md`. The two inline workflow `curl` steps are replaced by a `harness/cli.py fetch-rubric` subcommand; the URLs now live once in the harness. Decision (a)'s `LANGUAGE.md`/`DEEPENING.md` references map to the new paths; Decision (b)'s float policy and (c)'s hard-fail guarantee are preserved. OLD-gen consumer repos (`agent-research`, `goodreads-bot`, `tweakcc-maint`) that had no rubric-fetch step (silently degraded — their skeleton forward-referenced a rubric they never appended) are corrected by this rollout.
+
 ## Context
 
 [ADR 0016](0016-arch-review-prompt-is-skeleton-plus-local-repo-context-include.md)

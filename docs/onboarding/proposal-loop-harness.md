@@ -186,6 +186,17 @@ rarely; when it does, it is a **manual rollout** across the ~3 owned repos.
   block — pair it with an `if: failure()` summarise step that surfaces the raw log.
   Reads `$GH_REPO` / `$GITHUB_STEP_SUMMARY` / `$GITHUB_OUTPUT` from the Actions env.
 
+- **`python3 harness/cli.py fetch-rubric --out-dir DIR`** —
+  arch-review only. Downloads the depth rubric from `mattpocock/skills@main`
+  codebase-design paths into `DIR/depth-LANGUAGE.md` and `DIR/depth-DEEPENING.md`.
+  **Hard-fails (exit 1)** on any network or HTTP error per ADR 0020(c) — an
+  unattended run with a missing rubric would produce unsound depth proposals. The
+  two upstream URLs live once in `harness/cli.py`; a future upstream path change is
+  a one-line fix there, picked up by every consumer on next run. Float policy: no
+  SHA pin — tracks `mattpocock/skills@main` automatically per ADR 0020(b). Supply-chain
+  implication: third-party changes enter unattended runs unreviewed; pin a SHA in
+  your own envelope if that tradeoff is unacceptable.
+
 The `publish` parser is unit-tested (`harness/tests/`, gated by
 `.github/workflows/harness-tests.yml`) precisely because it is the #117 drift
 surface — a tested stdlib parser replaces the brittle `sed`/`jq` hand-escaping

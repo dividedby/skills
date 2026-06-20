@@ -64,28 +64,13 @@ jobs:
           test -f ~/.claude/skills/improve-codebase-architecture/SKILL.md
           echo "Installed skill from mattpocock/skills@$(git -C "$tmp/mattpocock-skills" rev-parse --short HEAD)"
 
-      - name: Fetch depth rubric from mattpocock/skills
+      - name: Fetch depth rubric
         run: |
           set -euo pipefail
-          # ADR 0020: the depth concepts (deep/shallow modules, seams, deletion test)
-          # are fetched fresh from mattpocock/skills@main rather than hand-modeled in
-          # the skeleton, so the loop always runs against mattpocock's latest. Float
-          # policy: no SHA pin — accepted tradeoff (see ADR 0020). Hard-fail on any
-          # fetch error, consistent with the arch-review-context.md gate (ADR 0016):
-          # an unattended run with a missing or partial rubric would produce unsound
-          # depth proposals.
-          LANG_URL="https://raw.githubusercontent.com/mattpocock/skills/main/skills/engineering/improve-codebase-architecture/LANGUAGE.md"
-          DEEP_URL="https://raw.githubusercontent.com/mattpocock/skills/main/skills/engineering/improve-codebase-architecture/DEEPENING.md"
-          if ! curl -fsSL "$LANG_URL" -o "$RUNNER_TEMP/depth-LANGUAGE.md"; then
-            echo "ERROR: failed to fetch depth rubric LANGUAGE.md from mattpocock/skills" >&2
-            exit 1
-          fi
-          if ! curl -fsSL "$DEEP_URL" -o "$RUNNER_TEMP/depth-DEEPENING.md"; then
-            echo "ERROR: failed to fetch depth rubric DEEPENING.md from mattpocock/skills" >&2
-            exit 1
-          fi
-          echo "Fetched depth rubric files:"
-          wc -l "$RUNNER_TEMP/depth-LANGUAGE.md" "$RUNNER_TEMP/depth-DEEPENING.md"
+          # ADR 0020(c): hard-fail on any fetch error. The mattpocock/skills URLs
+          # live once in harness/cli.py fetch-rubric — a future upstream move is a
+          # one-line fix there, picked up by every consumer on next run.
+          python3 harness/cli.py fetch-rubric --out-dir "$RUNNER_TEMP"
 
       - name: Run /improve-codebase-architecture
         env:

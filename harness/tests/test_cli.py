@@ -354,5 +354,56 @@ class PublishCommandTest(unittest.TestCase):
         run.assert_not_called()
 
 
+class FetchRubricCommandTest(unittest.TestCase):
+    def setUp(self):
+        self.dir = tempfile.mkdtemp()
+
+    def _mock_urlopen(self, data=b"content", status=200):
+        """Return a context-manager mock whose .read() yields *data*."""
+        resp = mock.MagicMock()
+        resp.status = status
+        resp.read.return_value = data
+        resp.__enter__ = mock.Mock(return_value=resp)
+        resp.__exit__ = mock.Mock(return_value=False)
+        return resp
+
+    def test_both_files_written_on_success(self):
+        resp = self._mock_urlopen(b"content")
+        with mock.patch("cli.urllib.request.urlopen", return_value=resp) as m:
+            code, out = _run(["fetch-rubric", "--out-dir", self.dir])
+        self.assertEqual(code, 0)
+        lang = os.path.join(self.dir, "depth-LANGUAGE.md")
+        deep = os.path.join(self.dir, "depth-DEEPENING.md")
+        self.assertTrue(os.path.exists(lang))
+        self.assertTrue(os.path.exists(deep))
+        with open(lang, "rb") as fh:
+            self.assertEqual(fh.read(), b"content")
+        with open(deep, "rb") as fh:
+            self.assertEqual(fh.read(), b"content")
+        self.assertIn("Fetched depth-LANGUAGE.md", out)
+        self.assertIn("Fetched depth-DEEPENING.md", out)
+
+    def test_hard_fail_on_url_error(self):
+        with mock.patch(
+            "cli.urllib.request.urlopen",
+            side_effect=cli.urllib.error.URLError("simulated"),
+        ):
+            code, out = _run(["fetch-rubric", "--out-dir", self.dir])
+        self.assertEqual(code, 1)
+        self.assertFalse(os.path.exists(os.path.join(self.dir, "depth-LANGUAGE.md")))
+        self.assertFalse(os.path.exists(os.path.join(self.dir, "depth-DEEPENING.md")))
+
+    def test_hard_fail_on_http_error(self):
+        with mock.patch(
+            "cli.urllib.request.urlopen",
+            side_effect=cli.urllib.error.HTTPError(
+                "http://example.com", 404, "Not Found", {}, None
+            ),
+        ):
+            code, out = _run(["fetch-rubric", "--out-dir", self.dir])
+        self.assertEqual(code, 1)
+        self.assertFalse(os.path.exists(os.path.join(self.dir, "depth-LANGUAGE.md")))
+
+
 if __name__ == "__main__":
     unittest.main()
