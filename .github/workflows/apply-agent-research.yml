@@ -2,17 +2,15 @@ name: Apply Agent Research
 
 on:
   schedule:
-    # 01:19 UTC Saturday = 20:19 CT Friday. Weekly, in the Friday-evening consumer
-    # window — slot = sha1("skills/apply-agent-research") within the Sat 00–04 UTC
-    # (= Fri 19–23 CT) band, so onboarding a Consumer needs no schedule coordination
-    # (agent-research ADR 0022 hash-stagger). The Saturday-UTC slot IS Friday
-    # evening CT: one `* * 6` mask avoids the UTC-midnight day-of-week straddle.
-    # Weekly tracks the upstream corpus's cost-amended refresh (agent-research
-    # synthesizes 2×/week / scouts weekly), so applying the mirror more often was
-    # wasted runs; the loop re-clones the mirror fresh and the budgeted gate
-    # keeps each run to ≤5 issues across all channels (ADR 0019; a ceiling,
-    # not a target). (agent-research cost rebalance, 2026-06-08.)
-    - cron: "19 1 * * 6"
+    # 01:19 UTC Mon/Wed/Sat = 20:19 CT Sun/Tue/Fri. 3×/week, in the evening consumer
+    # window — slot = sha1("skills/apply-agent-research") within the 00–04 UTC band,
+    # so onboarding a Consumer needs no schedule coordination (agent-research ADR 0022
+    # hash-stagger). The UTC slot rolls back one calendar day in CT (UTC−5):
+    # Mon/Wed/Sat UTC → Sun/Tue/Fri CT evening. Per-run cap reduced to ≤2 issues
+    # across all channels (ADR 0019, amended 2026-06-20; a ceiling, not a target);
+    # frequency raised to 3×/week to compensate. (Was Saturday-only under the
+    # agent-research cost rebalance, 2026-06-08.)
+    - cron: "19 1 * * 1,3,6"
   workflow_dispatch:
 
 jobs:

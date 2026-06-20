@@ -24,7 +24,7 @@ skill is, from the workflow stub. Two subcommands:
     python3 harness/cli.py digest --jsonl agent.jsonl \
         --result-out agent.log --cost-out agent.cost
 
-    # result log  ->  parse <output>/<body-N>, file <=5 labeled issues, summarise
+    # result log  ->  parse <output>/<body-N>, file <=2 labeled issues, summarise
     python3 harness/cli.py publish --log agent.log \
         --label source:architecture-review --cost-file agent.cost \
         --heading "Architecture review"
@@ -45,9 +45,9 @@ import urllib.request
 _NA = "n/a"
 
 # Hard per-run cap on filed issues, enforced in code (not prompt adherence).
-# 5 is a ceiling, not a target — the prompts instruct agents to file only
+# 2 is a ceiling, not a target — the prompts instruct agents to file only
 # proposals that would each have cleared the old one-per-run bar on their own.
-MAX_PROPOSALS = 5
+MAX_PROPOSALS = 2
 
 # Depth rubric URLs from mattpocock/skills@main.
 # Note: upstream renamed improve-codebase-architecture/LANGUAGE.md →

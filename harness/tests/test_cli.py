@@ -278,23 +278,23 @@ class PublishCommandTest(unittest.TestCase):
         return fake_run
 
     def test_multi_proposal_files_each_with_matching_body(self):
-        self._multi_log(3)
+        self._multi_log(2)
         captured = []
         with mock.patch("cli.subprocess.run", side_effect=self._fake_gh(captured)):
             code, out = self._publish()
         self.assertEqual(code, 0)
-        self.assertEqual(len(captured), 3)
+        self.assertEqual(len(captured), 2)
         self.assertEqual(captured[1]["title"], "deepening: p2")
         self.assertEqual(captured[1]["body"], "Body 2 text.")
         with open(self.output) as fh:
             gh_out = fh.read()
         self.assertIn("issue_url=https://x/issues/1", gh_out)
         self.assertIn(
-            "issue_urls=https://x/issues/1,https://x/issues/2,https://x/issues/3", gh_out
+            "issue_urls=https://x/issues/1,https://x/issues/2", gh_out
         )
         with open(self.summary) as fh:
             s = fh.read()
-        self.assertIn("**Created (3):**", s)
+        self.assertIn("**Created (2):**", s)
         self.assertIn("https://x/issues/2 — summary 2", s)
 
     def test_more_than_cap_truncates_to_max(self):

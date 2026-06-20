@@ -2,9 +2,9 @@
 
 You are running unattended in GitHub Actions. No user is watching. Do not ask
 questions — make the call yourself. Your job is to apply the `apply-agent-research`
-skill to **this** repo and file **at most five issues per run, shared across all
+skill to **this** repo and file **at most two issues per run, shared across all
 channels** — and usually far fewer, or none (see the skill's `proposal-flow.md`
-and ADR 0019 in the skills repo). Five is a ceiling, not a target.
+and ADR 0019 in the skills repo). Two is a ceiling, not a target.
 
 This one prompt serves **both** the skills repo (the tracker **host**) and every
 downstream **Consumer**; it reads its wiring from the environment the workflow stub
@@ -58,7 +58,7 @@ of sync with the cross-repo writes it gates.
 
 ## Channels (run only the ones your role enables)
 
-All channels share **one per-run budget of 5 issues**, allocated best-first by a
+All channels share **one per-run budget of 2 issues**, allocated best-first by a
 single gate pass over the merged candidates — zero is fine, and a typical run
 files 0–2. A forced finding is worse than none: every candidate must
 independently clear the bar that would have made it the run's single best.
@@ -137,7 +137,7 @@ independently clear the bar that would have made it the run's single best.
 
 5. **Gate ONCE, over all channels merged.** Tag each candidate with its channel,
    merge every enabled channel's candidates, and run the budgeted gate **once**
-   with `"budget": 5` and the union of every channel's spoken-for keys, exactly as
+   with `"budget": 2` and the union of every channel's spoken-for keys, exactly as
    `proposal-flow.md` describes:
    `printf '%s' '<json>' | python3 "$SKILL_DIR/lib/cli.py" gate` (run from the repo
    root). Be ruthlessly critical *before* the gate: inject only candidates you
@@ -170,7 +170,7 @@ independently clear the bar that would have made it the run's single best.
    On `BLOCK: <reason>` it files nothing and exits non-zero — revise the body to drop
    the structural trigger (a fenced block, a pasted import, a `path/like.this` token,
    or a marker hit) and re-run; never route around it. For every channel that
-   contributed nothing, print `SKIPPED: <channel>: <reason>`. **At most five issues
+   contributed nothing, print `SKIPPED: <channel>: <reason>`. **At most two issues
    per run across all channels — the gate enforces it. Zero is acceptable.**
 
    End your run with a one-line-per-channel summary (the filed issue URL or
@@ -192,5 +192,5 @@ independently clear the bar that would have made it the run's single best.
 - `dividedby/skills` owns the `skill-request` and `skill-promotion` labels; a
   Consumer applies them, never creates them. Each repo owns its own `source:*`
   labels.
-- At most five issues per run across all channels, gate-enforced; five is a
+- At most two issues per run across all channels, gate-enforced; two is a
   ceiling, not a target. No questions. There is no user.

@@ -1,7 +1,30 @@
 # Proposal loops file a budgeted ranked top-k, not one issue per run/channel
 
+> **Amended 2026-06-20.** Two parameters change together now that the
+> `claude -p` SDK credit — the cost constraint this ADR's "Why" rested on (the
+> weekly cadence set by the 2026-06-08 cost-rebalance) — has been walked back by
+> Anthropic. **(1) Per-run cap 5 → 2** for the budgeted loops: `MAX_PROPOSALS`
+> (`harness/cli.py`, reaching arch-review estate-wide) and the
+> apply-agent-research gate `budget` (`proposal_gate.MAX_BUDGET`). Caps stay
+> mechanical and propagate to every consumer via the fetched-fresh harness/skill
+> ([ADR 0014](0014-harness-is-fetched-fresh-only-the-workflow-envelope-is-vendored.md)).
+> **(2) Cadence weekly → 3×/week** (Mon/Wed/Sat) for `improve-codebase-architecture`
+> and `apply-agent-research`, by expanding the cron day-of-week field and
+> preserving each repo's hash-staggered minute/hour (agent-research ADR 0022);
+> `staleness-review` is unchanged (monthly, one report). This adopts the pairing
+> the "Rejected alternatives" below dismissed as *"keep ≤1 and raise cadence
+> instead"* — but only partially: cadence rises **and** the per-run ceiling stays
+> above 1 (=2), so findings discovered together are not re-serialized one-per-run.
+> The "more runs cost more" objection is void without the credit. The
+> ceiling-not-target discipline is preserved (typical run still 0–2); the only
+> shift is that a maximal week per loop moves from 5 to 6 issues, spread across
+> three smaller, fresher batches, cutting the wait for a serialized finding from a
+> week to ~2 days. Out of scope: agent-research's producer-side scout budget
+> (≤3) is a separate mechanism and is unchanged.
+
 Every Claude-powered proposal loop moves from a one-issue cap to a **per-run
-budget of 5**, enforced in code, with an explicit ceiling-not-target discipline:
+budget of 5** (lowered to **2** by the 2026-06-20 amendment above), enforced in
+code, with an explicit ceiling-not-target discipline:
 
 - **Harness loops** (`harness/cli.py publish` — architecture-review here and in
   every downstream repo): the `<output>` contract gains a `proposals[]` array
