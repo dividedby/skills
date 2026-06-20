@@ -77,12 +77,83 @@ def extract_block(text, tag):
     return matches[-1].strip("\n")
 
 
+def _repair_json(block: str) -> str:
+    """Conservative, idempotent JSON repair for the common corruption patterns.
+
+    Uses a single quote-state-aware character walk — NOT regex — to avoid
+    corrupting valid strings that contain sequences like ``, }``.
+
+    Repairs performed:
+    - Outside strings: drops structural trailing commas (a ``,`` whose next
+      non-whitespace character is ``}`` or ``]``).
+    - Inside strings: escapes lone control characters (raw newline, tab, CR)
+      that are not already escaped.
+    - Re-strips a residual ````json`` / ````` `` fence if present.
+    """
+    # Strip any residual fence variants the main strip may have missed.
+    stripped = re.sub(r"^\s*```json\s*", "", block, flags=re.MULTILINE)
+    stripped = re.sub(r"\s*```\s*$", "", stripped, flags=re.MULTILINE).strip()
+
+    out = []
+    in_string = False
+    i = 0
+    while i < len(stripped):
+        ch = stripped[i]
+        if in_string:
+            if ch == "\\":
+                # Consume the escape sequence verbatim (skip the escaped char).
+                out.append(ch)
+                i += 1
+                if i < len(stripped):
+                    out.append(stripped[i])
+                    i += 1
+                continue
+            elif ch == '"':
+                in_string = False
+                out.append(ch)
+            elif ch == "\n":
+                out.append("\\n")
+            elif ch == "\t":
+                out.append("\\t")
+            elif ch == "\r":
+                out.append("\\r")
+            else:
+                out.append(ch)
+        else:
+            if ch == '"':
+                in_string = True
+                out.append(ch)
+            elif ch == ",":
+                # Look ahead for the next non-whitespace char.
+                j = i + 1
+                while j < len(stripped) and stripped[j] in " \t\n\r":
+                    j += 1
+                if j < len(stripped) and stripped[j] in "}]":
+                    # Structural trailing comma — drop it.
+                    i += 1
+                    continue
+                else:
+                    out.append(ch)
+            else:
+                out.append(ch)
+        i += 1
+    return "".join(out)
+
+
 def parse_output(text):
     """Parse the agent's ``<output>`` block into a dict.
 
-    Strips an optional ```json fence inside the block. Raises ``ValueError`` on
-    a missing block or invalid JSON — loud beats lossy: an unattended loop that
-    "succeeds" with no signal is worse than one that fails visibly (#117).
+    Strips an optional ```json fence inside the block. On malformed JSON,
+    attempts a single conservative deterministic repair before failing.
+
+    Recovery hierarchy (loud beats lossy — #117):
+
+    1. Clean parse → return dict.
+    2. ``JSONDecodeError`` → call ``_repair_json``, retry once.
+       - Repair succeeds → emit ``::warning::`` to stderr, return dict.
+       - Repair also fails → raise ``ValueError`` so the caller can attempt
+         ``<body-N>`` salvage via ``_salvage_bodies``.
+    3. Missing/empty block → raise ``ValueError`` immediately (no repair).
     """
     block = extract_block(text, "output")
     if block is None:
@@ -93,8 +164,19 @@ def parse_output(text):
         raise ValueError("the <output> block was empty")
     try:
         return json.loads(block)
-    except json.JSONDecodeError as exc:
-        raise ValueError(f"the <output> block was not valid JSON: {exc}") from exc
+    except json.JSONDecodeError as original_exc:
+        repaired = _repair_json(block)
+        try:
+            result = json.loads(repaired)
+            print(
+                f"::warning::the <output> JSON was malformed; applied deterministic repair ({original_exc})",
+                file=sys.stderr,
+            )
+            return result
+        except json.JSONDecodeError:
+            raise ValueError(
+                f"the <output> block was not valid JSON: {original_exc}"
+            ) from original_exc
 
 
 def parse_proposals(output, text):
@@ -134,6 +216,43 @@ def parse_proposals(output, text):
     if not title or not body:
         raise ValueError("status=proposed but title is empty or no <body> block was found")
     return [{"title": title, "oneLineSummary": output.get("oneLineSummary", ""), "body": body}]
+
+
+def _salvage_bodies(text: str) -> list:
+    """Extract ``<body-N>`` (or legacy ``<body>``) blocks when ``<output>`` is unparseable.
+
+    For each block found, builds a proposal dict with a reconstructed title
+    derived from the first markdown heading or first non-empty line of the body,
+    truncated to 80 characters and prefixed ``recovered: ``.
+
+    Returns ``[]`` when no body blocks are present.
+    """
+    proposals = []
+    # Try numbered blocks first: <body-1>, <body-2>, …
+    for i in range(1, MAX_PROPOSALS + 1):
+        body = extract_block(text, f"body-{i}")
+        if body is None:
+            break
+        title = _title_from_body(body)
+        proposals.append({"title": title, "oneLineSummary": "", "body": body})
+    # Fall back to legacy single <body> block if no numbered blocks found.
+    if not proposals:
+        body = extract_block(text, "body")
+        if body:
+            proposals.append({"title": _title_from_body(body), "oneLineSummary": "", "body": body})
+    return proposals
+
+
+def _title_from_body(body: str) -> str:
+    """Reconstruct a proposal title from a body's first heading or first line."""
+    for line in body.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        if line.startswith("#"):
+            line = line.lstrip("#").strip()
+        return ("recovered: " + line)[:80]
+    return "recovered: (no title)"
 
 
 def parse_digest(lines):
@@ -248,10 +367,22 @@ def _publish(args, out):
 
     Filing, the provenance label, and the per-run issue cap live here, in code,
     so none of it rests on prompt adherence: proposals beyond ``MAX_PROPOSALS``
-    are dropped (visibly, in the summary), never filed. A missing/garbled block
-    fails the run (exit 1) without writing a summary — the workflow's
-    ``if: failure()`` step then surfaces the raw log. On a clean proposed/skipped
-    run this writes the step summary itself, so the stub needs no jq.
+    are dropped (visibly, in the summary), never filed.
+
+    Recovery hierarchy when ``<output>`` is malformed (loud beats lossy — #117):
+
+    1. ``parse_output`` attempts a deterministic one-shot JSON repair; on success
+       it emits a ``::warning::`` to stderr and continues normally.
+    2. If repair also fails, ``_salvage_bodies`` scans the raw log for
+       ``<body-N>`` blocks and files them under reconstructed titles, emitting a
+       ``::warning::`` for each salvaged block.
+    3. Only when NOTHING is salvageable does the run fail (exit 1) without
+       writing a summary — the workflow's ``if: failure()`` step then surfaces
+       the raw log. This preserves the distinction between *missing* (no signal
+       at all → loud failure) and *recovered-with-degradation* (warned, filed).
+
+    On a clean proposed/skipped run this writes the step summary itself, so the
+    stub needs no jq.
     """
     cost = _NA
     if args.cost_file and os.path.exists(args.cost_file):
@@ -260,7 +391,53 @@ def _publish(args, out):
 
     with open(args.log, encoding="utf-8") as fh:
         text = fh.read()
-    output = parse_output(text)  # raises ValueError -> caught in main(), exit 1
+
+    salvaged_proposals = None
+    try:
+        output = parse_output(text)
+    except ValueError:
+        salvaged = _salvage_bodies(text)
+        if not salvaged:
+            raise  # re-raise ValueError -> caught in main(), exit 1
+        n = len(salvaged)
+        print(
+            f"::warning::<output> was unparseable; salvaged {n} <body-N> block(s) with reconstructed titles",
+            file=sys.stderr,
+        )
+        salvaged_proposals = salvaged
+
+    if salvaged_proposals is not None:
+        # Degraded path: file salvaged proposals directly (skip status/parse_proposals).
+        proposals = salvaged_proposals[:MAX_PROPOSALS]
+        truncated = max(0, len(salvaged_proposals) - MAX_PROPOSALS)
+        if truncated:
+            print(
+                f"WARNING: {len(salvaged_proposals)} salvaged proposals; filing only the "
+                f"first {MAX_PROPOSALS} (in-code cap)",
+                file=out,
+            )
+        repo = args.repo or os.environ.get("GH_REPO")
+        _ensure_label(args.label, args.label_color, args.label_description, repo)
+        filed = []
+        for proposal in proposals:
+            with tempfile.NamedTemporaryFile(
+                "w", suffix=".md", delete=False, encoding="utf-8"
+            ) as bf:
+                bf.write(proposal["body"])
+                body_path = bf.name
+            try:
+                url = _create_issue(proposal["title"], body_path, args.label, repo)
+            finally:
+                os.unlink(body_path)
+            print(f"Published {url}", file=out)
+            filed.append({"url": url, "oneLineSummary": proposal["oneLineSummary"]})
+        summary_file = args.summary_file or os.environ.get("GITHUB_STEP_SUMMARY")
+        gh_output = args.output_file or os.environ.get("GITHUB_OUTPUT")
+        _append(gh_output, f"issue_url={filed[0]['url']}\n")
+        _append(gh_output, "issue_urls=" + ",".join(f["url"] for f in filed) + "\n")
+        # Use a degraded summary (no candidatesConsidered from the corrupted output).
+        _append(summary_file, _summary_proposed(args.heading, cost, filed, {}, truncated))
+        return 0
 
     status = output.get("status")
     summary_file = args.summary_file or os.environ.get("GITHUB_STEP_SUMMARY")

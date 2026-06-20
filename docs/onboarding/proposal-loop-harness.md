@@ -182,8 +182,12 @@ rarely; when it does, it is a **manual rollout** across the ~3 owned repos.
   blocks (or the legacy single `<body>`), files ≤5 issues under `L` (cap in code —
   [ADR 0019](../adr/0019-proposal-loops-file-a-budgeted-ranked-top-k.md)), writes
   the rich step summary, and emits `issue_url` / `issue_urls` to
-  `$GITHUB_OUTPUT`. **Fails loudly (exit 1)** on a missing/garbled/unknown-status
-  block — pair it with an `if: failure()` summarise step that surfaces the raw log.
+  `$GITHUB_OUTPUT`. **Recovers loudly, then fails loud** — on a malformed
+  `<output>` it applies a deterministic one-shot JSON repair, then salvages any
+  `<body-N>` blocks under reconstructed titles (each degradation emits a
+  `::warning::`); it exits 1 only when nothing is salvageable (no output and no
+  bodies, or unknown status) — [ADR 0025](../adr/0025-publish-seam-recovers-malformed-output-loudly-before-failing.md).
+  Pair it with an `if: failure()` summarise step that surfaces the raw log.
   Reads `$GH_REPO` / `$GITHUB_STEP_SUMMARY` / `$GITHUB_OUTPUT` from the Actions env.
 
 - **`python3 harness/cli.py fetch-rubric --out-dir DIR`** —

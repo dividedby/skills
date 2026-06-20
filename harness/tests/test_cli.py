@@ -330,7 +330,71 @@ class PublishCommandTest(unittest.TestCase):
         self.assertFalse(os.path.exists(self.summary))
 
     def test_garbled_json_fails_loudly(self):
+        # Double-comma (,,) is NOT fully repaired in one pass, and there are no
+        # <body-N> blocks to salvage — asserts the fail-loud floor.
         self._log('<output>\n{"status": "proposed",,}\n</output>\n')
+        with mock.patch("cli.subprocess.run") as run:
+            code, _ = self._publish()
+        self.assertEqual(code, 1)
+        run.assert_not_called()
+
+    def test_repairs_trailing_comma_with_warning(self):
+        """Single trailing comma is repaired; a ::warning:: goes to stderr."""
+        self._log('<output>{"status":"skipped","reason":"x",}</output>')
+        with mock.patch("cli.subprocess.run"):
+            with mock.patch("sys.stderr", new_callable=io.StringIO) as err:
+                code, out = self._publish()
+        self.assertEqual(code, 0)
+        self.assertIn("SKIPPED: x", out)
+        self.assertIn("::warning::", err.getvalue())
+        self.assertIn("deterministic repair", err.getvalue())
+
+    def test_repairs_real_delimiter_failure(self):
+        """A raw newline inside a JSON string (produces Expecting ',' delimiter) is repaired."""
+        # Build JSON with a raw embedded newline in the reason field.
+        raw = '{"status":"skipped","reason":"line one\nline two"}'
+        self._log(f"<output>{raw}</output>")
+        with mock.patch("cli.subprocess.run"):
+            with mock.patch("sys.stderr", new_callable=io.StringIO) as err:
+                code, out = self._publish()
+        self.assertEqual(code, 0)
+        self.assertIn("::warning::", err.getvalue())
+
+    def test_valid_unusual_json_untouched(self):
+        """A VALID <output> whose string value contains ', }' and an escaped newline
+        round-trips unchanged — the repair must never corrupt valid JSON."""
+        payload = {"status": "skipped", "reason": "foo, } and \\n bar"}
+        raw_json = json.dumps(payload)
+        self._log(f"<output>{raw_json}</output>")
+        with mock.patch("cli.subprocess.run"):
+            with mock.patch("sys.stderr", new_callable=io.StringIO) as err:
+                code, out = self._publish()
+        # Must parse cleanly with no repair warning.
+        self.assertEqual(code, 0)
+        self.assertEqual(err.getvalue(), "")
+        self.assertIn("SKIPPED: foo, } and", out)
+
+    def test_irreparable_output_salvages_bodies(self):
+        """Genuine garbage <output> + present <body-N> blocks → exit 0, 2 issues filed."""
+        self._log(
+            "<output>not json {[</output>\n"
+            "<body-1>\n# First proposal\nBody one.\n</body-1>\n"
+            "<body-2>\n# Second proposal\nBody two.\n</body-2>\n"
+        )
+        captured = []
+        with mock.patch("cli.subprocess.run", side_effect=self._fake_gh(captured)):
+            with mock.patch("sys.stderr", new_callable=io.StringIO) as err:
+                code, out = self._publish()
+        self.assertEqual(code, 0)
+        self.assertEqual(len(captured), 2)
+        self.assertTrue(captured[0]["title"].startswith("recovered: "))
+        self.assertTrue(captured[1]["title"].startswith("recovered: "))
+        self.assertIn("salvaged", err.getvalue())
+        self.assertIn("::warning::", err.getvalue())
+
+    def test_no_output_and_no_bodies_still_fails_loudly(self):
+        """Garbage <output> + zero <body-N> blocks → exit 1, no issue filed."""
+        self._log("<output>not json {[</output>\n")
         with mock.patch("cli.subprocess.run") as run:
             code, _ = self._publish()
         self.assertEqual(code, 1)
