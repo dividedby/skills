@@ -44,6 +44,10 @@ knowledge-base producer; **goodreads-bot** = deployed app (default branch
 - Uses the harness **`publish` seam** (cap = `MAX_PROPOSALS`, [ADR 0019](../adr/0019-proposal-loops-file-a-budgeted-ranked-top-k.md)).
 - Depth rubric fetched fresh from `mattpocock/skills@main`
   ([ADR 0020](../adr/0020-arch-review-fetches-depth-rubric-fresh-and-adds-simplification-legibility-lenses.md)).
+- Proposal bodies include a **Design-tension section** — 2–3 candidate-specific
+  competing constraints, a sketch under each, and a tension statement — as
+  competing-constraint decision-support for the human triaging before implementation
+  (ADR 0020, second amendment; async adaptation of DESIGN-IT-TWICE).
 
 ## `apply-agent-research` — Saturdays
 

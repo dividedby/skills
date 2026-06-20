@@ -71,7 +71,12 @@ first**; this doc is only the deltas.
     (oversized files, non-conventional names, greppability, CLI surfacing) are
     modeled in the skeleton at principle level; the depth lens is forward-referenced
     to the fetched rubric. Every consumer of this skeleton gets all three lenses
-    without any local changes.
+    without any local changes. Step 5's body-drafting rules also instruct the agent
+    to include a **Design-tension section** per proposal — naming 2–3
+    candidate-specific competing constraints with a sketch under each and a tension
+    statement the human must resolve at triage — an async adaptation of the
+    DESIGN-IT-TWICE principle inlined at principle level (ADR 0020, second
+    amendment).
 - **No cross-repo writes**, so **no `SKILLS_TRACKER_TOKEN`** — only
   `CLAUDE_CODE_OAUTH_TOKEN`. `permissions: contents: read, issues: write` and
   `GITHUB_TOKEN` suffice.
