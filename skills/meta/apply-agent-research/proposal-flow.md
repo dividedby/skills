@@ -61,7 +61,7 @@ the standalone check is still there:
 
 ## The proposal gate — run ONCE over every channel's candidates
 
-The cap is a **shared per-run budget of 5**, ranked best-first across all
+The cap is a **shared per-run budget of 2**, ranked best-first across all
 channels ([ADR 0019](../../../docs/adr/0019-proposal-loops-file-a-budgeted-ranked-top-k.md),
 superseding the per-channel one-cap of ADR 0011). Gather candidates from every
 enabled channel (`self-improvement`, `skill-audit`, the skills-repo's
@@ -72,7 +72,7 @@ plus the union of every channel's already-spoken-for keys:
     echo '{"candidates": [{"dedup_key": "...", "priority": 3, "title": "...", "channel": "self-improvement"}],
            "open_issues": ["<keys already open or wontfix in ANY channel>"],
            "min_priority": 1,
-           "budget": 5}' \
+           "budget": 2}' \
       | python3 <skill-dir>/lib/cli.py gate
 
 - **Adversarial pre-gate filter.** Before injecting a candidate, challenge it
@@ -109,7 +109,7 @@ plus the union of every channel's already-spoken-for keys:
 - The gate drops any candidate whose key is already open and any below
   `min_priority`, deduplicates keys within the batch, ranks the survivors by
   priority (ties break on the smallest key — deterministic), and returns at most
-  `budget` of them (the code clamps the budget to 5 regardless of what is asked).
+  `budget` of them (the code clamps the budget to 2 regardless of what is asked).
 - Output `{"file": [...]}` → file each, in order. `{"file": []}` → file nothing;
   print `SKIPPED: <channel>: <one-line reason>` per enabled channel that
   contributed nothing.

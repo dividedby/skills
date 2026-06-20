@@ -53,10 +53,11 @@ class ProposalGateTest(unittest.TestCase):
         candidates = [
             {"dedup_key": f"cand-{i:02d}", "priority": i} for i in range(10)
         ]
+        # budget=3 clamps to MAX_BUDGET=2; still exercises ranked top-k selection
         result = decide(candidates, open_issues=[], budget=3)
         self.assertEqual(
             [c["dedup_key"] for c in result["file"]],
-            ["cand-09", "cand-08", "cand-07"],
+            ["cand-09", "cand-08"],
         )
 
     def test_budget_is_a_ceiling_not_a_target(self):

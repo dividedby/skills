@@ -2,15 +2,14 @@ name: Improve Codebase Architecture
 
 on:
   schedule:
-    # 00:05 UTC Saturday = 19:05 CT Friday. Weekly, in the Friday-evening consumer
-    # window — slot = sha1("skills/improve-codebase-architecture") within the Sat
-    # 00–04 UTC (= Fri 19–23 CT) band, so onboarding a Consumer needs no schedule
-    # coordination (agent-research ADR 0022 hash-stagger). The Saturday-UTC slot IS
-    # Friday evening CT: one `* * 6` mask avoids the UTC-midnight day-of-week
-    # straddle. Weekly (was weekdays) under the agent-research cost rebalance
-    # (2026-06-08) — a daily arch-review found little run-to-run on a slow-churn
-    # repo, for sonnet spend that added up under the $100 Agent SDK credit.
-    - cron: "5 0 * * 6"
+    # 00:05 UTC Mon/Wed/Sat = 19:05 CT Sun/Tue/Fri. 3×/week, in the evening consumer
+    # window — slot = sha1("skills/improve-codebase-architecture") within the
+    # 00–04 UTC band, so onboarding a Consumer needs no schedule coordination
+    # (agent-research ADR 0022 hash-stagger). The UTC slot rolls back one calendar
+    # day in CT (UTC−5): Mon/Wed/Sat UTC → Sun/Tue/Fri CT evening. Per-run cap
+    # reduced to 2 (ADR 0019, amended 2026-06-20); frequency raised to 3×/week to
+    # compensate. (Was Saturday-only under the agent-research cost rebalance, 2026-06-08.)
+    - cron: "5 0 * * 1,3,6"
   workflow_dispatch:
 
 # This workflow is the thin **workflow envelope** (ADR 0014): cron, permissions,
@@ -94,7 +93,7 @@ jobs:
           # The agent is read-only: it explores, decides, and emits a single
           # <output> JSON block plus raw <body-N> blocks (see prompt). It does NOT
           # file the issues — the Publish step does, via the harness, which enforces
-          # the ≤5-issues-per-run cap (ADR 0019) and the label in code. gh access is
+          # the ≤2-issues-per-run cap (ADR 0019) and the label in code. gh access is
           # scoped to read-only subcommands (list/view/search) so the agent *cannot*
           # create an issue itself. Do NOT add `gh api` here — it is a write primitive
           # that POSTs issues directly, bypassing the cap (#306). WebSearch/WebFetch are
@@ -145,7 +144,7 @@ jobs:
         id: publish
         run: |
           set -euo pipefail
-          # Parse <output>/<body-N>, file <=5 labeled issues (cap in code, ADR
+          # Parse <output>/<body-N>, file <=2 labeled issues (cap in code, ADR
           # 0019), write the rich step summary, emit issue_url(s). Fails loudly
           # (exit 1) on a missing/garbled block — the failure() Summarise step
           # below then surfaces the raw log.
