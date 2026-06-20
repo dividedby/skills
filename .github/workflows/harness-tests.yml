@@ -6,14 +6,19 @@ name: harness tests
 # fetched fresh by every loop, a regression here would reach all of them at once,
 # so its stdlib test suite is a hard gate, not advisory. Stdlib-only, sub-second.
 # Path-filtered so doc-only commits don't trigger it.
+# Also guards the skill's verbatim copy of the JSON repairer: a one-sided edit to
+# `skills/meta/apply-agent-research/lib/json_repair.py` triggers the same suite
+# (harness/tests/test_repair_json_drift.py asserts byte-identical bodies — ADR 0026).
 
 on:
   push:
     paths:
       - "harness/**"
+      - "skills/meta/apply-agent-research/lib/json_repair.py"
   pull_request:
     paths:
       - "harness/**"
+      - "skills/meta/apply-agent-research/lib/json_repair.py"
   workflow_dispatch:
 
 jobs:

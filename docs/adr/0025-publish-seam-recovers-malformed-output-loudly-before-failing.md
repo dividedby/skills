@@ -62,6 +62,7 @@ envelope change is required. The third loop, `apply-agent-research`, files
 through the skill's own guarded `cli.py` (not the harness `publish` seam), so it
 is unaffected by this change; whether that path shares the same brittleness is a
 separate audit.
+*Update: that separate audit ran (#369); the gate path now shares this recovery via a byte-identical copy of `_repair_json` under a CI drift guard — see [ADR 0026](0026-repair-json-duplicated-under-drift-guard.md).*
 
 ## Consequences
 

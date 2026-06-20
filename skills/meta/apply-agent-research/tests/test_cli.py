@@ -13,7 +13,7 @@ import os
 import sys
 import tempfile
 import unittest
-from contextlib import redirect_stdout
+from contextlib import redirect_stderr, redirect_stdout
 from types import SimpleNamespace
 from unittest import mock
 
@@ -102,6 +102,31 @@ class GateCommandTest(unittest.TestCase):
         }
         _, out = _run(["gate"], stdin=json.dumps(payload))
         self.assertEqual(json.loads(out)["file"], [])
+
+    def test_repairs_malformed_json_with_warning(self):
+        # Trailing commas (one malformed blob) used to drop every channel's
+        # candidates for the run (#369); now repaired with a loud warning.
+        payload = '{"candidates": [{"dedup_key": "deepen-x", "priority": 3},], "open_issues": [],}'
+        out, err = io.StringIO(), io.StringIO()
+        with redirect_stdout(out), redirect_stderr(err):
+            code = cli.main(["gate"], stdin=io.StringIO(payload))
+        self.assertEqual(code, 0)
+        self.assertEqual(
+            [c["dedup_key"] for c in json.loads(out.getvalue())["file"]], ["deepen-x"]
+        )
+        self.assertIn("::warning::", err.getvalue())
+        self.assertIn("deterministic repair", err.getvalue())
+
+    def test_unrepairable_json_fails_loudly(self):
+        # Double-comma is NOT fully repaired in one pass -> fail loud (clear
+        # message, non-zero exit), file nothing. ADR 0025 fail-loud floor.
+        payload = '{"candidates": [{"dedup_key": "x", "priority": 1},,], "open_issues": []}'
+        out, err = io.StringIO(), io.StringIO()
+        with redirect_stdout(out), redirect_stderr(err):
+            code = cli.main(["gate"], stdin=io.StringIO(payload))
+        self.assertEqual(code, 1)
+        self.assertEqual(out.getvalue(), "")
+        self.assertIn("ERROR", err.getvalue())
 
 
 class GuardedFilingTest(unittest.TestCase):

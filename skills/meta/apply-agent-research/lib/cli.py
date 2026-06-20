@@ -45,7 +45,8 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from proposal_gate import decide  # noqa: E402  (after sys.path bootstrap)
+from json_repair import repair_json  # noqa: E402  (after sys.path bootstrap)
+from proposal_gate import decide  # noqa: E402
 from sanitizer import check  # noqa: E402
 
 
@@ -59,8 +60,40 @@ def _sanitize(args, stdin, out):
     return 1
 
 
+def _load_gate_payload(text):
+    """Parse the consolidated gate JSON, recovering from common corruption.
+
+    The agent pipes one consolidated object across every channel's candidates, so
+    a bare ``json.load`` dropped the whole run on a single malformed blob (#369).
+    Mirror the harness publish seam's recovery hierarchy (ADR 0025, loud beats
+    lossy — #117):
+
+    1. Clean parse → return dict.
+    2. ``JSONDecodeError`` → ``repair_json``, retry once.
+       - Repair succeeds → emit ``::warning::`` to stderr, return dict.
+       - Repair also fails → raise ``ValueError`` (clear message) so ``_gate``
+         can fail loud only when nothing parses.
+    """
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError as original_exc:
+        try:
+            result = json.loads(repair_json(text))
+        except json.JSONDecodeError:
+            raise ValueError(f"the gate JSON was not valid JSON: {original_exc}") from original_exc
+        print(
+            f"::warning::the gate JSON was malformed; applied deterministic repair ({original_exc})",
+            file=sys.stderr,
+        )
+        return result
+
+
 def _gate(args, stdin, out):
-    payload = json.load(stdin)
+    try:
+        payload = _load_gate_payload(stdin.read())
+    except ValueError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
     result = decide(
         payload["candidates"],
         payload.get("open_issues", []),
