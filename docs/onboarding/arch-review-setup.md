@@ -33,14 +33,18 @@ first**; this doc is only the deltas.
     discipline (Task steps 1–6), and the lockstep `<output>`/`<body>` schema. It
     is **scope-free** and does not model the depth concepts — it forward-references
     the depth rubric appended below.
-  - The **depth rubric** (`mattpocock/skills` → `LANGUAGE.md` + `DEEPENING.md`,
-    fetched fresh from `main` at run time) carries the depth concepts: deep/shallow
-    modules, seams, and the deletion test. The workflow fetches these files in a
-    dedicated step before invoking the agent and **hard-fails the run if either
-    fetch fails** — an unattended run with a missing rubric would produce unsound
-    depth proposals. The rubric floats at `main` (no SHA pin): consumers
-    automatically track mattpocock's latest depth thinking, and an upstream rename
-    or deletion surfaces immediately as a hard-fail rather than silently drifting.
+  - The **depth rubric** (`mattpocock/skills` → `codebase-design/SKILL.md` +
+    `codebase-design/DEEPENING.md`, fetched fresh from `main` at run time and
+    written as `depth-LANGUAGE.md` / `depth-DEEPENING.md` for envelope
+    compatibility) carries the depth concepts: deep/shallow modules, seams, and the
+    deletion test. The workflow runs `python3 harness/cli.py fetch-rubric --out-dir
+    "$RUNNER_TEMP"` in a dedicated step before invoking the agent and **hard-fails
+    the run if either fetch fails** (ADR 0020 c) — an unattended run with a missing
+    rubric would produce unsound depth proposals. The upstream URLs live once in
+    `harness/cli.py`; a future path change is a one-line fix there. The rubric
+    floats at `main` (no SHA pin): consumers automatically track mattpocock's latest
+    depth thinking, and an upstream rename or deletion surfaces immediately as a
+    hard-fail rather than silently drifting (ADR 0020 b).
     **Supply-chain implication:** a third-party maintainer's changes enter this
     loop's unattended runs unreviewed each week. This is a deliberate choice made
     by the `dividedby/skills` maintainer; consumers who want review-before-run

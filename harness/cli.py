@@ -37,6 +37,8 @@ import re
 import subprocess
 import sys
 import tempfile
+import urllib.error
+import urllib.request
 
 # --- pure helpers (no I/O, unit-tested directly) ---------------------------
 
@@ -46,6 +48,20 @@ _NA = "n/a"
 # 5 is a ceiling, not a target — the prompts instruct agents to file only
 # proposals that would each have cleared the old one-per-run bar on their own.
 MAX_PROPOSALS = 5
+
+# Depth rubric URLs from mattpocock/skills@main.
+# Note: upstream renamed improve-codebase-architecture/LANGUAGE.md →
+# codebase-design/SKILL.md (2026-06-17), but the OUTPUT filename stays
+# depth-LANGUAGE.md for envelope compatibility (the downstream `cat` and
+# `test -f` steps reference that name).
+_RUBRIC_LANGUAGE_URL = (
+    "https://raw.githubusercontent.com/mattpocock/skills/main"
+    "/skills/engineering/codebase-design/SKILL.md"
+)
+_RUBRIC_DEEPENING_URL = (
+    "https://raw.githubusercontent.com/mattpocock/skills/main"
+    "/skills/engineering/codebase-design/DEEPENING.md"
+)
 
 
 def extract_block(text, tag):
@@ -310,6 +326,33 @@ def _create_issue(title, body_path, label, repo):
     return result.stdout.strip().splitlines()[-1]
 
 
+def _fetch_rubric(args, out):
+    """Download the depth rubric files from mattpocock/skills@main into --out-dir.
+
+    Hard-fails (exit 1) on any network or HTTP error — an unattended run with a
+    missing rubric would produce unsound depth proposals (ADR 0020 c).
+    """
+    files = [
+        ("depth-LANGUAGE.md", _RUBRIC_LANGUAGE_URL),
+        ("depth-DEEPENING.md", _RUBRIC_DEEPENING_URL),
+    ]
+    for filename, url in files:
+        try:
+            with urllib.request.urlopen(url) as resp:
+                data = resp.read()
+        except urllib.error.URLError as exc:
+            print(
+                f"::error::fetch-rubric: {filename}: {url}: {exc}",
+                file=sys.stderr,
+            )
+            return 1
+        dest = os.path.join(args.out_dir, filename)
+        with open(dest, "wb") as fh:
+            fh.write(data)
+        print(f"Fetched {filename} ({len(data)} bytes)", file=out)
+    return 0
+
+
 def main(argv=None, out=None):
     out = out if out is not None else sys.stdout
 
@@ -335,6 +378,16 @@ def main(argv=None, out=None):
     p_publish.add_argument("--summary-file", dest="summary_file", help="defaults to $GITHUB_STEP_SUMMARY")
     p_publish.add_argument("--output-file", dest="output_file", help="defaults to $GITHUB_OUTPUT")
     p_publish.set_defaults(func=_publish)
+
+    p_fetch = sub.add_parser(
+        "fetch-rubric",
+        help="download depth rubric from mattpocock/skills@main into --out-dir",
+    )
+    p_fetch.add_argument(
+        "--out-dir", required=True, dest="out_dir",
+        help="directory to write depth-LANGUAGE.md and depth-DEEPENING.md into",
+    )
+    p_fetch.set_defaults(func=_fetch_rubric)
 
     args = parser.parse_args(argv)
     try:
