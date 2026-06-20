@@ -45,6 +45,30 @@ class ExtractBlockTest(unittest.TestCase):
         body = "Line one\n\n```py\ncode()\n```\nLine two"
         self.assertEqual(cli.extract_block(f"<body>\n{body}\n</body>", "body"), body)
 
+    def test_design_tension_section_survives_round_trip(self):
+        """A <body-1> block with a Design-tension markdown section (headings,
+        blank lines, multiple paragraphs) must survive extract_block verbatim.
+        Guards against future parse tightening that strips heading-containing bodies."""
+        body = (
+            "deepening: widen the publish-seam parser\n\n"
+            "The current parser handles only `<body-N>` tags; nested structures\n"
+            "are silently dropped.\n\n"
+            "### Design tension\n\n"
+            "**Single-pass extraction vs. robustness to nested markup.**\n"
+            "Under single-pass extraction the parser stays minimal and fast but\n"
+            "rejects bodies that contain tag-like strings; any markdown heading\n"
+            "that resembles an XML tag would be silently stripped.\n\n"
+            "**Spec-compliant XML parsing vs. stdlib portability.**\n"
+            "A full XML parser handles arbitrary nesting but adds a dependency\n"
+            "and fails on bodies that are not well-formed XML; every unescaped\n"
+            "`<` in a code fence becomes a parse error.\n\n"
+            "The decision that must be resolved at triage: does the body contract\n"
+            "permit heading-containing markdown, and if so, which parsing strategy\n"
+            "is the right tradeoff — single-pass regex with an escaping convention,\n"
+            "or a more permissive heuristic that accepts real-world agent output?"
+        )
+        self.assertEqual(cli.extract_block(f"<body-1>\n{body}\n</body-1>", "body-1"), body)
+
 
 class ParseOutputTest(unittest.TestCase):
     def test_parses_clean_json(self):

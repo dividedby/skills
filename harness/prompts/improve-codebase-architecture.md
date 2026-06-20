@@ -195,6 +195,12 @@ code may be minimal and well-structured but still physically hard to navigate.
      belong in a short "Rejected alternatives" footnote with the
      reason for rejection — never two equally-weighted "Option A /
      Option B" paths that punt the decision to the reader.
+   - **Design tension** (subordinate to the recommendation above, not a
+     second one). After the call, add a short **"Design tension"** section:
+     name the two or three competing constraints this specific candidate
+     trades off — derived from its real tensions, not generic "option A/B"
+     labels — sketch the design each would imply, and state the decision the
+     human must resolve at triage. Keep it proportional to the diagnosis.
    - **Prescription proportional to diagnosis.** If you can't write a
      concrete fix that matches the weight of your problem statement,
      either sharpen the diagnosis or skip this candidate.
