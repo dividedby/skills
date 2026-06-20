@@ -27,5 +27,6 @@
 | [0022](0022-doc-it-vs-grill-with-docs-authoring-auditing-boundary.md) | doc-it and grill-with-docs have non-overlapping scopes: auditing vs authoring | Two skills touch documentation: `doc-it` generates and patches **reference docs** (README, API docs, onboarding, CHANGELOG) and audits existing ADRs / `CONTEXT.md` for staleness; `grill-with-docs` ... | `doc-it/SKILL` |
 | [0023](0023-setup-dividedby-skills-vs-project-claude-config-seam.md) | setup-dividedby-skills and project-claude-config have non-overlapping scopes | Two skills in the `config/` bucket both operate on a target repo's configuration. | `config/README`, `setup-dividedby-skills/SKILL` |
 | [0024](0024-lean-on-upstream-skills-soft-depend-over-reinvent.md) | Lean on Matt Pocock's upstream skills; default to delete-and-soft-depend over reinvention | This repo (`dividedby/skills`) was conceived to **extend** `mattpocock/skills` and fill genuine gaps — not to replace it. | `skill-divergence-audit/SKILL` |
+| [0025](0025-publish-seam-recovers-malformed-output-loudly-before-failing.md) | The publish seam recovers a malformed `<output>` loudly before failing the run | `harness/cli.py publish` is a **post-hoc parse seam**: it runs in a CI step after the agent session is gone. There is no session to resume; upstream resume-and-repair tools (e.g. | — |
 
-*23 ADRs listed. Regenerate with `python3 tools/generate_adr_index.py`.*
+*24 ADRs listed. Regenerate with `python3 tools/generate_adr_index.py`.*
