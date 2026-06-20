@@ -28,5 +28,6 @@
 | [0023](0023-setup-dividedby-skills-vs-project-claude-config-seam.md) | setup-dividedby-skills and project-claude-config have non-overlapping scopes | Two skills in the `config/` bucket both operate on a target repo's configuration. | `config/README`, `setup-dividedby-skills/SKILL` |
 | [0024](0024-lean-on-upstream-skills-soft-depend-over-reinvent.md) | Lean on Matt Pocock's upstream skills; default to delete-and-soft-depend over reinvention | This repo (`dividedby/skills`) was conceived to **extend** `mattpocock/skills` and fill genuine gaps — not to replace it. | `skill-divergence-audit/SKILL` |
 | [0025](0025-publish-seam-recovers-malformed-output-loudly-before-failing.md) | The publish seam recovers a malformed `<output>` loudly before failing the run | `harness/cli.py publish` is a **post-hoc parse seam**: it runs in a CI step after the agent session is gone. There is no session to resume; upstream resume-and-repair tools (e.g. | — |
+| [0026](0026-repair-json-duplicated-under-drift-guard.md) | `repair_json` is duplicated under a CI drift guard | [#369](https://github.com/dividedby/skills/pull/369) fixed the `gate` subcommand's malformed-JSON brittleness: consolidated-JSON with a trailing comma or a lone control character in a string field ... | — |
 
-*24 ADRs listed. Regenerate with `python3 tools/generate_adr_index.py`.*
+*25 ADRs listed. Regenerate with `python3 tools/generate_adr_index.py`.*
