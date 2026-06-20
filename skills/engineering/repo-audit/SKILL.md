@@ -44,6 +44,7 @@ Look for code, workflows, dependencies, and features that can be deleted outrigh
 **Optional inputs that feed this category:**
 - Staleness scan (dead code, orphaned workflows, stale deps) — run where the repo looks large or long-lived.
 - Prior-art check — run where the repo may be reimplementing something that already exists.
+- Deterministic detectors (dead exports/files/deps, orphan modules, cycles, copy-paste duplication) — run where Stage-1 context shows a JS/TS or Python stack. Ephemeral (`npx`/`uvx`/`pipx run`), optional, skip-and-note if the runner is absent. See the playbook for the detector→language map and output discipline.
 
 ### Performance
 
