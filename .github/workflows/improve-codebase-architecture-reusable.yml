@@ -1,0 +1,204 @@
+name: Improve Codebase Architecture (Reusable Body)
+
+# Reusable workflow_call body for the improve-codebase-architecture loop (#382).
+# Consumers vendor a thin caller stub (cron + `uses:` + tag @claude-loops-v1);
+# this body resolves fresh from skills on every run. skills itself calls it via
+# local-path `./` — the canary that runs the latest body before consumers pin.
+#
+# The leanest proposal loop (docs/onboarding/arch-review-setup.md): no
+# knowledge-mirror input, no cross-repo channels — the input IS the checked-out
+# caller repo. It reads the codebase (informed by CONTEXT.md + docs/adr/) and
+# files its few best refactor proposals (≤2 per run, cap in code — ADR 0019 as
+# amended 2026-06-20; a ceiling, not a target) into the caller's own tracker
+# under source:architecture-review.
+#
+# Secrets: explicit pass-through of CLAUDE_CODE_OAUTH_TOKEN only. Never `inherit`.
+# GITHUB_TOKEN is NOT passed — workflow_call mints its own in the caller context.
+#
+# No inputs: cron lives in each caller's `on.schedule`; arch-review-context is
+# uniformly .github/arch-review-context.md; budget/model/timeout/label are uniform
+# across all consumers (confirmed pre-ratification in issue #366).
+#
+# The /improve-codebase-architecture SKILL is FETCHED FRESH each run from
+# mattpocock/skills into ~/.claude/skills/ (ADR 0008 — never vendored): a
+# committed copy silently drifts from upstream. The prompt invokes it by its
+# fetched file path.
+#
+# The PROMPT is two parts (ADR 0016): a scope-free SKELETON fetched fresh from
+# harness/prompts/improve-codebase-architecture.md (the shared proposal discipline
+# + the lockstep <output>/<body> schema) concatenated with a LOCAL Repo-context
+# include (.github/arch-review-context.md) carrying only what is irreducibly
+# repo-specific. Only the include is vendored; the Run step concatenates the two
+# and hard-fails if the include is missing.
+#
+# Deterministic publish seam: the agent is READ-ONLY on the tracker (gh access
+# scoped to read-only subcommands — it cannot `gh issue create`). It explores,
+# decides, and ends its run with a single schema-validated <output> JSON block
+# plus a raw <body> block. The "Publish proposal" step (harness/cli.py publish)
+# parses that block and files the issues itself — so the ≤2-proposals-per-run cap
+# and the provenance label live in CODE, not in prompt-adherence.
+
+on:
+  workflow_call:
+    secrets:
+      CLAUDE_CODE_OAUTH_TOKEN:
+        required: true
+
+jobs:
+  improve-codebase-architecture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    concurrency:
+      group: improve-codebase-architecture
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      issues: write
+
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
+      LABEL: source:architecture-review
+
+    steps:
+      - name: Checkout caller repo
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          # No `ref:` — defaults to the caller's default branch (preserves main
+          # for most consumers and `staging` for goodreads-bot).
+
+      - name: Install Claude Code
+        run: |
+          set -euo pipefail
+          # Unpinned trusted-vendor dependency (#308): no per-version installer URL or
+          # checksum is published to consume; accepted on the same trust root as the
+          # CLAUDE_CODE_OAUTH_TOKEN issuer that authorizes this job.
+          curl -fsSL https://claude.ai/install.sh | bash
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      # Fetch the proposal-loop harness fresh (ADR 0014): the cost scrape +
+      # <output>/<body> publish parser live in harness/cli.py, fetched on the same
+      # rail as the skill so a fix reaches every loop. The body runs in the
+      # CALLER's checkout; skills is not present in-tree, so we clone it.
+      - name: Install the proposal-loop harness
+        run: |
+          set -euo pipefail
+          git clone --depth 1 https://github.com/dividedby/skills.git "$RUNNER_TEMP/skills"
+          echo "HARNESS=$RUNNER_TEMP/skills/harness" >> "$GITHUB_ENV"
+          echo "Fetched harness from dividedby/skills@$(git -C "$RUNNER_TEMP/skills" rev-parse --short HEAD)"
+
+      - name: Install /improve-codebase-architecture skill
+        run: |
+          set -euo pipefail
+          tmp=$(mktemp -d)
+          git clone --depth 1 https://github.com/mattpocock/skills.git "$tmp/mattpocock-skills"
+          mkdir -p ~/.claude/skills
+          cp -R "$tmp/mattpocock-skills/skills/engineering/improve-codebase-architecture" ~/.claude/skills/
+          test -f ~/.claude/skills/improve-codebase-architecture/SKILL.md
+          echo "Installed skill from mattpocock/skills@$(git -C "$tmp/mattpocock-skills" rev-parse --short HEAD)"
+
+      - name: Fetch depth rubric
+        run: |
+          set -euo pipefail
+          # skills ADR 0020(c): hard-fail on any fetch error. The mattpocock/skills
+          # URLs live once in harness/cli.py fetch-rubric (dividedby/skills).
+          python3 "$HARNESS/cli.py" fetch-rubric --out-dir "$RUNNER_TEMP"
+
+      - name: Run /improve-codebase-architecture
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        run: |
+          set -euo pipefail
+          # The system prompt is assembled from three parts (ADR 0016, ADR 0020):
+          #   1. The fetched-fresh scope-free SKELETON in the harness clone
+          #      (harness/prompts/improve-codebase-architecture.md — the shared
+          #      proposal discipline + the lockstep <output>/<body> schema). Unlike
+          #      the skills host repo (which reads harness/ from its own checkout),
+          #      this reusable body always reads from the harness CLONE at $HARNESS.
+          #   2. The DEPTH RUBRIC fetched fresh from mattpocock/skills@main
+          #      (LANGUAGE.md + DEEPENING.md). Assembled by the preceding step;
+          #      hard-fails if absent — same spirit as the test -f below.
+          #   3. The caller repo's LOCAL Repo-context include
+          #      (.github/arch-review-context.md). Scope is load-bearing — a skeleton
+          #      with no scope reviews blindly — so a missing include HARD-FAILS the run.
+          test -f .github/arch-review-context.md
+          test -f "$RUNNER_TEMP/depth-LANGUAGE.md"
+          test -f "$RUNNER_TEMP/depth-DEEPENING.md"
+          # The agent is read-only: it explores, decides, and emits a single
+          # <output> JSON block plus raw <body-N> blocks (see prompt). It does NOT
+          # file the issues — the Publish step does, via the harness, which enforces
+          # the ≤2-issues-per-run cap (ADR 0019) and the label in code. gh access is
+          # scoped to read-only subcommands (list/view/search) so the agent *cannot*
+          # create an issue itself. Do NOT add `gh api` here — it is a write primitive
+          # that POSTs issues directly, bypassing the cap (#306). WebSearch/WebFetch are
+          # likewise excluded: the rubric is fetched by the shell step above, not the
+          # model, so web access only adds an exfil surface for an injected prompt.
+          # --output-format stream-json --verbose: stream every event so a hung run
+          # leaves a trace (plain json buffers) and the final result event (with
+          # total_cost_usd) lands before claude exits — cost captured even on failure.
+          # pipefail propagates an agent failure; the Digest step still runs (always).
+          # --model pinned to the exact model ID — a floating alias (`sonnet`)
+          # silently inherits the next release into an unattended loop (skills#180).
+          # --max-budget-usd is a per-run spend backstop (skills#181): sized ~2.5–3×
+          # the observed max from the cost ledger — never trips a healthy run, caps
+          # a runaway well below an unbounded 20-minute spend.
+          claude -p \
+            --output-format stream-json --verbose \
+            --model claude-sonnet-4-6 \
+            --max-budget-usd 3.00 \
+            --permission-mode acceptEdits \
+            --allowedTools "Bash(gh issue list:*) Bash(gh issue view:*) Bash(gh search:*) Bash(git:*) Read Grep Glob" \
+            --append-system-prompt "$(
+              cat "$HARNESS/prompts/improve-codebase-architecture.md"
+              printf '\n\n---\n\n## Depth rubric (fetched from mattpocock/skills)\n\n'
+              cat "$RUNNER_TEMP/depth-LANGUAGE.md"
+              printf '\n\n'
+              cat "$RUNNER_TEMP/depth-DEEPENING.md"
+              printf '\n\n---\n\n'
+              cat .github/arch-review-context.md
+            )" \
+            "Run the architecture-review pass. Follow the instructions in the system prompt." \
+            | tee "$RUNNER_TEMP/agent.jsonl"
+
+      - name: Digest the run (result log + cost ledger)
+        if: always()
+        run: |
+          set -euo pipefail
+          # JSONL -> clean result text + the total_cost_usd=… ledger line, via the
+          # fetched-fresh harness. Best-effort by construction (exit 0 even with no
+          # result event), so it runs on a failed agent run too.
+          python3 "$HARNESS/cli.py" digest \
+            --jsonl "$RUNNER_TEMP/agent.jsonl" \
+            --result-out "$RUNNER_TEMP/agent.log" \
+            --cost-out "$RUNNER_TEMP/agent.cost"
+
+      - name: Publish proposal
+        id: publish
+        run: |
+          set -euo pipefail
+          # Parse <output>/<body-N>, file <=2 labeled issues (cap in code, ADR
+          # 0019), write the rich step summary, emit issue_url(s). Fails loudly
+          # (exit 1) on a missing/garbled block — the failure() Summarise step
+          # below then surfaces the raw log.
+          python3 "$HARNESS/cli.py" publish \
+            --log "$RUNNER_TEMP/agent.log" \
+            --label "$LABEL" \
+            --label-description "Issues proposed by the automated architecture-review workflow" \
+            --cost-file "$RUNNER_TEMP/agent.cost" \
+            --heading "Architecture review"
+
+      - name: Summarise a failed run
+        if: failure()
+        run: |
+          {
+            echo "## Architecture review"
+            echo ""
+            echo "**Cost:** $(cat "$RUNNER_TEMP/agent.cost" 2>/dev/null || echo "n/a")"
+            echo ""
+            echo "**No valid \`<output>\` block, or the agent crashed** — last result text:"
+            echo ""
+            echo '```'
+            tail -n 50 "$RUNNER_TEMP/agent.log" 2>/dev/null || echo "(no log produced)"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

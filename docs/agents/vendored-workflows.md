@@ -1,11 +1,24 @@
 # Vendored Claude-powered Workflows
 
-A reference map of the three vendored **proposal-loop** workflows across the five
-repos that run them: cron slots, timing, per-run budget, issue caps, and
-cross-repo dependencies. It doubles as the reference surface for
+A reference map of the three **proposal-loop** workflows across the five repos
+that run them: cron slots, timing, per-run budget, issue caps, and cross-repo
+dependencies. It doubles as the reference surface for
 [#365](https://github.com/dividedby/skills/issues/365) (guard envelope drift) and
 [#366](https://github.com/dividedby/skills/issues/366) (reusable workflows to
 shrink the envelope).
+
+**Loop hosting model (post #382):**
+
+| Loop | What lives per-repo | What lives in skills |
+|---|---|---|
+| `improve-codebase-architecture` | Thin caller stub (cron + `uses:` + tag) | `workflow_call` reusable body (`-reusable.yml`) |
+| `staleness-review` | Thin caller stub (cron + `uses:` + tag) | `workflow_call` reusable body (`-reusable.yml`) |
+| `apply-agent-research` | Full-copy envelope (unchanged — out of scope) | n/a |
+
+Consumers pin the reusable bodies at tag `@claude-loops-v1`. The skills repo
+uses a local-path `./` ref (canary — always runs the latest body). `apply-agent-research`
+remains a full-copy vendored workflow in each repo; its body forks on
+mode (host/consumer/producer) so no single shared body exists to host.
 
 **Snapshot date:** 2026-06-20 — hand-maintained until #365 lands a generator +
 `git diff --exit-code` gate. To refresh, re-read
@@ -26,9 +39,10 @@ All five repos run all three loops.
 | `apply-agent-research` | ✓ | ✓ | ✓ | ✓ | ✓ |
 | `staleness-review` | ✓ | ✓ | ✓ | ✓ | ✓ |
 
-Repo roles: **skills** = host (carries the harness in-tree); **agent-research** =
-knowledge-base producer; **goodreads-bot** = deployed app (default branch
-`staging`); **moodreader**, **tweakcc-maint** = consumers.
+Repo roles: **skills** = host (carries the harness in-tree and the reusable
+`workflow_call` bodies); **agent-research** = knowledge-base producer;
+**goodreads-bot** = deployed app (default branch `staging`); **moodreader**,
+**tweakcc-maint** = consumers.
 
 ## `improve-codebase-architecture` — Mon/Wed/Sat (3×/week)
 
@@ -99,15 +113,21 @@ by construction. Bands in use:
 
 ## Cross-repo dependencies
 
+- **Reusable bodies** (`improve-codebase-architecture`, `staleness-review`):
+  hosted once in skills as `workflow_call` reusable workflows
+  (`.github/workflows/*-reusable.yml`). Consumers vendor a thin caller stub
+  (cron + `uses:` + `@claude-loops-v1` tag). The skills repo uses a local-path
+  `./` ref (#382).
 - **Harness** (`harness/cli.py` + prompts): fetched fresh each run via
-  `git clone --depth 1 https://github.com/dividedby/skills.git`
-  ([ADR 0014](../adr/0014-harness-is-fetched-fresh-only-the-workflow-envelope-is-vendored.md));
-  the skills host uses its in-tree checkout.
+  `git clone --depth 1 https://github.com/dividedby/skills.git` — both by the
+  reusable bodies (clone form) and by the `apply-agent-research` full-copy
+  envelope ([ADR 0014](../adr/0014-harness-is-fetched-fresh-only-the-workflow-envelope-is-vendored.md)).
 - **arch-review skill + depth rubric:** `mattpocock/skills@main`.
 - **Knowledge mirror:** `dividedby/agent-research-knowledge@main` (consumers);
   the agent-research producer reads its own `knowledge/` tree.
-- **Tokens:** own-repo `GITHUB_TOKEN`; `SKILLS_TRACKER_TOKEN` for cross-repo
-  writes.
+- **Tokens:** own-repo `GITHUB_TOKEN` (minted by `workflow_call` in caller
+  context; never passed explicitly); `CLAUDE_CODE_OAUTH_TOKEN` passed explicitly
+  through `secrets:` (never `inherit`).
 - **Model:** pinned to `claude-sonnet-4-6` (no floating alias).
 
 ## The publish seam (which loops it covers)

@@ -52,6 +52,12 @@ and versioned conservatively.
 - Introduces the stub ↔ harness interface contract. A breaking interface change is
   a manual rollout across the ~3 owned repos — rare by construction, since the
   drift-prone logic no longer lives on this surface.
+- For a knob-only loop body (arch-review, staleness-review), `workflow_call` is
+  the same fetch-fresh rail this ADR built by hand for the harness — the consumer
+  vendors a thin caller (cron + `uses:` + tag) and the body resolves fresh from
+  `skills`. Clone-and-invoke remains the rail for loops whose body forks on mode
+  (apply-agent-research: host/consumer/producer), where no single shared body
+  exists to host.
 
 ## Rejected alternative
 
