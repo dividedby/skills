@@ -75,7 +75,7 @@ Locate the `## Conventions` heading in the target's instruction file.
 - **update** if the block exists but is missing sections or has stale links.
 - **skip** if complete and current.
 
-The block includes: Issue tracker, Triage labels, Domain docs, Intake convention (with the live Inbox URL), Skill editorial intent, and HITL/verification gate posture.
+The block includes: Issue tracker, Triage labels, Domain docs, Installed skills (where applicable), Skill editorial intent (skills repo only), and Intake convention (with the live Inbox URL).
 
 The **Triage labels** pointer in the Conventions block must point at `docs/agents/triage-labels.md` (Matt's filename, overwritten with dividedby content by Concern D — see below). Do **not** point at `docs/agents/labels.md`; that file does not exist in the target. If the block was seeded with a `docs/agents/labels.md` reference, update it to `docs/agents/triage-labels.md`.
 
