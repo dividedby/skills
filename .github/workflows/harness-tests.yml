@@ -21,6 +21,10 @@ on:
       - "skills/meta/apply-agent-research/lib/json_repair.py"
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   harness-tests:
     runs-on: ubuntu-latest

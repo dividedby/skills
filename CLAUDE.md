@@ -42,14 +42,7 @@ Skills in this repo prescribe at the principle level; code examples are illustra
 
 ### Intake convention
 
-When I say **"file an idea"** or **"file an issue"** (unqualified), append an
-**enriched row** to this repo's [**Idea Inbox**](https://github.com/dividedby/skills/issues/91) issue (label
-`idea-inbox`, one per repo): the raw idea **plus the ambient context/links
-available right now** — the source file/issue/PR that prompted it and a sentence
-of why — as an unchecked item at the TOP of `## Ideas`. Do not grill or scope it
-yet; that happens at drain. The capture and drain protocol lives once in
-[`docs/agents/idea-inbox.md`](./docs/agents/idea-inbox.md) (the issue body is
-human-facing and carries no operating instructions).
+- **"file an idea"** / unqualified **"file an issue"** → append an enriched row (the raw idea **plus the ambient context/links available now**) to the top of the [Idea Inbox](https://github.com/dividedby/skills/issues/91) (`idea-inbox`, one per repo); don't scope it yet.
+- **"file a *tracked* issue"** or a plainly-scoped bug → skip the Inbox, file a `needs-triage` issue directly via `gh`.
 
-When I say **"file a *tracked* issue"** — or hand you a **plainly-scoped bug** —
-skip the Inbox and file a `needs-triage` issue directly via `gh`.
+Capture/drain protocol: [`docs/agents/idea-inbox.md`](./docs/agents/idea-inbox.md).

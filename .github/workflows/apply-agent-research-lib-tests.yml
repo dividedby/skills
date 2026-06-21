@@ -18,6 +18,10 @@ on:
       - "skills/meta/apply-agent-research/tests/**"
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   lib-tests:
     runs-on: ubuntu-latest
