@@ -59,6 +59,18 @@ and versioned conservatively.
   (apply-agent-research: host/consumer/producer), where no single shared body
   exists to host.
 
+- The remaining vendored surface — the `apply-agent-research` full-copy envelope
+  (all 5 repos) and the two thin caller stubs per-consumer — is now guarded by a
+  scheduled divergence report (`check-workflow-drift.yml`, weekly Sun 04:00 UTC,
+  central in skills, `tools/check_workflow_drift.py`). The check is
+  **anchor-presence, not full normalization**: it verifies that structurally
+  required substrings exist (e.g. `permissions: / issues: write`, `@claude-loops-v1`
+  tag pin, `harness/prompts/apply-agent-research.md` fetch, `--model
+  claude-sonnet-4-6`, `--max-budget-usd`). This targets the #384 startup-fail class
+  (missing `issues: write` grant on caller stub) and the OLD-gen/NEW-gen
+  silent-degradation class (missing harness-prompt-fetch step). Drift opens a
+  labeled `workflow-drift` issue in dividedby/skills; nothing auto-applies.
+
 ## Rejected alternative
 
 Keep the wiring vendored and build an update/reconcile mode that diffs installed

@@ -27,8 +27,12 @@ the grant the body's `issues: write` exceeds the caller's token and the run
 **startup-fails**. The reusable body also declares the same `permissions`; the
 two must agree.
 
-**Snapshot date:** 2026-06-20 — hand-maintained until #365 lands a generator +
-`git diff --exit-code` gate. To refresh, re-read
+**Snapshot date:** 2026-06-20 — live divergence check landed via
+[`check-workflow-drift.yml`](../../.github/workflows/check-workflow-drift.yml)
+(#365, weekly Sun 04:00 UTC, central in skills). The scheduled job reads each
+consumer repo's vendored files via the GitHub Contents API, checks structural
+anchors (anchor-presence, not full normalization), and opens a `workflow-drift`
+issue in dividedby/skills for any drifted repo. To refresh this table, re-read
 `.github/workflows/{improve-codebase-architecture,apply-agent-research,staleness-review}.yml`
 in each repo.
 
