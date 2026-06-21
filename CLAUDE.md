@@ -32,6 +32,10 @@ available in every session even when not files under this repo's `skills/`. A
 committed snapshot lives at `docs/agents/installed-skills.md` so remote loops can
 read it. See `docs/agents/installed-skills.md`.
 
+### Workflow authoring
+
+Adding or re-cadencing a scheduled `claude -p` workflow (a proposal loop here or in any consumer): pin `--model` to an exact ID, carry a `--max-budget-usd` backstop, emit `total_cost_usd` via `harness/cli.py digest`, onboard into the cross-repo `COST_SURFACE`, and self-stagger the cron by hash. See `docs/agents/workflow-authoring.md`. Binding decisions: ADR 0019 (budget/cap + cadence), ADR 0014 (fetched-fresh envelope).
+
 ### Skill editorial intent
 
 Skills in this repo prescribe at the principle level; code examples are illustrative sketches, not literal rules. See [`docs/adr/0002-design-skills-prescribe-at-principle-level.md`](./docs/adr/0002-design-skills-prescribe-at-principle-level.md).
