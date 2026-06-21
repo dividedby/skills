@@ -12,6 +12,13 @@ on:
 
 jobs:
   run:
+    # The calling job must grant the token scopes the reusable body needs: a
+    # called workflow can't be granted more than the caller holds, and the repo
+    # default is read-only — without this the body's `issues: write` request
+    # exceeds the caller's grant and the run startup-fails.
+    permissions:
+      contents: read
+      issues: write
     uses: ./.github/workflows/staleness-review-reusable.yml
     secrets:
       CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
