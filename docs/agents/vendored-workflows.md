@@ -70,17 +70,18 @@ knowledge-base producer; **goodreads-bot** = deployed app (default branch
 
 | Repo | cron (UTC) | CT (CDT) | timeout | budget | issues/run |
 |---|---|---|---|---|---|
-| moodreader | `50 1 * * 1` | Sun 20:50 | 20m | $3 | 1 |
 | goodreads-bot | `7 13 * * 1` | Mon 08:07 | 20m | $3 | 1 |
 | skills | `8 13 * * 1` | Mon 08:08 | 20m | $3 | 1 |
 | tweakcc-maint | `9 13 * * 1` | Mon 08:09 | 20m | $3 | 1 |
+| moodreader | `10 13 * * 1` | Mon 08:10 | 20m | $3 | 1 |
 | agent-research | `17 13 * * 1` | Mon 08:17 | 20m | $3 | 1 |
 
 - Gated to the **first Monday** via a `first-monday-gate` step (cron fires every
   Monday; the gate no-ops the other weeks).
 - Uses the harness **`publish` seam**; cap = 1.
-- **Outlier:** moodreader runs at `50 1 * * 1` (Sun 20:50 CT) — a different hour
-  band from the others (13:xx UTC). Verify intent; flag as possible drift (#365).
+- Slots are **hand-chosen** in the 13:xx UTC band (this loop is not hash-staggered;
+  ADR 0022 staggers only the two 3×/week loops). moodreader was realigned from an
+  off-band `50 1` (Sun 20:50 CT) to `10 13` on 2026-06-20.
 
 ## Hash-stagger slots
 
@@ -93,8 +94,8 @@ by construction. Bands in use:
   (Sun/Tue/Fri evening CT). The per-repo minute/hour is unchanged from the original
   Saturday stagger — only the day-of-week list grew to `1,3,6`. No cron collisions
   across the current estate (verified).
-- `staleness-review`: **first Monday 13:xx UTC** (08:xx CT) — except moodreader
-  (see outlier above).
+- `staleness-review`: **first Monday 13:xx UTC** (08:xx CT) — hand-chosen, not
+  hash-staggered (ADR 0022 covers only the two 3×/week loops).
 
 ## Cross-repo dependencies
 
