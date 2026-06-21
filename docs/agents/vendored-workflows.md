@@ -11,14 +11,21 @@ shrink the envelope).
 
 | Loop | What lives per-repo | What lives in skills |
 |---|---|---|
-| `improve-codebase-architecture` | Thin caller stub (cron + `uses:` + tag) | `workflow_call` reusable body (`-reusable.yml`) |
-| `staleness-review` | Thin caller stub (cron + `uses:` + tag) | `workflow_call` reusable body (`-reusable.yml`) |
+| `improve-codebase-architecture` | Thin caller stub (cron + `uses:` + tag + `permissions` grant) | `workflow_call` reusable body (`-reusable.yml`) |
+| `staleness-review` | Thin caller stub (cron + `uses:` + tag + `permissions` grant) | `workflow_call` reusable body (`-reusable.yml`) |
 | `apply-agent-research` | Full-copy envelope (unchanged — out of scope) | n/a |
 
 Consumers pin the reusable bodies at tag `@claude-loops-v1`. The skills repo
 uses a local-path `./` ref (canary — always runs the latest body). `apply-agent-research`
 remains a full-copy vendored workflow in each repo; its body forks on
 mode (host/consumer/producer) so no single shared body exists to host.
+
+**Caller stubs must grant `permissions: { contents: read, issues: write }`** on
+the calling job. A called workflow can't be granted more token scope than the
+caller holds, and every repo's default workflow permission is read-only — without
+the grant the body's `issues: write` exceeds the caller's token and the run
+**startup-fails**. The reusable body also declares the same `permissions`; the
+two must agree.
 
 **Snapshot date:** 2026-06-20 — hand-maintained until #365 lands a generator +
 `git diff --exit-code` gate. To refresh, re-read
