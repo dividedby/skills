@@ -3,7 +3,7 @@ name: skill-divergence-audit
 description: >
   Recurring, report-only audit that diffs this repo's published skills against
   Matt Pocock's repo and the agent-research KB, classifies each gap, and
-  proposes realignment issues — at most five per run, each cleared against a
+  proposes realignment issues — at most two per run, each cleared against a
   high independent bar. Never edits, commits, or merges; proposals go only
   through the guarded filing path.
 ---
@@ -16,13 +16,13 @@ published skills against Matt Pocock's `mattpocock/skills` and the
 the strongest gaps proposed as labeled issues for the maintainer to decide on.
 
 **It proposes; it never applies.** The only mutation it may make is filing
-issues — labeled `source:skill-audit`, capped at five per run, deduplicated
+issues — labeled `source:skill-audit`, capped at two per run, deduplicated
 against open issues, and passed through the leak guard before anything reaches
 the tracker. The producer/decider split
 ([ADR 0003](../../../docs/adr/0003-skill-improvement-workflows-propose-via-issues.md))
 is what makes unattended operation safe.
 
-The **≤5-per-run cap**, **dedup**, and **leak guard** are enforced by code,
+The **≤2-per-run cap**, **dedup**, and **leak guard** are enforced by code,
 not prompt discipline. The mechanical details — the gate, the sanitizer, and
 the filing path — follow [proposal-flow.md](../apply-agent-research/proposal-flow.md)
 exactly. The pure classify core ships with this skill under
@@ -119,11 +119,11 @@ and metadata). Then gather the existing open-issue dedup keys and run the gate
 **once**:
 
 ```
-echo '{"candidates": [...], "open_issues": [...], "budget": 5}' \
+echo '{"candidates": [...], "open_issues": [...], "budget": 2}' \
   | python3 <skill-dir>/lib/cli.py gate
 ```
 
-The gate returns at most **five** ranked candidates. For each, write the issue
+The gate returns at most **two** ranked candidates. For each, write the issue
 body to a file (with the dedup-key HTML comment and a Sources line), then file
 through the **guarded path**:
 
@@ -180,8 +180,8 @@ fetching only `skill-divergence-audit` alone is not sufficient (ADR 0024).
   `cli.py file`; the leak guard cannot be bypassed.
 - **Running the gate more than once per run.** Gate runs once over the merged
   candidate set; there is no second pass.
-- **Filing more than five proposals.** The budget is a ceiling and the code
-  enforces it. A typical run files 0–2; filing 5 means 5 independently strong
+- **Filing more than two proposals.** The budget is a ceiling and the code
+  enforces it. A typical run files 0–2; filing 2 means 2 independently strong
   proposals.
 - **Treating a naming mismatch as a gap.** Two skills covering the same
   concept under different names are not a divergence — read the content, not
