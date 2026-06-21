@@ -1,0 +1,166 @@
+name: Staleness Review (Reusable Body)
+
+# Reusable workflow_call body for the staleness-review loop (#382).
+# Consumers vendor a thin caller stub (cron + `uses:` + tag @claude-loops-v1);
+# this body resolves fresh from skills on every run. skills itself calls it via
+# local-path `./` — the canary that runs the latest body before consumers pin.
+#
+# Secrets: explicit pass-through of CLAUDE_CODE_OAUTH_TOKEN only. Never `inherit`.
+# GITHUB_TOKEN is NOT passed — workflow_call mints its own in the caller context.
+#
+# No inputs: cron lives in each caller's `on.schedule`; SKILL_DIR is constant
+# (the skills clone path); budget/model/timeout/label are uniform across all
+# consumers (confirmed pre-ratification in issue #366).
+
+on:
+  workflow_call:
+    secrets:
+      CLAUDE_CODE_OAUTH_TOKEN:
+        required: true
+
+jobs:
+  # "First Monday" can't be a cron, so the schedule fires every Monday and this
+  # gate decides whether it's the first one (day-of-month ≤ 7). A manual
+  # workflow_dispatch always passes through (see the staleness-review `if`).
+  first-monday-gate:
+    runs-on: ubuntu-latest
+    outputs:
+      run: ${{ steps.check.outputs.run }}
+    steps:
+      - id: check
+        run: |
+          if [ "$(date -u +%-d)" -le 7 ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  staleness-review:
+    needs: first-monday-gate
+    if: ${{ needs.first-monday-gate.outputs.run == 'true' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    concurrency:
+      group: staleness-review
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      issues: write
+
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
+      LABEL: source:staleness-review
+
+    steps:
+      - name: Checkout caller repo
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          # No `ref:` — defaults to the caller's default branch (preserves main
+          # for most consumers and `staging` for goodreads-bot).
+
+      - name: Install Claude Code
+        run: |
+          set -euo pipefail
+          # Unpinned trusted-vendor dependency (#308): no per-version installer URL or
+          # checksum is published to consume; accepted on the same trust root as the
+          # CLAUDE_CODE_OAUTH_TOKEN issuer that authorizes this job.
+          curl -fsSL https://claude.ai/install.sh | bash
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      # --- Fetch the harness fresh (skills ADR 0014) ---
+      # The body runs in the CALLER's checkout; skills is not present in-tree.
+      # Clone dividedby/skills for the harness + the staleness-audit skill (which
+      # rides in the same clone — ADR 0008, never vendored). SKILL_DIR is set here
+      # for the @SKILL_DIR@ substitution in the prompt template.
+      - name: Install the proposal-loop harness + staleness-audit skill (ADR 0014/0008)
+        run: |
+          set -euo pipefail
+          git clone --depth 1 https://github.com/dividedby/skills.git "$RUNNER_TEMP/skills-src"
+          echo "HARNESS=$RUNNER_TEMP/skills-src/harness" >> "$GITHUB_ENV"
+          # The skill rides in the same clone (skills ADR 0008 — fetch fresh, never vendor).
+          # SKILL_DIR is set here for the @SKILL_DIR@ substitution in the prompt.
+          echo "SKILL_DIR=$RUNNER_TEMP/skills-src/skills/engineering/staleness-audit" >> "$GITHUB_ENV"
+          test -f "$RUNNER_TEMP/skills-src/skills/engineering/staleness-audit/SKILL.md"
+          echo "Installed harness+skill from dividedby/skills@$(git -C "$RUNNER_TEMP/skills-src" rev-parse --short HEAD)"
+
+      - name: Ensure provenance label exists
+        run: |
+          gh label create "$LABEL" \
+            --color "5319E7" \
+            --description "Reports filed by the automated staleness-review loop" \
+            >/dev/null 2>&1 || true
+
+      - name: Run staleness-review
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        run: |
+          set -euo pipefail
+          # The agent is read-only: it follows the staleness-audit skill at
+          # $SKILL_DIR/SKILL.md report-only and emits a single <output> JSON block
+          # plus a raw <body> block (see prompt). It does NOT file the issue — the
+          # Publish step does, via the harness, which enforces the per-run issue cap
+          # and the label in code (one ranked report per run). No Edit/Write tools
+          # are granted, and gh access is scoped to read-only subcommands, so the
+          # agent can neither mutate the repo nor file an issue itself.
+          # --output-format stream-json --verbose: stream every event so a hung run
+          # leaves a trace (plain json buffers) and the final result event (with
+          # total_cost_usd) lands before claude exits — cost captured even on failure.
+          # --model is pinned to claude-sonnet-4-6 (not a floating alias) so an
+          # unattended run can't silently inherit the next release (skills#180).
+          # --max-budget-usd is the per-run spend backstop (skills#181) — headroom
+          # included for the web-validated Validate station; never trips a healthy
+          # run, caps a runaway well below an unbounded 20-minute spend.
+          # WebSearch + WebFetch are required: without them every finding is tagged
+          # "unverified: no web access" and the audit self-degrades (staleness-setup.md).
+          claude -p \
+            --output-format stream-json --verbose \
+            --model claude-sonnet-4-6 \
+            --max-budget-usd 3.00 \
+            --permission-mode acceptEdits \
+            --allowedTools "Bash(gh issue list:*) Bash(gh issue view:*) Bash(gh search:*) Bash(git:*) Bash(python3:*) Read Grep Glob WebSearch WebFetch" \
+            --append-system-prompt "$(sed "s#@SKILL_DIR@#$SKILL_DIR#g" "$HARNESS/prompts/staleness-audit.md")" \
+            "Run the monthly staleness-review pass. Follow the instructions in the system prompt." \
+            | tee "$RUNNER_TEMP/agent.jsonl"
+
+      - name: Digest the run (result log + cost ledger)
+        if: always()
+        run: |
+          set -euo pipefail
+          # JSONL -> clean result text + the total_cost_usd=… ledger line the
+          # cross-repo cost hub scrapes. Best-effort (exit 0 even with no result
+          # event), so it runs on a failed agent run too.
+          python3 "$HARNESS/cli.py" digest \
+            --jsonl "$RUNNER_TEMP/agent.jsonl" \
+            --result-out "$RUNNER_TEMP/agent.log" \
+            --cost-out "$RUNNER_TEMP/agent.cost"
+
+      - name: Publish report
+        id: publish
+        run: |
+          set -euo pipefail
+          # Parse <output>/<body>, file the single report issue, write the rich
+          # step summary, emit issue_url. Fails loudly (exit 1) on a missing/
+          # garbled block — the failure() Summarise step below surfaces the raw log.
+          python3 "$HARNESS/cli.py" publish \
+            --log "$RUNNER_TEMP/agent.log" \
+            --label "$LABEL" \
+            --label-description "Reports filed by the automated staleness-review loop" \
+            --cost-file "$RUNNER_TEMP/agent.cost" \
+            --heading "Staleness review"
+
+      - name: Summarise a failed run
+        if: failure()
+        run: |
+          {
+            echo "## Staleness review"
+            echo ""
+            echo "**Cost:** $(cat "$RUNNER_TEMP/agent.cost" 2>/dev/null || echo "n/a")"
+            echo ""
+            echo "**No valid \`<output>\` block, or the agent crashed** — last result text:"
+            echo ""
+            echo '```'
+            tail -n 50 "$RUNNER_TEMP/agent.log" 2>/dev/null || echo "(no log produced)"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
