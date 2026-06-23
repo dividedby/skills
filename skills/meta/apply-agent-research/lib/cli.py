@@ -47,6 +47,9 @@ is what lets the helpers travel with the installed skill into a Consumer repo.
     # <!-- capability: <slug> -->, or nothing on no match; exits non-zero if gh fails
     python3 <skill-dir>/lib/cli.py find-open --repo owner/name \
         --label <label> --capability <slug>
+
+    # allowlist-safe mode discriminator: prints "consumer" or "host" (never the token)
+    python3 <skill-dir>/lib/cli.py mode
 """
 
 import argparse
@@ -175,6 +178,21 @@ def _comment(args, stdin, out):
     return subprocess.run(cmd, env=_gh_env(args.repo)).returncode
 
 
+def _mode(args, stdin, out):
+    """Print 'consumer' or 'host' depending on whether SKILLS_TRACKER_TOKEN is set.
+
+    This is the allowlist-safe alternative to shell env introspection (``printenv``,
+    ``$VAR`` expansion, etc.), which are denied in the scoped sandbox. Never prints
+    the token value — only the word 'host' or 'consumer'.
+    """
+    tok = os.environ.get("SKILLS_TRACKER_TOKEN")
+    if tok:
+        print("consumer", file=out)
+    else:
+        print("host", file=out)
+    return 0
+
+
 def _find_open(args, stdin, out):
     """List open issues by label, print the first matching the capability marker.
 
@@ -247,6 +265,12 @@ def main(argv=None, stdin=None, out=None):
     p_comment.add_argument("--repo", help="owner/name; defaults to the current repo / GH_REPO")
     _add_marker(p_comment)
     p_comment.set_defaults(func=_comment)
+
+    p_mode = sub.add_parser(
+        "mode",
+        help="print 'consumer' or 'host' (allowlist-safe mode discriminator; never prints the token)",
+    )
+    p_mode.set_defaults(func=_mode)
 
     p_find_open = sub.add_parser(
         "find-open",

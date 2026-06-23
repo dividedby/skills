@@ -65,6 +65,20 @@ specifying a different `--repo`: the swap simply does not occur.
 - The design docs (`docs/design/skill-request-flow.md`,
   `docs/design/skill-promotion-flow.md`) are updated to document the new invariant.
 
+## Update: mode detection had the same root cause
+
+After the cross-repo token swap landed, a second manifestation of the same root
+cause was confirmed: the system prompt instructed the agent to detect its
+host-vs-consumer role by inspecting `$SKILLS_TRACKER_TOKEN` directly (via
+`printenv`, `env`, `python3 -c`, or shell `$VAR` expansion). Every one of those
+paths is denied by the scoped `--allowedTools` allowlist, so the agent stalled in
+mode detection before reaching any cross-repo channel. This was resolved by an
+allowlist-safe `cli.py mode` discriminator: it prints `host` or `consumer` (never
+the token value) by reading the process environment internally, then exits 0. The
+harness prompt was updated to call `python3 "$SKILL_DIR/lib/cli.py" mode` as the
+sole mode-detection step and to explicitly prohibit all shell env-introspection
+paths. The fix ships via the same fresh-clone pattern as the token swap (ADR 0014).
+
 ## References
 
 - [ADR 0029](0029-apply-agent-research-joins-the-reusable-body-rail.md) — the rail fold that introduced the scoped allowlist
