@@ -48,8 +48,6 @@ on:
     secrets:
       CLAUDE_CODE_OAUTH_TOKEN:
         required: true
-      SKILLS_TRACKER_TOKEN:
-        required: false
       ISSUES_TOKEN:
         required: false
 
@@ -69,7 +67,7 @@ jobs:
       GH_REPO: ${{ github.repository }}
       LABEL: source:agent-research
       IS_TRACKER_HOST: ${{ inputs.is-tracker-host }}
-      ISSUES_TOKEN: ${{ secrets.ISSUES_TOKEN || secrets.SKILLS_TRACKER_TOKEN }}
+      ISSUES_TOKEN: ${{ secrets.ISSUES_TOKEN }}
       PRIVATE_MARKERS: ${{ inputs.private-markers }}
       # MIRROR_DIR is resolved in a step (see below) — the `runner` context is not
       # available in job-level `env:`, only at step scope.
