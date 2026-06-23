@@ -113,7 +113,7 @@ class TestDedup(unittest.TestCase):
         self.assertEqual(filed, [], "file_issue should not be called when issue is already open")
 
     def test_no_existing_issue_allows_create(self):
-        repo = "dividedby/tweakcc-maint"
+        repo = "dividedby/goodreads-bot"
         title = _issue_title(repo)
         open_titles: set[str] = set()  # empty → no existing issue
 

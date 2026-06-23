@@ -8,7 +8,7 @@ fixer. Never mutates a consumer repo.
 Prerequisites
 -------------
 - DRIFT_CHECK_TOKEN: fine-grained PAT, owner dividedby, repositories:
-  moodreader + agent-research + goodreads-bot + tweakcc-maint + skills,
+  moodreader + agent-research + goodreads-bot + skills,
   Contents:Read + Issues:Write on skills. Until this secret is created the
   job exits 0 and does nothing (graceful no-op).
 
@@ -34,11 +34,12 @@ from typing import Optional
 
 # Repos to audit, mapped to their default branch.
 # Confirmed 2026-06-20 via `gh repo view dividedby/<repo> --json defaultBranchRef`.
+# ponytail: archived repos dropped by hand; if more get archived, skip via
+#   gh api repos/<r> -q .archived
 REPOS: dict[str, str] = {
     "dividedby/moodreader": "main",
     "dividedby/agent-research": "main",
     "dividedby/goodreads-bot": "staging",
-    "dividedby/tweakcc-maint": "main",
 }
 
 SKILLS_REPO = "dividedby/skills"

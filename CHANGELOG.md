@@ -18,10 +18,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `project-claude-config`: detect label-doc drift and hand off to `setup-dividedby-skills` (#402)
 - `setup-dividedby-skills`: add must-fix outcome + force-canonical mode for drifted label conventions (#393)
 - proposal-loop reusable workflows: SHA-pin actions, drop acceptEdits, scope allowedTools; Dependabot for actions (#394)
-- `apply-agent-research` folds onto the claude-loops-v1 reusable rail: one `workflow_call` body (`apply-agent-research-reusable.yml`) replaces all five full-copy envelopes; each repo vendors a thin caller stub; hardened (no acceptEdits, scoped allowedTools, SHA-pinned checkout); ADR 0029 (#417)
+- `apply-agent-research` folds onto the claude-loops-v1 reusable rail: one `workflow_call` body (`apply-agent-research-reusable.yml`) replaces the active consumers' full-copy envelopes; each repo vendors a thin caller stub; hardened (no acceptEdits, scoped allowedTools, SHA-pinned checkout); ADR 0029 (#417)
 
 ### Changed
 
+- `tweakcc-maint` archived and decommissioned: dropped from the workflow-drift and label-drift fleet detectors; ADR 0014 updated to reflect that the reusable-rail migration (ADR 0029) covers the active consumer fleet only (moodreader, agent-research, goodreads-bot + skills canary) (#416)
 - `autonomous-loop`: added non-binary-quality evaluator gate section (generator/evaluator split, rubric design, calibration, sprint contracts, cost heuristics) (#430)
 
 ### Fixed

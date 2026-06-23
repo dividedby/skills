@@ -64,12 +64,14 @@ and versioned conservatively.
   > are env-wiring (`SKILLS_TRACKER_TOKEN` presence + an `is-knowledge-source` input),
   > not forks — so `apply-agent-research` now rides the same `workflow_call`
   > reusable-body rail. The "remaining vendored surface" below reduces to one
-  > reusable body + five thin callers.
+  > reusable body + thin caller stubs across the active consumer fleet.
 
-- The remaining vendored surface — the `apply-agent-research` full-copy envelope
-  (all 5 repos) and the two thin caller stubs per-consumer — is now guarded by a
-  scheduled divergence report (`check-workflow-drift.yml`, weekly Sun 04:00 UTC,
-  central in skills, `tools/check_workflow_drift.py`). The check is
+- The remaining vendored surface — the `apply-agent-research` thin caller stubs
+  across the active consumer fleet (moodreader, agent-research, goodreads-bot) plus
+  the skills local canary — is now guarded by a scheduled divergence report
+  (`check-workflow-drift.yml`, weekly Sun 04:00 UTC, central in skills,
+  `tools/check_workflow_drift.py`). (`tweakcc-maint` was archived/decommissioned
+  before the ADR 0029 migration and is excluded.) The check is
   **anchor-presence, not full normalization**: it verifies that structurally
   required substrings exist (e.g. `permissions: / issues: write`, `@claude-loops-v1`
   tag pin, `harness/prompts/apply-agent-research.md` fetch, `--model
