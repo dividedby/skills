@@ -48,6 +48,7 @@ Scheduled, skill-driven workflows that propose improvements via labeled issues (
 ## Docs
 
 - [CHANGELOG](./CHANGELOG.md) — notable changes by release
+- [CODING_STANDARDS](./CODING_STANDARDS.md) — markdown skill and harness Python conventions
 
 ## Upstream
 
