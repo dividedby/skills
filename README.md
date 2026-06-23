@@ -45,6 +45,10 @@ Scheduled, skill-driven workflows that propose improvements via labeled issues (
 - **[consumer-setup](./docs/onboarding/consumer-setup.md)** — wire a repo up as an `apply-agent-research` Consumer (agent-meta self-improvement + the cross-repo `skill-request` / `skill-promotion` channels).
 - **[arch-review-setup](./docs/onboarding/arch-review-setup.md)** — the simpler `improve-codebase-architecture` loop (codebase → refactor proposals).
 
+## Docs
+
+- [CHANGELOG](./CHANGELOG.md) — notable changes by release
+
 ## Upstream
 
 These skills soft-depend on `mattpocock/skills` — install it alongside this plugin.
