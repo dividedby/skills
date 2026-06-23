@@ -1,5 +1,6 @@
 ---
 name: doc-it
+disable-model-invocation: true
 description: >
   Scan a repo and generate or patch its reference documentation (README, API
   docs, onboarding guide, CHANGELOG) from source — applying changes directly.

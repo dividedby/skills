@@ -1,5 +1,6 @@
 ---
 name: triage
+disable-model-invocation: true
 description: Triage issues through a state machine driven by the dividedby label vocabulary. Use when the maintainer wants to see what needs attention, triage a specific issue, move an issue to a new state, or manage issue workflow on this repo's GitHub tracker.
 ---
 

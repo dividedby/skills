@@ -1,5 +1,6 @@
 ---
 name: frontend-design
+disable-model-invocation: true
 description: >
   Design and refine production-grade, opinionated frontend interfaces that
   avoid generic AI aesthetics. Use when asked to "design a UI", "build a

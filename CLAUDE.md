@@ -40,6 +40,8 @@ Adding or re-cadencing a scheduled `claude -p` workflow (a proposal loop here or
 
 Skills in this repo prescribe at the principle level; code examples are illustrative sketches, not literal rules. See [`docs/adr/0002-design-skills-prescribe-at-principle-level.md`](./docs/adr/0002-design-skills-prescribe-at-principle-level.md).
 
+Skills here are user-invoked orchestrators by default — each `SKILL.md` carries `disable-model-invocation: true`, so its description doesn't load into every session's context. Exception: a skill deliberately model-fired on a signal (e.g. `flow-pr` on done+green) omits the flag by design.
+
 <important if="filing an issue or idea">
 
 ### Intake convention

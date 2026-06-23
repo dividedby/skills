@@ -1,5 +1,6 @@
 ---
 name: skill-divergence-audit
+disable-model-invocation: true
 description: >
   Recurring, report-only audit that diffs this repo's published skills against
   Matt Pocock's repo and the agent-research KB, classifies each gap, and
