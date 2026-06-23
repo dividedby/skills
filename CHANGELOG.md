@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `project-claude-config`: detect situational sections and propose `<important if>` gating (#399)
 - `project-claude-config`: detect label-doc drift and hand off to `setup-dividedby-skills` (#402)
 - `setup-dividedby-skills`: add must-fix outcome + force-canonical mode for drifted label conventions (#393)
+- proposal-loop reusable workflows: SHA-pin actions, drop acceptEdits, scope allowedTools; Dependabot for actions (#394)
 
 ## [2026-06-23]
 

@@ -50,6 +50,10 @@ APPLY_PATH = ".github/workflows/apply-agent-research.yml"
 ARCH_PATH = ".github/workflows/improve-codebase-architecture.yml"
 STALE_PATH = ".github/workflows/staleness-review.yml"
 
+# Reusable body paths (local to skills; not vendored to consumers).
+ARCH_BODY_PATH = ".github/workflows/improve-codebase-architecture-reusable.yml"
+STALE_BODY_PATH = ".github/workflows/staleness-review-reusable.yml"
+
 # Anchor sets: substrings that MUST appear in every non-missing file.
 #
 # apply-agent-research.yml — variant-neutral (host / consumer / producer all share):
@@ -96,6 +100,63 @@ ANCHORS: dict[str, list[str]] = {
     ],
 }
 
+# Anchors for the reusable body files (local to skills; hardened form — C-1/C-2/C-3).
+#
+# C-1 — SHA-pinned actions: no movable tag (actions/checkout@v + digit is the old form).
+# C-2 — acceptEdits absent: proposal loops must not carry --permission-mode acceptEdits.
+# C-3 — scoped allowedTools: no bare Bash(git:*) or Bash(python3:*) wildcard.
+#   - "Bash(git log:*)" is the narrowest read-only git anchor present in both bodies.
+#   - "Bash(python3 $SKILL_DIR" is present only in staleness-review (scoped to lib/).
+#     arch-review has no python3 tool grant — its absence is verified by asserting
+#     "Bash(python3:*)" does NOT appear (checked as a "must-not" anchor separately below).
+BODY_ANCHORS: dict[str, list[str]] = {
+    ARCH_BODY_PATH: [
+        "permissions:",
+        "issues: write",
+        "--model claude-sonnet-4-6",
+        "--max-budget-usd",
+        "--output-format stream-json",
+        "git clone --depth 1",
+        # C-1: SHA-pinned checkout (40-char hex after @).
+        "actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10",
+        # C-3: scoped git (at least one specific read-only subcommand present).
+        "Bash(git log:*)",
+    ],
+    STALE_BODY_PATH: [
+        "permissions:",
+        "issues: write",
+        "--model claude-sonnet-4-6",
+        "--max-budget-usd",
+        "--output-format stream-json",
+        "git clone --depth 1",
+        # C-1: SHA-pinned checkout.
+        "actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10",
+        # C-3: scoped git and scoped python3.
+        "Bash(git log:*)",
+        "Bash(python3 $SKILL_DIR/lib/:*)",
+    ],
+}
+
+# Must-NOT-appear anchors for the reusable bodies (hardened form violations).
+BODY_FORBIDDEN: dict[str, list[str]] = {
+    ARCH_BODY_PATH: [
+        "--permission-mode acceptEdits",  # C-2: no acceptEdits in propose-only loop
+        "Bash(git:*)",                    # C-3: bare git wildcard replaced by scoped subcommands
+        "Bash(python3:*)",               # C-3: arch-review has no python3 grant
+        "actions/checkout@v",            # C-1: movable tag replaced by SHA pin
+        "Bash(gh search:*)",             # C-3: prompt uses only gh issue list/view; search not needed
+        "Bash(gh api:*)",                # C-3: write primitive — bypasses proposal cap (#306)
+    ],
+    STALE_BODY_PATH: [
+        "--permission-mode acceptEdits",  # C-2: no acceptEdits in propose-only loop
+        "Bash(git:*)",                    # C-3: bare git wildcard replaced by scoped subcommands
+        "Bash(python3:*)",               # C-3: bare python3 wildcard replaced by scoped path
+        "actions/checkout@v",            # C-1: movable tag replaced by SHA pin
+        "Bash(gh search:*)",             # C-3: prompt uses only gh issue list/view; search not needed
+        "Bash(gh api:*)",                # C-3: write primitive — bypasses proposal cap (#306)
+    ],
+}
+
 # Anchors to skip when checking skills' OWN caller stubs.  Skills uses a local
 # `./` ref by design (canary — always runs the latest body) rather than
 # @claude-loops-v1, so that tag is not expected there.
@@ -124,6 +185,21 @@ def check_file(content: str, anchors: list[str], skip: set[str] | None = None) -
     """
     skip = skip or set()
     return [a for a in anchors if a not in skip and a not in content]
+
+
+def check_forbidden(content: str, forbidden: list[str]) -> list[str]:
+    """Return the list of forbidden substrings that ARE present in *content*.
+
+    Used to enforce hardened-form must-not-appear rules (C-2, C-3).
+
+    Args:
+        content:   The decoded text of the workflow file.
+        forbidden: Substrings that must NOT appear.
+
+    Returns:
+        Ordered list of violated (present) forbidden substrings (empty == clean).
+    """
+    return [f for f in forbidden if f in content]
 
 
 # ---------------------------------------------------------------------------
@@ -385,6 +461,27 @@ def main(argv=None):
     except OSError as exc:
         print(f"ERROR reading local {APPLY_PATH}: {exc}", file=sys.stderr)
         any_error = True
+
+    # skills' own reusable bodies — check hardened form (C-1/C-2/C-3 anchors).
+    repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    for body_path in (ARCH_BODY_PATH, STALE_BODY_PATH):
+        local_body = os.path.join(repo_root, body_path)
+        try:
+            with open(local_body, encoding="utf-8") as fh:
+                body_content = fh.read()
+        except OSError as exc:
+            print(f"ERROR reading local {body_path}: {exc}", file=sys.stderr)
+            any_error = True
+            continue
+
+        missing = check_file(body_content, BODY_ANCHORS[body_path])
+        present_forbidden = check_forbidden(body_content, BODY_FORBIDDEN[body_path])
+        if missing:
+            print(f"DRIFT: {SKILLS_REPO}/{body_path}: missing required anchors {missing}")
+        if present_forbidden:
+            print(f"DRIFT: {SKILLS_REPO}/{body_path}: forbidden patterns present {present_forbidden}")
+        if not missing and not present_forbidden:
+            print(f"OK:    {SKILLS_REPO}/{body_path}")
 
     if any_error:
         sys.exit(1)

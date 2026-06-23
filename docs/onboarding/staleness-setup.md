@@ -75,11 +75,11 @@ report issue per run** — the complement to Dependabot, which owns library deps
   staleness-specific round-trip case (a body with table pipes) is pinned in
   `harness/tests/test_cli.py`.
 - **Tools (read-only `gh` + web + python3):**
-  `Bash(gh issue list:*) Bash(gh issue view:*) Bash(gh search:*) Bash(gh api:*) Bash(git:*) Bash(python3:*) Read Grep Glob WebSearch WebFetch`.
-  `Bash(python3:*)` is load-bearing: the skill's classify/EOL/rank stations run
-  the stdlib helpers under `lib/` (`version_gap.py`, `eol.py`, `rank.py`) —
-  without the grant the agent's helper invocations are permission-denied and it
-  falls back to deriving gaps and rankings in prose.
+  `Bash(gh issue list:*) Bash(gh issue view:*) Bash(git log:*) Bash(git diff:*) Bash(git show:*) Bash(git blame:*) Bash(git ls-files:*) Bash(git status:*) Bash(python3 $SKILL_DIR/lib/:*) Read Grep Glob WebSearch WebFetch`.
+  `Bash(python3 $SKILL_DIR/lib/:*)` is load-bearing: the skill's classify/EOL/rank
+  stations run the stdlib helpers under `lib/` (`version_gap.py`, `eol.py`,
+  `rank.py`) by path — without the grant the agent's helper invocations are
+  permission-denied and it falls back to deriving gaps and rankings in prose.
   The agent gets only read access to the tracker and **no `Edit`/`Write`** — it can
   neither `gh issue create` nor mutate the repo, which makes the deterministic
   publish the sole filing path and keeps the cron report-only.
@@ -104,7 +104,7 @@ and the skill — see [`proposal-loop-harness.md`](./proposal-loop-harness.md).
 2. Set `SKILL_DIR` to the cloned skill path
    (`$RUNNER_TEMP/<clone>/skills/engineering/staleness-audit`) so the prompt's
    `@SKILL_DIR@` resolves; keep the full tool scoping from the Tools bullet above
-   (read-only `gh`, `WebSearch`/`WebFetch`, and the load-bearing `Bash(python3:*)`)
+   (read-only `gh`, `WebSearch`/`WebFetch`, and the load-bearing `Bash(python3 $SKILL_DIR/lib/:*)`)
    and `permissions: contents: read, issues: write`.
 3. Ensure the `CLAUDE_CODE_OAUTH_TOKEN` secret exists.
 4. Confirm the repo actually pins a toolchain — any ecosystem (Node, Python, Go, …),

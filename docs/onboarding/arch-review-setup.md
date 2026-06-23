@@ -99,10 +99,12 @@ first**; this doc is only the deltas.
   raw log when it fails. This is the generator/publisher split adapted from
   `mattpocock/course-video-manager`'s `architecture-review.yml`; the harness gives
   us in tested Python what it gets from the sandcastle framework.
-- **Tools (read-only `gh`):**
-  `Bash(gh issue list:*) Bash(gh issue view:*) Bash(gh search:*) Bash(gh api:*) Bash(git:*) Read Grep Glob WebSearch WebFetch`.
-  The agent gets only read access to the tracker — it *cannot* `gh issue create`,
-  which makes the deterministic publish the sole filing path.
+- **Tools (read-only `gh` + read-only `git`):**
+  `Bash(gh issue list:*) Bash(gh issue view:*) Bash(git log:*) Bash(git diff:*) Bash(git show:*) Bash(git blame:*) Bash(git ls-files:*) Bash(git status:*) Read Grep Glob`.
+  No `WebSearch`/`WebFetch` — the depth rubric is fetched by the shell step above
+  (not the model), so web access would only add an exfil surface for injected
+  prompts. The agent gets only read access to the tracker — it *cannot*
+  `gh issue create`, which makes the deterministic publish the sole filing path.
 
 ## Reference
 

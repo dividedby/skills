@@ -62,7 +62,7 @@ jobs:
 
     steps:
       - name: Checkout caller repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           fetch-depth: 1
           # No `ref:` — defaults to the caller's default branch (preserves main
@@ -130,10 +130,13 @@ jobs:
           # file the issues — the Publish step does, via the harness, which enforces
           # the ≤2-issues-per-run cap (ADR 0019) and the label in code. gh access is
           # scoped to read-only subcommands (list/view/search) so the agent *cannot*
-          # create an issue itself. Do NOT add `gh api` here — it is a write primitive
-          # that POSTs issues directly, bypassing the cap (#306). WebSearch/WebFetch are
-          # likewise excluded: the rubric is fetched by the shell step above, not the
-          # model, so web access only adds an exfil surface for an injected prompt.
+          # create an issue itself. This is a propose-only loop (no local writes,
+          # no edit permission mode). git is scoped to read-only subcommands
+          # (log/diff/show/blame/ls-files/status). Do NOT add `gh api` here — it is
+          # a write primitive that POSTs issues directly, bypassing the cap (#306).
+          # WebSearch/WebFetch are likewise excluded: the rubric is fetched by the
+          # shell step above, not the model, so web access only adds an exfil surface
+          # for an injected prompt.
           # --output-format stream-json --verbose: stream every event so a hung run
           # leaves a trace (plain json buffers) and the final result event (with
           # total_cost_usd) lands before claude exits — cost captured even on failure.
@@ -147,8 +150,7 @@ jobs:
             --output-format stream-json --verbose \
             --model claude-sonnet-4-6 \
             --max-budget-usd 3.00 \
-            --permission-mode acceptEdits \
-            --allowedTools "Bash(gh issue list:*) Bash(gh issue view:*) Bash(gh search:*) Bash(git:*) Read Grep Glob" \
+            --allowedTools "Bash(gh issue list:*) Bash(gh issue view:*) Bash(git log:*) Bash(git diff:*) Bash(git show:*) Bash(git blame:*) Bash(git ls-files:*) Bash(git status:*) Read Grep Glob" \
             --append-system-prompt "$(
               cat "$HARNESS/prompts/improve-codebase-architecture.md"
               printf '\n\n---\n\n## Depth rubric (fetched from mattpocock/skills)\n\n'
