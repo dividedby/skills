@@ -31,14 +31,15 @@ key) are not cross-repo GitHub PATs and are not governed by this decision.
 
 ## Decision
 
-Cross-repo GitHub Actions access uses **fine-grained PATs, one per role,
-least-privilege, scoped to exactly the repos that role touches.** This codifies the
-pattern already in force.
+Cross-repo GitHub Actions access uses **fine-grained PATs, one per role.**
+Tracker-write and drift-read stay scoped to exactly the repos they touch; the
+cost-scrape role uses a **single token scoped to all repositories, current and
+future** (a maintainer decision — see below).
 
 | Role | Token | Scope | Stored in |
 | --- | --- | --- | --- |
 | Tracker-write | `SKILLS_TRACKER_TOKEN` | Issues: read/write on `dividedby/skills` only | each active consumer repo (one copy each) |
-| Cost-scrape | the per-target `*_ACTIONS_TOKEN` set — **kept split** | Actions: read, each scoped to one repo | hub: `dividedby/agent-research` only |
+| Cost-scrape | a single `ACTIONS_TOKEN` | Actions: read on **all repositories (current and future)** | hub: `dividedby/agent-research` only |
 | Drift-read | `DRIFT_CHECK_TOKEN` | Contents: read on the active consumer repos | `dividedby/skills` only |
 
 Rejected alternatives:
@@ -57,28 +58,47 @@ Rejected alternatives:
   maintainer has explicitly preferred simplicity over marginal security, this is
   over-engineering. Rejected.
 
-The five cost-scrape `*_ACTIONS_TOKEN` PATs are **deliberately not collapsed** into
-one Actions:read PAT spanning every repo. They are least-privilege fan-in (each
-reads exactly one repo's Actions logs), not accidental duplication. Collapsing them
-would buy a one-time provisioning saving in exchange for a permanently wider blast
-radius on the hub, and would contradict the "least privilege per channel"
-principle. The only role with genuine N-way duplication is tracker-write, and that
-is already "one logical token per role" — copied per repo only because a User
-account offers no shared-secret mechanism.
+**Maintainer decision — cost-scrape uses one all-repos token.** The cost-scrape role
+uses a single `ACTIONS_TOKEN`: a fine-grained PAT with **Actions:read on all
+repositories** the account owns. A fine-grained PAT scoped to "all repositories"
+automatically includes repos created later, so a new repo's cost scrape works with
+no new secret — zero-touch onboarding. This **overrides the #424 audit's
+recommendation to keep five per-repo tokens.** The trade is deliberate: per-repo
+least-privilege is given up for operational simplicity — one secret to provision and
+rotate, future repos covered automatically. The accepted blast radius stays narrow
+because the permission is **Actions:read only** (log/artifact reads — no write, no
+contents, no issues), which is why the maintainer judges the wider repo scope
+acceptable. The five `SKILLS_ACTIONS_TOKEN` / `GOODREADS_ACTIONS_TOKEN` /
+`MOODREADER_ACTIONS_TOKEN` / `TWEAKCC_ACTIONS_TOKEN` / `CLAUDE_CONFIG_ACTIONS_TOKEN`
+secrets are retired in favor of the single `ACTIONS_TOKEN`.
+
+Tracker-write keeps its tight scope because `Issues:write` is a mutation grant, and
+drift-read keeps Contents:read on the named consumers; neither was part of this
+consolidation. The same all-repos simplification could later be applied to
+drift-read if the maintainer wants it.
 
 ## Security invariant
 
-Each token carries the minimum permission for its role on the minimum set of repos,
-with a finite expiry. A leak of any one token is bounded to that role on those
-repos: a leaked `SKILLS_TRACKER_TOKEN` can spam issues on `dividedby/skills` and
-nothing else; a leaked `*_ACTIONS_TOKEN` can read one repo's Actions logs and
-nothing else. No single cross-repo token grants account-wide access.
+Each token carries the minimum permission for its role, with a finite expiry. A leak
+is bounded by permission, and for tracker-write and drift-read also by repo: a leaked
+`SKILLS_TRACKER_TOKEN` can only spam issues on `dividedby/skills`; a leaked
+`DRIFT_CHECK_TOKEN` can only read consumer repo contents. The consolidated
+`ACTIONS_TOKEN` is Actions:read across all repositories — a leak exposes Actions
+log/artifact reads account-wide, but **no write, no contents, and no issues access**.
+No cross-repo token grants write or account-wide mutation.
 
 ## Consequences
 
-- The estate's token model is now recorded; onboarding cites this ADR instead of
-  re-deriving it. Structurally nothing changes — the decision ratifies what is
-  already deployed.
+- The token model is recorded; onboarding cites this ADR instead of re-deriving it.
+  Tracker-write and drift-read ratify the deployed state; cost-scrape consolidates
+  from five per-repo tokens to one all-repos `ACTIONS_TOKEN`.
+- New repos are covered automatically for cost-scrape: the `ACTIONS_TOKEN`
+  (fine-grained, "all repositories") picks up future repos with no new secret — only
+  the hub's cost-ledger workflow needs a scrape entry for the new repo.
+- Migrating to the single token touches the hub only: `dividedby/agent-research`
+  `cost-ledger.yml` and `docs/cost-tracking.md` / `COST_SURFACE` switch from the five
+  `*_ACTIONS_TOKEN` names to `ACTIONS_TOKEN`. Provisioning `ACTIONS_TOKEN` and
+  retiring the five old secrets are admin steps.
 - Provisioning, granting, and rotating tokens are admin operations on a User
   account and remain **maintainer-only** (human checkpoints); no autonomous agent
   provisions, writes, or rotates secrets.
@@ -96,4 +116,4 @@ nothing else. No single cross-repo token grants account-wide access.
 - [ADR 0014](0014-harness-is-fetched-fresh-only-the-workflow-envelope-is-vendored.md) — fetch-fresh pattern
 - [ADR 0015](0015-apply-agent-research-prompt-is-consumer-portable-via-env.md) — env-wiring portability; `SKILLS_TRACKER_TOKEN` as the host/consumer role discriminator
 - [ADR 0030](0030-cross-repo-credential-selected-inside-cli-py.md) — where the tracker-write token is selected (inside `cli.py`, allowlist-safe)
-- `docs/onboarding/consumer-setup.md`, `dividedby/agent-research docs/cost-tracking.md` — the existing per-channel prescriptions this ADR codifies
+- `docs/onboarding/consumer-setup.md`, `dividedby/agent-research docs/cost-tracking.md` — the existing per-channel prescriptions (codified here for tracker-write and drift-read; superseded for cost-scrape, which consolidates to one all-repos token)
