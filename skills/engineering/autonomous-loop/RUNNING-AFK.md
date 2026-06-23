@@ -133,5 +133,3 @@ firewall is what keeps the last issue as sharp as the first.
 The guardrails are what let steps 4–6 run while you step away: the git-guard
 (guardrail 1) blocks irreversible ops no matter what a sub-agent decides, and
 every item is on a PR, gated, and persisted before the next begins.
-
-Route per-item work to an in-session sub-agent when a session exists; headless `claude -p` only where there is none — see `/context-firewall` step 2.
