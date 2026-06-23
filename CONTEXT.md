@@ -23,6 +23,15 @@ A cross-cutting rule that multiple skills follow, documented under
 read by skills during their work.
 _Avoid_: agent skill, shared rule, policy.
 
+**All-clear scope**:
+The rule that a skill reports "all clear" **only for the surfaces it owns**. When
+it observes drift in a surface another skill owns, it does not absorb the fix and
+does not imply a whole-repo clearance — it **flags the drift and names the owning
+skill** to hand off. Born from `project-claude-config` reporting "config is fine"
+while a `setup-dividedby-skills`-owned label doc was drifted
+([ADR 0023](./docs/adr/0023-setup-dividedby-skills-vs-project-claude-config-seam.md)).
+_Avoid_: false all-clear, clean report, whole-repo green.
+
 **Guard hook**:
 A deterministic PreToolUse hook that blocks a class of dangerous commands by
 exiting non-zero (e.g. `bash-guard.py`, `pnpm-guard`, a git-guard). The
