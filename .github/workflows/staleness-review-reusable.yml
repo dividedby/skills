@@ -54,7 +54,7 @@ jobs:
 
     steps:
       - name: Checkout caller repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           fetch-depth: 1
           # No `ref:` — defaults to the caller's default branch (preserves main
@@ -102,8 +102,12 @@ jobs:
           # plus a raw <body> block (see prompt). It does NOT file the issue — the
           # Publish step does, via the harness, which enforces the per-run issue cap
           # and the label in code (one ranked report per run). No Edit/Write tools
-          # are granted, and gh access is scoped to read-only subcommands, so the
-          # agent can neither mutate the repo nor file an issue itself.
+          # are granted; this is a propose-only loop (no local writes, no edit
+          # permission mode), gh access is scoped to read-only subcommands,
+          # git is scoped to read-only subcommands (log/diff/show/blame/ls-files/
+          # status), and python3 is scoped to the skill's own lib/ helpers
+          # (version_gap.py, eol.py, rank.py, apply_policy.py) so the agent can
+          # neither mutate the repo nor file an issue itself.
           # --output-format stream-json --verbose: stream every event so a hung run
           # leaves a trace (plain json buffers) and the final result event (with
           # total_cost_usd) lands before claude exits — cost captured even on failure.
@@ -118,8 +122,7 @@ jobs:
             --output-format stream-json --verbose \
             --model claude-sonnet-4-6 \
             --max-budget-usd 3.00 \
-            --permission-mode acceptEdits \
-            --allowedTools "Bash(gh issue list:*) Bash(gh issue view:*) Bash(gh search:*) Bash(git:*) Bash(python3:*) Read Grep Glob WebSearch WebFetch" \
+            --allowedTools "Bash(gh issue list:*) Bash(gh issue view:*) Bash(git log:*) Bash(git diff:*) Bash(git show:*) Bash(git blame:*) Bash(git ls-files:*) Bash(git status:*) Bash(python3 $SKILL_DIR/lib/:*) Read Grep Glob WebSearch WebFetch" \
             --append-system-prompt "$(sed "s#@SKILL_DIR@#$SKILL_DIR#g" "$HARNESS/prompts/staleness-audit.md")" \
             "Run the monthly staleness-review pass. Follow the instructions in the system prompt." \
             | tee "$RUNNER_TEMP/agent.jsonl"
