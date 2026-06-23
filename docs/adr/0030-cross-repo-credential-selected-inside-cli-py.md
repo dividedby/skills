@@ -1,5 +1,7 @@
 # Cross-repo credential is selected inside cli.py, not the workflow shell
 
+> **Superseded in part by [ADR 0032](0032-issues-token-consolidation-and-explicit-mode-flag.md):** the token name is now `ISSUES_TOKEN` (was `SKILLS_TRACKER_TOKEN`); the `repo == dividedby/skills` swap guard is retained and its importance increases (ISSUES_TOKEN has wider repo scope).
+
 ## Context
 
 The `apply-agent-research` reusable body was hardened in #394 (ADR 0029): scoped

@@ -1,5 +1,7 @@
 # The apply-agent-research harness prompt is consumer-portable via env, not vendored per-repo
 
+> **Superseded in part by [ADR 0032](0032-issues-token-consolidation-and-explicit-mode-flag.md):** the host/consumer role discriminator is now the explicit `is-tracker-host` workflow input (not `SKILLS_TRACKER_TOKEN` presence), and the cross-repo PAT is now `ISSUES_TOKEN`.
+
 [ADR 0014](0014-harness-is-fetched-fresh-only-the-workflow-envelope-is-vendored.md)
 moved the proposal-loop **prompts** onto the fetch-fresh harness rail so a fix
 reaches every loop on its next run. But the `apply-agent-research` prompt that

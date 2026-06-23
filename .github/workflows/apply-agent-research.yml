@@ -27,8 +27,7 @@ jobs:
       issues: write
     uses: ./.github/workflows/apply-agent-research-reusable.yml
     with:
+      is-tracker-host: true    # host opts in via this flag (ADR 0032); cli.py reads IS_TRACKER_HOST
       is-knowledge-source: false
     secrets:
       CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-      # Host mode — SKILLS_TRACKER_TOKEN deliberately NOT passed; its absence is
-      # the discriminator that puts the prompt in host mode (ADR 0015).

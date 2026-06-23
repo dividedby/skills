@@ -1,5 +1,7 @@
 # Cross-repo Actions tokens are per-role least-privilege fine-grained PATs
 
+> **Superseded in part by [ADR 0032](0032-issues-token-consolidation-and-explicit-mode-flag.md):** the three write tokens (`SKILLS_TRACKER_TOKEN`, `DRIFT_CHECK_TOKEN`, and an unused agent-research write PAT) consolidate into one `ISSUES_TOKEN` (all repos, Issues:RW + Contents:read), overriding the "keep write tokens scoped" stance; `DRIFT_CHECK_TOKEN` is retained as Option-B fallback only.
+
 ## Context
 
 The fleet runs several cross-repo GitHub Actions credentials: consumer loops file

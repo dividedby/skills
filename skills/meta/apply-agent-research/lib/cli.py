@@ -16,7 +16,7 @@ forgetting-failure). The pure decision stays pure and testable; this seam adds t
 thin, gated transport on top — the agent never calls ``gh issue create`` itself.
 
 **Token selection invariant.** When ``--repo`` is exactly ``dividedby/skills``,
-``_gh_env`` injects ``SKILLS_TRACKER_TOKEN`` as ``GH_TOKEN`` in the subprocess
+``_gh_env`` injects ``ISSUES_TOKEN`` as ``GH_TOKEN`` in the subprocess
 environment — automatically, for every ``gh`` call that targets that repo. Any other
 ``--repo`` value (or no ``--repo``) keeps the ambient ``GH_TOKEN`` unchanged. The
 agent and workflow shell MUST NOT set ``GH_TOKEN`` manually or read the token value;
@@ -48,7 +48,8 @@ is what lets the helpers travel with the installed skill into a Consumer repo.
     python3 <skill-dir>/lib/cli.py find-open --repo owner/name \
         --label <label> --capability <slug>
 
-    # allowlist-safe mode discriminator: prints "consumer" or "host" (never the token)
+    # allowlist-safe mode discriminator: prints "host" or "consumer" (never any token value)
+    # reads IS_TRACKER_HOST env var: "true" → host, anything else / unset → consumer
     python3 <skill-dir>/lib/cli.py mode
 """
 
@@ -71,13 +72,13 @@ CROSS_REPO = "dividedby/skills"
 def _gh_env(repo):
     """Return a subprocess env with GH_TOKEN swapped in for cross-repo writes.
 
-    When ``repo`` is exactly ``dividedby/skills`` and ``SKILLS_TRACKER_TOKEN`` is
+    When ``repo`` is exactly ``dividedby/skills`` and ``ISSUES_TOKEN`` is
     set, GH_TOKEN is overridden with that PAT so gh can write into the tracker
     without the caller ever touching the token value. Any other repo (or no repo)
     keeps the ambient environment unchanged.
     """
     env = os.environ.copy()
-    tok = os.environ.get("SKILLS_TRACKER_TOKEN")
+    tok = os.environ.get("ISSUES_TOKEN")
     if repo == CROSS_REPO and tok:
         env["GH_TOKEN"] = tok
     return env
@@ -179,17 +180,18 @@ def _comment(args, stdin, out):
 
 
 def _mode(args, stdin, out):
-    """Print 'consumer' or 'host' depending on whether SKILLS_TRACKER_TOKEN is set.
+    """Print 'host' or 'consumer' based on the IS_TRACKER_HOST env flag.
 
     This is the allowlist-safe alternative to shell env introspection (``printenv``,
     ``$VAR`` expansion, etc.), which are denied in the scoped sandbox. Never prints
-    the token value — only the word 'host' or 'consumer'.
+    any token value — only the word 'host' or 'consumer'.
+
+    IS_TRACKER_HOST=true → host; anything else (false, empty, unset) → consumer.
+    Default (unset) is consumer so a misconfigured workflow fails safe rather than
+    running as host and draining into the wrong tracker.
     """
-    tok = os.environ.get("SKILLS_TRACKER_TOKEN")
-    if tok:
-        print("consumer", file=out)
-    else:
-        print("host", file=out)
+    host = os.environ.get("IS_TRACKER_HOST", "").strip().lower() == "true"
+    print("host" if host else "consumer", file=out)
     return 0
 
 

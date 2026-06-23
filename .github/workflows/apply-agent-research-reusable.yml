@@ -13,7 +13,8 @@ name: Apply Agent Research (Reusable Body)
 # harness/cli.py from the fresh dividedby/skills clone.
 #
 # One body with two conditional points serves all three modes:
-#   - Mode = SKILLS_TRACKER_TOKEN presence (ADR 0015): unset → host, set → consumer.
+#   - Mode = explicit is-tracker-host input (ADR 0032): true → host, false/unset → consumer.
+#     cli.py reads IS_TRACKER_HOST env var set from this input; the host caller passes true.
 #   - is-knowledge-source gates only the knowledge-mirror clone: the producer
 #     (agent-research) reads its native knowledge/; host and consumers clone the
 #     public dividedby/agent-research-knowledge mirror.
@@ -28,6 +29,10 @@ name: Apply Agent Research (Reusable Body)
 on:
   workflow_call:
     inputs:
+      is-tracker-host:
+        description: "True only for dividedby/skills itself; consumers leave false. Sets IS_TRACKER_HOST for cli.py mode detection (ADR 0032)."
+        type: boolean
+        default: false
       is-knowledge-source:
         description: "Set true only for dividedby/agent-research (reads native knowledge/ instead of mirror clone)"
         type: boolean
@@ -45,6 +50,8 @@ on:
         required: true
       SKILLS_TRACKER_TOKEN:
         required: false
+      ISSUES_TOKEN:
+        required: false
 
 jobs:
   apply-agent-research:
@@ -61,7 +68,8 @@ jobs:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       GH_REPO: ${{ github.repository }}
       LABEL: source:agent-research
-      SKILLS_TRACKER_TOKEN: ${{ secrets.SKILLS_TRACKER_TOKEN }}
+      IS_TRACKER_HOST: ${{ inputs.is-tracker-host }}
+      ISSUES_TOKEN: ${{ secrets.ISSUES_TOKEN || secrets.SKILLS_TRACKER_TOKEN }}
       PRIVATE_MARKERS: ${{ inputs.private-markers }}
       # MIRROR_DIR is resolved in a step (see below) — the `runner` context is not
       # available in job-level `env:`, only at step scope.

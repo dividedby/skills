@@ -30,9 +30,11 @@ This prints `host` or `consumer` and exits 0. Branch your whole run on that outp
   skills — `skill-promotion` (supply) channels into `dividedby/skills`,
   authenticating those calls with the cross-repo PAT that cli.py supplies internally.
 
-The `cli.py mode` result is an honest discriminator: the host never sets
-`SKILLS_TRACKER_TOKEN`, so the discriminator cannot drift out of sync with the
-cross-repo writes it gates. cli.py reads the env internally — you never need to.
+The `cli.py mode` result is an honest discriminator: the caller workflow sets
+`is-tracker-host: true` only for `dividedby/skills` itself; cli.py reads
+`IS_TRACKER_HOST` from its process environment internally — you never inspect
+environment variables directly. The flag cannot drift out of sync with the
+cross-repo writes it gates (ADR 0032).
 
 **Environment variable constraint:** do NOT inspect environment variables via
 `printenv`, `env`, `python3 -c "import os; …"`, `cat /proc/*/environ`, or shell
@@ -70,7 +72,7 @@ supplied by cli.py itself — never read it.
   to one repeatable `--marker <token>` per token on **every** guarded `file` /
   `comment` call (see Filing). Empty (the host case, and any fully-public repo) → no
   `--marker` flags, and the guard's structural checks still apply.
-- **`$SKILLS_TRACKER_TOKEN`** — the cross-repo GitHub credential in consumer mode;
+- **`$ISSUES_TOKEN`** — the cross-repo GitHub credential in consumer mode;
   cli.py reads it internally. Use `cli.py mode` (above) to determine your role —
   never inspect this variable directly.
 - **This repo's own governance docs:** `CONTEXT.md`, `CLAUDE.md`, every file under
@@ -145,7 +147,7 @@ independently clear the bar that would have made it the run's single best.
        markers.
    - All `dividedby/skills` calls go through cli.py (`find-open`/`file`/`comment`)
      with `--repo dividedby/skills`; cli.py supplies the cross-repo token itself from
-     `$SKILLS_TRACKER_TOKEN`. **Never set `GH_TOKEN` yourself and never read the token
+     `$ISSUES_TOKEN`. **Never set `GH_TOKEN` yourself and never read the token
      value.** **Apply** the existing `skill-request` label; **never** create it (the
      skills repo owns it).
 
@@ -205,7 +207,7 @@ independently clear the bar that would have made it the run's single best.
    - **consumer-mode `skill-request` / `skill-promotion`** → cross-repo via
      `python3 "$SKILL_DIR/lib/cli.py" file` / `comment` with `--repo dividedby/skills`,
      the channel's label, and the expanded `--marker` flags, as in steps 3–4.
-     cli.py supplies the cross-repo token automatically from `$SKILLS_TRACKER_TOKEN`;
+     cli.py supplies the cross-repo token automatically from `$ISSUES_TOKEN`;
      never set `GH_TOKEN` yourself.
 
    On `BLOCK: <reason>` it files nothing and exits non-zero — revise the body to drop
