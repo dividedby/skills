@@ -42,6 +42,10 @@ Skills in this repo prescribe at the principle level; code examples are illustra
 
 Skills here are user-invoked orchestrators by default — each `SKILL.md` carries `disable-model-invocation: true`, so its description doesn't load into every session's context. Exception: a skill deliberately model-fired on a signal (e.g. `flow-pr` on done+green) omits the flag by design.
 
+### Skill authoring
+
+Composition patterns (which wrapper calls which sub-skill) and worked editorial-judgement examples (ADR 0002 edge cases) live in [`docs/agents/skill-authoring.md`](./docs/agents/skill-authoring.md). Read it when authoring a new skill or deciding whether to add a code example to an existing skill.
+
 ### Changelog
 
 Notable changes land in the top-level [`CHANGELOG.md`](./CHANGELOG.md) (Keep a Changelog format) — the human-readable record the version-bump / roll-up step updates. It tracks the two published surfaces: the skills catalog and `harness/`.
