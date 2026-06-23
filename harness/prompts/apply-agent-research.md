@@ -170,6 +170,21 @@ independently clear the bar that would have made it the run's single best.
    standalone step — it is folded into the guarded filing path (step 6), which
    sanitizes `title + body` and files **only on ALLOW**.
 
+5a. **Emit a candidate log to the step summary.** After the gate returns but before
+    filing, write a candidate log to `$GITHUB_STEP_SUMMARY` using the `Write` tool
+    (append mode is not available — write the whole block at once to a temp file,
+    then use `cli.py digest` or write directly if the summary is the only content at
+    this point). For **each KB area that produced a potential candidate**, emit one
+    line in this format:
+
+        <target surface> — <advanced|dropped>: <primary reason>
+
+    where "target surface" names the skill, doc, or harness area the candidate would
+    touch, and "primary reason" is a single concise clause (e.g. "already covered by
+    flow-pr", "cleared adversarial filter, highest-priority gap", "ethos-fit miss").
+    One line per candidate, no sub-bullets. This log appears in the Actions step
+    summary so the maintainer can audit the pre-gate reasoning, not just the outcome.
+
 6. **File what the gate returned (or skip) — via the guarded shim only.** Direct
    `gh issue create` / `gh issue comment` are disallowed by the workflow's tool
    policy; file through `cli.py file` / `cli.py comment`, which run the leak guard
