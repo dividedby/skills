@@ -60,7 +60,7 @@ pushes to the default branch.
     max-budget-usd: "3.00"
   secrets:
     CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-    SKILLS_TRACKER_TOKEN: ${{ secrets.SKILLS_TRACKER_TOKEN }}
+    ISSUES_TOKEN: ${{ secrets.ISSUES_TOKEN }}
   ```
   The reusable body fetches the harness, the skill lib (`SKILL_DIR`), and the
   published-skill catalog (`SKILLS_SRC`) fresh each run from `dividedby/skills`
@@ -110,11 +110,11 @@ Then layer on the Consumer specifics:
    | `SKILL_DIR` | `$RUNNER_TEMP/skills-src/skills/meta/apply-agent-research` (from fresh clone) | `python3 $SKILL_DIR/lib/cli.py {gate,file,comment}` |
    | `SKILLS_SRC` | `$RUNNER_TEMP/skills-src` (fresh `dividedby/skills` clone root) | published-skill catalog + installed-skills snapshot |
    | `PRIVATE_MARKERS` | this repo's private markers (space-separated; empty if fully public) | expanded to repeatable `--marker` on every guarded `file`/`comment` |
-   | `SKILLS_TRACKER_TOKEN` | the cross-repo PAT (below) | **role discriminator** (set → consumer mode) + cross-repo GH auth |
+   | `ISSUES_TOKEN` | the cross-repo PAT (below) | cross-repo GH auth for cli.py |
 
-   Setting `SKILLS_TRACKER_TOKEN` is what puts the prompt in **consumer mode** (the
-   cross-repo `skill-request`/`skill-promotion` channels); the skills-repo host
-   leaves it unset and runs the same prompt in host mode. `PRIVATE_MARKERS` is the
+   Mode is set by the `is-tracker-host` reusable input (`true` only for
+   `dividedby/skills`), not by token presence — consumers leave it at the default
+   `false` (ADR 0032). `PRIVATE_MARKERS` is the
    load-bearing leak-safety input on a **private** Consumer filing to the **public**
    tracker — set it (step 7); an empty value falls back to the guard's structural
    checks only.
@@ -181,7 +181,7 @@ Then layer on the Consumer specifics:
      marker). **Match** → `+1 — also built by CONSUMER_REPO` via `cli.py comment`.
      Apply the existing `skill-promotion` label; never create it.
 
-   Steps 5–6 write to `dividedby/skills`, so they use **`SKILLS_TRACKER_TOKEN`**,
+   Steps 5–6 write to `dividedby/skills`, so they use **`ISSUES_TOKEN`**,
    never the default `GITHUB_TOKEN` (own-repo scoped → 403). Each is its own
    per-channel ≤1 output.
 
@@ -199,12 +199,13 @@ Then layer on the Consumer specifics:
 
 ## Manual steps for the human (surface these — the agent cannot do them)
 
-- **Create a fine-grained PAT**, least privilege: Repository access = **only**
-  `dividedby/skills`; Permissions = `Issues: Read and write` (+ implied
-  `Metadata: Read`); finite expiry. Store as the Actions secret
-  `SKILLS_TRACKER_TOKEN` in `CONSUMER_REPO`. (One token covers **both**
-  `skill-request` and `skill-promotion` — same repo, same scope.) Blast radius of
-  a leak: file/comment issues on the public skills tracker, nothing more.
+- **Create a fine-grained PAT**, least privilege: Repository access = **all
+  repositories** (or at minimum `dividedby/skills`); Permissions = `Issues: Read
+  and write` + `Contents: read` (+ implied `Metadata: Read`); finite expiry. Store
+  as the Actions secret `ISSUES_TOKEN` in `CONSUMER_REPO`. (One token covers
+  **both** `skill-request` and `skill-promotion` — same repo, same scope.) Blast
+  radius of a leak: file/comment issues on the public skills tracker plus read
+  repo contents, nothing more.
 - **Ensure `CLAUDE_CODE_OAUTH_TOKEN`** exists (a repo already running Claude in
   Actions has it — reuse, don't re-add).
 - **Create a second fine-grained PAT for the cost ledger**, least privilege:
@@ -213,7 +214,7 @@ Then layer on the Consumer specifics:
   owner to store there as the secret `<CONSUMER>_ACTIONS_TOKEN` — it lives in the
   **hub** repo, not in `CONSUMER_REPO`, because the hub uses it to read this
   Consumer's run logs and scrape the `total_cost_usd=…` summary line. This is
-  **distinct** from `SKILLS_TRACKER_TOKEN` (Issues:rw, can't read Actions logs):
+  **distinct** from `ISSUES_TOKEN` (Issues:rw + Contents:read, can't read Actions logs):
   least privilege **per channel**.
   - **`<CONSUMER>` is a deliberate, stable short-name, not the repo slug.** The hub
     can't mechanically derive it, so it stores the secret under exactly the literal

@@ -171,9 +171,10 @@ rarely; when it does, it is a **manual rollout** across the ~3 owned repos.
   analysis naming 2–3 candidate-specific tensions and a triage decision statement —
   for human review before implementation starts (ADR 0020, second amendment).
   That prompt reads its wiring from the env the stub exports — `MIRROR_DIR`,
-  `SKILL_DIR`, `SKILLS_SRC`, `PRIVATE_MARKERS`, and `SKILLS_TRACKER_TOKEN` (whose
-  presence is the host/consumer role discriminator). The exact contract and what a
-  Consumer stub must export is in [`consumer-setup.md`](./consumer-setup.md).
+  `SKILL_DIR`, `SKILLS_SRC`, `PRIVATE_MARKERS`, and `ISSUES_TOKEN` (the cross-repo
+  credential; mode is determined by the explicit `is-tracker-host` input, not token
+  presence — ADR 0032). The exact contract and what a Consumer stub must export is in
+  [`consumer-setup.md`](./consumer-setup.md).
 - **`python3 harness/cli.py digest --jsonl F --result-out F --cost-out F`** —
   every loop. Reduces the `stream-json` JSONL to the last result event's `.result`
   (whole, multi-line preserved) and the `total_cost_usd=…  duration_ms=…
@@ -283,5 +284,5 @@ that caused it ([ADR 0004](../adr/0004-runbook-helpers-are-python-stdlib.md)).
 
 - **`CLAUDE_CODE_OAUTH_TOKEN`** — so the run can authenticate. A repo already
   running Claude in Actions has this; reuse it.
-- Any **loop-specific** token (e.g. a Consumer's `SKILLS_TRACKER_TOKEN` for
+- Any **loop-specific** token (e.g. a Consumer's `ISSUES_TOKEN` for
   cross-repo writes) — see that loop's doc.

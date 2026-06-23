@@ -44,7 +44,7 @@ consumer's `docs/agents/triage-labels.md` and `docs/agents/labels.md` via the
 GitHub Contents API; classifies one of four drift shapes per repo; opens a
 `label-drift` issue in dividedby/skills naming `setup-dividedby-skills` as the
 fixer. Report-only — never mutates a consumer repo. Requires the same
-`DRIFT_CHECK_TOKEN` secret as workflow-drift.
+`ISSUES_TOKEN` secret (with `DRIFT_CHECK_TOKEN` as Option-B fallback) as workflow-drift.
 
 **Reading the crons:** schedules are UTC (authoritative). **CT** is shown for CDT
 (Mar–Nov, UTC−5); **subtract 1h in CST** (Nov–Mar). Day codes: `* * 6` =

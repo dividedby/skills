@@ -216,9 +216,9 @@ class GuardedFilingTest(unittest.TestCase):
         run.assert_not_called()
 
     def test_file_cross_repo_injects_pat(self):
-        """file --repo dividedby/skills with SKILLS_TRACKER_TOKEN set → GH_TOKEN == PAT."""
+        """file --repo dividedby/skills with ISSUES_TOKEN set → GH_TOKEN == PAT (ADR 0032)."""
         body = self._body("A generalized improvement, no leaks.")
-        with mock.patch.dict(os.environ, {"SKILLS_TRACKER_TOKEN": "PAT-xyz"}):
+        with mock.patch.dict(os.environ, {"ISSUES_TOKEN": "PAT-xyz"}):
             with mock.patch(
                 "cli.subprocess.run", return_value=SimpleNamespace(returncode=0)
             ) as run:
@@ -230,9 +230,9 @@ class GuardedFilingTest(unittest.TestCase):
         self.assertEqual(env_passed["GH_TOKEN"], "PAT-xyz")
 
     def test_file_own_repo_does_not_get_pat(self):
-        """file with no --repo should NOT override GH_TOKEN even when PAT is set."""
+        """file with no --repo should NOT override GH_TOKEN even when ISSUES_TOKEN is set."""
         body = self._body("A generalized improvement, no leaks.")
-        with mock.patch.dict(os.environ, {"SKILLS_TRACKER_TOKEN": "PAT-xyz"}, clear=False):
+        with mock.patch.dict(os.environ, {"ISSUES_TOKEN": "PAT-xyz"}, clear=False):
             # Ensure GH_TOKEN is absent so we can confirm no injection occurred.
             os.environ.pop("GH_TOKEN", None)
             with mock.patch(
@@ -246,9 +246,9 @@ class GuardedFilingTest(unittest.TestCase):
         self.assertNotEqual(env_passed.get("GH_TOKEN", ""), "PAT-xyz")
 
     def test_file_other_repo_does_not_get_pat(self):
-        """file --repo someone/evil with PAT set → PAT NOT injected."""
+        """file --repo someone/evil with ISSUES_TOKEN set → PAT NOT injected."""
         body = self._body("A generalized improvement, no leaks.")
-        with mock.patch.dict(os.environ, {"SKILLS_TRACKER_TOKEN": "PAT-xyz"}):
+        with mock.patch.dict(os.environ, {"ISSUES_TOKEN": "PAT-xyz"}):
             os.environ.pop("GH_TOKEN", None)
             with mock.patch(
                 "cli.subprocess.run", return_value=SimpleNamespace(returncode=0)
@@ -261,10 +261,10 @@ class GuardedFilingTest(unittest.TestCase):
         self.assertNotEqual(env_passed.get("GH_TOKEN", ""), "PAT-xyz")
 
     def test_file_cross_repo_pat_absent_no_override(self):
-        """SKILLS_TRACKER_TOKEN unset, file --repo dividedby/skills → no PAT override."""
+        """ISSUES_TOKEN unset, file --repo dividedby/skills → no PAT override."""
         body = self._body("A generalized improvement, no leaks.")
         env_without_pat = {k: v for k, v in os.environ.items()
-                          if k not in ("SKILLS_TRACKER_TOKEN", "GH_TOKEN")}
+                          if k not in ("ISSUES_TOKEN", "GH_TOKEN")}
         with mock.patch.dict(os.environ, env_without_pat, clear=True):
             with mock.patch(
                 "cli.subprocess.run", return_value=SimpleNamespace(returncode=0)
@@ -277,9 +277,9 @@ class GuardedFilingTest(unittest.TestCase):
         self.assertNotIn("GH_TOKEN", env_passed)
 
     def test_comment_cross_repo_injects_pat(self):
-        """comment --repo dividedby/skills with SKILLS_TRACKER_TOKEN set → GH_TOKEN == PAT."""
+        """comment --repo dividedby/skills with ISSUES_TOKEN set → GH_TOKEN == PAT."""
         body = self._body("+1 — also wanted by example-repo.")
-        with mock.patch.dict(os.environ, {"SKILLS_TRACKER_TOKEN": "PAT-xyz"}):
+        with mock.patch.dict(os.environ, {"ISSUES_TOKEN": "PAT-xyz"}):
             with mock.patch(
                 "cli.subprocess.run", return_value=SimpleNamespace(returncode=0)
             ) as run:
@@ -293,7 +293,7 @@ class GuardedFilingTest(unittest.TestCase):
     def test_comment_own_repo_does_not_get_pat(self):
         """comment with no --repo should NOT override GH_TOKEN even when PAT is set."""
         body = self._body("+1 — also wanted by example-repo.")
-        with mock.patch.dict(os.environ, {"SKILLS_TRACKER_TOKEN": "PAT-xyz"}, clear=False):
+        with mock.patch.dict(os.environ, {"ISSUES_TOKEN": "PAT-xyz"}, clear=False):
             os.environ.pop("GH_TOKEN", None)
             with mock.patch(
                 "cli.subprocess.run", return_value=SimpleNamespace(returncode=0)
@@ -305,7 +305,7 @@ class GuardedFilingTest(unittest.TestCase):
     def test_cross_repo_block_never_shells_to_gh(self):
         """file --repo dividedby/skills with a forbidden body → BLOCK, gh not called."""
         body = self._body("Leaky:\n```\nsecret()\n```\n")
-        with mock.patch.dict(os.environ, {"SKILLS_TRACKER_TOKEN": "PAT-xyz"}):
+        with mock.patch.dict(os.environ, {"ISSUES_TOKEN": "PAT-xyz"}):
             with mock.patch("cli.subprocess.run") as run:
                 code, out = self._file(
                     ["file", "--title", "t", "--body-file", body,
@@ -317,24 +317,28 @@ class GuardedFilingTest(unittest.TestCase):
 
 
 class ModeCommandTest(unittest.TestCase):
-    def test_token_set_prints_consumer(self):
-        with mock.patch.dict(os.environ, {"SKILLS_TRACKER_TOKEN": "PAT-placeholder"}):
+    """Mode is determined by IS_TRACKER_HOST, not by token presence (ADR 0032)."""
+
+    def test_is_tracker_host_true_prints_host(self):
+        with mock.patch.dict(os.environ, {"IS_TRACKER_HOST": "true"}):
+            code, out = _run(["mode"])
+        self.assertEqual(code, 0)
+        self.assertEqual(out.strip(), "host")
+
+    def test_is_tracker_host_false_prints_consumer(self):
+        env = {k: v for k, v in os.environ.items() if k != "IS_TRACKER_HOST"}
+        env["IS_TRACKER_HOST"] = "false"
+        with mock.patch.dict(os.environ, env, clear=True):
             code, out = _run(["mode"])
         self.assertEqual(code, 0)
         self.assertEqual(out.strip(), "consumer")
 
-    def test_token_unset_prints_host(self):
-        env_without_token = {k: v for k, v in os.environ.items() if k != "SKILLS_TRACKER_TOKEN"}
-        with mock.patch.dict(os.environ, env_without_token, clear=True):
+    def test_is_tracker_host_unset_prints_consumer(self):
+        env = {k: v for k, v in os.environ.items() if k != "IS_TRACKER_HOST"}
+        with mock.patch.dict(os.environ, env, clear=True):
             code, out = _run(["mode"])
         self.assertEqual(code, 0)
-        self.assertEqual(out.strip(), "host")
-
-    def test_token_empty_string_prints_host(self):
-        with mock.patch.dict(os.environ, {"SKILLS_TRACKER_TOKEN": ""}):
-            code, out = _run(["mode"])
-        self.assertEqual(code, 0)
-        self.assertEqual(out.strip(), "host")
+        self.assertEqual(out.strip(), "consumer")
 
 
 class FindOpenCommandTest(unittest.TestCase):
@@ -373,7 +377,7 @@ class FindOpenCommandTest(unittest.TestCase):
 
     def test_match_injects_pat_when_skills_repo(self):
         issues = [{"number": 7, "body": "<!-- capability: test-cap -->"}]
-        with mock.patch.dict(os.environ, {"SKILLS_TRACKER_TOKEN": "PAT-xyz"}):
+        with mock.patch.dict(os.environ, {"ISSUES_TOKEN": "PAT-xyz"}):
             _, _, _, run = self._run_find_open(
                 ["find-open", "--repo", "dividedby/skills",
                  "--label", "skill-request", "--capability", "test-cap"],

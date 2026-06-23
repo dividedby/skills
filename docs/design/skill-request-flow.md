@@ -166,7 +166,7 @@ The default `GITHUB_TOKEN` is own-repo scoped and **will 403** writing into
   - **Permissions:** `Issues: Read and write` (file the issue, read existing ones
     to aggregate, post the +1 comment) and the implied `Metadata: Read`. Nothing
     else.
-- **Storage:** as a per-Consumer Actions secret (e.g. `SKILLS_TRACKER_TOKEN`),
+- **Storage:** as a per-Consumer Actions secret (`ISSUES_TOKEN`),
   referenced only by that Consumer's `apply-agent-research` workflow.
 - **Scoping note — the label must pre-exist.** Creating labels is not guaranteed
   under fine-grained `Issues: write`, so `dividedby/skills` **owns** the
@@ -182,7 +182,7 @@ The default `GITHUB_TOKEN` is own-repo scoped and **will 403** writing into
 - **Token selection is internal to cli.py (ADR 0030).** The agent and workflow
   shell must **never** set `GH_TOKEN` or read the token value directly. When
   `--repo dividedby/skills` is passed to any `cli.py` subcommand (`find-open`,
-  `file`, `comment`), the shim reads `SKILLS_TRACKER_TOKEN` from its own process
+  `file`, `comment`), the shim reads `ISSUES_TOKEN` from its own process
   environment and injects it as `GH_TOKEN` for that `gh` subprocess only. Any
   other `--repo` keeps the ambient credential unchanged.
 
@@ -199,7 +199,7 @@ right for a single-maintainer, few-repo setup.
   built).
 - **In each Consumer repo:** the **filing** step inside its own
   `apply-agent-research` workflow (list-or-file-or-+1 against `dividedby/skills`
-  using `SKILLS_TRACKER_TOKEN`), plus the secret itself. The file/+1 writes go
+  using `ISSUES_TOKEN`), plus the secret itself. The file/+1 writes go
   through the skill's **guarded path** (`cli.py file` for a new issue, `cli.py
   comment` for a `+1` — each sanitizes the body and writes only on ALLOW; the
   workflow disallows direct `gh issue create`/`comment`). See

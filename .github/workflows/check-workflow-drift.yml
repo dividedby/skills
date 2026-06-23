@@ -6,11 +6,11 @@ name: Check Workflow Drift
 # Contents API; checks structural anchors; opens a `workflow-drift` issue in
 # dividedby/skills for any drifted repo. Report only — no hard gate, no auto-fix.
 #
-# Prerequisite: DRIFT_CHECK_TOKEN secret (fine-grained PAT, owner dividedby,
-# all five repos: skills + moodreader + agent-research + goodreads-bot +
-# tweakcc-maint, permissions: Contents:Read on all + Issues:Write on skills).
-# Until this secret is created the job exits 0 and does nothing (graceful no-op;
-# the script prints a clear notice to the log).
+# Prerequisite: ISSUES_TOKEN secret (fine-grained PAT, owner dividedby, all repos,
+# permissions: Contents:Read + Issues:Write). Option-B fallback: DRIFT_CHECK_TOKEN
+# is also accepted while repos migrate to ISSUES_TOKEN. Until either secret is
+# created the job exits 0 and does nothing (graceful no-op; the script prints a
+# clear notice to the log).
 #
 # Reference: docs/agents/vendored-workflows.md, tools/check_workflow_drift.py
 
@@ -38,7 +38,7 @@ jobs:
 
       - name: Run drift check
         env:
-          DRIFT_CHECK_TOKEN: ${{ secrets.DRIFT_CHECK_TOKEN }}
+          DRIFT_CHECK_TOKEN: ${{ secrets.ISSUES_TOKEN || secrets.DRIFT_CHECK_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           python3 tools/check_workflow_drift.py \

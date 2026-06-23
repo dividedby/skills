@@ -32,11 +32,11 @@ skill-request channels.
 ## Reused unchanged from `skill-request-flow.md`
 
 - **The cross-repo write token.** The same per-Consumer fine-grained PAT
-  (`SKILLS_TRACKER_TOKEN`, `Issues: Read and write` on `dividedby/skills` only).
+  (`ISSUES_TOKEN`, `Issues: Read and write` on `dividedby/skills` only).
   No new credential — promotion is another issue write into the same repo. Token
   selection is internal to cli.py (ADR 0030): pass `--repo dividedby/skills` to any
   `find-open`/`file`/`comment` call; cli.py injects the PAT from
-  `$SKILLS_TRACKER_TOKEN` automatically. Never set `GH_TOKEN` in the shell.
+  `$ISSUES_TOKEN` automatically. Never set `GH_TOKEN` in the shell.
 - **The capability key + `+1` aggregation.** Use `cli.py find-open` to match on
   `<!-- capability: <slug> -->` against **open `skill-promotion`** issues: empty
   output → file; a number → comment `+1 — also built by <repo>`. Here `+1` is an
@@ -94,7 +94,7 @@ human-actionable in `dividedby/skills`. So:
   here), this contract, [ADR 0010](../adr/0010-consumers-audit-local-skills-supply-side.md),
   and the human-review/adopt end.
 - **In each Consumer repo:** the supply-side audit + the file-or-`+1` filing
-  step inside its own `apply-agent-research` workflow, using `SKILLS_TRACKER_TOKEN`.
+  step inside its own `apply-agent-research` workflow, using `ISSUES_TOKEN`.
   Built per Consumer at onboarding (see
   [`docs/onboarding/consumer-setup.md`](../onboarding/consumer-setup.md)).
 

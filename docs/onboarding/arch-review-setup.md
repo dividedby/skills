@@ -77,7 +77,7 @@ first**; this doc is only the deltas.
     statement the human must resolve at triage — an async adaptation of the
     DESIGN-IT-TWICE principle inlined at principle level (ADR 0020, second
     amendment).
-- **No cross-repo writes**, so **no `SKILLS_TRACKER_TOKEN`** — only
+- **No cross-repo writes**, so **no `ISSUES_TOKEN`** — only
   `CLAUDE_CODE_OAUTH_TOKEN`. `permissions: contents: read, issues: write` and
   `GITHUB_TOKEN` suffice.
 - **Deterministic publish, structured `<output>` + raw `<body>`.** The agent does

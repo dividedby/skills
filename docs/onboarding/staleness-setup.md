@@ -56,7 +56,7 @@ report issue per run** — the complement to Dependabot, which owns library deps
   read, issues: write` and `GITHUB_TOKEN` enforce the no-mutation invariant in the
   harness, not in prompt-adherence. (Auto-apply is for an interactive, watched run
   — never an unattended cron.)
-- **No cross-repo writes**, so **no `SKILLS_TRACKER_TOKEN`** — only
+- **No cross-repo writes**, so **no `ISSUES_TOKEN`** — only
   `CLAUDE_CODE_OAUTH_TOKEN`.
 - **Deterministic publish, structured `<output>` + raw `<body>`.** Identical to the
   arch-review loop: the agent does **not** file the issue. It ends its run with a

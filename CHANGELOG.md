@@ -8,6 +8,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- ADR 0032: consolidate three write PATs (`SKILLS_TRACKER_TOKEN`, `DRIFT_CHECK_TOKEN`, unused agent-research write PAT) into one `ISSUES_TOKEN` (all repos, Issues:RW + Contents:read); host/consumer mode becomes the explicit `is-tracker-host` workflow input read by `cli.py` as `IS_TRACKER_HOST` (not token presence); the `repo == dividedby/skills` swap guard in `cli.py` is retained and gains importance with the wider token scope; Option-B fallback keeps existing secrets working during transition (#424)
+
+### Changed
+
+- `apply-agent-research` cli.py `_gh_env`: reads `ISSUES_TOKEN` instead of `SKILLS_TRACKER_TOKEN`; module-level token invariant comment updated
+- `apply-agent-research` cli.py `_mode`: explicit-flag contract — `IS_TRACKER_HOST=true` → `host`, anything else/unset → `consumer`; replaces token-presence discriminator (ADR 0032)
+- `apply-agent-research-reusable.yml`: added `is-tracker-host` input; added `ISSUES_TOKEN` secret declaration; credential env line uses `ISSUES_TOKEN || SKILLS_TRACKER_TOKEN` fallback; exported `IS_TRACKER_HOST` to job env; header comment updated
+- `apply-agent-research.yml` (host caller): passes `is-tracker-host: true`; no tracker token secret (host writes to itself with `GITHUB_TOKEN`)
+- `check-workflow-drift.yml`, `check-label-drift.yml`: credential env uses `ISSUES_TOKEN || DRIFT_CHECK_TOKEN` fallback; header comments updated
+- `tools/check_workflow_drift.py`, `tools/check_label_drift.py`: renamed `DRIFT_CHECK_TOKEN` → `ISSUES_TOKEN` in docstrings and NOTICE messages
+- `harness/prompts/apply-agent-research.md`: discriminator rationale updated (explicit flag, not token absence); `$SKILLS_TRACKER_TOKEN` refs → `$ISSUES_TOKEN`
+- Docs (`skill-request-flow.md`, `skill-promotion-flow.md`, `consumer-setup.md`, `proposal-loop-harness.md`, `staleness-setup.md`, `arch-review-setup.md`, `vendored-workflows.md`): `SKILLS_TRACKER_TOKEN`/`DRIFT_CHECK_TOKEN` → `ISSUES_TOKEN`; presence-discriminator framing → explicit-flag framing
+
 - ADR 0031: cross-repo Actions tokens are per-role fine-grained PATs — cost-scrape consolidates to a single `ACTIONS_TOKEN` scoped to all repositories (current and future) for zero-touch onboarding; tracker-write and drift-read stay repo-scoped; rejects classic PAT and GitHub App; org secrets unavailable on a User account (#424)
 - `check-label-drift`: fleet-wide, report-only label-doc drift detector (mirrors `check-workflow-drift`); weekly cron Sun 05:00 UTC; classifies four drift shapes per consumer repo and files one `label-drift` issue naming `setup-dividedby-skills` as the fixer; graceful no-op when `DRIFT_CHECK_TOKEN` is absent (#415)
 - `apply-agent-research` prompt: candidate log step (5a) emits one line per KB candidate to the Actions step summary — target surface plus advanced/dropped reason — so pre-gate reasoning is visible alongside outcomes (#421)

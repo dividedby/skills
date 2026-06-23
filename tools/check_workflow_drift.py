@@ -7,10 +7,10 @@ checks each against a set of required structural anchors. Opens a single
 
 Prerequisites
 -------------
-- DRIFT_CHECK_TOKEN: fine-grained PAT, owner dividedby, repositories:
-  moodreader + agent-research + goodreads-bot + skills,
-  Contents:Read + Issues:Write on skills. Until this secret is created the
-  job exits 0 and does nothing (graceful no-op).
+- ISSUES_TOKEN: fine-grained PAT, owner dividedby, all repositories,
+  Contents:Read + Issues:Write. Passed as --read-token. Option-B fallback:
+  DRIFT_CHECK_TOKEN is accepted while repos migrate to ISSUES_TOKEN.
+  Until either secret is created the job exits 0 and does nothing (graceful no-op).
 
 Usage
 -----
@@ -392,8 +392,8 @@ def main(argv=None):
 
     if not read_token:
         print(
-            "NOTICE: --read-token is empty. DRIFT_CHECK_TOKEN secret has not been created yet. "
-            "Exiting without checking (inert no-op until the secret exists).",
+            "NOTICE: --read-token is empty. ISSUES_TOKEN secret has not been created yet "
+            "(DRIFT_CHECK_TOKEN fallback also absent). Exiting without checking (inert no-op until the secret exists).",
             file=sys.stderr,
         )
         sys.exit(0)
