@@ -10,7 +10,9 @@ from unittest.mock import MagicMock, patch
 from tools.check_workflow_drift import (
     ANCHORS,
     APPLY_PATH,
+    APPLY_BODY_PATH,
     ARCH_PATH,
+    BODY_ANCHORS,
     STALE_PATH,
     SKILLS_SKIP_ANCHORS,
     _issue_title,
@@ -23,6 +25,9 @@ class TestCheckFile(unittest.TestCase):
 
     def _apply_anchors(self):
         return ANCHORS[APPLY_PATH]
+
+    def _body_anchors(self):
+        return BODY_ANCHORS[APPLY_BODY_PATH]
 
     def _stub_anchors(self):
         return ANCHORS[ARCH_PATH]
@@ -59,19 +64,22 @@ class TestCheckFile(unittest.TestCase):
         self.assertEqual(missing, anchors)
 
     def test_missing_prompt_fetch_is_reported(self):
-        anchors = self._apply_anchors()
-        content = "\n".join(a for a in anchors if a != "harness/prompts/apply-agent-research.md")
+        # Prompt-fetch anchor lives on the reusable body, not the thin-caller stub.
+        anchors = self._body_anchors()
+        content = "\n".join(a for a in anchors if a != "prompts/apply-agent-research.md")
         missing = check_file(content, anchors)
-        self.assertIn("harness/prompts/apply-agent-research.md", missing)
+        self.assertIn("prompts/apply-agent-research.md", missing)
 
     def test_missing_model_pin_is_reported(self):
-        anchors = self._apply_anchors()
+        # Model-pin anchor lives on the reusable body, not the thin-caller stub.
+        anchors = self._body_anchors()
         content = "\n".join(a for a in anchors if a != "--model claude-sonnet-4-6")
         missing = check_file(content, anchors)
         self.assertIn("--model claude-sonnet-4-6", missing)
 
     def test_missing_budget_backstop_is_reported(self):
-        anchors = self._apply_anchors()
+        # Budget-backstop anchor lives on the reusable body, not the thin-caller stub.
+        anchors = self._body_anchors()
         content = "\n".join(a for a in anchors if a != "--max-budget-usd")
         missing = check_file(content, anchors)
         self.assertIn("--max-budget-usd", missing)
