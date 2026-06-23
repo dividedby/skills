@@ -35,7 +35,7 @@ Dispatch Explore to report:
 From the detect report, assign each concern a posture:
 
 - **Missing or trivial → scaffold** (additive). An empty `{}` settings.json or an untouched boilerplate CLAUDE.md is greenfield, not audit material. Follow [scaffold-stubs.md](scaffold-stubs.md): earn-the-line stubs built from repo facts, with a "here's what I inferred — confirm/correct" framing.
-- **Present with real content → audit** (subtractive). Follow [audit-checklist.md](audit-checklist.md): a concise finding list (`cut` / `move-to-<doc>` / `keep` / `fix-contradiction` / `add` / `flag` — defined there) with `file:line` or key-path refs.
+- **Present with real content → audit** (subtractive). Follow [audit-checklist.md](audit-checklist.md): a concise finding list (`cut` / `move-to-<doc>` / `keep` / `fix-contradiction` / `add` / `gate` / `flag` — defined there) with `file:line` or key-path refs.
 
 Work the harness concern before the instructions concern: settle the proposed hook set first, then scaffold/trim instructions against what those hooks would enforce. **One interview (Step 4) and one approval batch (Step 5) cover both concerns** — the ordering is internal, never a second round-trip to the user.
 

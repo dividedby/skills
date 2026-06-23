@@ -12,6 +12,7 @@ Every finding uses one of these, with a ref (`settings.json` key-path or `file:l
 - **`move-to-<doc>`** — inline bloat in an instruction file (workflows, glossaries, API docs) that belongs in a linked doc with a one-line pointer left behind. Name the destination.
 - **`add`** — a high-value catalog entry whose trigger matched but which is missing (harness: passes the annoyance filter; instructions: passes the earn-the-line filter).
 - **`keep`** — earns its place: project-specific, changes behavior, non-duplicative — and, for a hook, still passing the annoyance filter (deterministic, non-interactive, fast). An existing hook that nags or blocks broadly fails `keep` even if it duplicates nothing.
+- **`gate`** — a CLAUDE.md section that is situational (only matters when a specific, nameable condition holds) and is not preventative; propose wrapping it in `<important if="…">` with a narrow condition string. See "Situational-section gating check" below.
 
 ## Harness checks
 
@@ -29,6 +30,36 @@ Against [CATALOG.md](CATALOG.md) "Instructions" — the earn-the-line filter, li
 - **Prefer enforcement over instruction.** Cut any line a hook (global or project) already enforces deterministically. Since the harness concern ran first, you know exactly what's enforced.
 - **Progressive disclosure.** CLAUDE.md is an index, not a manual; long content moves out behind a pointer — and the pointer only earns its place if the target is clean, loadable, in-repo markdown.
 - **Monorepo split** per the catalog's line class: flag facts duplicated between root and an app file, or app-specific facts that leaked into root.
+
+## Situational-section gating check
+
+Run as part of the instruction-file audit (Step 3) for every `CLAUDE.md` / `AGENTS.md` with real content. Frontier models reliably follow only ~150–200 instructions; an always-loaded file should reserve that budget for universal rules and gate situational sections behind a narrow condition (precedent: dividedby/claude-config#78; rationale: humanlayer `instruction-budget` KB).
+
+### What to look for
+
+A section is **situational** if it only matters when a specific, nameable condition holds — typically phrased "when X, do Y" or carrying a narrow trigger that doesn't apply every session. Scan every top-level section (H2/H3 header + body) for this property.
+
+A section is **preventative** if it is a safety or cost-prevention rule that must be in context *before* the triggering action — gating it would risk an agent skipping the guard entirely. Do **not** propose gating preventative sections. Examples:
+- Always-on security rules, data-loss-prevention checks, validation gates.
+- Cost-tracking / budget requirements for `claude -p` workflows (e.g. `--max-budget-usd`, COST_SURFACE, ADR 0019/0014) — must be loaded before any workflow is authored, not surfaced after.
+- Any rule whose violation can't be easily undone.
+
+### Decision tree per section
+
+1. **Already gated** (`<important if="…">` present) → skip.
+2. **Situational** and **not preventative** → `gate` finding: propose `<important if="<narrow condition>">` with a concrete condition string drawn from the section's actual trigger. Cite dividedby/claude-config#78 as precedent.
+3. **Situational** but **preventative** → no `gate`; note explicitly why it is excluded (one-line rationale), so the audit explains the decision.
+4. **Universal** (applies every session regardless of task) → no `gate`.
+
+### Output format
+
+For each `gate` finding:
+
+> **`gate` — `<Section name>`** (`file:line`): situational — only relevant when `<trigger>`. Propose: `<important if="<condition>">…</important>`. Rationale: instruction budget; precedent dividedby/claude-config#78. **Report only — do not edit the file.**
+
+For each preventative exclusion noted:
+
+> **no-gate — `<Section name>`**: preventative — `<one-line reason why it must stay always-loaded>`.
 
 ## Label-doc drift check (cross-seam — detect only)
 
