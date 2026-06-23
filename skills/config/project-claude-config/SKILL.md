@@ -28,6 +28,7 @@ Dispatch Explore to report:
 - **What exists.** For `.claude/settings.json` (root), return the **full content** — it is small and it is the audit object; key-path findings need the actual keys. Note any `settings.local.json` (read-only, personal, outranks the shared file) and any nested `packages/*/.claude/settings.json` (NOT loaded — dead config). For every `CLAUDE.md` / `AGENTS.md` (root + nested), return section headers plus anything that looks long, duplicative, or derivable — request excerpts only where a judgment call needs them, not full bodies.
 - **Fact triggers** for the catalog: configured formatter, fast typecheck/lint command, secret files (`.env*`, `*.pem`, `credentials/`), irreplaceable-data dirs (`data/`, `migrations/`), language/stack, package manager, CI workflows that run an agent headless.
 - **Repo shape:** monorepo layout (workspaces/packages/apps), build·test·lint·run tooling from manifests and README.
+- **Label-doc shape:** check `docs/agents/` for the dividedby label-doc convention and report any drift — a stray `labels.md`, a short-form/pointer `triage-labels.md`, a `labels.md`-only repo, or no label doc at all. Detection only; the [audit-checklist.md](audit-checklist.md) "Label-doc drift check" defines the `flag` and the handoff to `setup-dividedby-skills` (ADR 0023). This skill never edits the label doc.
 
 ## Step 3 — Route by state
 
