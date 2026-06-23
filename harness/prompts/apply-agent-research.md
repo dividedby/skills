@@ -106,34 +106,37 @@ independently clear the bar that would have made it the run's single best.
      published catalog (`$SKILLS_SRC/skills/...`, `plugin.json`) **and**
      `$SKILLS_SRC/docs/agents/installed-skills.md`. If either covers it, **do not
      file** — print `SKIPPED: skill-request: already covered by <name>`.
-   - Otherwise list open requests:
-     `GH_TOKEN="$SKILLS_TRACKER_TOKEN" gh issue list --repo dividedby/skills --label skill-request --state open`
-     and match on the `<!-- capability: <slug> -->` marker. The slug names the
-     *wanted capability*, so a different repo with the same gap produces the same slug.
-     - **No match** → file a new issue in `dividedby/skills` via the guarded shim,
-       following the full contract: capability wanted (generalized); the *specific,
-       traceable* motivating KB note; why a published skill (broadly useful, and
-       skill-shaped — not a run-book or harness feature); what it does **not**
+   - Otherwise check for an existing open request via cli.py:
+     `python3 "$SKILL_DIR/lib/cli.py" find-open --repo dividedby/skills --label skill-request --capability <slug>`
+     (empty output → no open match; a number → that issue already exists). The slug
+     names the *wanted capability*, so a different repo with the same gap produces
+     the same slug.
+     - **No match (empty output)** → file a new issue in `dividedby/skills` via the
+       guarded shim, following the full contract: capability wanted (generalized); the
+       *specific, traceable* motivating KB note; why a published skill (broadly useful,
+       and skill-shaped — not a run-book or harness feature); what it does **not**
        duplicate; the requesting repo (`$GH_REPO`); and the `<!-- capability:
        <kebab-slug> -->` marker. File as in step 5 with `--repo dividedby/skills
-       --label skill-request` and the cross-repo token.
-     - **Match** → do **not** open a second issue. `+1` via the shim's comment path
-       (body = `+1 — also wanted by <this repo>` plus this repo's own motivating
-       knowledge), with the same token, `--repo`, and markers.
-   - All `dividedby/skills` calls MUST use `GH_TOKEN="$SKILLS_TRACKER_TOKEN" ...
-     --repo dividedby/skills`. Never the default `GITHUB_TOKEN` (own-repo scoped →
-     403). Read-only `gh issue list` may use a bare `gh`; create/comment go through
-     the shim. **Apply** the existing `skill-request` label; **never** create it (the
+       --label skill-request`.
+     - **Match (a number)** → do **not** open a second issue. `+1` via the shim's
+       comment path (body = `+1 — also wanted by <this repo>` plus this repo's own
+       motivating knowledge), with `--issue <number> --repo dividedby/skills` and
+       markers.
+   - All `dividedby/skills` calls go through cli.py (`find-open`/`file`/`comment`)
+     with `--repo dividedby/skills`; cli.py supplies the cross-repo token itself from
+     `$SKILLS_TRACKER_TOKEN`. **Never set `GH_TOKEN` yourself and never read the token
+     value.** **Apply** the existing `skill-request` label; **never** create it (the
      skills repo owns it).
 
 4. **`skill-promotion` supply channel (consumer mode, local skills only)**
    (`$SKILLS_SRC/docs/design/skill-promotion-flow.md`) — for each **promotable**
-   local skill from the supply-side audit (ADR 0010): list open
-   `skill-promotion` issues in `dividedby/skills`, match on the `<!-- capability:
-   <slug> -->` marker, and **file** (capability offered/generalized; why it clears
-   general merit and is skill-shaped; a pointer to where the implementation lives —
-   never a paste; not-already-covered; `$GH_REPO`; the marker) **or `+1`**, exactly
-   like step 3 but with `--label skill-promotion`.
+   local skill from the supply-side audit (ADR 0010): check for an existing open
+   offer via:
+   `python3 "$SKILL_DIR/lib/cli.py" find-open --repo dividedby/skills --label skill-promotion --capability <slug>`
+   then **file** (capability offered/generalized; why it clears general merit and is
+   skill-shaped; a pointer to where the implementation lives — never a paste;
+   not-already-covered; `$GH_REPO`; the marker) **or `+1`**, exactly like step 3 but
+   with `--label skill-promotion`.
 
 5. **Gate ONCE, over all channels merged.** Tag each candidate with its channel,
    merge every enabled channel's candidates, and run the budgeted gate **once**
@@ -163,9 +166,11 @@ independently clear the bar that would have made it the run's single best.
 
    - **host-mode skills-on-general-merit / drained skill-request** → file into the
      own tracker the same way (own provenance label, own token).
-   - **consumer-mode `skill-request` / `skill-promotion`** → cross-repo, with
-     `GH_TOKEN="$SKILLS_TRACKER_TOKEN"`, `--repo dividedby/skills`, the channel's
-     label, and the expanded `--marker` flags, as in steps 3–4.
+   - **consumer-mode `skill-request` / `skill-promotion`** → cross-repo via
+     `python3 "$SKILL_DIR/lib/cli.py" file` / `comment` with `--repo dividedby/skills`,
+     the channel's label, and the expanded `--marker` flags, as in steps 3–4.
+     cli.py supplies the cross-repo token automatically from `$SKILLS_TRACKER_TOKEN`;
+     never set `GH_TOKEN` yourself.
 
    On `BLOCK: <reason>` it files nothing and exits non-zero — revise the body to drop
    the structural trigger (a fenced block, a pasted import, a `path/like.this` token,

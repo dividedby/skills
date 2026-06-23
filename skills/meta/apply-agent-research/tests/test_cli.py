@@ -215,6 +215,186 @@ class GuardedFilingTest(unittest.TestCase):
         self.assertIn("BLOCK", out)
         run.assert_not_called()
 
+    def test_file_cross_repo_injects_pat(self):
+        """file --repo dividedby/skills with SKILLS_TRACKER_TOKEN set → GH_TOKEN == PAT."""
+        body = self._body("A generalized improvement, no leaks.")
+        with mock.patch.dict(os.environ, {"SKILLS_TRACKER_TOKEN": "PAT-xyz"}):
+            with mock.patch(
+                "cli.subprocess.run", return_value=SimpleNamespace(returncode=0)
+            ) as run:
+                self._file(
+                    ["file", "--title", "t", "--body-file", body,
+                     "--label", "skill-request", "--repo", "dividedby/skills"]
+                )
+        env_passed = run.call_args.kwargs["env"]
+        self.assertEqual(env_passed["GH_TOKEN"], "PAT-xyz")
+
+    def test_file_own_repo_does_not_get_pat(self):
+        """file with no --repo should NOT override GH_TOKEN even when PAT is set."""
+        body = self._body("A generalized improvement, no leaks.")
+        with mock.patch.dict(os.environ, {"SKILLS_TRACKER_TOKEN": "PAT-xyz"}, clear=False):
+            # Ensure GH_TOKEN is absent so we can confirm no injection occurred.
+            os.environ.pop("GH_TOKEN", None)
+            with mock.patch(
+                "cli.subprocess.run", return_value=SimpleNamespace(returncode=0)
+            ) as run:
+                self._file(
+                    ["file", "--title", "t", "--body-file", body,
+                     "--label", "source:agent-research"]
+                )
+        env_passed = run.call_args.kwargs["env"]
+        self.assertNotEqual(env_passed.get("GH_TOKEN", ""), "PAT-xyz")
+
+    def test_file_other_repo_does_not_get_pat(self):
+        """file --repo someone/evil with PAT set → PAT NOT injected."""
+        body = self._body("A generalized improvement, no leaks.")
+        with mock.patch.dict(os.environ, {"SKILLS_TRACKER_TOKEN": "PAT-xyz"}):
+            os.environ.pop("GH_TOKEN", None)
+            with mock.patch(
+                "cli.subprocess.run", return_value=SimpleNamespace(returncode=0)
+            ) as run:
+                self._file(
+                    ["file", "--title", "t", "--body-file", body,
+                     "--repo", "someone/evil"]
+                )
+        env_passed = run.call_args.kwargs["env"]
+        self.assertNotEqual(env_passed.get("GH_TOKEN", ""), "PAT-xyz")
+
+    def test_file_cross_repo_pat_absent_no_override(self):
+        """SKILLS_TRACKER_TOKEN unset, file --repo dividedby/skills → no PAT override."""
+        body = self._body("A generalized improvement, no leaks.")
+        env_without_pat = {k: v for k, v in os.environ.items()
+                          if k not in ("SKILLS_TRACKER_TOKEN", "GH_TOKEN")}
+        with mock.patch.dict(os.environ, env_without_pat, clear=True):
+            with mock.patch(
+                "cli.subprocess.run", return_value=SimpleNamespace(returncode=0)
+            ) as run:
+                self._file(
+                    ["file", "--title", "t", "--body-file", body,
+                     "--repo", "dividedby/skills"]
+                )
+        env_passed = run.call_args.kwargs["env"]
+        self.assertNotIn("GH_TOKEN", env_passed)
+
+    def test_comment_cross_repo_injects_pat(self):
+        """comment --repo dividedby/skills with SKILLS_TRACKER_TOKEN set → GH_TOKEN == PAT."""
+        body = self._body("+1 — also wanted by example-repo.")
+        with mock.patch.dict(os.environ, {"SKILLS_TRACKER_TOKEN": "PAT-xyz"}):
+            with mock.patch(
+                "cli.subprocess.run", return_value=SimpleNamespace(returncode=0)
+            ) as run:
+                self._file(
+                    ["comment", "--issue", "42", "--body-file", body,
+                     "--repo", "dividedby/skills"]
+                )
+        env_passed = run.call_args.kwargs["env"]
+        self.assertEqual(env_passed["GH_TOKEN"], "PAT-xyz")
+
+    def test_comment_own_repo_does_not_get_pat(self):
+        """comment with no --repo should NOT override GH_TOKEN even when PAT is set."""
+        body = self._body("+1 — also wanted by example-repo.")
+        with mock.patch.dict(os.environ, {"SKILLS_TRACKER_TOKEN": "PAT-xyz"}, clear=False):
+            os.environ.pop("GH_TOKEN", None)
+            with mock.patch(
+                "cli.subprocess.run", return_value=SimpleNamespace(returncode=0)
+            ) as run:
+                self._file(["comment", "--issue", "42", "--body-file", body])
+        env_passed = run.call_args.kwargs["env"]
+        self.assertNotEqual(env_passed.get("GH_TOKEN", ""), "PAT-xyz")
+
+    def test_cross_repo_block_never_shells_to_gh(self):
+        """file --repo dividedby/skills with a forbidden body → BLOCK, gh not called."""
+        body = self._body("Leaky:\n```\nsecret()\n```\n")
+        with mock.patch.dict(os.environ, {"SKILLS_TRACKER_TOKEN": "PAT-xyz"}):
+            with mock.patch("cli.subprocess.run") as run:
+                code, out = self._file(
+                    ["file", "--title", "t", "--body-file", body,
+                     "--label", "skill-request", "--repo", "dividedby/skills"]
+                )
+        self.assertEqual(code, 1)
+        self.assertIn("BLOCK", out)
+        run.assert_not_called()
+
+
+class FindOpenCommandTest(unittest.TestCase):
+    """Tests for the cross-repo dedup read subcommand."""
+
+    def _run_find_open(self, argv, gh_stdout="", gh_returncode=0, gh_stderr=""):
+        out = io.StringIO()
+        err = io.StringIO()
+        result_ns = SimpleNamespace(
+            returncode=gh_returncode, stdout=gh_stdout, stderr=gh_stderr
+        )
+        with mock.patch("cli.subprocess.run", return_value=result_ns) as run:
+            with redirect_stdout(out), redirect_stderr(err):
+                code = cli.main(argv)
+        return code, out.getvalue(), err.getvalue(), run
+
+    def _issues_json(self, issues):
+        return json.dumps(issues)
+
+    def test_match_prints_number_and_exits_zero(self):
+        issues = [
+            {"number": 42, "body": "some text\n<!-- capability: my-slug -->\nmore"},
+        ]
+        code, out, _, run = self._run_find_open(
+            ["find-open", "--repo", "dividedby/skills",
+             "--label", "skill-request", "--capability", "my-slug"],
+            gh_stdout=self._issues_json(issues),
+        )
+        self.assertEqual(code, 0)
+        self.assertEqual(out.strip(), "42")
+        # confirm argv includes --state open and --json
+        cmd = run.call_args.args[0]
+        self.assertIn("--state", cmd)
+        self.assertIn("open", cmd)
+        self.assertIn("--json", cmd)
+
+    def test_match_injects_pat_when_skills_repo(self):
+        issues = [{"number": 7, "body": "<!-- capability: test-cap -->"}]
+        with mock.patch.dict(os.environ, {"SKILLS_TRACKER_TOKEN": "PAT-xyz"}):
+            _, _, _, run = self._run_find_open(
+                ["find-open", "--repo", "dividedby/skills",
+                 "--label", "skill-request", "--capability", "test-cap"],
+                gh_stdout=self._issues_json(issues),
+            )
+        env_passed = run.call_args.kwargs["env"]
+        self.assertEqual(env_passed["GH_TOKEN"], "PAT-xyz")
+
+    def test_no_match_empty_stdout_exit_zero(self):
+        issues = [
+            {"number": 5, "body": "<!-- capability: other-slug -->"},
+        ]
+        code, out, _, _ = self._run_find_open(
+            ["find-open", "--repo", "dividedby/skills",
+             "--label", "skill-request", "--capability", "my-slug"],
+            gh_stdout=self._issues_json(issues),
+        )
+        self.assertEqual(code, 0)
+        self.assertEqual(out.strip(), "")
+
+    def test_gh_failure_exits_nonzero_not_silent(self):
+        """A gh failure must exit non-zero — never collapse into the empty 'no match' signal."""
+        code, out, err, _ = self._run_find_open(
+            ["find-open", "--repo", "dividedby/skills",
+             "--label", "skill-request", "--capability", "my-slug"],
+            gh_stdout="",
+            gh_returncode=1,
+            gh_stderr="gh: HTTP 401 Unauthorized",
+        )
+        self.assertNotEqual(code, 0)
+        self.assertEqual(out.strip(), "")
+        self.assertIn("401", err)
+
+    def test_no_issues_empty_stdout_exit_zero(self):
+        code, out, _, _ = self._run_find_open(
+            ["find-open", "--repo", "dividedby/skills",
+             "--label", "skill-request", "--capability", "my-slug"],
+            gh_stdout=self._issues_json([]),
+        )
+        self.assertEqual(code, 0)
+        self.assertEqual(out.strip(), "")
+
 
 if __name__ == "__main__":
     unittest.main()

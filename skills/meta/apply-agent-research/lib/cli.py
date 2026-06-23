@@ -15,6 +15,13 @@ construction, not by the agent remembering a separate step (the realistic
 forgetting-failure). The pure decision stays pure and testable; this seam adds the
 thin, gated transport on top — the agent never calls ``gh issue create`` itself.
 
+**Token selection invariant.** When ``--repo`` is exactly ``dividedby/skills``,
+``_gh_env`` injects ``SKILLS_TRACKER_TOKEN`` as ``GH_TOKEN`` in the subprocess
+environment — automatically, for every ``gh`` call that targets that repo. Any other
+``--repo`` value (or no ``--repo``) keeps the ambient ``GH_TOKEN`` unchanged. The
+agent and workflow shell MUST NOT set ``GH_TOKEN`` manually or read the token value;
+cli.py owns that selection.
+
 Invoked by file path (``python3 <skill-dir>/lib/cli.py``), not ``-m`` — the skill
 folder name is hyphenated, so it is not an importable module. It bootstraps its
 own directory onto ``sys.path`` so the sibling imports resolve from any cwd, which
@@ -35,6 +42,11 @@ is what lets the helpers travel with the installed skill into a Consumer repo.
     # guarded +1 comment: sanitize body, then `gh issue comment` ONLY on ALLOW
     python3 <skill-dir>/lib/cli.py comment --issue N --body-file F \
         [--repo owner/name] [--marker M ...]
+
+    # cross-repo dedup read: print the first open issue number whose body contains
+    # <!-- capability: <slug> -->, or nothing on no match; exits non-zero if gh fails
+    python3 <skill-dir>/lib/cli.py find-open --repo owner/name \
+        --label <label> --capability <slug>
 """
 
 import argparse
@@ -48,6 +60,24 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from json_repair import repair_json  # noqa: E402  (after sys.path bootstrap)
 from proposal_gate import decide  # noqa: E402
 from sanitizer import check  # noqa: E402
+
+# The one repo that requires the cross-repo PAT rather than the ambient GH_TOKEN.
+CROSS_REPO = "dividedby/skills"
+
+
+def _gh_env(repo):
+    """Return a subprocess env with GH_TOKEN swapped in for cross-repo writes.
+
+    When ``repo`` is exactly ``dividedby/skills`` and ``SKILLS_TRACKER_TOKEN`` is
+    set, GH_TOKEN is overridden with that PAT so gh can write into the tracker
+    without the caller ever touching the token value. Any other repo (or no repo)
+    keeps the ambient environment unchanged.
+    """
+    env = os.environ.copy()
+    tok = os.environ.get("SKILLS_TRACKER_TOKEN")
+    if repo == CROSS_REPO and tok:
+        env["GH_TOKEN"] = tok
+    return env
 
 
 def _sanitize(args, stdin, out):
@@ -129,7 +159,7 @@ def _file(args, stdin, out):
         cmd += ["--repo", args.repo]
     # stderr intentionally uncaptured: gh writes diagnostics to stderr directly,
     # which a CI log captures without any plumbing on our side.
-    return subprocess.run(cmd).returncode
+    return subprocess.run(cmd, env=_gh_env(args.repo)).returncode
 
 
 def _comment(args, stdin, out):
@@ -142,7 +172,41 @@ def _comment(args, stdin, out):
         cmd += ["--repo", args.repo]
     # stderr intentionally uncaptured: gh writes diagnostics to stderr directly,
     # which a CI log captures without any plumbing on our side.
-    return subprocess.run(cmd).returncode
+    return subprocess.run(cmd, env=_gh_env(args.repo)).returncode
+
+
+def _find_open(args, stdin, out):
+    """List open issues by label, print the first matching the capability marker.
+
+    Exits non-zero if gh itself fails — a gh failure must never collapse into the
+    silent "no match" signal, because that would cause a duplicate file instead of
+    a clean +1.
+    """
+    cmd = [
+        "gh", "issue", "list",
+        "--repo", args.repo,
+        "--label", args.label,
+        "--state", "open",
+        "--json", "number,body",
+        "--limit", "200",
+    ]
+    result = subprocess.run(cmd, capture_output=True, text=True, env=_gh_env(args.repo))
+    if result.returncode != 0:
+        # Pass gh's stderr through so the caller sees exactly why gh failed.
+        print(result.stderr, file=sys.stderr, end="")
+        return result.returncode
+    marker = f"<!-- capability: {args.capability} -->"
+    try:
+        issues = json.loads(result.stdout)
+    except json.JSONDecodeError as exc:
+        print(f"ERROR: could not parse gh output: {exc}", file=sys.stderr)
+        return 1
+    for issue in issues:
+        if marker in (issue.get("body") or ""):
+            print(issue["number"], file=out)
+            return 0
+    # No match — empty output, exit 0 (clean "not found" signal).
+    return 0
 
 
 def _add_marker(parser):
@@ -183,6 +247,20 @@ def main(argv=None, stdin=None, out=None):
     p_comment.add_argument("--repo", help="owner/name; defaults to the current repo / GH_REPO")
     _add_marker(p_comment)
     p_comment.set_defaults(func=_comment)
+
+    p_find_open = sub.add_parser(
+        "find-open",
+        help=(
+            "list open issues by label, print the number of the first whose body "
+            "contains <!-- capability: <slug> -->; empty output = no match"
+        ),
+    )
+    p_find_open.add_argument("--repo", required=True, help="owner/name")
+    p_find_open.add_argument("--label", required=True, help="label to filter on")
+    p_find_open.add_argument(
+        "--capability", required=True, help="capability slug (the <!-- capability: <slug> --> marker)"
+    )
+    p_find_open.set_defaults(func=_find_open)
 
     args = parser.parse_args(argv)
     return args.func(args, stdin, out)

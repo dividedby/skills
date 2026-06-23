@@ -33,12 +33,15 @@ skill-request channels.
 
 - **The cross-repo write token.** The same per-Consumer fine-grained PAT
   (`SKILLS_TRACKER_TOKEN`, `Issues: Read and write` on `dividedby/skills` only).
-  No new credential — promotion is another issue write into the same repo.
-- **The capability key + `+1` aggregation.** Match on `<!-- capability: <slug> -->`
-  against **open `skill-promotion`** issues: no match → file; match → comment
-  `+1 — also built by <repo>`. Here `+1` is an unusually strong signal — two repos
-  *independently building the same skill* is hard evidence of general merit, not
-  mere demand.
+  No new credential — promotion is another issue write into the same repo. Token
+  selection is internal to cli.py (ADR 0030): pass `--repo dividedby/skills` to any
+  `find-open`/`file`/`comment` call; cli.py injects the PAT from
+  `$SKILLS_TRACKER_TOKEN` automatically. Never set `GH_TOKEN` in the shell.
+- **The capability key + `+1` aggregation.** Use `cli.py find-open` to match on
+  `<!-- capability: <slug> -->` against **open `skill-promotion`** issues: empty
+  output → file; a number → comment `+1 — also built by <repo>`. Here `+1` is an
+  unusually strong signal — two repos *independently building the same skill* is
+  hard evidence of general merit, not mere demand.
 - **The leak guard.** Filing goes through the guarded path (`cli.py file` for a new
   offer, `cli.py comment` for a `+1`), which runs the guard on the `title + body`
   with the host's private markers and writes **only on ALLOW** — so the guard cannot
