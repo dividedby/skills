@@ -30,6 +30,36 @@ Against [CATALOG.md](CATALOG.md) "Instructions" — the earn-the-line filter, li
 - **Progressive disclosure.** CLAUDE.md is an index, not a manual; long content moves out behind a pointer — and the pointer only earns its place if the target is clean, loadable, in-repo markdown.
 - **Monorepo split** per the catalog's line class: flag facts duplicated between root and an app file, or app-specific facts that leaked into root.
 
+## Label-doc drift check (cross-seam — detect only)
+
+Run this check as part of Step 2 (Detect). It is **not** a harness or instruction finding — it is a seam-boundary report that blocks the all-clear if triggered.
+
+### What to look for in the target repo's `docs/agents/`
+
+A well-formed repo has exactly `docs/agents/triage-labels.md` containing the dividedby CORE/LOOP-NETWORK/CHANNELS tiering structure (seeded from `dividedby/skills docs/agents/labels.md`).
+
+Drift shapes to detect:
+
+| Shape | What you see | Verdict |
+|---|---|---|
+| Stray `labels.md` | `docs/agents/labels.md` exists (the `dividedby/skills` source file, not the target-repo convention file) | drifted |
+| Short-form/pointer `triage-labels.md` | `docs/agents/triage-labels.md` exists but does not contain the CORE/LOOP-NETWORK/CHANNELS tiering structure — e.g. it is Matt's version (`needs-info`, Matt-specific role→label wording), a stub, or a pointer | drifted |
+| `labels.md`-only repo | `docs/agents/labels.md` exists but `docs/agents/triage-labels.md` does not | drifted |
+| No label doc at all | Neither file exists | drifted |
+| Correct | `docs/agents/triage-labels.md` exists and contains the dividedby tiering structure; no stray `labels.md` | clear |
+
+### On drift: flag and hand off — do not fix
+
+If any drift shape is detected, **do not edit or normalize the label doc**. That surface is owned by `setup-dividedby-skills`. Instead, surface a `flag` finding:
+
+> **`flag` — labels drifted — run `setup-dividedby-skills`** (`docs/agents/` label-doc shape does not match the dividedby convention; `setup-dividedby-skills` owns the fix — see [ADR 0023](../../../docs/adr/0023-setup-dividedby-skills-vs-project-claude-config-seam.md))
+
+Include the drift shape (which of the four patterns above you saw). This finding goes into the output batch and **prevents a whole-repo all-clear** — the harness/instructions may be fine, but the label-doc surface is not cleared here.
+
+If the label-doc is clean, note it briefly in the output ("label-doc: `triage-labels.md` present, dividedby content — clear") and move on. Do not detail the label contents further — that is `setup-dividedby-skills`' job.
+
 ## Output
 
 Per file/concern: the verb list with refs, then the proposed lean structure (trimmed tree + headers for instruction files; proposed key structure for the harness). Feeds the single batch approval in SKILL.md's final step.
+
+For the label-doc check: include the finding (flag or clear) in the output. If flagged, the report must explicitly state that the all-clear covers only harness/instructions — label-doc drift remains open for `setup-dividedby-skills` to resolve.
