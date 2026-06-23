@@ -33,7 +33,8 @@ the five elements below — it never authors the backlog or builds a new runtime
 - **One-shot serialized burn-down** — a finite run to completion over a fixed
   backlog (how #64→#66 ran). Stops when the backlog empties.
 
-Route per-item work to an in-session sub-agent when a session exists; headless `claude -p` only where there is none — see `/context-firewall` step 2.
+> **Per-item routing:** use an in-session sub-agent when a session exists;
+> headless `claude -p` only where there is none — see `/context-firewall` step 2.
 
 ## What this skill owns
 
