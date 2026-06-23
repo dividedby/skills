@@ -47,6 +47,23 @@ adjacency. Ownership is by insertion origin:
 - `setup-dividedby-skills` inserts or updates the block without touching any
   other section.
 
+### Drift-detection across the seam (amended 2026-06-22)
+
+Owning the *fix* for a surface does not relieve the other skill of *noticing*
+drift in it. `project-claude-config` once reported "config is fine" while the
+label-doc convention (a `setup-dividedby-skills`-owned surface) was drifted, and
+a maintainer trusted that false all-clear. The seam therefore carries a reporting
+rule, not just an editing rule:
+
+- A skill **reports all-clear only for surfaces it owns.** When it observes drift
+  in a surface the *other* skill owns, it must not absorb the fix and must not
+  report a global "all clear" — it **flags the drift and names the owning skill**
+  to hand off. `project-claude-config` gains a lightweight detector for label-doc
+  drift (a stray `labels.md`, a short-form/pointer `triage-labels.md`) that flags
+  "labels drifted — run `setup-dividedby-skills`" instead of clearing the repo.
+- This generalizes to any future seam: see the **All-clear scope** term in
+  `CONTEXT.md`.
+
 ## Consequences
 
 - On a greenfield repo, the canonical order is: `project-claude-config` → then
@@ -60,3 +77,8 @@ adjacency. Ownership is by insertion origin:
 - Future skills that touch repo configuration should self-locate against this axis
   (Claude harness/instructions vs. workflow conventions/GitHub settings) and not
   straddle it.
+- A success report from either skill is scoped to its own surfaces. "Config is
+  fine" from `project-claude-config` means harness/instructions are fine — it is
+  not a clearance for labels/idea-inbox, which only `setup-dividedby-skills` can
+  clear. Each skill flags adjacent drift and hands off rather than implying a
+  whole-repo all-clear.
