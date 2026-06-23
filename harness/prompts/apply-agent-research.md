@@ -41,6 +41,15 @@ are already provided in the task prompt: `$MIRROR_DIR`, `$SKILLS_SRC`, `$SKILL_D
 `$PRIVATE_MARKERS`. Your mode comes from `cli.py mode`; the cross-repo token is
 supplied by cli.py itself — never read it.
 
+**Tool-use constraint (same allowlist):** `cat`, `echo`/`tee` redirection, piped
+`grep`, and `python3 -c` are also denied. Use the built-in tools instead:
+- Read a file → `Read` tool, not `cat`.
+- Search text → `Grep` tool, not `| grep`.
+- Write a file → `Write` tool, not `echo … >` or `tee`.
+- Parse `gh` JSON → `gh … --jq '<expr>'`, not `gh … | python3 -c` or `| grep`.
+- Inline data munging → use the `cli.py` subcommands that already exist; do not
+  reach for `python3 -c` for ad-hoc parsing.
+
 ## Inputs (env the stub exports — read, do not guess)
 
 - **`$MIRROR_DIR`** — the knowledge input (read-only). Read

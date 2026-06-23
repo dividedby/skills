@@ -26,6 +26,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Consumer cross-repo `skill-request`/`skill-promotion` filing silently no-opped under the hardened scoped `--allowedTools` introduced in #394: the `GH_TOKEN="$SKILLS_TRACKER_TOKEN" gh …` env-prefix was denied by the allowlist. cli.py now selects `SKILLS_TRACKER_TOKEN` itself for any `--repo dividedby/skills` call (`find-open`/`file`/`comment`) — no env-prefix, no token value in the shell, no tag move required (#418)
 - Consumer-mode detection also broke under the scoped allowlist: the agent could not inspect `$SKILLS_TRACKER_TOKEN` via `printenv`, `env`, shell expansion, or `python3 -c` — all denied by the sandbox. Fixed via the allowlist-safe `cli.py mode` subcommand (prints `host` or `consumer`, never the token value) (#418)
+- `apply-agent-research` prompt: steered agent away from denied shell helpers (`cat`, piped `grep`, `echo`/`tee`, `python3 -c`) toward the allowlisted built-in tools (`Read`, `Grep`, `Write`, `gh --jq`, `cli.py` subcommands) to prevent incidental approval denials in unattended runs (#427)
 
 ## [2026-06-23]
 
