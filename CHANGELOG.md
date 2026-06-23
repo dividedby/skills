@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- `check-label-drift`: fleet-wide, report-only label-doc drift detector (mirrors `check-workflow-drift`); weekly cron Sun 05:00 UTC; classifies four drift shapes per consumer repo and files one `label-drift` issue naming `setup-dividedby-skills` as the fixer; graceful no-op when `DRIFT_CHECK_TOKEN` is absent (#415)
 - `apply-agent-research` prompt: candidate log step (5a) emits one line per KB candidate to the Actions step summary — target surface plus advanced/dropped reason — so pre-gate reasoning is visible alongside outcomes (#421)
 - `apply-agent-research` cli.py: `find-open` subcommand for cross-repo dedup reads without a bare `gh` call (#418)
 - Top-level CHANGELOG.md (#397)

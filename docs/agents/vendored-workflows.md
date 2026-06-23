@@ -37,6 +37,15 @@ issue in dividedby/skills for any drifted repo. To refresh this table, re-read
 `.github/workflows/{improve-codebase-architecture,apply-agent-research,staleness-review}.yml`
 in each repo.
 
+**Label-doc drift check** — companion detector landed via
+[`check-label-drift.yml`](../../.github/workflows/check-label-drift.yml)
+(#415, weekly Sun 05:00 UTC — staggered 1h after workflow-drift). Reads each
+consumer's `docs/agents/triage-labels.md` and `docs/agents/labels.md` via the
+GitHub Contents API; classifies one of four drift shapes per repo; opens a
+`label-drift` issue in dividedby/skills naming `setup-dividedby-skills` as the
+fixer. Report-only — never mutates a consumer repo. Requires the same
+`DRIFT_CHECK_TOKEN` secret as workflow-drift.
+
 **Reading the crons:** schedules are UTC (authoritative). **CT** is shown for CDT
 (Mar–Nov, UTC−5); **subtract 1h in CST** (Nov–Mar). Day codes: `* * 6` =
 Saturday, `* * 1` = Monday, `* * 3` = Wednesday. Rows are ordered by UTC time within each table.
