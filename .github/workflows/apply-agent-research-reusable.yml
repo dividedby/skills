@@ -63,7 +63,8 @@ jobs:
       LABEL: source:agent-research
       SKILLS_TRACKER_TOKEN: ${{ secrets.SKILLS_TRACKER_TOKEN }}
       PRIVATE_MARKERS: ${{ inputs.private-markers }}
-      MIRROR_DIR: ${{ inputs.is-knowledge-source && github.workspace || format('{0}/knowledge-mirror', runner.temp) }}
+      # MIRROR_DIR is resolved in a step (see below) — the `runner` context is not
+      # available in job-level `env:`, only at step scope.
 
     steps:
       - name: Checkout caller repo
@@ -98,12 +99,21 @@ jobs:
           echo "SKILLS_SRC=$RUNNER_TEMP/skills-src" >> "$GITHUB_ENV"
           test -f "$RUNNER_TEMP/skills-src/skills/meta/apply-agent-research/SKILL.md"
           echo "Installed harness+skill from dividedby/skills@$(git -C "$RUNNER_TEMP/skills-src" rev-parse --short HEAD)"
+          # Resolve the knowledge dir per mode. The producer (is-knowledge-source)
+          # reads its native knowledge/ from the caller checkout; everyone else
+          # reads the mirror clone (next step). Resolved here, not in job-level
+          # env, because the `runner` context is unavailable at that scope.
+          if [ "${{ inputs.is-knowledge-source }}" = "true" ]; then
+            echo "MIRROR_DIR=$GITHUB_WORKSPACE" >> "$GITHUB_ENV"
+          else
+            echo "MIRROR_DIR=$RUNNER_TEMP/knowledge-mirror" >> "$GITHUB_ENV"
+          fi
 
       # Clone the public knowledge mirror (credential-free, read-only).
       # Gated: the knowledge-base producer (agent-research) reads its native
       # knowledge/ from the caller checkout instead; for everyone else this step
-      # is unconditional.  MIRROR_DIR in env already resolves to the correct path
-      # for each mode (set above at job level).
+      # is unconditional. MIRROR_DIR was resolved to the correct per-mode path in
+      # the harness-install step above.
       - name: Clone the public knowledge mirror
         if: ${{ !inputs.is-knowledge-source }}
         run: |
