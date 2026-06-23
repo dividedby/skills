@@ -13,22 +13,33 @@ exports (see [ADR 0015](../adr/0015-apply-agent-research-prompt-is-consumer-port
 and follow it. **Read both `$SKILL_DIR/SKILL.md` and `$SKILL_DIR/proposal-flow.md`
 before acting** — this prompt is only the concrete wiring.
 
-## Your role: host or consumer (derived from `$SKILLS_TRACKER_TOKEN`)
+## Your role: host or consumer
 
-Branch your whole run on whether **`$SKILLS_TRACKER_TOKEN` is set**:
+Determine your mode first by running:
 
-- **Unset → host mode.** You are running inside `dividedby/skills` itself. There is
+    python3 "$SKILL_DIR/lib/cli.py" mode
+
+This prints `host` or `consumer` and exits 0. Branch your whole run on that output.
+
+- **`host` → host mode.** You are running inside `dividedby/skills` itself. There is
   no cross-repo channel: you **drain** incoming `skill-request` issues on this
   tracker and propose skills on general merit, all into **this** repo with the
   default `GH_TOKEN`. Never write to another repo.
-- **Set → consumer mode.** You are a downstream Consumer. You file/+1 the cross-repo
-  `skill-request` (demand) and — only if this repo has local non-published skills —
-  `skill-promotion` (supply) channels into `dividedby/skills`, authenticating those
-  calls with `$SKILLS_TRACKER_TOKEN`.
+- **`consumer` → consumer mode.** You are a downstream Consumer. You file/+1 the
+  cross-repo `skill-request` (demand) and — only if this repo has local non-published
+  skills — `skill-promotion` (supply) channels into `dividedby/skills`,
+  authenticating those calls with the cross-repo PAT that cli.py supplies internally.
 
-The token is an honest discriminator: the host writes to itself with the default
-`GITHUB_TOKEN` and never sets the cross-repo PAT, so its presence cannot drift out
-of sync with the cross-repo writes it gates.
+The `cli.py mode` result is an honest discriminator: the host never sets
+`SKILLS_TRACKER_TOKEN`, so the discriminator cannot drift out of sync with the
+cross-repo writes it gates. cli.py reads the env internally — you never need to.
+
+**Environment variable constraint:** do NOT inspect environment variables via
+`printenv`, `env`, `python3 -c "import os; …"`, `cat /proc/*/environ`, or shell
+`$VAR` expansion — these are denied by the sandbox allowlist. All inputs you need
+are already provided in the task prompt: `$MIRROR_DIR`, `$SKILLS_SRC`, `$SKILL_DIR`,
+`$PRIVATE_MARKERS`. Your mode comes from `cli.py mode`; the cross-repo token is
+supplied by cli.py itself — never read it.
 
 ## Inputs (env the stub exports — read, do not guess)
 
@@ -50,8 +61,9 @@ of sync with the cross-repo writes it gates.
   to one repeatable `--marker <token>` per token on **every** guarded `file` /
   `comment` call (see Filing). Empty (the host case, and any fully-public repo) → no
   `--marker` flags, and the guard's structural checks still apply.
-- **`$SKILLS_TRACKER_TOKEN`** — your role discriminator (above) and the cross-repo
-  GitHub credential in consumer mode.
+- **`$SKILLS_TRACKER_TOKEN`** — the cross-repo GitHub credential in consumer mode;
+  cli.py reads it internally. Use `cli.py mode` (above) to determine your role —
+  never inspect this variable directly.
 - **This repo's own governance docs:** `CONTEXT.md`, `CLAUDE.md`, every file under
   `docs/adr/`, and any skills under the repo. Use them as the ethos-fit oracle *and*
   the already-do-this filter. Treat ADRs as binding.

@@ -316,6 +316,27 @@ class GuardedFilingTest(unittest.TestCase):
         run.assert_not_called()
 
 
+class ModeCommandTest(unittest.TestCase):
+    def test_token_set_prints_consumer(self):
+        with mock.patch.dict(os.environ, {"SKILLS_TRACKER_TOKEN": "PAT-placeholder"}):
+            code, out = _run(["mode"])
+        self.assertEqual(code, 0)
+        self.assertEqual(out.strip(), "consumer")
+
+    def test_token_unset_prints_host(self):
+        env_without_token = {k: v for k, v in os.environ.items() if k != "SKILLS_TRACKER_TOKEN"}
+        with mock.patch.dict(os.environ, env_without_token, clear=True):
+            code, out = _run(["mode"])
+        self.assertEqual(code, 0)
+        self.assertEqual(out.strip(), "host")
+
+    def test_token_empty_string_prints_host(self):
+        with mock.patch.dict(os.environ, {"SKILLS_TRACKER_TOKEN": ""}):
+            code, out = _run(["mode"])
+        self.assertEqual(code, 0)
+        self.assertEqual(out.strip(), "host")
+
+
 class FindOpenCommandTest(unittest.TestCase):
     """Tests for the cross-repo dedup read subcommand."""
 
