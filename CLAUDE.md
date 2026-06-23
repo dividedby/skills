@@ -46,6 +46,10 @@ Skills here are user-invoked orchestrators by default — each `SKILL.md` carrie
 
 Notable changes land in the top-level [`CHANGELOG.md`](./CHANGELOG.md) (Keep a Changelog format) — the human-readable record the version-bump / roll-up step updates. It tracks the two published surfaces: the skills catalog and `harness/`.
 
+### Coding standards
+
+Authoring and code style for markdown skills and `harness/` Python. See [`CODING_STANDARDS.md`](./CODING_STANDARDS.md).
+
 <important if="filing an issue or idea">
 
 ### Intake convention
