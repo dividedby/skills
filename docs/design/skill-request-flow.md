@@ -90,8 +90,14 @@ Only a genuine gap proceeds to the duplicate-request check below.
 
 ## Aggregation: duplicates corroborate
 
-Before filing, the Consumer lists open `skill-request` issues in `dividedby/skills`
-and matches on the capability key:
+Before filing, the Consumer uses `cli.py find-open` to check for an existing open
+`skill-request` matching the capability key:
+
+    python3 "$SKILL_DIR/lib/cli.py" find-open --repo dividedby/skills \
+        --label skill-request --capability <slug>
+
+cli.py also supplies the cross-repo token automatically — never set `GH_TOKEN`
+in the shell. Empty output means no match; a number means the issue exists.
 
 - **No match** → open a new issue with the contract above.
 - **Match exists** → **do not** open a second issue. Post a comment:
@@ -173,6 +179,12 @@ The default `GITHUB_TOKEN` is own-repo scoped and **will 403** writing into
 - **Fork-PR safety:** Actions does not pass secrets to workflows triggered by
   fork PRs, so the token is exposed only on the maintainer's own scheduled /
   dispatched runs.
+- **Token selection is internal to cli.py (ADR 0030).** The agent and workflow
+  shell must **never** set `GH_TOKEN` or read the token value directly. When
+  `--repo dividedby/skills` is passed to any `cli.py` subcommand (`find-open`,
+  `file`, `comment`), the shim reads `SKILLS_TRACKER_TOKEN` from its own process
+  environment and injects it as `GH_TOKEN` for that `gh` subprocess only. Any
+  other `--repo` keeps the ambient credential unchanged.
 
 If the Consumer count grows enough that manual PAT rotation becomes a burden, the
 scale-up is a **GitHub App** with `issues:write` on `dividedby/skills` (short-lived
