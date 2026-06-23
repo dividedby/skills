@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - CODING_STANDARDS.md (#398)
 - docs/agents/skill-authoring.md (#405)
 - `project-claude-config`: detect label-doc drift and hand off to `setup-dividedby-skills` (#402)
+- `setup-dividedby-skills`: add must-fix outcome + force-canonical mode for drifted label conventions (#393)
 
 ## [2026-06-23]
 

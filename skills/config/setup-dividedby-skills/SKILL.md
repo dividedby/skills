@@ -64,9 +64,37 @@ Condense findings to a state summary; do not dump raw output.
 
 ---
 
+## Convention classification
+
+Every convention this skill manages is classified as one of two kinds:
+
+| Convention | Classification | Rationale |
+|---|---|---|
+| C — GitHub label name / color / description | **convention-only** | Purely mechanical; the canonical values are specified in `docs/agents/labels.md` with no judgment required. |
+| C — `needs-info` removal | **convention-only** | The dividedby posture unconditionally suppresses `needs-info`; no judgment call. |
+| C — stock label deletion | **convention-only** | Stock labels are unconditionally removed; canonical list is fixed. |
+| D — label-doc file layout (single vs split, full vs pointer) | **convention-only** | File-name and single-file-vs-split is a pure layout convention. The correct form is `docs/agents/triage-labels.md` with full dividedby content. No judgment involved. |
+| A — Conventions block content | **convention-only** | The block structure and pointer targets are prescribed; adapt repo-specific references only. |
+| E — `docs/agents/idea-inbox.md` creation | **convention-only** | Seeded from a fixed template; repo-name substitution only. |
+| B — Idea Inbox issue | **convention-only** | Fixed body template; repo-name substitution only. |
+| F — branching role classification (library vs app) | **judgment-bearing** | Role determines default branch and merge mechanics; requires human judgment about the repo's purpose. |
+| F — default-branch change | **judgment-bearing** | Destructive and role-dependent; always requires explicit confirmation. |
+
+**force-canonical eligibility:** only convention-only items may be auto-applied by force-canonical mode. judgment-bearing items always prompt, even in force-canonical mode — they are never auto-applied.
+
+New conventions added to this skill must declare which classification they belong to in this table before being implemented.
+
+---
+
 ## Step 2 — Draft the plan
 
-From the detect report, build a per-concern action list with a three-state posture per item: **create**, **update**, or **skip**.
+From the detect report, build a per-concern action list with a four-state posture per item: **create**, **update**, **skip**, or **must-fix**.
+
+**State definitions:**
+- **create** — the item does not exist; will be created.
+- **update** — the item exists but is drifted from canonical in a routine way; will be reconciled.
+- **skip** — the item is already canonical. A skip means already canonical, never "non-canonical but left alone."
+- **must-fix** — a *known* non-canonical form that cannot resolve to skip. The fix is destructive (delete a stray file, rewrite a pointer, overwrite Matt's version) and requires confirmation before applying. Surfaces the exact diff/destructive change so the user knows precisely what will happen.
 
 ### Concern A — CLAUDE.md / AGENTS.md Conventions block
 
@@ -107,8 +135,19 @@ Note: the seeded doc is the **full convention reference** — it describes all t
 
 Also reconcile any stale references found in the detect scan: if `docs/agents/issue-tracker.md`, `docs/agents/domain.md`, or any other file in `docs/agents/` contains `needs-info` or Matt-specific role→label wording, update those lines to match the dividedby convention. Surface each such edit in the HITL plan before executing.
 
-- **update** if the file exists but does not contain the dividedby CORE/LOOP-NETWORK/CHANNELS tiering structure (i.e. it's Matt's version).
-- **skip** if the file already carries the dividedby content (idempotent re-run).
+**Known drift shapes (all resolve to must-fix, not skip):**
+
+The following forms are *known* non-canonical. They cannot resolve to skip — each triggers **must-fix**, which surfaces the exact destructive diff before applying:
+
+1. **Two-file split** — both `docs/agents/labels.md` and `docs/agents/triage-labels.md` exist. The stray `labels.md` must be deleted after all refs are retargeted to `triage-labels.md`. Surface: "will delete `docs/agents/labels.md` (stray file) and retarget N references."
+2. **Short-form / pointer `triage-labels.md`** — the file exists but is a short-form stub or pointer (does not contain the full dividedby CORE/LOOP-NETWORK/CHANNELS tiering structure). Surface: "will overwrite `docs/agents/triage-labels.md` with full canonical content."
+3. **`labels.md`-only repo** — only `docs/agents/labels.md` exists; `triage-labels.md` is absent. Surface: "will rename/copy content to `docs/agents/triage-labels.md` and delete `docs/agents/labels.md`."
+
+For each must-fix item, the plan step must state: the exact file(s) being deleted or overwritten, the reason (which drift shape), and the proposed replacement content summary. The user must confirm before any write or delete executes.
+
+**Routine states:**
+- **update** if the file exists but does not contain the dividedby CORE/LOOP-NETWORK/CHANNELS tiering structure (i.e. it's Matt's version) — this is a must-fix unless covered by a drift shape above; treat as must-fix with overwrite diff surfaced.
+- **skip** if the file already carries the dividedby content (idempotent re-run). skip means already canonical — never a tolerated deviation.
 
 This is a file write in the target repo, not a network mutation — but surface it in the plan so the user can approve.
 
@@ -133,7 +172,13 @@ From `~/.claude/branching-flow.md`:
 
 **Show the full plan before any network mutation or file write.**
 
-Present it as a structured list, grouped by concern (A–F), with one line per action showing posture (create / update / skip / delete) and a brief what/why. Flag destructive actions (label deletes, `needs-info` removal, default-branch change) explicitly.
+Present it as a structured list, grouped by concern (A–F), with one line per action showing posture (create / update / skip / must-fix / delete) and a brief what/why. Flag destructive actions (label deletes, `needs-info` removal, default-branch change) explicitly.
+
+For each **must-fix** item: include the exact destructive diff inline — what file will be deleted or overwritten, what the replacement is, and which drift shape triggered it. Do not collapse must-fix items into a generic "will fix drift" line.
+
+**force-canonical mode (opt-in):** If the user invokes this skill with `force-canonical` (e.g. "run setup-dividedby-skills with force-canonical"), skip per-item confirmation prompts for all must-fix items that are **convention-only** and apply them in a single batch. The plan is still shown first (one presentation, then "applying all must-fix items without per-item prompts"). judgment-bearing items (branching role, default-branch changes) always prompt even in force-canonical mode — they are never auto-applied regardless of mode.
+
+**Default mode (propose-only):** Each must-fix item requires explicit per-item confirmation. The user may approve, skip, or modify any individual item.
 
 **Do not proceed until the user types explicit confirmation** (e.g. "go", "approved", "yes"). A non-response or an ambiguous reply is not approval. If the user modifies the plan, update the action list before proceeding.
 
