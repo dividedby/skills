@@ -13,12 +13,13 @@ shrink the envelope).
 |---|---|---|
 | `improve-codebase-architecture` | Thin caller stub (cron + `uses:` + tag + `permissions` grant) | `workflow_call` reusable body (`-reusable.yml`) |
 | `staleness-review` | Thin caller stub (cron + `uses:` + tag + `permissions` grant) | `workflow_call` reusable body (`-reusable.yml`) |
-| `apply-agent-research` | Full-copy envelope (unchanged — out of scope) | n/a |
+| `apply-agent-research` | Thin caller stub (cron + `uses:` + tag + `permissions` grant) | `workflow_call` reusable body (`-reusable.yml`) |
 
 Consumers pin the reusable bodies at tag `@claude-loops-v1`. The skills repo
-uses a local-path `./` ref (canary — always runs the latest body). `apply-agent-research`
-remains a full-copy vendored workflow in each repo; its body forks on
-mode (host/consumer/producer) so no single shared body exists to host.
+uses a local-path `./` ref (canary — always runs the latest body).
+`apply-agent-research` joined the reusable-body rail in ADR 0029: the three
+"modes" (host/consumer/producer) are env-wiring, not body forks — one body with
+two conditional points serves all three.
 
 **Caller stubs must grant `permissions: { contents: read, issues: write }`** on
 the calling job. A called workflow can't be granted more token scope than the
@@ -124,15 +125,15 @@ by construction. Bands in use:
 
 ## Cross-repo dependencies
 
-- **Reusable bodies** (`improve-codebase-architecture`, `staleness-review`):
-  hosted once in skills as `workflow_call` reusable workflows
-  (`.github/workflows/*-reusable.yml`). Consumers vendor a thin caller stub
-  (cron + `uses:` + `@claude-loops-v1` tag). The skills repo uses a local-path
-  `./` ref (#382).
+- **Reusable bodies** (all three loops): hosted once in skills as `workflow_call`
+  reusable workflows (`.github/workflows/*-reusable.yml`). Consumers vendor a
+  thin caller stub (cron + `uses:` + `@claude-loops-v1` tag). The skills repo
+  uses a local-path `./` ref (canary). `apply-agent-research` joined the rail in
+  ADR 0029.
 - **Harness** (`harness/cli.py` + prompts): fetched fresh each run via
-  `git clone --depth 1 https://github.com/dividedby/skills.git` — both by the
-  reusable bodies (clone form) and by the `apply-agent-research` full-copy
-  envelope ([ADR 0014](../adr/0014-harness-is-fetched-fresh-only-the-workflow-envelope-is-vendored.md)).
+  `git clone --depth 1 https://github.com/dividedby/skills.git` — by all three
+  reusable bodies (clone form)
+  ([ADR 0014](../adr/0014-harness-is-fetched-fresh-only-the-workflow-envelope-is-vendored.md)).
 - **arch-review skill + depth rubric:** `mattpocock/skills@main`.
 - **Knowledge mirror:** `dividedby/agent-research-knowledge@main` (consumers);
   the agent-research producer reads its own `knowledge/` tree.
@@ -145,8 +146,10 @@ by construction. Bands in use:
 
 The harness `publish` seam (`harness/cli.py publish`, capped by `MAX_PROPOSALS`)
 is used by **two** loops: `improve-codebase-architecture` and `staleness-review`.
-`apply-agent-research` files through the **skill's own guarded `cli.py`** — a
-separate code path. A fix to the harness publish seam (e.g.
+`apply-agent-research` files through the **skill's own guarded `cli.py`**
+(`skills/meta/apply-agent-research/lib/cli.py`) — a separate code path — even
+though its reusable body fetches the harness fresh for the `digest` step. A fix
+to the harness publish seam (e.g.
 [ADR 0025](../adr/0025-publish-seam-recovers-malformed-output-loudly-before-failing.md))
 reaches those two loops, not the third.
 

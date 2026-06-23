@@ -53,20 +53,15 @@ STALE_PATH = ".github/workflows/staleness-review.yml"
 # Reusable body paths (local to skills; not vendored to consumers).
 ARCH_BODY_PATH = ".github/workflows/improve-codebase-architecture-reusable.yml"
 STALE_BODY_PATH = ".github/workflows/staleness-review-reusable.yml"
+APPLY_BODY_PATH = ".github/workflows/apply-agent-research-reusable.yml"
 
 # Anchor sets: substrings that MUST appear in every non-missing file.
 #
-# apply-agent-research.yml — variant-neutral (host / consumer / producer all share):
+# apply-agent-research.yml (thin caller stubs — consumer repos + skills canary):
 #   - "permissions:" + "issues: write" → missing == #384 startup-fail class
-#   - "harness/prompts/apply-agent-research.md" → prompt fetched fresh; present in all 5
-#     variants (consumer/host via RUNNER_TEMP/skills-src/harness/prompts/…; host via
-#     local checkout). NOTE: "harness/cli.py" is deliberately excluded — the producer
-#     (agent-research) uses only the skill's own lib/cli.py, not harness/cli.py; only
-#     consumers + host reference it. harness/prompts/ catches OLD-gen without this gap.
-#   - "--model claude-sonnet-4-6" → missing == floating alias, silent model upgrade
-#   - "--max-budget-usd" → missing == no spend backstop
-#   - "--output-format stream-json" → missing == no cost ledger line emitted
-#   - "git clone --depth 1" → missing == no shallow clone at all (harness not fetched)
+#   - "@claude-loops-v1" → missing == stub points at wrong ref or is full-copy OLD-gen
+#     (skipped for skills canary via SKILLS_SKIP_ANCHORS — it uses local `./` ref)
+#   - "CLAUDE_CODE_OAUTH_TOKEN" → missing == token not passed through
 #
 # improve-codebase-architecture.yml (consumer stubs only, not skills canary):
 #   - "permissions:" + "issues: write" → startup-fail class (#384)
@@ -80,11 +75,8 @@ ANCHORS: dict[str, list[str]] = {
     APPLY_PATH: [
         "permissions:",
         "issues: write",
-        "harness/prompts/apply-agent-research.md",
-        "--model claude-sonnet-4-6",
-        "--max-budget-usd",
-        "--output-format stream-json",
-        "git clone --depth 1",
+        "@claude-loops-v1",
+        "CLAUDE_CODE_OAUTH_TOKEN",
     ],
     ARCH_PATH: [
         "permissions:",
@@ -135,6 +127,23 @@ BODY_ANCHORS: dict[str, list[str]] = {
         "Bash(git log:*)",
         "Bash(python3 $SKILL_DIR/lib/:*)",
     ],
+    APPLY_BODY_PATH: [
+        "permissions:",
+        "issues: write",
+        "--model claude-sonnet-4-6",
+        "--max-budget-usd",
+        "--output-format stream-json",
+        "git clone --depth 1",
+        # C-1: SHA-pinned checkout (40-char hex after @).
+        "actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10",
+        # C-3: scoped git (at least one specific read-only subcommand present).
+        "Bash(git log:*)",
+        # C-3: scoped python3 (skill's own cli.py).
+        "Bash(python3 $SKILL_DIR/lib/cli.py:*)",
+        # Harness prompt fetched fresh from the skills clone (not from local checkout).
+        # The file uses $HARNESS/prompts/apply-agent-research.md — match the path suffix.
+        "prompts/apply-agent-research.md",
+    ],
 }
 
 # Must-NOT-appear anchors for the reusable bodies (hardened form violations).
@@ -153,6 +162,13 @@ BODY_FORBIDDEN: dict[str, list[str]] = {
         "Bash(python3:*)",               # C-3: bare python3 wildcard replaced by scoped path
         "actions/checkout@v",            # C-1: movable tag replaced by SHA pin
         "Bash(gh search:*)",             # C-3: prompt uses only gh issue list/view; search not needed
+        "Bash(gh api:*)",                # C-3: write primitive — bypasses proposal cap (#306)
+    ],
+    APPLY_BODY_PATH: [
+        "--permission-mode acceptEdits",  # C-2: no acceptEdits — loop files via guarded cli.py shim
+        "Bash(git:*)",                    # C-3: bare git wildcard replaced by scoped subcommands
+        "Bash(python3:*)",               # C-3: bare python3 wildcard replaced by scoped path
+        "actions/checkout@v",            # C-1: movable tag replaced by SHA pin
         "Bash(gh api:*)",                # C-3: write primitive — bypasses proposal cap (#306)
     ],
 }
@@ -426,7 +442,9 @@ def main(argv=None):
                 file_issue(repo, drifted, write_token, args.dry_run)
 
     # Check skills' own caller stubs (canary; skip @claude-loops-v1 anchor).
-    for path in (ARCH_PATH, STALE_PATH):
+    # APPLY_PATH is included here: it's a thin local-`./` caller (ADR 0029), so
+    # @claude-loops-v1 is not expected and is skipped via SKILLS_SKIP_ANCHORS.
+    for path in (ARCH_PATH, STALE_PATH, APPLY_PATH):
         anchors = ANCHORS[path]
         try:
             content = fetch_file(SKILLS_REPO, SKILLS_BRANCH, path, read_token)
@@ -445,26 +463,23 @@ def main(argv=None):
         else:
             print(f"OK:    {SKILLS_REPO}/{path}")
 
-    # skills' own apply-agent-research.yml — read local file.
-    local_apply = os.path.join(
-        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-        APPLY_PATH,
-    )
+    # skills' own apply-agent-research.yml — also verify local file (canary).
+    repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    local_apply = os.path.join(repo_root, APPLY_PATH)
     try:
         with open(local_apply, encoding="utf-8") as fh:
             skills_apply_content = fh.read()
-        missing = check_file(skills_apply_content, ANCHORS[APPLY_PATH])
+        missing = check_file(skills_apply_content, ANCHORS[APPLY_PATH], skip=SKILLS_SKIP_ANCHORS)
         if missing:
-            print(f"DRIFT: {SKILLS_REPO}/{APPLY_PATH}: missing {missing}")
+            print(f"DRIFT: {SKILLS_REPO}/{APPLY_PATH} (local): missing {missing}")
         else:
-            print(f"OK:    {SKILLS_REPO}/{APPLY_PATH}")
+            print(f"OK:    {SKILLS_REPO}/{APPLY_PATH} (local)")
     except OSError as exc:
         print(f"ERROR reading local {APPLY_PATH}: {exc}", file=sys.stderr)
         any_error = True
 
     # skills' own reusable bodies — check hardened form (C-1/C-2/C-3 anchors).
-    repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    for body_path in (ARCH_BODY_PATH, STALE_BODY_PATH):
+    for body_path in (ARCH_BODY_PATH, STALE_BODY_PATH, APPLY_BODY_PATH):
         local_body = os.path.join(repo_root, body_path)
         try:
             with open(local_body, encoding="utf-8") as fh:

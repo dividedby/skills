@@ -51,10 +51,21 @@ pushes to the default branch.
   baseline covers skills installed in the host's *global* environment, not just
   files under the repo; a remote run can't enumerate the install, so the host
   commits a snapshot the loop reads.
-- **A reference workflow to adapt:** `dividedby/skills` →
-  `.github/workflows/apply-agent-research.yml` (the thin envelope) + the
-  fetched-fresh harness it calls (`harness/prompts/apply-agent-research.md`,
-  `harness/cli.py digest` for the cost ledger). See
+- **A reference workflow to adapt:** vendor the thin caller in your repo:
+  ```yaml
+  uses: dividedby/skills/.github/workflows/apply-agent-research-reusable.yml@claude-loops-v1
+  with:
+    is-knowledge-source: false      # true only for dividedby/agent-research
+    private-markers: ""             # space-separated private tokens; empty if public
+    max-budget-usd: "3.00"
+  secrets:
+    CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+    SKILLS_TRACKER_TOKEN: ${{ secrets.SKILLS_TRACKER_TOKEN }}
+  ```
+  The reusable body fetches the harness, the skill lib (`SKILL_DIR`), and the
+  published-skill catalog (`SKILLS_SRC`) fresh each run from `dividedby/skills`
+  (ADR 0008/0014). It also reads `harness/prompts/apply-agent-research.md` as
+  the system prompt and runs `harness/cli.py digest` for the cost ledger. See
   [`proposal-loop-harness.md`](./proposal-loop-harness.md) for the stub↔harness
   interface; this loop files through the skill's own guarded `cli.py`, so it uses
   only `digest`, not the harness `publish` seam.
@@ -69,13 +80,17 @@ Friday-evening window + `workflow_dispatch`, scoped tools, **pinned `--model`
 (default `sonnet`)**, step-summary with the `total_cost_usd=…` cost-ledger line).
 Then layer on the Consumer specifics:
 
-1. **Fetch the skill fresh + hard-gate its guard.** Clone `dividedby/skills`
-   shallow, `cp -R skills/meta/apply-agent-research` into `~/.claude/skills/`.
-   Immediately **run the guard's unit tests as a hard gate**
-   (`python3 -m unittest discover -s <skill-dir>/tests`) and confirm the seam runs —
-   the gate (`cli.py gate`), the standalone guard (`cli.py sanitize`), and the
-   **guarded filing path** (`cli.py file --help` / `cli.py comment --help`), which is
-   how the loop files (step 7). **Never proceed on a broken guard.**
+1. **The reusable body fetches the skill fresh automatically.** When using the
+   reusable body (`apply-agent-research-reusable.yml@claude-loops-v1`), the
+   `dividedby/skills` clone step sets `SKILL_DIR`, `SKILLS_SRC`, and `HARNESS`
+   for you — no `cp -R` into `~/.claude/skills/` is needed. The guard's unit
+   tests run as part of the reusable body's hard-gate. If you are building a
+   custom envelope instead, clone `dividedby/skills` shallow, set `SKILL_DIR` to
+   the clone path, and **run the guard's unit tests as a hard gate**
+   (`python3 -m unittest discover -s "$SKILL_DIR/tests"`) before proceeding.
+   Confirm the gate (`cli.py gate`), the standalone guard (`cli.py sanitize`),
+   and the **guarded filing path** (`cli.py file --help` / `cli.py comment --help`),
+   which is how the loop files (step 7). **Never proceed on a broken guard.**
    The same fresh clone is also (a) the **live published-skill catalog** the
    already-do-this / audit steps read (`skills/<bucket>/*/SKILL.md`,
    `.claude-plugin/plugin.json`) and (b) the **fetched-fresh harness**
@@ -92,8 +107,8 @@ Then layer on the Consumer specifics:
    | Env var | Consumer value | Prompt use |
    |---|---|---|
    | `MIRROR_DIR` | the mirror clone (or native `knowledge/` if `IS_KNOWLEDGE_SOURCE`) | KB read |
-   | `SKILL_DIR` | the install dir, e.g. `~/.claude/skills/apply-agent-research` | `python3 $SKILL_DIR/lib/cli.py {gate,file,comment}` |
-   | `SKILLS_SRC` | the fresh `dividedby/skills` clone root | published-skill catalog + installed-skills snapshot |
+   | `SKILL_DIR` | `$RUNNER_TEMP/skills-src/skills/meta/apply-agent-research` (from fresh clone) | `python3 $SKILL_DIR/lib/cli.py {gate,file,comment}` |
+   | `SKILLS_SRC` | `$RUNNER_TEMP/skills-src` (fresh `dividedby/skills` clone root) | published-skill catalog + installed-skills snapshot |
    | `PRIVATE_MARKERS` | this repo's private markers (space-separated; empty if fully public) | expanded to repeatable `--marker` on every guarded `file`/`comment` |
    | `SKILLS_TRACKER_TOKEN` | the cross-repo PAT (below) | **role discriminator** (set → consumer mode) + cross-repo GH auth |
 

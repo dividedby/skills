@@ -59,6 +59,13 @@ and versioned conservatively.
   (apply-agent-research: host/consumer/producer), where no single shared body
   exists to host.
 
+  > **Carve-out lifted by [ADR 0029](0029-apply-agent-research-joins-the-reusable-body-rail.md):**
+  > spike #404 disproved the "body forks on mode" premise — host/consumer/producer
+  > are env-wiring (`SKILLS_TRACKER_TOKEN` presence + an `is-knowledge-source` input),
+  > not forks — so `apply-agent-research` now rides the same `workflow_call`
+  > reusable-body rail. The "remaining vendored surface" below reduces to one
+  > reusable body + five thin callers.
+
 - The remaining vendored surface — the `apply-agent-research` full-copy envelope
   (all 5 repos) and the two thin caller stubs per-consumer — is now guarded by a
   scheduled divergence report (`check-workflow-drift.yml`, weekly Sun 04:00 UTC,
