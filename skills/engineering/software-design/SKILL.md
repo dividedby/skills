@@ -1,5 +1,6 @@
 ---
 name: software-design
+disable-model-invocation: true
 description: >
   Orchestrates a multi-module design session — prereq self-check, frontend
   routing stamp, issue clustering, module/seam design via codebase-design,

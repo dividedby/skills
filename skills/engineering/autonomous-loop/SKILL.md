@@ -1,5 +1,6 @@
 ---
 name: autonomous-loop
+disable-model-invocation: true
 description: >
   Take a briefed backlog to a safely-running unattended ("AFK") agent loop —
   the discipline of running unattended, not a loop runtime.

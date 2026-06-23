@@ -1,5 +1,6 @@
 ---
 name: staleness-audit
+disable-model-invocation: true
 description: >
   Audit a repo's pinned toolchain versions for staleness and emit a ranked
   report — the complement to Dependabot's library bumps. Safe in-major bumps are

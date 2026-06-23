@@ -1,5 +1,6 @@
 ---
 name: context-firewall
+disable-model-invocation: true
 description: >
   Restructure a long, multi-item agent run so output quality doesn't decay as
   the context window fills — handle each item in a fresh, discarded sub-agent

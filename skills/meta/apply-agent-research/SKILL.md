@@ -1,5 +1,6 @@
 ---
 name: apply-agent-research
+disable-model-invocation: true
 description: >
   Apply an external agent-research knowledge base to a repo's agent-meta: read a
   public knowledge mirror and the host repo's own CONTEXT.md / CLAUDE.md / docs/adr,
