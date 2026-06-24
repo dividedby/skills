@@ -39,7 +39,7 @@ report issue per run** — the complement to Dependabot, which owns library deps
   fires every Monday and a `first-monday-gate` job skips all but the first — see the
   harness doc's hash-stagger note). A toolchain pin drifts on the order of weeks, so
   a monthly pass catches a stale line without issue-spam (contrast the arch loop's
-  weekly Friday-evening slot).
+  3×/week Mon/Wed/Sat slot).
 - **Input:** none to fetch — the input *is* the checked-out repo's pins. The skill
   reads `CONTEXT.md` + `docs/adr/` for risk framing if present, but needs neither.
 - **Web is required for the validate station.** Grant **`WebSearch` + `WebFetch`**:

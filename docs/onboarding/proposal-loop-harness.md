@@ -183,7 +183,7 @@ rarely; when it does, it is a **manual rollout** across the ~3 owned repos.
 - **`python3 harness/cli.py publish --log F --label L [--label-color H]
   [--label-description T] [--cost-file F] [--heading H] [--repo R]`** —
   publish-seam loops only. Parses the agent's `<output>` JSON + raw `<body-N>`
-  blocks (or the legacy single `<body>`), files ≤5 issues under `L` (cap in code —
+  blocks (or the legacy single `<body>`), files ≤2 issues under `L` (cap in code —
   [ADR 0019](../adr/0019-proposal-loops-file-a-budgeted-ranked-top-k.md)), writes
   the rich step summary, and emits `issue_url` / `issue_urls` to
   `$GITHUB_OUTPUT`. **Recovers loudly, then fails loud** — on a malformed
@@ -226,12 +226,11 @@ that caused it ([ADR 0004](../adr/0004-runbook-helpers-are-python-stdlib.md)).
   ```
 
   The hash picks only the **minute and hour within the assigned day**; the
-  day/frequency stays as the cadence dictates. The shared **Friday-evening consumer
+  day/frequency stays as the cadence dictates. The shared **Mon/Wed/Sat consumer
   window** (where `apply` / `improve-codebase-architecture` across all repos consume
-  the same week's Friday synthesis) is `WINDOW_START=0`, `WINDOW_HOURS=4` on
-  **Saturday UTC** (`* * 6`) — Saturday 00–04 UTC **is** Friday 19–23 CT, and the
-  single `* * 6` mask avoids the UTC-midnight day-of-week straddle a literal
-  `* * 5` evening window would hit. **First-Monday cadence** (e.g. staleness-review):
+  the same run's synthesis) is `WINDOW_START=0`, `WINDOW_HOURS=4` on
+  **Mon/Wed/Sat UTC** (`* * 1,3,6`) — the `* * 1,3,6` mask avoids the UTC-midnight
+  day-of-week straddle a CT-evening window would hit. **First-Monday cadence** (e.g. staleness-review):
   POSIX cron can't express it, so fire every Monday and gate the job on
   `[ "$(date -u +%-d)" -le 7 ]`.
 - **`concurrency` with `cancel-in-progress: false`** so a long run is never

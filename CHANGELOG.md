@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- `docs/onboarding/` corrected to post-amendment ADR 0019 regime: cadence updated to 3×/week Mon/Wed/Sat (`* * 1,3,6`), per-run cap updated to ≤2 issues, per-channel cap framing replaced with shared-budget language (one budgeted gate pass, ADR 0019 superseded ADR 0011) (#440)
+- `CONTEXT.md` Guard hook definition: appended output convention (silent on pass, diagnostic-to-stderr on block) (#441)
+
 ### Added
 
 - ADR 0032: consolidate three write PATs (`SKILLS_TRACKER_TOKEN`, `DRIFT_CHECK_TOKEN`, unused agent-research write PAT) into one `ISSUES_TOKEN` (all repos, Issues:RW + Contents:read); host/consumer mode becomes the explicit `is-tracker-host` workflow input read by `cli.py` as `IS_TRACKER_HOST` (not token presence); the `repo == dividedby/skills` swap guard in `cli.py` is retained and gains importance with the wider token scope; Option-B fallback keeps existing secrets working during transition (#424)
