@@ -17,6 +17,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 - ADR 0033: context-firewall folds into autonomous-loop as a supporting doc (`FIREWALL.md`), not a standalone skill — supersedes ADR 0012 (the predicted standalone loopless invoker never materialized); the firewall *knowledge* is kept while the standalone trigger is dropped; de-registration + doc re-cut tracked in #448 (#446)
 - ADR 0032: consolidate three write PATs (`SKILLS_TRACKER_TOKEN`, `DRIFT_CHECK_TOKEN`, unused agent-research write PAT) into one `ISSUES_TOKEN` (all repos, Issues:RW + Contents:read); host/consumer mode becomes the explicit `is-tracker-host` workflow input read by `cli.py` as `IS_TRACKER_HOST` (not token presence); the `repo == dividedby/skills` swap guard in `cli.py` is retained and gains importance with the wider token scope; Option-B fallback keeps existing secrets working during transition (#424)
 - `check-label-drift`: fleet-wide, report-only label-doc drift detector (mirrors `check-workflow-drift`); weekly cron Sun 05:00 UTC; classifies four drift shapes per consumer repo and files one `label-drift` issue naming `setup-dividedby-skills` as the fixer; graceful no-op when `DRIFT_CHECK_TOKEN` is absent (#415)
+- Top-level `CHANGELOG.md` — tracks all notable changes to the two published surfaces (the skills catalog and `harness/` Python) in Keep a Changelog format (#397)
+- `CODING_STANDARDS.md` — authoring and code-style rules for markdown skills and `harness/` Python (#398)
+- `docs/agents/skill-authoring.md` — composition patterns and editorial-judgement examples (ADR 0002 edge cases) for authoring new skills (#405)
 
 ### Removed
 
@@ -44,9 +47,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 - ADR 0031: cross-repo Actions tokens are per-role fine-grained PATs — cost-scrape consolidates to a single `ACTIONS_TOKEN` scoped to all repositories (current and future) for zero-touch onboarding; tracker-write and drift-read stay repo-scoped; rejects classic PAT and GitHub App; org secrets unavailable on a User account (#424)
 - `apply-agent-research` prompt: candidate log step (5a) emits one line per KB candidate to the Actions step summary — target surface plus advanced/dropped reason — so pre-gate reasoning is visible alongside outcomes (#421)
 - `apply-agent-research` cli.py: `find-open` subcommand for cross-repo dedup reads without a bare `gh` call (#418)
-- Top-level CHANGELOG.md (#397)
-- CODING_STANDARDS.md (#398)
-- docs/agents/skill-authoring.md (#405)
 - `project-claude-config`: detect situational sections and propose `<important if>` gating (#399)
 - `project-claude-config`: detect label-doc drift and hand off to `setup-dividedby-skills` (#402)
 - `setup-dividedby-skills`: add must-fix outcome + force-canonical mode for drifted label conventions (#393)
