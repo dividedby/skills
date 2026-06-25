@@ -62,7 +62,10 @@ Guardrail (2) is one point on a spectrum of how much an iteration is trusted to
   Proposal-loop family).
 - **Apply-on-branch** — commits and opens PRs, never merges; a human merges.
 - **Apply-and-merge-on-green** — merges its own PR when the gate passes (the
-  #64→#66 burn-down).
+  #64→#66 burn-down). Per-item close-out: `/flow-pr` (branch cutting, commit,
+  PR open, review gate, CI gate, merge). Work lands on branches/PRs, never
+  `main`; every iteration passes its gate or halts; an iteration/cost/time cap
+  bounds the run.
 
 Applying loops are first-class. Choose the strictest point that still lets the
 loop do its job — not propose-only by default.
@@ -122,11 +125,13 @@ firewall is what keeps the last issue as sharp as the first.
      per-pickup reconciliation is distinct from the pre-run brief-*shape* check
      (SKILL.md element 5), which runs once before the loop.
 5. **Gate or halt** — the sub-agent runs the issue's feedback gate; a red gate
-   halts that item without landing work. Green → it opens a branch + PR
-   (guardrail 2), never `main`.
-6. **Flush, then drop** — append the completed issue's outcome to the progress
-   file, drop its detail from the session, continue lean. This is the same
-   progress file that makes monitor/stop/resume work.
+   halts that item without landing work. Green → close out via `/flow-pr`
+   (branch, PR, review gate, CI gate, merge — apply-and-merge-on-green end of
+   the spectrum), never `main`.
+6. **Flush, then drop** — flush the completed item's compact outcome to the
+   progress file, then drop its detail from context (mechanics:
+   [FIREWALL.md § 4](FIREWALL.md)). This is what makes monitor/stop/resume
+   work and keeps the next item as sharp as the first.
 7. **Cap** — backlog size is the natural ceiling; add an iteration or
    wall-clock cap so a stuck issue can't spin forever (guardrail 4).
 
