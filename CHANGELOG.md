@@ -2,13 +2,13 @@
 
 All notable changes to this project's two published surfaces — the skills catalog and the `harness/` Python — are documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
 ## [Unreleased]
 
 ### Added
 
-- Centralized weekly changelog-health evaluator: `changelog-health.yml` workflow + `harness/prompts/changelog-health.md` prompt — flag-not-rewrite advisory loop (reads `CHANGELOG.md` against recent `git log` and the eight-row grading checklist in `docs/agents/changelog-guideline.md`; proposes `## [Unreleased]` lines and rubric citations; never edits `CHANGELOG.md`; not a CI gate); proven on the skills repo, enrolled={dividedby/skills}, fans out to 6 repos in #458; harness read from local checkout (ADR 0014); budget backstop $3.00 (ADR 0019) (#457)
+- Centralized weekly changelog-health evaluator: `changelog-health.yml` workflow + `harness/prompts/changelog-health.md` prompt — flag-not-rewrite advisory loop (reads `CHANGELOG.md` against recent `git log` and the eight-row grading checklist in `docs/agents/changelog-guideline.md`; proposes `## [Unreleased]` lines and rubric citations; never edits `CHANGELOG.md`; not a CI gate); proven on the skills repo; harness read from local checkout (ADR 0014); budget backstop $3.00 (ADR 0019) (#457)
 - `docs/agents/changelog-guideline.md` — fleet CHANGELOG quality rubric distilling Keep a Changelog 2.0.0 (six-category taxonomy, `## [Unreleased]` discipline, the 2.0.0 conventions); every rule is phrased as a check against a `git log` + changelog diff so the doc doubles as the #457 evaluator's grading criteria (ADR 0034, #456)
 - ADR 0034: fleet changelogs are hand-maintained + LLM-evaluated, not semantic-release — extends #397's hand-maintained choice fleet-wide and layers on a weekly flag-not-rewrite evaluator nudge; rejects semantic-release (a release-pipeline gate vs the maintainer's anti-gate constraint; changelog generation not cleanly modular; fleet-wide conventional-commits unwarranted) (#456)
 - `autonomous-loop/EVALUATOR-GATE.md` — evaluator-gate detail (generator/evaluator split, rubric design, calibration, sprint contracts, cost heuristics) disclosed from `SKILL.md` element 6 to a supporting doc, cutting SKILL.md sprawl (#448)
@@ -23,6 +23,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- `changelog-health` evaluator fanned out from 1 to 6 enrolled repos (agent-research, claude-config, goodreads-bot, infra, moodreader, skills) via a GitHub Actions matrix — one job per repo per weekly run; single-open-advisory dedup moved from the agent prompt into `cli.py publish` (`--dedup-open`); the agent now runs no `gh` and holds no write credential (default token is `contents: read` only) (#458)
+- `workflow-onboarding`: `source:changelog-health` added to the canonical LOOP label set — repos onboarded after this change get the label provisioned automatically (#461)
 - `autonomous-loop` supporting docs tightened for sprawl: `FIREWALL.md` dedups the vocabulary/body overlap, the repeated "compact return" statement, the §3/§4 forced-compaction restatement, and the anti-patterns list; `RUNNING-AFK.md` binds the apply-and-merge gate constraints to guardrails 2–4 by reference; `EVALUATOR-GATE.md` no-op prune (#448)
 - `autonomous-loop` SKILL.md rewritten to the /writing-great-skills standard; `/flow-pr` wired as the per-item close-out at the apply-and-merge-on-green end of the gate spectrum; RUNNING-AFK.md flush/drop deduped to FIREWALL.md (#448)
 - `/context-firewall` cross-references in `autonomous-loop/SKILL.md`, `autonomous-loop/RUNNING-AFK.md`, and `docs/agents/skill-authoring.md` repointed to `FIREWALL.md`; `context-firewall` token removed from `docs/agents/installed-skills.md` (#448)

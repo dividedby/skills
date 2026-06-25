@@ -441,6 +441,71 @@ class PublishCommandTest(unittest.TestCase):
         self.assertEqual(code, 1)
         run.assert_not_called()
 
+    def _publish_dedup(self, extra=None):
+        """Like _publish but passes --dedup-open."""
+        argv = ["publish", "--log", self.log, "--label", "source:changelog-health",
+                "--heading", "Changelog health", "--summary-file", self.summary,
+                "--output-file", self.output, "--repo", "owner/name", "--dedup-open"]
+        return _run(argv + (extra or []))
+
+    def test_dedup_open_skips_when_advisory_exists(self):
+        """--dedup-open + open advisory → no issue create, exit 0, summary says 'already open'."""
+        self._log('<output>\n{"status": "proposed", "title": "t", "oneLineSummary": "s"}\n</output>\n'
+                  "<body>\nbody text\n</body>\n")
+        calls = []
+
+        def fake_run(cmd, **kw):
+            calls.append(cmd)
+            if cmd[:3] == ["gh", "issue", "list"]:
+                return SimpleNamespace(returncode=0, stdout='[{"url":"https://github.com/owner/name/issues/1"}]')
+            return SimpleNamespace(returncode=0, stdout="")
+
+        with mock.patch("cli.subprocess.run", side_effect=fake_run):
+            code, out = self._publish_dedup()
+
+        self.assertEqual(code, 0)
+        self.assertIn("SKIPPED", out)
+        self.assertIn("already open", out)
+        # No issue create call
+        create_calls = [c for c in calls if c[:3] == ["gh", "issue", "create"]]
+        self.assertEqual(create_calls, [])
+        with open(self.summary) as fh:
+            self.assertIn("already open", fh.read())
+
+    def test_dedup_open_proceeds_when_none_open(self):
+        """--dedup-open + no open advisory → label ensure + issue create proceed normally."""
+        self._log('<output>\n{"status": "proposed", "title": "t", "oneLineSummary": "s"}\n</output>\n'
+                  "<body>\nbody text\n</body>\n")
+
+        def fake_run(cmd, **kw):
+            if cmd[:3] == ["gh", "issue", "list"]:
+                return SimpleNamespace(returncode=0, stdout="[]")
+            if cmd[:3] == ["gh", "issue", "create"]:
+                return SimpleNamespace(returncode=0, stdout="https://github.com/owner/name/issues/2\n")
+            return SimpleNamespace(returncode=0, stdout="")
+
+        with mock.patch("cli.subprocess.run", side_effect=fake_run):
+            code, out = self._publish_dedup()
+
+        self.assertEqual(code, 0)
+        self.assertIn("Published", out)
+
+    def test_no_dedup_open_flag_skips_list_call(self):
+        """Without --dedup-open, gh issue list is never called (regression guard)."""
+        self._log('<output>\n{"status": "skipped", "reason": "all quiet"}\n</output>\n')
+        calls = []
+
+        def fake_run(cmd, **kw):
+            calls.append(cmd)
+            return SimpleNamespace(returncode=0, stdout="")
+
+        with mock.patch("cli.subprocess.run", side_effect=fake_run):
+            code, out = self._publish()
+
+        self.assertEqual(code, 0)
+        list_calls = [c for c in calls if c[:3] == ["gh", "issue", "list"]]
+        self.assertEqual(list_calls, [])
+
 
 class FetchRubricCommandTest(unittest.TestCase):
     def setUp(self):
