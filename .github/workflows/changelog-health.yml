@@ -89,8 +89,11 @@ jobs:
           # rubric doc (docs/agents/changelog-guideline.md), decides whether
           # drift or violations exist, and emits a single <output> JSON block
           # plus a raw <body> block. It does NOT file the issue — the Publish
-          # step does, via the harness, so the single-open-advisory invariant
-          # and the provenance label live in code.
+          # step does, via the harness, so the provenance label and the per-run
+          # issue cap live in code. (The single-open-advisory dedup is enforced
+          # in the prompt's find-open check — see the prompt's step 2 — not in
+          # code; publish itself does not dedup. Acceptable for the one-repo
+          # rollout; the prompt names the in-code upgrade path for fan-out.)
           #
           # gh access is scoped to read-only subcommands (list/view) so the
           # agent *cannot* create an issue itself — no `gh issue create` or
