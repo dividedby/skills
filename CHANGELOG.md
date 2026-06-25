@@ -8,12 +8,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- `autonomous-loop/FIREWALL.md` — generic context-hygiene supporting doc (per-item sub-agent, budget checkpoint, compaction, flush/drop); pointable by any multi-item skill, loop or loopless; migrated from `context-firewall` (ADR 0033, #448)
 - ADR 0033: context-firewall folds into autonomous-loop as a supporting doc (`FIREWALL.md`), not a standalone skill — supersedes ADR 0012 (the predicted standalone loopless invoker never materialized); the firewall *knowledge* is kept while the standalone trigger is dropped; de-registration + doc re-cut tracked in #448 (#446)
 - ADR 0032: consolidate three write PATs (`SKILLS_TRACKER_TOKEN`, `DRIFT_CHECK_TOKEN`, unused agent-research write PAT) into one `ISSUES_TOKEN` (all repos, Issues:RW + Contents:read); host/consumer mode becomes the explicit `is-tracker-host` workflow input read by `cli.py` as `IS_TRACKER_HOST` (not token presence); the `repo == dividedby/skills` swap guard in `cli.py` is retained and gains importance with the wider token scope; Option-B fallback keeps existing secrets working during transition (#424)
 - Removed Option-B dual-secret fallbacks now that `SKILLS_TRACKER_TOKEN` and `DRIFT_CHECK_TOKEN` are decommissioned (ADR 0032 cutover complete): `apply-agent-research-reusable.yml` drops `SKILLS_TRACKER_TOKEN` secret declaration and fallback; `check-workflow-drift.yml` and `check-label-drift.yml` rename env var to `ISSUES_TOKEN` and drop `DRIFT_CHECK_TOKEN` fallback; docstrings and NOTICE messages in `check_workflow_drift.py` and `check_label_drift.py` simplified accordingly
 
+### Removed
+
+- `context-firewall` skill retired — de-registered from `plugin.json`, top-level `README.md`, and `skills/engineering/README.md`; directory deleted; knowledge preserved in `autonomous-loop/FIREWALL.md` (ADR 0033, #448)
+
 ### Changed
 
+- `/context-firewall` cross-references in `autonomous-loop/SKILL.md`, `autonomous-loop/RUNNING-AFK.md`, and `docs/agents/skill-authoring.md` repointed to `FIREWALL.md`; `context-firewall` token removed from `docs/agents/installed-skills.md` (#448)
 - `docs/onboarding/` corrected to post-amendment ADR 0019 regime: cadence updated to 3×/week Mon/Wed/Sat (`* * 1,3,6`), per-run cap updated to ≤2 issues, per-channel cap framing replaced with shared-budget language (one budgeted gate pass, ADR 0019 superseded ADR 0011) (#440)
 - `CONTEXT.md` Guard hook definition: appended output convention (silent on pass, diagnostic-to-stderr on block) (#441)
 - `apply-agent-research` cli.py `_gh_env`: reads `ISSUES_TOKEN` instead of `SKILLS_TRACKER_TOKEN`; module-level token invariant comment updated

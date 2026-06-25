@@ -7,10 +7,6 @@ and auditing software projects.
 
 Takes a briefed backlog to a safely-running unattended agent loop — owns the stop condition, HITL→AFK graduation, iteration/cost/time cap, and monitor/stop/resume.
 
-## [`context-firewall`](./context-firewall/SKILL.md)
-
-Restructures a long multi-item agent run so each item gets a fresh sub-agent context, preventing quality decay as the window fills.
-
 ## [`doc-it`](./doc-it/SKILL.md)
 
 Generates or patches reference documentation (README, API docs, onboarding guide, CHANGELOG) from source, and audits ADRs and CONTEXT.md for staleness.

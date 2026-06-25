@@ -41,7 +41,7 @@ Matt Pocock's skill suite (`mattpocock/skills`, upstream of this repo's
 in `~/.claude/skills/`:
 
 `apply-agent-research`, `ask-matt`, `autonomous-loop`, `cba-searching`,
-`codebase-design`, `context-firewall`, `decision-mapping`, `diagnosing-bugs`,
+`codebase-design`, `decision-mapping`, `diagnosing-bugs`,
 `doc-it`, `domain-modeling`, `find-skills`, `flow-pr`, `frontend-design`,
 `grill-with-docs`, `grilling`, `handoff`, `implement`,
 `improve-codebase-architecture`, `playwright-cli`, `project-claude-config`,

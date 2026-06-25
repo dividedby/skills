@@ -50,18 +50,18 @@ A two-line wrapper: runs `/grilling` with the `/domain-modeling` skill in scope.
 an architectural decision needs to be recorded. `software-design` defers to this
 pair when new terms or trade-offs surface mid-session.
 
-### `context-firewall`
+### `FIREWALL.md` (copy-in pattern)
 
-**File:** `skills/engineering/context-firewall/SKILL.md`
+**File:** `skills/engineering/autonomous-loop/FIREWALL.md`
 
-Not an orchestrator in the sub-skill sense. Composes into skill-authoring when
-a skill's workflow processes many items in sequence — flag the skill to prescribe
-the firewall pattern (fresh sub-agent context per item, budget checkpoints,
-intentional compaction) rather than letting context fill silently.
+Not a skill and not an orchestrator — a generic context-hygiene discipline doc.
+Copy a reference into any multi-item skill (loop or loopless) rather than
+authoring a new sub-agent runtime: point to FIREWALL.md for the per-item
+sub-agent shape, budget-checkpoint placement, and compaction mechanics.
 
-**Trigger for composition:** a skill's workflow runs a loop over a backlog or
-processes multiple documents in one context. Include the `context-firewall`
-discipline in the skill's multi-item workflow section.
+**Trigger for composition:** a skill's workflow runs over a backlog or processes
+multiple items in sequence. Reference the FIREWALL.md discipline in the skill's
+multi-item section rather than re-deriving it inline.
 
 ### `autonomous-loop`
 

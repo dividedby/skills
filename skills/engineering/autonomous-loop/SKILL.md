@@ -35,7 +35,7 @@ the five elements below — it never authors the backlog or builds a new runtime
   backlog (how #64→#66 ran). Stops when the backlog empties.
 
 > **Per-item routing:** use an in-session sub-agent when a session exists;
-> headless `claude -p` only where there is none — see `/context-firewall` step 2.
+> headless `claude -p` only where there is none — see [FIREWALL.md](FIREWALL.md) step 2.
 
 ## What this skill owns
 
@@ -72,8 +72,8 @@ is unacceptable — not the universal rule.
 
 ### 4. Monitor, stop, resume
 
-The loop writes a durable **progress file** (the same artifact
-`/context-firewall` flushes to). It lets you watch progress, stop cleanly, and
+The loop writes a durable **progress file** (flush/drop mechanics:
+[FIREWALL.md](FIREWALL.md)). It lets you watch progress, stop cleanly, and
 resume by reading the file and skipping done items. Persisted progress is what
 makes stopping safe.
 
