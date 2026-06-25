@@ -76,7 +76,7 @@ pushes to the default branch.
 
 Start from the [harness skeleton](./proposal-loop-harness.md) (fetch-fresh,
 `contents: read` / `issues: write`, hash-slotted off-the-hour cron in the shared
-Friday-evening window + `workflow_dispatch`, scoped tools, **pinned `--model`
+Mon/Wed/Sat window + `workflow_dispatch`, scoped tools, **pinned `--model`
 (default `sonnet`)**, step-summary with the `total_cost_usd=…` cost-ledger line).
 Then layer on the Consumer specifics:
 
@@ -127,16 +127,16 @@ Then layer on the Consumer specifics:
      natively; **skip the mirror clone** and point the skill's `MIRROR_DIR` (or
      equivalent) at the local `knowledge/` path. Schedule **after** this repo's
      own synthesis run so it reads fresh knowledge.
-   - **Slot the cron by the harness hash rule** (Friday-evening window, Saturday
-     UTC `* * 6`) so the loop self-staggers against every other Consumer with no
-     schedule coordination — the upstream corpus's Friday-morning synthesis lands
+   - **Slot the cron by the harness hash rule** (Mon/Wed/Sat window,
+     `* * 1,3,6`) so the loop self-staggers against every other Consumer with no
+     schedule coordination — the upstream corpus's synthesis lands
      well before the window opens, so the mirror is fresh.
    - Invoke Claude using **this repo's existing convention** (e.g. match
      `anthropics/claude-code-base-action` if its other workflows use it).
 
 3. **Channel outputs ([ADR 0019](../adr/0019-proposal-loops-file-a-budgeted-ranked-top-k.md)) —
-   at most **five issues per run, shared across all channels** via one budgeted
-   gate pass, zero fine (five is a ceiling, not a target).** Into the repo's
+   at most **two issues per run, shared across all enabled channels** via one budgeted
+   gate pass, zero fine (two is a ceiling, not a target).** Into the repo's
    **own** tracker (ensure each label idempotently in the workflow):
    - **self-improvement** (`source:agent-research`) — agent-meta improvements
      from KB notes.
@@ -182,8 +182,9 @@ Then layer on the Consumer specifics:
      Apply the existing `skill-promotion` label; never create it.
 
    Steps 5–6 write to `dividedby/skills`, so they use **`ISSUES_TOKEN`**,
-   never the default `GITHUB_TOKEN` (own-repo scoped → 403). Each is its own
-   per-channel ≤1 output.
+   never the default `GITHUB_TOKEN` (own-repo scoped → 403). The `+1` aggregation
+   behavior (ADR 0006) applies independently of the shared budget — a matching open
+   issue always gets a `+1` comment regardless of how many new issues the budget allows.
 
 7. **Leak guard on every filed body — enforced by the filing path, not by memory.**
    Every issue and +1 is filed through `cli.py file` / `cli.py comment`, which run
@@ -235,16 +236,16 @@ Then layer on the Consumer specifics:
 ## Verify
 
 `workflow_dispatch` a manual run. Confirm it: clones the mirror (or reads native
-knowledge); runs the guard tests green; files **≤1 per channel** into this repo's
+knowledge); runs the guard tests green; files **≤2 issues per run, shared across all enabled channels** (ADR 0019 superseded ADR 0011's per-channel cap — one budgeted gate pass) into this repo's
 own tracker (or prints `SKIPPED: <channel>: …`); and — if warranted — files-or-+1's
-≤1 `skill-request` and/or ≤1 `skill-promotion` in `dividedby/skills`. Confirm the
+a `skill-request` and/or a `skill-promotion` in `dividedby/skills`. Confirm the
 step summary carries the `total_cost_usd=…  duration_ms=…  num_turns=…` ledger
 line (present even on a failed run). Watch the run; report the issue links.
 
 ## Guardrails (do not violate)
 
 - The loop **proposes, never applies**: no edits, commits, or PRs — only issues.
-  At most one issue **per channel** per run; zero is fine.
+  At most two issues per run, shared across all enabled channels (one budgeted gate pass — ADR 0019 superseded ADR 0011's per-channel cap); zero is fine.
 - Every filed body passes the real leak guard; no private content reaches a public
   tracker. Keep prose generalized regardless.
 - Duplicate `skill-request`s and `skill-promotion`s **aggregate** (+1); they never

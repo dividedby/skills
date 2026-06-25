@@ -41,6 +41,7 @@ impossible. Proposed/audited via the `config/` skill's (`project-claude-config`)
 as a standalone skill. A project-scope guard may re-declare a global one when the
 run lacks global config (CI/AFK) — see
 [ADR 0013](./docs/adr/0013-project-scope-hooks-may-redeclare-global-guards-for-ci.md).
+Output convention: silent on pass (no output, exit 0); on a block, emit to stderr exactly the diagnostic the agent needs to correct course — no more — and exit non-zero.
 _Avoid_: safety hook, blocker, validator.
 
 **Supporting file**:

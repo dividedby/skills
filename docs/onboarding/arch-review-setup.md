@@ -14,9 +14,9 @@ first**; this doc is only the deltas.
 - **Skill source:** `mattpocock/skills` →
   `skills/engineering/improve-codebase-architecture` (not `dividedby/skills`).
 - **Provenance label:** `source:architecture-review`.
-- **Cadence:** weekly, in the shared **Friday-evening window** — slot the cron by
+- **Cadence:** 3×/week (Mon/Wed/Sat), in the shared **Mon/Wed/Sat window** — slot the cron by
   the harness hash rule (`sha1("{repo}/improve-codebase-architecture")` within the
-  Saturday-UTC `* * 6` band). It has no corpus input, so it only needs to avoid
+  `* * 1,3,6` band). It has no corpus input, so it only needs to avoid
   colliding with the other loops' minutes, which the hash gives for free.
 - **Input:** none to fetch — the input *is* the checked-out repo. The skill reads
   `CONTEXT.md` + `docs/adr/` for domain language; without them it still runs, just
@@ -91,7 +91,7 @@ first**; this doc is only the deltas.
   whole block (see #117). The **harness `publish` seam** (`harness/cli.py publish`,
   fetched fresh — [ADR 0014](../adr/0014-harness-is-fetched-fresh-only-the-workflow-envelope-is-vendored.md))
   parses the JSON, copies each `<body-N>` verbatim, and runs `gh issue create` — so
-  the five-proposals-per-run cap and the provenance label live **in code**, not in
+  the two-proposals-per-run cap and the provenance label live **in code**, not in
   prompt-adherence, and a missing/garbled block **fails the run loudly** rather
   than skipping silently. It is a *tested stdlib parser*, replacing the brittle
   `sed`/`jq` hand-escaping that caused #117/#211. It writes the step summary
@@ -129,7 +129,7 @@ downstream repo clones `dividedby/skills` into a temp dir for it — see
 3. Ensure the `CLAUDE_CODE_OAUTH_TOKEN` secret exists.
 4. (Recommended) add a `CONTEXT.md` + `docs/adr/` so proposals speak the repo's
    own language.
-5. `workflow_dispatch` once to verify it files ≤5 issues (or skips), then let the
+5. `workflow_dispatch` once to verify it files ≤2 issues (or skips), then let the
    cron take over.
 
 A repo can run **both** this loop and the
