@@ -15,11 +15,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 - `autonomous-loop/FIREWALL.md` — generic context-hygiene supporting doc (per-item sub-agent, budget checkpoint, compaction, flush/drop); pointable by any multi-item skill, loop or loopless; migrated from `context-firewall` (ADR 0033, #448)
 - ADR 0033: context-firewall folds into autonomous-loop as a supporting doc (`FIREWALL.md`), not a standalone skill — supersedes ADR 0012 (the predicted standalone loopless invoker never materialized); the firewall *knowledge* is kept while the standalone trigger is dropped; de-registration + doc re-cut tracked in #448 (#446)
 - ADR 0032: consolidate three write PATs (`SKILLS_TRACKER_TOKEN`, `DRIFT_CHECK_TOKEN`, unused agent-research write PAT) into one `ISSUES_TOKEN` (all repos, Issues:RW + Contents:read); host/consumer mode becomes the explicit `is-tracker-host` workflow input read by `cli.py` as `IS_TRACKER_HOST` (not token presence); the `repo == dividedby/skills` swap guard in `cli.py` is retained and gains importance with the wider token scope; Option-B fallback keeps existing secrets working during transition (#424)
-- Removed Option-B dual-secret fallbacks now that `SKILLS_TRACKER_TOKEN` and `DRIFT_CHECK_TOKEN` are decommissioned (ADR 0032 cutover complete): `apply-agent-research-reusable.yml` drops `SKILLS_TRACKER_TOKEN` secret declaration and fallback; `check-workflow-drift.yml` and `check-label-drift.yml` rename env var to `ISSUES_TOKEN` and drop `DRIFT_CHECK_TOKEN` fallback; docstrings and NOTICE messages in `check_workflow_drift.py` and `check_label_drift.py` simplified accordingly
+- `check-label-drift`: fleet-wide, report-only label-doc drift detector (mirrors `check-workflow-drift`); weekly cron Sun 05:00 UTC; classifies four drift shapes per consumer repo and files one `label-drift` issue naming `setup-dividedby-skills` as the fixer; graceful no-op when `DRIFT_CHECK_TOKEN` is absent (#415)
 
 ### Removed
 
 - `context-firewall` skill retired — de-registered from `plugin.json`, top-level `README.md`, and `skills/engineering/README.md`; directory deleted; knowledge preserved in `autonomous-loop/FIREWALL.md` (ADR 0033, #448)
+- **Breaking:** Option-B dual-secret fallbacks removed now that `SKILLS_TRACKER_TOKEN` and `DRIFT_CHECK_TOKEN` are decommissioned (ADR 0032 cutover complete) — consumer repos must use `ISSUES_TOKEN`: `apply-agent-research-reusable.yml` drops the `SKILLS_TRACKER_TOKEN` secret declaration and fallback; `check-workflow-drift.yml` and `check-label-drift.yml` rename the env var to `ISSUES_TOKEN` and drop the `DRIFT_CHECK_TOKEN` fallback; docstrings and NOTICE messages in `check_workflow_drift.py` and `check_label_drift.py` simplified accordingly
+- `tweakcc-maint` archived and decommissioned: dropped from the workflow-drift and label-drift fleet detectors; ADR 0014 updated to reflect that the reusable-rail migration (ADR 0029) covers the active consumer fleet only (moodreader, agent-research, goodreads-bot + skills canary) (#416)
 
 ### Changed
 
@@ -39,7 +41,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 - `harness/prompts/apply-agent-research.md`: discriminator rationale updated (explicit flag, not token absence); `$SKILLS_TRACKER_TOKEN` refs → `$ISSUES_TOKEN`
 - Docs (`skill-request-flow.md`, `skill-promotion-flow.md`, `consumer-setup.md`, `proposal-loop-harness.md`, `staleness-setup.md`, `arch-review-setup.md`, `vendored-workflows.md`): `SKILLS_TRACKER_TOKEN`/`DRIFT_CHECK_TOKEN` → `ISSUES_TOKEN`; presence-discriminator framing → explicit-flag framing
 - ADR 0031: cross-repo Actions tokens are per-role fine-grained PATs — cost-scrape consolidates to a single `ACTIONS_TOKEN` scoped to all repositories (current and future) for zero-touch onboarding; tracker-write and drift-read stay repo-scoped; rejects classic PAT and GitHub App; org secrets unavailable on a User account (#424)
-- `check-label-drift`: fleet-wide, report-only label-doc drift detector (mirrors `check-workflow-drift`); weekly cron Sun 05:00 UTC; classifies four drift shapes per consumer repo and files one `label-drift` issue naming `setup-dividedby-skills` as the fixer; graceful no-op when `DRIFT_CHECK_TOKEN` is absent (#415)
 - `apply-agent-research` prompt: candidate log step (5a) emits one line per KB candidate to the Actions step summary — target surface plus advanced/dropped reason — so pre-gate reasoning is visible alongside outcomes (#421)
 - `apply-agent-research` cli.py: `find-open` subcommand for cross-repo dedup reads without a bare `gh` call (#418)
 - Top-level CHANGELOG.md (#397)
@@ -50,7 +51,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 - `setup-dividedby-skills`: add must-fix outcome + force-canonical mode for drifted label conventions (#393)
 - proposal-loop reusable workflows: SHA-pin actions, drop acceptEdits, scope allowedTools; Dependabot for actions (#394)
 - `apply-agent-research` folds onto the claude-loops-v1 reusable rail: one `workflow_call` body (`apply-agent-research-reusable.yml`) replaces the active consumers' full-copy envelopes; each repo vendors a thin caller stub; hardened (no acceptEdits, scoped allowedTools, SHA-pinned checkout); ADR 0029 (#417)
-- `tweakcc-maint` archived and decommissioned: dropped from the workflow-drift and label-drift fleet detectors; ADR 0014 updated to reflect that the reusable-rail migration (ADR 0029) covers the active consumer fleet only (moodreader, agent-research, goodreads-bot + skills canary) (#416)
 - `autonomous-loop`: added non-binary-quality evaluator gate section (generator/evaluator split, rubric design, calibration, sprint contracts, cost heuristics) (#430)
 
 ### Fixed
