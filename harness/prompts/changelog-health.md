@@ -22,33 +22,21 @@ the maintainer hand-applies (or ignores) the suggestion.
 
 ## Task
 
-Work through each repo in `$ENROLLED_REPOS` (space-separated). For this
-initial rollout there is exactly one repo; the loop is designed to fan out
-in a later ticket.
+One repo per job run (the matrix fans out at the workflow level). The repo
+under evaluation is checked out at your current working directory.
 
 For each repo:
 
 ### 1. Read the rubric
 
-Read `docs/agents/changelog-guideline.md` (from the checked-out skills repo,
-since skills IS the enrolled repo for this initial rollout). This is your
-grading criteria. Each of the eight rows in the **Grading checklist** table is
-a numbered rule you can cite in the advisory.
+Read the grading rubric from the absolute path given in your task message
+(`$SKILLS_DIR/docs/agents/changelog-guideline.md`). This is your grading
+criteria. Each of the eight rows in the **Grading checklist** table is a
+numbered rule you can cite in the advisory.
 
-### 2. Dedup: check for an open advisory
+### 2. Read the changelog and git log
 
-```
-gh issue list --label source:changelog-health --state open
-```
-
-If an open advisory already exists → emit `{"status":"skipped","reason":"advisory #N already open"}` and stop.
-
-<!-- ponytail: single-open-advisory enforced here rather than in the publish
-     step; upgrade path is in-place update (edit the issue body) when the loop
-     fans out to multiple repos and a per-repo open-issue check becomes
-     necessary. -->
-
-### 3. Read the changelog and git log
+Your current working directory IS the target repo.
 
 - Read `CHANGELOG.md` in full.
 - Identify the most recent dated `## [x.y.z] - YYYY-MM-DD` section (or, if
@@ -71,13 +59,13 @@ If an open advisory already exists → emit `{"status":"skipped","reason":"advis
 - Apply the eight grading-checklist rules to the current `## [Unreleased]`
   content. Cite rule numbers when flagging violations.
 
-### 4. Decide
+### 3. Decide
 
 - If the changelog is current (no missing notable entries AND no rule
   violations) → emit `{"status":"skipped","reason":"changelog current"}`.
-- If there is at least one missing entry or one violation → proceed to step 5.
+- If there is at least one missing entry or one violation → proceed to step 4.
 
-### 5. Draft the advisory
+### 4. Draft the advisory
 
 Write a single advisory body (the `<body>` block) containing:
 
@@ -155,9 +143,8 @@ Field rules:
 - **Read-only. You file nothing.** No commits, no edits, no `gh issue create`,
   no `gh issue comment`. The workflow publishes the advisory (and applies the
   `source:changelog-health` label) from your `<output>` + `<body>` blocks.
-- **One advisory per repo per run** — the dedup check in step 2 keeps at most
-  one open advisory per repo. When there is already an open advisory, skip
-  silently (the maintainer has the signal; a second issue adds noise).
+  The workflow's publish step also handles dedup (single-open-advisory) via
+  `--dedup-open` — you do not need to check for open advisories yourself.
 - **Flag, never rewrite.** The advisory proposes entries the maintainer
   hand-applies. It never modifies `CHANGELOG.md` or any other file.
 - **No questions.** There is no user.

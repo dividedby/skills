@@ -389,6 +389,18 @@ def _publish(args, out):
         with open(args.cost_file, encoding="utf-8") as fh:
             cost = fh.read().strip() or _NA
 
+    # Hoist early — needed by the dedup gate and all downstream exit paths.
+    repo = args.repo or os.environ.get("GH_REPO")
+    summary_file = args.summary_file or os.environ.get("GITHUB_STEP_SUMMARY")
+
+    if args.dedup_open:
+        existing = _find_open(args.label, repo)
+        if existing:
+            print(f"SKIPPED: advisory already open: {existing}", file=out)
+            _append(summary_file, _summary_skipped(
+                args.heading, cost, {"reason": f"advisory already open: {existing}"}))
+            return 0
+
     with open(args.log, encoding="utf-8") as fh:
         text = fh.read()
 
@@ -416,7 +428,6 @@ def _publish(args, out):
                 f"first {MAX_PROPOSALS} (in-code cap)",
                 file=out,
             )
-        repo = args.repo or os.environ.get("GH_REPO")
         _ensure_label(args.label, args.label_color, args.label_description, repo)
         filed = []
         for proposal in proposals:
@@ -431,7 +442,6 @@ def _publish(args, out):
                 os.unlink(body_path)
             print(f"Published {url}", file=out)
             filed.append({"url": url, "oneLineSummary": proposal["oneLineSummary"]})
-        summary_file = args.summary_file or os.environ.get("GITHUB_STEP_SUMMARY")
         gh_output = args.output_file or os.environ.get("GITHUB_OUTPUT")
         _append(gh_output, f"issue_url={filed[0]['url']}\n")
         _append(gh_output, "issue_urls=" + ",".join(f["url"] for f in filed) + "\n")
@@ -440,7 +450,6 @@ def _publish(args, out):
         return 0
 
     status = output.get("status")
-    summary_file = args.summary_file or os.environ.get("GITHUB_STEP_SUMMARY")
 
     if status == "skipped":
         reason = output.get("reason", "")
@@ -461,7 +470,6 @@ def _publish(args, out):
         )
         proposals = proposals[:MAX_PROPOSALS]
 
-    repo = args.repo or os.environ.get("GH_REPO")
     _ensure_label(args.label, args.label_color, args.label_description, repo)
 
     filed = []
@@ -501,6 +509,16 @@ def _create_issue(title, body_path, label, repo):
         cmd += ["--repo", repo]
     result = subprocess.run(cmd, check=True, capture_output=True, text=True)
     return result.stdout.strip().splitlines()[-1]
+
+
+def _find_open(label, repo):
+    cmd = ["gh", "issue", "list", "--label", label, "--state", "open",
+           "--limit", "1", "--json", "url"]
+    if repo:
+        cmd += ["--repo", repo]
+    result = subprocess.run(cmd, check=True, capture_output=True, text=True)
+    items = json.loads(result.stdout or "[]")
+    return items[0]["url"] if items else None
 
 
 def _fetch_rubric(args, out):
@@ -554,6 +572,8 @@ def main(argv=None, out=None):
     p_publish.add_argument("--repo", help="owner/name; defaults to $GH_REPO")
     p_publish.add_argument("--summary-file", dest="summary_file", help="defaults to $GITHUB_STEP_SUMMARY")
     p_publish.add_argument("--output-file", dest="output_file", help="defaults to $GITHUB_OUTPUT")
+    p_publish.add_argument("--dedup-open", action="store_true", dest="dedup_open",
+                           help="skip filing entirely if an open issue with --label already exists in --repo (single-open-advisory)")
     p_publish.set_defaults(func=_publish)
 
     p_fetch = sub.add_parser(
