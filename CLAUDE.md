@@ -48,7 +48,7 @@ Composition patterns (which wrapper calls which sub-skill) and worked editorial-
 
 ### Changelog
 
-Notable changes land in the top-level [`CHANGELOG.md`](./CHANGELOG.md) (Keep a Changelog format) — the human-readable record the version-bump / roll-up step updates. It tracks the two published surfaces: the skills catalog and `harness/`.
+Notable changes land in the top-level [`CHANGELOG.md`](./CHANGELOG.md) (Keep a Changelog format) — the human-readable record the version-bump / roll-up step updates. It tracks the two published surfaces: the skills catalog and `harness/`. What a good entry says — audience, the six categories, `## [Unreleased]` discipline, the 2.0.0 conventions — is the fleet rubric in [`docs/agents/changelog-guideline.md`](./docs/agents/changelog-guideline.md); the hand-maintained + LLM-evaluator (not semantic-release) decision is [ADR 0034](./docs/adr/0034-fleet-changelogs-are-hand-maintained-and-llm-evaluated.md).
 
 ### Coding standards
 
