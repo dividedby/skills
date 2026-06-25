@@ -1,0 +1,175 @@
+name: Changelog Health
+
+# Centralized weekly changelog-health evaluator (#457).
+#
+# Flag-not-rewrite advisory loop: reads enrolled repos' CHANGELOG.md against
+# recent git log and the fleet changelog rubric (docs/agents/changelog-guideline.md),
+# and files at most one advisory issue per repo proposing ## [Unreleased] lines
+# and/or citing rubric violations. Never edits CHANGELOG.md; never a CI gate.
+#
+# Host repo: dividedby/skills.
+# Enrolled repos: dividedby/skills (fans out to 6 repos in #458).
+#
+# Harness: read fresh from the LOCAL checkout — skills IS the host, so the
+# harness lives at $GITHUB_WORKSPACE/harness. Consumer reusable bodies clone
+# skills to get the harness; this workflow skips that clone step entirely.
+#
+# Secrets:
+#   CLAUDE_CODE_OAUTH_TOKEN — agent authorization (read-only agent run).
+#   ISSUES_TOKEN            — fleet write PAT (Issues:RW across all repos,
+#                             ADR 0032); used only by the publish step so the
+#                             agent itself never holds a write credential. When
+#                             the loop fans out to additional repos (#458), only
+#                             this token needs the additional repo scope —
+#                             no structural change to the workflow.
+#
+# ADR 0014 (fetched-fresh harness): harness is read from the local checkout,
+#   not vendored — a fix to cli.py reaches the next scheduled run automatically.
+# ADR 0019 (budget/cap): --max-budget-usd 3.00 backstop; one advisory per run
+#   (the single-open-advisory invariant is enforced in the prompt, not the cap).
+# No CI gate: this loop is advisory-only.
+
+on:
+  schedule:
+    # Hash-staggered slot: offset = int(sha1("skills/changelog-health")[:6], 16)
+    # = 0x412dfd = 4271613 → minute = 4271613 % 60 = 33,
+    # hour = (4271613 // 60) % 4 = 1 (within the 00–04 UTC off-peak band).
+    # Weekly on Thursday (day 4) — free of the MWF proposal loops (1,3,6)
+    # and the Sunday drift checks (0), keeping advisory issues spaced within
+    # one UTC day.
+    - cron: "33 1 * * 4"
+  workflow_dispatch:
+
+jobs:
+  changelog-health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    concurrency:
+      group: changelog-health
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      issues: write
+
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: dividedby/skills
+      LABEL: source:changelog-health
+      ENROLLED_REPOS: "dividedby/skills"
+
+    steps:
+      - name: Checkout skills repo
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          fetch-depth: 0
+          # Full history needed so the agent can run git log back to the last
+          # dated changelog section without a shallow-clone truncation.
+
+      - name: Install Claude Code
+        run: |
+          set -euo pipefail
+          # Unpinned trusted-vendor dependency (#308): no per-version installer URL or
+          # checksum is published to consume; accepted on the same trust root as the
+          # CLAUDE_CODE_OAUTH_TOKEN issuer that authorizes this job.
+          curl -fsSL https://claude.ai/install.sh | bash
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      # The harness lives in the local checkout — no git clone needed.
+      # (Consumer reusable bodies clone dividedby/skills to get the harness;
+      # this centralized host workflow reads it directly from $GITHUB_WORKSPACE.)
+      - name: Set harness path
+        run: echo "HARNESS=$GITHUB_WORKSPACE/harness" >> "$GITHUB_ENV"
+
+      - name: Run changelog-health evaluator
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        run: |
+          set -euo pipefail
+          # The agent is read-only: it inspects CHANGELOG.md, git log, and the
+          # rubric doc (docs/agents/changelog-guideline.md), decides whether
+          # drift or violations exist, and emits a single <output> JSON block
+          # plus a raw <body> block. It does NOT file the issue — the Publish
+          # step does, via the harness, so the provenance label and the per-run
+          # issue cap live in code. (The single-open-advisory dedup is enforced
+          # in the prompt's find-open check — see the prompt's step 2 — not in
+          # code; publish itself does not dedup. Acceptable for the one-repo
+          # rollout; the prompt names the in-code upgrade path for fan-out.)
+          #
+          # gh access is scoped to read-only subcommands (list/view) so the
+          # agent *cannot* create an issue itself — no `gh issue create` or
+          # `gh issue comment` in the allowlist.
+          # git is scoped to read-only subcommands (log/diff/show/ls-files/status).
+          # Do NOT add `gh api` here — it is a write primitive that POSTs issues
+          # directly, bypassing the single-advisory invariant (#306).
+          # WebSearch/WebFetch are excluded: the rubric is in the local checkout,
+          # not fetched by the model, so web access only adds an exfil surface
+          # for an injected prompt.
+          #
+          # --output-format stream-json --verbose: stream every event so a hung
+          # run leaves a trace and the final result event (with total_cost_usd)
+          # lands before claude exits — cost captured even on failure.
+          # --model pinned to the exact model ID — a floating alias silently
+          # inherits the next release into an unattended loop (skills#180).
+          # --max-budget-usd is a per-run spend backstop (skills#181): sized
+          # ~3× the expected max; never trips a healthy run, caps a runaway.
+          claude -p \
+            --output-format stream-json --verbose \
+            --model claude-sonnet-4-6 \
+            --max-budget-usd 3.00 \
+            --allowedTools "Bash(gh issue list:*) Bash(gh issue view:*) Bash(git log:*) Bash(git diff:*) Bash(git show:*) Bash(git ls-files:*) Bash(git status:*) Read Grep Glob" \
+            --disallowedTools "Bash(gh issue create:*) Bash(gh issue comment:*)" \
+            --append-system-prompt "$(cat "$HARNESS/prompts/changelog-health.md")" \
+            "Run the weekly changelog-health pass over ${ENROLLED_REPOS}. Follow the instructions in the system prompt." \
+            | tee "$RUNNER_TEMP/agent.jsonl"
+
+      - name: Digest the run (result log + cost ledger)
+        if: always()
+        run: |
+          set -euo pipefail
+          # JSONL -> clean result text + the total_cost_usd=… ledger line, via
+          # the local harness. Best-effort by construction (exit 0 even with no
+          # result event), so it runs on a failed agent run too.
+          python3 "$HARNESS/cli.py" digest \
+            --jsonl "$RUNNER_TEMP/agent.jsonl" \
+            --result-out "$RUNNER_TEMP/agent.log" \
+            --cost-out "$RUNNER_TEMP/agent.cost"
+
+      - name: Publish advisory
+        id: publish
+        env:
+          GH_TOKEN: ${{ secrets.ISSUES_TOKEN }}
+          GH_REPO: ${{ env.GH_REPO }}
+        run: |
+          set -euo pipefail
+          # Parse <output>/<body>, file at most one labeled advisory issue (the
+          # single-open-advisory invariant is enforced in the prompt; publish
+          # handles the create). Writes the rich step summary. Fails loudly
+          # (exit 1) on a missing/garbled block — the failure() step below
+          # then surfaces the raw log.
+          #
+          # ISSUES_TOKEN (not GITHUB_TOKEN): the fleet write PAT (ADR 0032,
+          # Issues:RW across all enrolled repos). When the loop fans out in
+          # #458, the publish step already holds the right credential — no
+          # structural change needed.
+          python3 "$HARNESS/cli.py" publish \
+            --log "$RUNNER_TEMP/agent.log" \
+            --label "$LABEL" \
+            --label-description "Filed by the changelog-health loop" \
+            --label-color 5319E7 \
+            --cost-file "$RUNNER_TEMP/agent.cost" \
+            --heading "Changelog health"
+
+      - name: Summarise a failed run
+        if: failure()
+        run: |
+          {
+            echo "## Changelog health"
+            echo ""
+            echo "**Cost:** $(cat "$RUNNER_TEMP/agent.cost" 2>/dev/null || echo "n/a")"
+            echo ""
+            echo "**No valid \`<output>\` block, or the agent crashed** — last result text:"
+            echo ""
+            echo '```'
+            tail -n 50 "$RUNNER_TEMP/agent.log" 2>/dev/null || echo "(no log produced)"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

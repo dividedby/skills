@@ -38,7 +38,7 @@ gh label list --repo {owner}/{repo} --limit 100 --json name,color,description \
   --jq 'sort_by(.name)[] | "\(.name)\t\(.color)\t\(.description)"'
 ```
 
-Compare against the 5 canonical LOOP/NETWORK labels:
+Compare against the 6 canonical LOOP/NETWORK labels:
 
 | Label | Color | Description |
 | --- | --- | --- |
@@ -47,6 +47,7 @@ Compare against the 5 canonical LOOP/NETWORK labels:
 | `source:architecture-review` | `5319E7` | Filed by the improve-codebase-architecture loop |
 | `source:staleness-review` | `5319E7` | Filed by the staleness-review loop |
 | `source:skill-audit` | `5319E7` | Filed by the skill-divergence-audit loop |
+| `source:changelog-health` | `5319E7` | Filed by the changelog-health loop |
 
 For each: **create** if absent, **update** if color or description has drifted, **skip** if correct.
 

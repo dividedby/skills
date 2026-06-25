@@ -82,6 +82,7 @@ CANONICAL_LOOP_LABELS = {
     "source:architecture-review",
     "source:staleness-review",
     "source:skill-audit",
+    "source:changelog-health",
 }
 
 CORE_LABELS_SAMPLE = {"needs-triage", "bug", "size:M", "idea-inbox"}
