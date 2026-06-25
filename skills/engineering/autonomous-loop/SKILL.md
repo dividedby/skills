@@ -2,12 +2,7 @@
 name: autonomous-loop
 disable-model-invocation: true
 description: >
-  Take a briefed backlog to a safely-running unattended ("AFK") agent loop —
-  the discipline of running unattended, not a loop runtime.
-  Use when setting up or running a loop over a backlog, running an agent while
-  away from the keyboard, or hardening a loop so it can run unattended.
-  Applying loops (commit / open PRs / merge on a green gate) are first-class;
-  propose-only is the strict end of the spectrum.
+  Turn a briefed backlog into a safely-running unattended agent loop.
 ---
 
 # Autonomous Loop
@@ -34,22 +29,19 @@ the five elements below — it never authors the backlog or builds a new runtime
 - **One-shot serialized burn-down** — a finite run to completion over a fixed
   backlog (how #64→#66 ran). Stops when the backlog empties.
 
-> **Per-item routing:** use an in-session sub-agent when a session exists;
-> headless `claude -p` only where there is none — see [FIREWALL.md](FIREWALL.md) step 2.
+Per-item sub-agent dispatch and flush/drop mechanics: [FIREWALL.md](FIREWALL.md).
 
 ## What this skill owns
 
 ### 1. Stop condition
 
 State an unambiguous halt before starting: backlog empty, N iterations done, a
-cost ceiling hit, or a gate stays red. A loop with no stop condition is the
-failure mode this skill exists to prevent.
+cost ceiling hit, or a gate stays red.
 
 ### 2. Per-iteration feedback gate
 
 Each iteration must pass its own gate — tests, lint, typecheck, build — or
-**halt without committing**. A red gate never lands work. The gate is what makes
-unattended iteration trustworthy.
+**halt without committing**. A red gate never lands work.
 
 ### 3. HITL→AFK by graduation-by-guardrail
 
@@ -64,18 +56,20 @@ only when all four hold (detail in [RUNNING-AFK.md](RUNNING-AFK.md)):
 4. An **iteration / cost / time cap** bounds the run (lived caps: backlog size,
    `total_cost_usd`, CI `timeout-minutes`).
 
-**Applying loops are first-class** — committing, opening PRs, and merging on a
-green gate are in scope (the #64→#66 burn-down). **Propose-only**
+**Applying loops are first-class.** Committing, opening PRs, and merging on a
+green gate are in scope (the #64→#66 burn-down). Per-item close-out uses
+`/flow-pr` — the **apply-and-merge-on-green** end of the gate spectrum, bound by
+guardrails 2–4 above. **Propose-only**
 ([ADR 0003](../../../docs/adr/0003-skill-improvement-workflows-propose-via-issues.md))
-is the *strictest* setting on the gate spectrum, for when unsupervised applying
-is unacceptable — not the universal rule.
+is the *strictest* point on the spectrum, for when unsupervised applying is
+unacceptable — not the universal rule. Gate spectrum detail and `/flow-pr`
+wiring: [RUNNING-AFK.md § The gate spectrum](RUNNING-AFK.md).
 
 ### 4. Monitor, stop, resume
 
 The loop writes a durable **progress file** (flush/drop mechanics:
 [FIREWALL.md](FIREWALL.md)). It lets you watch progress, stop cleanly, and
-resume by reading the file and skipping done items. Persisted progress is what
-makes stopping safe.
+resume by reading the file and skipping done items.
 
 ### 5. Brief-durability precondition
 
