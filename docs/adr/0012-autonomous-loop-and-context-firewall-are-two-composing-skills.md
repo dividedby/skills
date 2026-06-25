@@ -1,5 +1,7 @@
 # autonomous-loop and context-firewall are two composing skills
 
+> **Superseded by [ADR 0033](0033-context-firewall-folds-into-autonomous-loop-as-a-supporting-doc.md):** context-firewall is no longer a standalone skill — its discipline re-homes as `autonomous-loop/FIREWALL.md`, a supporting doc. The "two independently-invokable skills" ruling is reversed: the predicted standalone loopless invoker never materialized, so the loopless user keeps a documented home as a cross-linked doc rather than a trigger. The "compose, not fold," per-item-reconciliation, and graduation-by-guardrail reasoning below still informs the merged skill's structure.
+
 Two requested capabilities — running an agent unattended over a backlog (#65)
 and keeping output quality from decaying as one long run fills its window (#67)
 — ship as **two separate engineering skills that compose**, not one combined

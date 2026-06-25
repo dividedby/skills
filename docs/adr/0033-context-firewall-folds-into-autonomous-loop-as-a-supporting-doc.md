@@ -1,6 +1,6 @@
 # context-firewall folds into autonomous-loop as a supporting doc, not a standalone skill
 
-> **Status: proposed** — supersedes [ADR 0012](0012-autonomous-loop-and-context-firewall-are-two-composing-skills.md). Pending maintainer ratification; until then 0012 stands and no skill is moved or deleted. Decision spike: [#446](https://github.com/dividedby/skills/issues/446).
+> **Status: accepted** — supersedes [ADR 0012](0012-autonomous-loop-and-context-firewall-are-two-composing-skills.md). Ratified via PR #449 (decision spike [#446](https://github.com/dividedby/skills/issues/446)). Records the decision only; the skill de-registration + doc re-cut land in #448, the `/flow-pr` close-out in #447 — no skill is moved or deleted until #448.
 
 [ADR 0012](0012-autonomous-loop-and-context-firewall-are-two-composing-skills.md)
 kept `autonomous-loop` and `context-firewall` as **two independently-invokable
@@ -96,5 +96,4 @@ path is removed.
 `/writing-great-skills`) implements the de-registration and the doc re-cut;
 [#447](https://github.com/dividedby/skills/issues/447) wires `/flow-pr` as the
 per-item close-out. Both were gated on this decision and inherit a **one-skill**
-outcome. On ratification, add the `> Superseded by ADR 0033` blockquote to
-ADR 0012.
+outcome. ADR 0012 now carries the `Superseded by ADR 0033` blockquote.
