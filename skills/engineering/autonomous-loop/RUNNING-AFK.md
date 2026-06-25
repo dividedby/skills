@@ -62,10 +62,8 @@ Guardrail (2) is one point on a spectrum of how much an iteration is trusted to
   Proposal-loop family).
 - **Apply-on-branch** — commits and opens PRs, never merges; a human merges.
 - **Apply-and-merge-on-green** — merges its own PR when the gate passes (the
-  #64→#66 burn-down). Per-item close-out: `/flow-pr` (branch cutting, commit,
-  PR open, review gate, CI gate, merge). Work lands on branches/PRs, never
-  `main`; every iteration passes its gate or halts; an iteration/cost/time cap
-  bounds the run.
+  #64→#66 burn-down). Per-item close-out: `/flow-pr` (branch, commit, PR,
+  review gate, CI gate, merge), under guardrails 2–4 above.
 
 Applying loops are first-class. Choose the strictest point that still lets the
 loop do its job — not propose-only by default.
