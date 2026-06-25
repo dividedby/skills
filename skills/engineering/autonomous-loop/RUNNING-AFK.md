@@ -69,8 +69,8 @@ loop do its job — not propose-only by default.
 
 ## Monitor, stop, resume
 
-The **progress file** is the shared spine (the same artifact `/context-firewall`
-flushes to). It is what makes a long unattended run observable and recoverable.
+The **progress file** is the shared spine (flush/drop mechanics:
+[FIREWALL.md](FIREWALL.md)). It is what makes a long unattended run observable and recoverable.
 
 - **Monitor** — the loop appends each completed item's compact outcome. Tail the
   file (or the PRs it opens) to see progress without attaching to the run.
@@ -86,7 +86,7 @@ before the first unattended run.
 
 ## Worked example: a triaged backlog in one self-paced session
 
-The common case where this skill and `/context-firewall` compose. You have a
+The common case where this skill and [FIREWALL.md](FIREWALL.md) compose. You have a
 backlog of briefed, ready-for-agent issues and you want to burn it down from a
 single interactive session (`/loop` self-paced) rather than a scheduled
 fresh-process-per-issue runtime. Because it's **one accumulating context**, the
@@ -98,7 +98,7 @@ firewall is what keeps the last issue as sharp as the first.
    passes. The iteration boundary is *not* a context boundary here — the
    orchestrator fills as issues accumulate — so step 4 supplies the boundary.
 3. **Stop condition** — backlog empty, or a cap trips first (below).
-4. **Firewall each issue** (`/context-firewall`) — dispatch each issue to a
+4. **Firewall each issue** (see [FIREWALL.md](FIREWALL.md)) — dispatch each issue to a
    sub-agent (the in-session Agent/sub-agent dispatch, *not* a new process) that
    loads only that issue's brief, does the work behind its own gate, and returns
    a compact outcome. The loop session never carries the raw diffs or tool
