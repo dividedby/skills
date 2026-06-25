@@ -10,6 +10,7 @@ criterion). These tests run the script extracted verbatim from the workflow
 (not a copy) in bash, so a future YAML edit that reintroduces the bug fails here.
 """
 
+import json
 import os
 import subprocess
 import tempfile
@@ -65,11 +66,19 @@ class ChangelogHealthMatrixTest(unittest.TestCase):
     def setUp(self):
         self.script = _read_step_script()
 
-    def test_real_file_yields_six(self):
+    def test_real_file_matches_enrolled(self):
+        # Derive the expected matrix from the real enrolled-repos.txt rather than
+        # a literal count, so enrolling a repo doesn't break this test.
         code, matrix = _run(self.script, _REPO)
         self.assertEqual(code, 0)
         self.assertIn("dividedby/skills", matrix)
-        self.assertEqual(matrix.count("dividedby/"), 6)
+        with open(os.path.join(_REPO, _ENROLL_REL)) as fh:
+            expected = [
+                ln.strip()
+                for ln in fh
+                if ln.strip() and not ln.strip().startswith("#")
+            ]
+        self.assertEqual(json.loads(matrix), expected)
 
     def test_empty_list_skips_not_errors(self):
         # The regression: must be matrix=[] AND exit 0, never a red step.
