@@ -11,10 +11,9 @@ into a **generator pass** (produce the output) and a separate **evaluator pass**
 ## Generator / evaluator split
 
 Separate producing from judging. The generator agent implements; the evaluator
-agent reads the output cold (no shared context with the generator) and scores it
-against a rubric. The separation matters: a single agent that generates and
-immediately self-grades is prone to confirming its own assumptions. A cold
-evaluator is structurally independent.
+agent reads the output cold (no shared context) and scores it against a rubric.
+A single agent that generates and self-grades confirms its own assumptions; a
+cold evaluator is structurally independent.
 
 ## Rubric design
 

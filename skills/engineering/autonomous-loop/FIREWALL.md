@@ -28,30 +28,28 @@ lean across the whole run.
 
 ## 1. Identify the per-item unit
 
-Find the repeatable **work item** — one briefed, independently-runnable chunk
-with its own inputs and a compact, mergeable result. If items share mutable
-state or need full ordered history they aren't independent; say so rather than
-forcing a firewall that loses needed context.
+Find the repeatable **work item** (defined above). If items share mutable state
+or need full ordered history they aren't independent; say so rather than forcing
+a firewall that loses needed context.
 
 ## 2. Firewall each item in a fresh sub-agent context
 
 Dispatch each work item to a sub-agent (the existing Agent/sub-agent mechanism
 — **no new runtime**) that loads only that item's inputs and returns a compact
-result. The orchestrator never sees the raw work, only the distilled return.
-This is **within-item** hygiene: per-item bloat is discarded with the sub-agent.
+result. This is **within-item** hygiene: per-item bloat is discarded with the
+sub-agent.
 
 Route by environment: when a session exists (interactive), use an **in-session
-sub-agent** (Agent tool, no new process). When there is no session (CI, cron,
+sub-agent** (Agent tool, no new process). When there is none (CI, cron,
 runners), a **headless process** gives the boundary for free. A
 builder/architect delegation already *is* a do-and-report firewall — the
-remaining job is the orchestrator-side half: budget checkpoint and
-flush/compact in steps 3–4.
+remaining job is the orchestrator-side half: the budget checkpoint and
+flush/drop in steps 3–4.
 
 ### Sub-agent firewall shapes
 
-The firewall is always the same move: spend the raw, bulky work inside a
-context you will throw away, and let only a distilled result cross back. Three
-common shapes:
+The move is always the same: spend the raw, bulky work inside a context you will
+throw away, and let only a distilled result cross back. Three common shapes:
 
 - **Read-and-distill.** The item's inputs are large (a long source document, a
   sprawling file tree, a noisy log). The sub-agent reads them and returns a
@@ -59,16 +57,14 @@ common shapes:
   material.
 - **Do-and-report.** The item is a unit of work (refactor one module, triage
   one issue, implement one ticket). The sub-agent does the work, runs its own
-  checks, and reports a compact outcome (what changed, pass/fail, follow-ups) —
-  the orchestrator never carries the intermediate edits or tool output.
+  checks, and reports a compact outcome (what changed, pass/fail, follow-ups).
 - **Fan-out-and-merge.** Items are independent enough to run in parallel
   sub-agents. Each returns its compact result; the orchestrator merges the
   results, never the raw work. Only safe when items truly don't share mutable
   state.
 
-What makes it a firewall, in every shape: the **return is compact and the raw
-work is discarded with the sub-agent**. If the orchestrator re-reads the same
-inputs after the sub-agent returns, you built a detour, not a firewall.
+In every shape, if the orchestrator re-reads the same inputs after the sub-agent
+returns, you built a detour, not a firewall.
 
 **Keep the return compact:**
 
@@ -76,14 +72,14 @@ inputs after the sub-agent returns, you built a detour, not a firewall.
   length). An unconstrained sub-agent returns as much as a non-firewalled run.
 - Return conclusions and pointers, not transcripts. "Updated `auth.ts`; 3 tests
   green; one TODO filed" — not the diff and the test log.
-- Push file-path-level detail into the durable artifact, not the return, when
-  the orchestrator only needs to know an item is done.
+- Push file-path-level detail into the durable artifact when the orchestrator
+  only needs to know an item is done.
 
 ## 3. Budget checkpoint between items
 
-Between items, check remaining headroom *before* continuing. Acting at a clean
-boundary beats the harness's forced mid-stream compaction, which is lossy and
-lands arbitrarily. If headroom is low, compact (step 4) or stop and resume fresh.
+Between items, check remaining headroom *before* continuing — a clean boundary
+beats the harness's forced mid-stream compaction, which is lossy and lands
+arbitrarily.
 
 **Placement:**
 
@@ -92,12 +88,10 @@ lands arbitrarily. If headroom is low, compact (step 4) or stop and resume fresh
 - **Before a known-heavy item** — if the next item's inputs are large, check
   first rather than discovering the overflow mid-item.
 - **Never mid-item.** A checkpoint that interrupts an item splits its context
-  exactly where you wanted it whole. The whole point of the firewall is that
-  item work is atomic.
+  exactly where you wanted it whole.
 
-What the checkpoint decides: enough headroom → continue; low headroom →
-intentionally compact (below); near-exhausted with items left → stop and resume
-fresh against the progress artifact.
+The decision: enough headroom → continue; low → intentionally compact (step 4);
+near-exhausted with items left → stop and resume fresh against the artifact.
 
 ## 4. Intentionally flush and drop between items
 
@@ -106,36 +100,27 @@ progress artifact, then drop them from context** and continue lean. This is
 **across-item** hygiene: it bounds orchestrator bloat, the complement to the
 per-item firewall.
 
-**Compaction steps:**
-
 1. **Flush** — append the items completed so far (their compact results) to the
-   durable progress artifact: a `PROGRESS.md`, a results file, the issue
-   tracker, whatever survives the run.
-2. **Drop** — clear the flushed detail from the working context. Keep only what
-   the remaining items genuinely need: the spec, the stop condition, and a
-   pointer to the artifact.
+   durable artifact: a `PROGRESS.md`, a results file, the issue tracker,
+   whatever survives the run.
+2. **Drop** — clear the flushed detail from context. Keep only what the
+   remaining items genuinely need: the spec, the stop condition, and a pointer
+   to the artifact.
 3. **Continue lean** — resume from the next item with a near-empty orchestrator.
 
-Why this beats the harness's forced compaction: you choose the boundary (clean,
-between items) and you choose what survives (the distilled artifact you wrote on
-purpose). The forced version fires mid-stream at an arbitrary point and keeps
-whatever heuristic it keeps — lossy and unpredictable for exactly the late items
-this discipline exists to protect.
+This beats the harness's forced compaction on both axes: you choose the boundary
+(clean, between items) and what survives (the artifact you wrote on purpose),
+where the forced version fires mid-stream and keeps whatever heuristic it keeps.
 
 **Resume safety:** because every completed item is in the artifact before its
 detail is dropped, a stopped or crashed run resumes by reading the artifact and
-skipping done items. Dropping in-context state is only safe once the flush has
-happened — flush first, drop second, never the reverse.
+skipping done items. Flush first, drop second, never the reverse.
 
 ---
 
-## Anti-Patterns
+## Anti-patterns
 
 - **One context for the whole run.** The default that decays late items —
   firewall the repeatable unit instead.
 - **Compacting only at the end.** Compact between items, proactively, not once
   the window is already full.
-- **Letting raw sub-agent work back into the orchestrator.** Return a compact
-  result; the firewall is wasted if the orchestrator re-absorbs the detail.
-- **Checking the budget mid-item.** A checkpoint that interrupts an item is
-  worse than one at the boundary — keep item work atomic.

@@ -20,6 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- `autonomous-loop` supporting docs tightened for sprawl: `FIREWALL.md` dedups the vocabulary/body overlap, the repeated "compact return" statement, the §3/§4 forced-compaction restatement, and the anti-patterns list; `RUNNING-AFK.md` binds the apply-and-merge gate constraints to guardrails 2–4 by reference; `EVALUATOR-GATE.md` no-op prune (#448)
 - `autonomous-loop` SKILL.md rewritten to the /writing-great-skills standard; `/flow-pr` wired as the per-item close-out at the apply-and-merge-on-green end of the gate spectrum; RUNNING-AFK.md flush/drop deduped to FIREWALL.md (#448)
 - `/context-firewall` cross-references in `autonomous-loop/SKILL.md`, `autonomous-loop/RUNNING-AFK.md`, and `docs/agents/skill-authoring.md` repointed to `FIREWALL.md`; `context-firewall` token removed from `docs/agents/installed-skills.md` (#448)
 - `docs/onboarding/` corrected to post-amendment ADR 0019 regime: cadence updated to 3×/week Mon/Wed/Sat (`* * 1,3,6`), per-run cap updated to ≤2 issues, per-channel cap framing replaced with shared-budget language (one budgeted gate pass, ADR 0019 superseded ADR 0011) (#440)
