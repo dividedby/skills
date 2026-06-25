@@ -8,8 +8,9 @@ name: Changelog Health
 # and/or citing rubric violations. Never edits CHANGELOG.md; never a CI gate.
 #
 # Host repo: dividedby/skills.
-# Enrolled repos (6): dividedby/agent-research, dividedby/claude-config,
-#   dividedby/goodreads-bot, dividedby/infra, dividedby/moodreader, dividedby/skills.
+# Enrolled repos: sourced from harness/changelog-health/enrolled-repos.txt
+#   (one owner/repo per line; #-comments and blank lines ignored). The `prepare`
+#   job reads that file and emits the matrix; enroll a repo by adding a line there.
 # Fan-out: GitHub Actions matrix — one job per enrolled repo per weekly run.
 #
 # Harness: read fresh from the LOCAL skills checkout — skills IS the host, so the
@@ -43,19 +44,49 @@ on:
   workflow_dispatch:
 
 jobs:
+  # Read the enrolled-repos list into a JSON array the matrix below fans out over.
+  # Single source of truth: harness/changelog-health/enrolled-repos.txt — enroll a
+  # repo by adding a line there (setup-dividedby-skills Concern G does this), no
+  # workflow edit needed.
+  prepare:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      matrix: ${{ steps.read.outputs.matrix }}
+    steps:
+      - name: Checkout skills repo
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+      - name: Read enrolled repos
+        id: read
+        run: |
+          set -euo pipefail
+          # Strip CR first (CRLF guard), then drop #-comments and blank/whitespace
+          # lines; jq packs the survivors into a compact JSON array.
+          # `|| true` on each grep: a no-match exit 1 is the legitimate empty/all-
+          # comments case — without it, `set -o pipefail` would kill the step red
+          # (matrix never written, warning never reached) and the dependent job
+          # would skip as a *failure* instead of the intended clean skip.
+          matrix=$(tr -d '\r' < harness/changelog-health/enrolled-repos.txt \
+            | { grep -v '^#' || true; } \
+            | { grep -v '^[[:space:]]*$' || true; } \
+            | jq -R -s -c 'split("\n") | map(select(length>0))')
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+          echo "Enrolled repos: $matrix"
+          if [ "$(echo "$matrix" | jq 'length')" -eq 0 ]; then
+            echo "::warning::enrolled-repos.txt resolved to an empty list — no changelog-health jobs will run (skills should always be enrolled)."
+          fi
+
   changelog-health:
+    needs: [prepare]
+    # Empty-list guard: fromJSON('[]') errors a GHA matrix, so skip the whole job.
+    if: needs.prepare.outputs.matrix != '[]'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
-        repo:
-          - dividedby/agent-research
-          - dividedby/claude-config
-          - dividedby/goodreads-bot
-          - dividedby/infra
-          - dividedby/moodreader
-          - dividedby/skills
+        repo: ${{ fromJSON(needs.prepare.outputs.matrix) }}
     concurrency:
       group: changelog-health-${{ matrix.repo }}
       cancel-in-progress: false

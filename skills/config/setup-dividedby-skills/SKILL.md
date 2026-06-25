@@ -26,6 +26,8 @@ Identify the target repo:
 - Read the canonical convention docs from **`dividedby/skills`** (not cached copies):
   - `docs/agents/labels.md`
   - `docs/agents/idea-inbox.md`
+  - `docs/agents/changelog-guideline.md` (the fleet changelog rubric — Concern G)
+  - `harness/changelog-health/enrolled-repos.txt` (the evaluator's enrollment list — Concern G)
   - `CLAUDE.md` lines 11–52 (the `## Conventions` block)
 
 These are authoritative. Adapt repo-specific references (Inbox issue URL, repo name) when porting content — do not copy raw.
@@ -79,6 +81,10 @@ Every convention this skill manages is classified as one of two kinds:
 | B — Idea Inbox issue | **convention-only** | Fixed body template; repo-name substitution only. |
 | F — branching role classification (library vs app) | **judgment-bearing** | Role determines default branch and merge mechanics; requires human judgment about the repo's purpose. |
 | F — default-branch change | **judgment-bearing** | Destructive and role-dependent; always requires explicit confirmation. |
+| G — CHANGELOG.md scaffold + git-history seed (new repo) | **judgment-bearing** | Which surfaces to track and which git-log changes are notable both require human judgment; the draft must be reviewed before writing. |
+| G — CHANGELOG.md KaC 2.0.0 migration (existing repo, mechanical) | **convention-only** | URL bump, missing `## [Unreleased]` insert, dead 1.x anchor removal — fixed transforms, never touching past entry content. |
+| G — `docs/agents/changelog-guideline.md` copy | **convention-only** | Canonical doc copied with ref adaptation only; no judgment. |
+| G — `enrolled-repos.txt` enrollment | **convention-only** | Append one `owner/repo` line; fixed format, no judgment. |
 
 **force-canonical eligibility:** only convention-only items may be auto-applied by force-canonical mode. judgment-bearing items always prompt, even in force-canonical mode — they are never auto-applied.
 
@@ -166,13 +172,30 @@ From `~/.claude/branching-flow.md`:
 - **Merge settings PATCH:** if any of `allow_squash_merge`, `allow_rebase_merge`, `allow_merge_commit`, `delete_branch_on_merge` diverges from the universal mechanics, plan a PATCH.
 - **Default branch:** if it does not match the role, plan a default-branch change.
 
+### Concern G — Changelog
+
+Ensures the target repo carries a conforming `CHANGELOG.md`, the fleet changelog standards doc, and is enrolled in the centralized [changelog-health evaluator](../../../.github/workflows/changelog-health.yml). Three sub-steps — always plan in order (G1 → G2 → G3).
+
+**G1 — `CHANGELOG.md`.** Detect against the [fleet rubric](../../../docs/agents/changelog-guideline.md): does the file exist? does the header contain `keepachangelog.com/en/2.0.0/`? is there exactly one `## [Unreleased]` and is it the first version section? any `keepachangelog.com/en/1.` URL? any dead 1.x FAQ anchor (`#why-…`/`#how-…`/`#what-…`)?
+- **create** (absent) — *judgment-bearing.* Prompt the maintainer for the tracked surface(s) the changelog records; scaffold the canonical KaC-2.0.0 header (based-on-2.0.0 line + surfaces line + `## [Unreleased]`); run `git log --oneline --stat` and draft `## [Unreleased]` entries across the six categories in consumer voice (label the draft "review against rule 1 — notable-only"); present the full draft for HITL edit before writing. Edge case — if the repo has **no** `## [x.y.z]` semver header (date-grouped/non-versioned, e.g. infra per its ADR 0001), prompt before adding `## [Unreleased]` rather than forcing it.
+- **must-fix** (exists but fails a check) — *convention-only* (force-canonical eligible). Surface each violation with its fix: 1.x URL → `…/en/2.0.0/`; missing `## [Unreleased]` → insert after the header block; dead 1.x anchor → remove/rewrite; no KaC reference at all (e.g. moodreader) → add the based-on-2.0.0 header line + `## [Unreleased]` without touching existing dated entries. **Never rewrite past entry content — structure/formatting only.**
+- **skip** — passes all four checks.
+
+**G2 — `docs/agents/changelog-guideline.md`.** Read the canonical from `dividedby/skills` (already read in Before starting). Adapt refs (relative ADR paths → absolute GitHub URLs; `#457` and similar → their URLs), then write to the target's `docs/agents/`.
+- **create** if absent.
+- **skip** if already present (consistent with `idea-inbox.md`; the evaluator catches content drift).
+
+**G3 — Enrollment.** Read `~/repos/skills/harness/changelog-health/enrolled-repos.txt`.
+- **create** if `dividedby/<target>` is absent: append the line, then print `git -C ~/repos/skills diff harness/changelog-health/enrolled-repos.txt` and remind the maintainer to commit it + open a skills PR before the next evaluator run (Thursday 01:33 UTC). **Do not run git mutations in the skills repo** — the maintainer commits.
+- **skip** if `dividedby/<target>` is already present.
+
 ---
 
 ## Step 3 — Report and confirm (HITL gate — mandatory)
 
 **Show the full plan before any network mutation or file write.**
 
-Present it as a structured list, grouped by concern (A–F), with one line per action showing posture (create / update / skip / must-fix / delete) and a brief what/why. Flag destructive actions (label deletes, `needs-info` removal, default-branch change) explicitly.
+Present it as a structured list, grouped by concern (A–G), with one line per action showing posture (create / update / skip / must-fix / delete) and a brief what/why. Flag destructive actions (label deletes, `needs-info` removal, default-branch change) explicitly.
 
 For each **must-fix** item: include the exact destructive diff inline — what file will be deleted or overwritten, what the replacement is, and which drift shape triggered it. Do not collapse must-fix items into a generic "will fix drift" line.
 
@@ -258,6 +281,16 @@ If a default-branch change is approved:
 gh api -X PATCH repos/{owner}/{repo} -f default_branch=<branch>
 ```
 
+**G — Changelog:** apply G1 → G2 → G3 in order. All three are local file writes (no network mutation).
+
+- **G1 — `CHANGELOG.md`:** for **create**, write the HITL-approved draft to the target's `CHANGELOG.md`. For **must-fix**, apply only the surfaced structural fixes (URL bump / `## [Unreleased]` insert / dead-anchor removal / header add) — never edit past entry text.
+- **G2 — `docs/agents/changelog-guideline.md`:** write the ref-adapted canonical doc to the target's `docs/agents/` (create only; skip if present).
+- **G3 — Enrollment:** append `dividedby/<target>` to `~/repos/skills/harness/changelog-health/enrolled-repos.txt`, then:
+  ```
+  git -C ~/repos/skills diff harness/changelog-health/enrolled-repos.txt
+  ```
+  Print the diff and remind the maintainer: **commit it and open a skills PR before the next evaluator run (Thursday 01:33 UTC)** — this skill does not commit or push the skills repo.
+
 ---
 
 ## Step 5 — Verify
@@ -268,6 +301,9 @@ After execution, re-run the key checks:
 - `gh api repos/{owner}/{repo} --jq '{allow_squash_merge,allow_rebase_merge,allow_merge_commit,delete_branch_on_merge,default_branch}'` — confirm universal mechanics applied.
 - Confirm the Conventions block is present, the Inbox link resolves, and the Triage labels pointer references `docs/agents/triage-labels.md` (not `docs/agents/labels.md`).
 - Confirm `docs/agents/idea-inbox.md` exists in the target.
+- **G1:** `CHANGELOG.md` passes the four conformance checks — KaC `…/en/2.0.0/` URL, exactly one `## [Unreleased]` as the first version section, no `…/en/1.` URL, no dead 1.x FAQ anchor.
+- **G2:** `docs/agents/changelog-guideline.md` is present in the target.
+- **G3:** `dividedby/<target>` is present in `~/repos/skills/harness/changelog-health/enrolled-repos.txt` — and if just appended, re-surface the **pending skills PR** so it isn't forgotten (the repo isn't actually enrolled until that PR merges).
 
 Report a short summary: what was created, what was updated, what was skipped. Surface any drift — do not silently leave it.
 

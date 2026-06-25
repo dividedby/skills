@@ -1,0 +1,8 @@
+# One owner/repo per line. Blank lines and # comments are ignored.
+# Add a repo here to enroll it in the weekly changelog-health evaluator.
+dividedby/agent-research
+dividedby/claude-config
+dividedby/goodreads-bot
+dividedby/infra
+dividedby/moodreader
+dividedby/skills
