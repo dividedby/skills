@@ -21,6 +21,7 @@ Pick the skills you want when prompted. Re-run to update.
 - **[repo-audit](./skills/engineering/repo-audit/SKILL.md)** — User-invoked audit that hunts high-leverage improvements in a repo (delete/lean, performance, architectural deepening, missing features) and produces a small set of epics with an ordered roadmap — reconciled against the existing backlog, not filed beside it.
 - **[software-design](./skills/engineering/software-design/SKILL.md)** — Turns a PRD and published backlog into named modules, located seams, and a testing strategy that makes issues TDD-ready.
 - **[staleness-audit](./skills/engineering/staleness-audit/SKILL.md)** — Audit a repo's pinned toolchain versions (Node, Python, Go, container and CI matrices) for staleness and emit a ranked report — safe in-major bumps auto-applied behind a verify gate, cross-major / EOL jumps stay recommendations; the complement to Dependabot's library bumps.
+- **[write-well](./skills/engineering/write-well/SKILL.md)** — Draft and de-slop English prose to a defensible core and clean output; two entry points (draft, improve).
 
 ### Config
 
