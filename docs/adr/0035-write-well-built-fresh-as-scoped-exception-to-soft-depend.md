@@ -1,6 +1,6 @@
 # `write-well` is built fresh — a scoped exception to the soft-depend-over-reinvention default
 
-> **Status: proposed** — pending ratification via the PR that lands this file. Records a decision from a `/grill-with-docs` session (2026-06-25) triaging [#470](https://github.com/dividedby/skills/issues/470). Names a deliberate exception to [ADR 0024](./0024-lean-on-upstream-skills-soft-depend-over-reinvent.md) for one skill; it does **not** weaken 0024's default.
+> **Status: accepted** — ratified via PR [#471](https://github.com/dividedby/skills/pull/471). Records a decision from a `/grill-with-docs` session (2026-06-25) triaging [#470](https://github.com/dividedby/skills/issues/470). Names a deliberate exception to [ADR 0024](./0024-lean-on-upstream-skills-soft-depend-over-reinvent.md) for one skill; it does **not** weaken 0024's default.
 
 ## Context
 
