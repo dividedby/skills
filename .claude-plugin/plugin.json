@@ -8,6 +8,7 @@
     "./skills/engineering/repo-audit",
     "./skills/engineering/software-design",
     "./skills/engineering/staleness-audit",
+    "./skills/engineering/write-well",
     "./skills/config/project-claude-config",
     "./skills/config/setup-dividedby-skills",
     "./skills/config/triage",
