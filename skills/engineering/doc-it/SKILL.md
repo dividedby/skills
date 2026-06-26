@@ -80,6 +80,17 @@ release or date. Derive entries from commit history and merged PRs (local
 `git log`). Record facts; do not editorialize. If the repo has an existing
 CHANGELOG format, match it exactly.
 
+**Prose quality.** Before applying any draft, run it through write-well
+([`../write-well/SKILL.md`](../write-well/SKILL.md)). README, API docs, and
+onboarding drafts receive the full pass: write-well's structure principles plus
+the de-slop layer
+([`../write-well/references/de-slop.md`](../write-well/references/de-slop.md)).
+CHANGELOG drafts (terse entries) receive the voice subset from that same
+de-slop reference: sentence-load density, typographic tells, and
+evidence-bound mode; burstiness, AI-trace, and narrative arc do not apply to
+terse entries. Entry-level changelog consumer-voice authoring lives in
+`setup-dividedby-skills` (Concern G).
+
 One principle holds across all four types: **link to existing ADRs for
 decisions, do not restate or invent them.** If a design choice is documented
 in an ADR, the reference doc points there rather than paraphrasing the
