@@ -76,6 +76,32 @@ HITL hardening, input durability) rather than re-deriving them inline.
 run unattended. Point to `/autonomous-loop` for the discipline; do not author
 a new runtime.
 
+### Deterministic groundwork (bundled CLI helper)
+
+**File:** `skills/meta/apply-agent-research/lib/cli.py` — the canonical example in
+this repo.
+
+When a skill's workflow opens by discovering system state — what mode the run is
+in, which issues are already open, what the catalog currently holds, whether a
+label exists — the naive design hands that discovery to the agent, which runs
+exploratory commands. Exploration is non-deterministic (the agent may miss items
+or misread output), burns tokens on every run, and breaks when the sandbox denies
+a command. Encode the state as deterministic functions in a bundled CLI helper the
+agent calls with a single Bash invocation, returning structured output it can gate
+on. `apply-agent-research`'s `cli.py` does this: `mode` prints the run-mode
+discriminator, `find-open` reports open-issue existence by capability marker, and
+`gate` dedups candidates against the open-issue set — each a reliable result every
+run, not a fresh exploration.
+
+**Use it for** state computable from external inputs — run mode, open-issue
+existence, catalog membership, label existence. **Not for** discovery that
+genuinely requires reading live code or recent git history; that stays with agent
+exploration.
+
+**Trigger for composition:** a skill's workflow begins by establishing system
+state before the agent does its real work. Bundle the discovery as a CLI
+subcommand rather than prescribing exploratory commands inline.
+
 ---
 
 ## Editorial-Judgement Log
