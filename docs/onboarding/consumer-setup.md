@@ -74,19 +74,25 @@ pushes to the default branch.
 
 ## What to build in `CONSUMER_REPO`
 
-Start from the [harness skeleton](./proposal-loop-harness.md) (fetch-fresh,
-`contents: read` / `issues: write`, hash-slotted off-the-hour cron in the shared
-Mon/Wed/Sat window + `workflow_dispatch`, scoped tools, **pinned `--model`
-(default `sonnet`)**, step-summary with the `total_cost_usd=…` cost-ledger line).
-Then layer on the Consumer specifics:
+Vendor the thin caller stub shown in the "Read first" section above (the `uses:`
+block with `@claude-loops-v1`), then wire the Consumer-specific `with:` inputs
+and secrets. The reusable body (`apply-agent-research-reusable.yml`) fetches the
+harness, skill lib, and prompt fresh each run — `SKILL_DIR`, `HARNESS`,
+`SKILLS_SRC`, scoped `--allowedTools`, pinned `--model`, `--max-budget-usd`, and
+the cost-ledger `digest` step are all inherited; no Consumer workflow should
+re-author them (#382,
+[ADR 0029](../adr/0029-apply-agent-research-joins-the-reusable-body-rail.md)).
+Set the cron slot via the hash-stagger rule in
+[`proposal-loop-harness.md`](./proposal-loop-harness.md). The Consumer-specific
+parts are:
 
 1. **The reusable body fetches the skill fresh automatically.** When using the
    reusable body (`apply-agent-research-reusable.yml@claude-loops-v1`), the
    `dividedby/skills` clone step sets `SKILL_DIR`, `SKILLS_SRC`, and `HARNESS`
    for you — no `cp -R` into `~/.claude/skills/` is needed. The guard's unit
    tests run as part of the reusable body's hard-gate. If you are building a
-   custom envelope instead, clone `dividedby/skills` shallow, set `SKILL_DIR` to
-   the clone path, and **run the guard's unit tests as a hard gate**
+   custom workflow instead of using the reusable body, clone `dividedby/skills`
+   shallow, set `SKILL_DIR` to the clone path, and **run the guard's unit tests as a hard gate**
    (`python3 -m unittest discover -s "$SKILL_DIR/tests"`) before proceeding.
    Confirm the gate (`cli.py gate`), the standalone guard (`cli.py sanitize`),
    and the **guarded filing path** (`cli.py file --help` / `cli.py comment --help`),
@@ -102,7 +108,8 @@ Then layer on the Consumer specifics:
    copy.** The prompt is a single, env-parametrized artifact that serves both the
    host and every Consumer ([ADR 0015](../adr/0015-apply-agent-research-prompt-is-consumer-portable-via-env.md));
    you wire its behavior entirely through the env your stub exports (next), not by
-   forking the prompt. The Consumer envelope must export this contract:
+   forking the prompt. Between your stub's `with:` inputs/secrets and the reusable
+   body's clone step, this env contract reaches the prompt:
 
    | Env var | Consumer value | Prompt use |
    |---|---|---|

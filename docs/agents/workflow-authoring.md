@@ -1,17 +1,33 @@
 # Authoring a scheduled headless-Claude workflow
 
-The checklist for adding (or re-cadencing) a GitHub Actions workflow that runs
-`claude -p` on a cron — here (the harness host) or in any consumer of the
-proposal-loop harness. Every such workflow is metered `claude -p` spend, so the
-rules below are about **cost legibility and budget fit**, not just "does it run"
-(the shared Agent SDK monthly credit that originally motivated this has since
-been walked back; the tracking is retained in case it returns). The binding
-decisions live in ADR
+This doc is for two distinct audiences — read the section that matches your role:
+
+- **Author** — you are editing a `*-reusable.yml` body in `dividedby/skills`
+  (adding a proposal loop, or changing its model, budget, tools, or first-Monday
+  gate). The checklist below applies to you in full. Re-cadencing — changing the
+  cron *schedule* — is a caller-stub edit, not a body edit: the schedule lives in
+  the stub, only the first-Monday gate lives in the body.
+- **Consumer** — you are vendoring a thin caller stub in another repo
+  (a `uses: dividedby/skills/.github/workflows/*-reusable.yml@claude-loops-v1`
+  block). You inherit `--model`, `--max-budget-usd`, `--allowedTools`, the cron
+  gate, `concurrency`, and the cost-ledger `digest` step from the reusable body.
+  **Do not re-author any of those in your stub.** The only thing you set is the
+  cron schedule (derived by the hash-stagger rule in step 5) and any
+  loop-specific `with:` inputs. See the per-loop setup docs for your stub form.
+
+Post-#382 / [ADR 0029](../adr/0029-apply-agent-research-joins-the-reusable-body-rail.md),
+all three proposal loops run as `workflow_call` reusable bodies; consumers vendor
+only the thin caller stub. The checklist below is the **author** checklist — it
+governs what goes into the `*-reusable.yml` body. Every such body is metered
+`claude -p` spend, so the rules are about **cost legibility and budget fit**, not
+just "does it run" (the shared Agent SDK monthly credit that originally motivated
+this has since been walked back; the tracking is retained in case it returns). The
+binding decisions live in ADR
 [0019](../adr/0019-proposal-loops-file-a-budgeted-ranked-top-k.md) (per-run
 budget/cap + the 2026-06-20 cadence amendment) and ADR
 [0014](../adr/0014-harness-is-fetched-fresh-only-the-workflow-envelope-is-vendored.md)
-(only the thin workflow envelope is vendored; the harness is fetched fresh). The
-hash-stagger rule itself lives one repo over, in **agent-research ADR 0022** —
+(the reusable-body rail; thin caller stubs vendor only `on:`/`permissions:`/`uses:`/`secrets:`).
+The hash-stagger rule itself lives one repo over, in **agent-research ADR 0022** —
 the estate's scheduling convention — and is summarised in step 5.
 
 ## The checklist
@@ -90,11 +106,11 @@ Encode new workflows against the three loops this repo runs. All hash-staggered
 
 Two non-obvious choices worth copying:
 
-- **The per-run cap lives in the fetched-fresh harness**, not in the workflow
-  envelope: `harness/cli.py publish` clamps to `MAX_PROPOSALS` (ADR 0019, lowered
-  5 → 2 on 2026-06-20), and `apply-agent-research`'s skill gate clamps to its own
-  `MAX_BUDGET`. Changing the envelope's comment does not change the cap — change
-  the harness.
+- **The per-run cap lives in the reusable body**, not in the thin caller stub:
+  `harness/cli.py publish` clamps to `MAX_PROPOSALS` (ADR 0019, lowered 5 → 2 on
+  2026-06-20), and `apply-agent-research`'s skill gate clamps to its own
+  `MAX_BUDGET`. Changing the thin caller stub's comment does not change the cap —
+  change the reusable body.
 - **`apply-agent-research` consumes the published knowledge mirror**, so its
   cadence rides behind the producer (agent-research synthesizes Mon/Wed/Fri and
   pushes the mirror; consumers read it). The 3×/week consumer cadence is the

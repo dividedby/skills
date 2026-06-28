@@ -26,7 +26,7 @@ first**; this doc is only the deltas.
   [ADR 0020](../adr/0020-arch-review-fetches-depth-rubric-fresh-and-adds-simplification-legibility-lenses.md)).
   Unlike `apply-agent-research`'s single env-parametrized prompt, this loop's
   per-repo variation *is content* — what to review, which disciplines bind — which
-  has no env representation. So the prompt is three parts joined by the envelope:
+  has no env representation. So the prompt is three parts joined by the reusable body:
   - The **skeleton** (`harness/prompts/improve-codebase-architecture.md`, fetched
     fresh) carries everything shared: the unattended/publish-seam framing, the
     three-lens structure (simplification, depth, legibility), the proposal
@@ -35,7 +35,7 @@ first**; this doc is only the deltas.
     the depth rubric appended below.
   - The **depth rubric** (`mattpocock/skills` → `codebase-design/SKILL.md` +
     `codebase-design/DEEPENING.md`, fetched fresh from `main` at run time and
-    written as `depth-LANGUAGE.md` / `depth-DEEPENING.md` for envelope
+    written as `depth-LANGUAGE.md` / `depth-DEEPENING.md` for reusable-body
     compatibility) carries the depth concepts: deep/shallow modules, seams, and the
     deletion test. The workflow runs `python3 harness/cli.py fetch-rubric --out-dir
     "$RUNNER_TEMP"` in a dedicated step before invoking the agent and **hard-fails
@@ -48,15 +48,15 @@ first**; this doc is only the deltas.
     **Supply-chain implication:** a third-party maintainer's changes enter this
     loop's unattended runs unreviewed each week. This is a deliberate choice made
     by the `dividedby/skills` maintainer; consumers who want review-before-run
-    should pin a SHA in the envelope.
+    should pin a SHA in the reusable body.
   - The **include** (`.github/arch-review-context.md`, vendored per repo) carries
     the irreducibly repo-specific substance: primary/fallback/out-of-scope review
     scope and the binding disciplines/ADRs (plus any repo-specific emit hints). It
     names its own path so the agent knows it is editable.
-  - The **envelope concatenates** all three into the system prompt (skeleton →
+  - The **reusable body concatenates** all three into the system prompt (skeleton →
     labeled depth rubric → repo-context include). The agent never consumes these
-    paths directly — the envelope does the concatenation.
-  - **A missing include or failed rubric fetch hard-fails the run.** The envelope
+    paths directly — the reusable body does the concatenation.
+  - **A missing include or failed rubric fetch hard-fails the run.** The reusable body
     `test -f`s `.github/arch-review-context.md` before invoking the agent, exactly
     like the existing `test -f …/SKILL.md` gate. Scope is load-bearing: a
     scope-free skeleton reviews blindly, so adopting this loop *requires* shipping
@@ -108,24 +108,38 @@ first**; this doc is only the deltas.
 
 ## Reference
 
-`dividedby/skills` → `.github/workflows/improve-codebase-architecture.yml` is a
-working **envelope** instance; the scope-free skeleton + publish seam it calls
-live in the fetched-fresh harness (`harness/prompts/improve-codebase-architecture.md`,
-`harness/cli.py`), and its own scope lives in the local
-`.github/arch-review-context.md` include. Copy the envelope, change the skill path
-and label, and ship your own include if porting to another repo. Note the
-home-repo envelope reads `harness/` straight from its own `ref: main` checkout; a
-downstream repo clones `dividedby/skills` into a temp dir for it — see
-[`proposal-loop-harness.md`](./proposal-loop-harness.md).
+`dividedby/skills` → `.github/workflows/improve-codebase-architecture.yml` is the
+**home-repo** thin caller stub; it calls the reusable body via local `./` (canary).
+Consumer repos vendor a thin caller stub that pins `@claude-loops-v1` (#382):
+
+```yaml
+uses: dividedby/skills/.github/workflows/improve-codebase-architecture-reusable.yml@claude-loops-v1
+secrets:
+  CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+```
+
+The stub carries no skill path, no label, no `claude -p` flags — all of that lives
+in the reusable body (`improve-codebase-architecture-reusable.yml`), which clones
+`dividedby/skills` fresh each run for the harness, the prompt skeleton, and the
+skill. The **only per-repo piece a consumer must supply** is the
+`.github/arch-review-context.md` include (the reusable body `test -f`s it and
+hard-fails the run if it is missing). See
+[`proposal-loop-harness.md`](./proposal-loop-harness.md) for the canonical
+thin-stub form (both home-repo `./` and consumer `@claude-loops-v1` variants).
 
 ## To propagate to another repo
 
-1. Copy the workflow envelope (it clones the harness fresh).
+1. Vendor the thin caller stub: create
+   `.github/workflows/improve-codebase-architecture.yml` in the target repo with
+   `on: schedule` (derive the cron slot with the hash-stagger rule in
+   [`proposal-loop-harness.md`](./proposal-loop-harness.md)) + `workflow_dispatch`,
+   and the `permissions:` / `uses:` / `secrets:` block shown in "Reference" above.
+   No skill path, no label, no `claude -p` flags — those live in the reusable body.
 2. **Write your repo's `.github/arch-review-context.md` include** — the one file
    you must vendor. Give it your primary/fallback/out-of-scope review scope and
    the disciplines/ADRs the loop must respect; have it name its own path so the
-   agent knows it is editable. Without it the run hard-fails on the envelope's
-   `test -f`. Use this repo's include as a template.
+   agent knows it is editable. Without it the run hard-fails on the reusable
+   body's `test -f`. Use this repo's include as a template.
 3. Ensure the `CLAUDE_CODE_OAUTH_TOKEN` secret exists.
 4. (Recommended) add a `CONTEXT.md` + `docs/adr/` so proposals speak the repo's
    own language.
