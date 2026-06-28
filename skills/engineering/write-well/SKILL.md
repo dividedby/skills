@@ -63,7 +63,7 @@ Bring your own text. Skip core-finding.
 
 1. **Structure-check.** Identify the arc. Audit section weight against actual
    word counts. Run the skim test.
-   **Done when:** arc named, over- and under-weighted sections adjusted.
+   **Done when:** arc named, over- and under-weighted sections adjusted, skim test passes.
 
 2. **Density.** Apply the sentence-load test from
    [`references/de-slop.md`](references/de-slop.md) to every sentence.
