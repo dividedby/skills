@@ -36,145 +36,107 @@ loop-specific doc.
   `~/.claude/skills/` at the start of every run. A committed copy silently drifts;
   for a security-relevant skill (a leak guard) that drift is the worst failure
   mode. The skill is used **by file path**, so any readable location works.
-- **Fetch the harness fresh too; vendor only the envelope** ([ADR 0014](../adr/0014-harness-is-fetched-fresh-only-the-workflow-envelope-is-vendored.md)).
-  The drift-prone harness logic — the `stream-json` cost scrape and the
-  `<output>`/`<body>` publish seam, plus the loop prompts — lives in
-  `dividedby/skills` `harness/` and is fetched fresh on the same rail as the skill.
-  Each repo commits only the thin **workflow envelope** (the "stub"): `on:` cron,
-  `permissions:`, token names, tool scoping, and a clone-and-invoke body. One fix
-  in `harness/` reaches every loop on its next run, killing the #117/#211 drift
-  class (the same invalid-JSON fix had to be hand-applied twice before this).
+- **Vendor only the thin caller stub; everything load-bearing lives in the reusable body** ([ADR 0014](../adr/0014-harness-is-fetched-fresh-only-the-workflow-envelope-is-vendored.md), [ADR 0029](../adr/0029-apply-agent-research-joins-the-reusable-body-rail.md)).
+  All three loops run as GitHub Actions `workflow_call` reusable bodies in
+  `dividedby/skills` (#382). The drift-prone logic — the `stream-json` cost
+  scrape, the `<output>`/`<body>` publish seam, the `claude -p` invocation with
+  scoped `--allowedTools`, pinned `--model`, `--max-budget-usd`, the first-Monday
+  gate, and the loop prompts — lives in the `*-reusable.yml` bodies and resolves
+  fresh from `dividedby/skills` on every run. Each repo commits only the **thin
+  caller stub**: `on:` (cron schedule), `permissions:`, `uses:`, and `secrets:`
+  (plus loop-specific `with:` inputs for `apply-agent-research`). The home repo
+  uses a local `./` ref (canary, runs latest body); consumers pin `@claude-loops-v1`.
+  One fix in a reusable body reaches every caller on its next run, killing the
+  #117/#211 drift class.
 
-## Skeleton workflow (the stub)
+## The thin caller stub
 
-The stub clones `dividedby/skills` for the harness + the prompt, runs the agent,
-and calls `harness/cli.py` for the cost scrape and (for a publish-seam loop) the
-filing. **In `dividedby/skills` itself the harness arrives with the `ref: main`
-checkout** — the checkout *is* the fresh harness — so its own two workflows skip
-the extra clone and call `harness/cli.py` directly. A downstream consumer repo
-clones it into a temp dir, shown here:
+Each loop's workflow file in any repo is just `on:` + `permissions:` + `uses:` +
+`secrets:` (plus `apply-agent-research`'s `with:` inputs). Everything
+load-bearing — the `claude -p` invocation, scoped `--allowedTools`, pinned
+`--model` and `--max-budget-usd`, cron gate logic, `concurrency`, the harness
+clone, the cost-ledger `digest` step — lives in the corresponding
+`*-reusable.yml` body in `dividedby/skills` and is inherited automatically by
+every caller. This is the canonical thin-stub form; per-loop docs cross-link
+here rather than duplicating it.
+
+The home repo (`dividedby/skills`) calls each body via a local `./` ref (the
+canary — always running the latest body before consumers pin). Consumer repos
+vendor a thin caller that pins `@claude-loops-v1`; a tag move is the single
+gated rollout that updates the body for all consumers at once.
 
 ```yaml
 name: <Loop Name>
+
+# Thin caller stub (#382). Body lives in <loop-name>-reusable.yml.
+# Home repo: local `./` ref runs its own latest body (the canary).
+# Consumers: pin @claude-loops-v1 — a tag move is the single gated rollout.
+
 on:
   schedule:
-    - cron: "<off-the-hour slot>"   # see scheduling note
+    - cron: "<off-the-hour slot>"   # derive via hash-stagger (see below); gate
+                                    # logic (e.g. first-Monday) lives in the body
   workflow_dispatch:
+
 jobs:
-  <loop-name>:
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    concurrency: { group: <loop-name>, cancel-in-progress: false }
+  run:
+    # The calling job must grant the token scopes the reusable body needs: a
+    # called workflow can't be granted more than the caller holds, and the repo
+    # default is read-only — without this the body's `issues: write` request
+    # exceeds the caller's grant and the run startup-fails.
     permissions:
-      contents: read        # never more
+      contents: read
       issues: write
-    env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      GH_REPO: ${{ github.repository }}
-      LABEL: source:<provenance>
-    steps:
-      - uses: actions/checkout@v6
-        with: { ref: <default-branch>, fetch-depth: 1 }
-
-      # --- Fetch the harness fresh (ADR 0014) ---
-      - name: Install the proposal-loop harness
-        run: |
-          set -euo pipefail
-          git clone --depth 1 https://github.com/dividedby/skills.git "$RUNNER_TEMP/skills"
-          echo "HARNESS=$RUNNER_TEMP/skills/harness" >> "$GITHUB_ENV"
-
-      # --- Fetch the skill fresh (ADR 0008) ---
-      - name: Install the skill
-        run: |
-          set -euo pipefail
-          mkdir -p ~/.claude/skills
-          cp -R "$RUNNER_TEMP/skills/<path-to-skill>" ~/.claude/skills/   # or another repo
-          test -f ~/.claude/skills/<skill-name>/SKILL.md
-      # If the skill bundles a code guard, run its unit tests here as a HARD GATE
-      # and fail the run on failure — never file with a broken guard.
-
-      - name: Run the loop
-        env:
-          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-        run: |
-          set -euo pipefail
-          # stream-json + tee so the final `result` event (carrying total_cost_usd)
-          # reaches the log before claude exits — cost is captured even on failure.
-          # --model is pinned to an exact model ID (default claude-sonnet-4-6) so
-          # cost is deterministic and the cost-hub projection holds — see
-          # "Pin --model" below.
-          # --max-budget-usd is a per-run spend backstop — size it ~2.5–3× the
-          # loop's observed max cost from the ledger so it never trips a healthy
-          # run but caps a runaway well below the job's wall-clock timeout.
-          claude -p \
-            --output-format stream-json --verbose \
-            --model claude-sonnet-4-6 \
-            --max-budget-usd 3.00 \
-            --permission-mode acceptEdits \
-            --allowedTools "<scoped to what the loop needs>" \
-            --append-system-prompt "$(cat "$HARNESS/prompts/<loop>.md")" \
-            "<one-line task pointer to the system prompt>" \
-            | tee "$RUNNER_TEMP/agent.jsonl"
-
-      - name: Digest the run (result log + cost ledger)
-        if: always()
-        run: |
-          set -euo pipefail
-          python3 "$HARNESS/cli.py" digest \
-            --jsonl "$RUNNER_TEMP/agent.jsonl" \
-            --result-out "$RUNNER_TEMP/agent.log" \
-            --cost-out "$RUNNER_TEMP/agent.cost"
-
-      # --- publish-seam loops only (e.g. arch-review); skip for a loop that
-      #     files through the skill's own guarded cli.py ---
-      - name: Publish proposal
-        run: |
-          set -euo pipefail
-          python3 "$HARNESS/cli.py" publish \
-            --log "$RUNNER_TEMP/agent.log" \
-            --label "$LABEL" \
-            --label-description "<provenance description>" \
-            --cost-file "$RUNNER_TEMP/agent.cost" \
-            --heading "<Loop Name>"
-
-      - name: Summarise a failed run
-        if: failure()
-        run: |
-          { echo "## <Loop Name>"; echo; \
-            echo "**Cost:** $(cat "$RUNNER_TEMP/agent.cost" 2>/dev/null || echo n/a)"; echo; \
-            echo '```'; tail -n 50 "$RUNNER_TEMP/agent.log" 2>/dev/null || echo "(no log)"; \
-            echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+    # Home-repo form (canary — calls local body at HEAD):
+    uses: ./.github/workflows/<loop-name>-reusable.yml
+    # Consumer form (pins a stable tag):
+    # uses: dividedby/skills/.github/workflows/<loop-name>-reusable.yml@claude-loops-v1
+    secrets:
+      CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+    # apply-agent-research consumers add with: inputs (see consumer-setup.md):
+    # with:
+    #   is-knowledge-source: false
+    #   private-markers: ""
+    #   max-budget-usd: "3.00"
+    # secrets:  # (in addition to CLAUDE_CODE_OAUTH_TOKEN above)
+    #   ISSUES_TOKEN: ${{ secrets.ISSUES_TOKEN }}
 ```
 
-## The stub ↔ harness interface contract
+The cron schedule is the **only per-consumer customization** in the thin caller
+stub — derive it with the hash-stagger rule in the
+[Conventions section](#conventions-in-the-reusable-body) below. All other
+configuration is inherited from the reusable body.
 
-This is the **stable, versioned** seam between the vendored envelope and the
-fetched-fresh harness ([ADR 0014](../adr/0014-harness-is-fetched-fresh-only-the-workflow-envelope-is-vendored.md)).
+## The reusable body ↔ harness interface contract
+
+This is the **stable, versioned** seam between the `*-reusable.yml` bodies and
+the fetched-fresh harness ([ADR 0014](../adr/0014-harness-is-fetched-fresh-only-the-workflow-envelope-is-vendored.md)).
 The drift-prone logic no longer lives on this surface, so the contract changes
-rarely; when it does, it is a **manual rollout** across the ~3 owned repos.
+rarely; when it does, it is a **manual rollout** to update the reusable bodies.
 
-- **`harness/prompts/<loop>.md`** — the loop's system prompt, `cat` by the stub.
-  Two reasons a prompt rides the harness rail rather than being vendored per repo:
-  for a **publish-seam** loop (arch-review, staleness) the prompt and the `publish`
-  parser share the `<output>`/`<body>` contract and version together; for
-  **`apply-agent-research`** the prompt is instead **parametrized by env** and serves
-  both the host and every Consumer from one source, so the rail preserves "one fix
-  reaches every loop" ([ADR 0015](../adr/0015-apply-agent-research-prompt-is-consumer-portable-via-env.md)).
+- **`harness/prompts/<loop>.md`** — the loop's system prompt, `cat`'d by the
+  reusable body. Two reasons a prompt rides the harness rail rather than being
+  vendored per repo: for a **publish-seam** loop (arch-review, staleness) the
+  prompt and the `publish` parser share the `<output>`/`<body>` contract and
+  version together; for **`apply-agent-research`** the prompt is instead
+  **parametrized by env** and serves both the host and every Consumer from one
+  source, so the rail preserves "one fix reaches every loop"
+  ([ADR 0015](../adr/0015-apply-agent-research-prompt-is-consumer-portable-via-env.md)).
   **`improve-codebase-architecture` is a hybrid:** the harness prompt is only the
-  **scope-free skeleton**, and the stub concatenates it with a vendored local
-  **Repo-context include** (`.github/arch-review-context.md`, hard-failed with
-  `test -f`) because that loop's per-repo variation is *content* — review scope and
-  binding disciplines — with no env representation
+  **scope-free skeleton**, and the reusable body concatenates it with a vendored
+  local **Repo-context include** (`.github/arch-review-context.md`, hard-failed
+  with `test -f`) because that loop's per-repo variation is *content* — review
+  scope and binding disciplines — with no env representation
   ([ADR 0016](../adr/0016-arch-review-prompt-is-skeleton-plus-local-repo-context-include.md),
   [`arch-review-setup.md`](./arch-review-setup.md)). The arch-review skeleton's
   body-drafting rules (Step 5) include a **Design-tension block** — competing-constraint
   analysis naming 2–3 candidate-specific tensions and a triage decision statement —
   for human review before implementation starts (ADR 0020, second amendment).
-  That prompt reads its wiring from the env the stub exports — `MIRROR_DIR`,
+  That prompt reads its wiring from the env the reusable body exports — `MIRROR_DIR`,
   `SKILL_DIR`, `SKILLS_SRC`, `PRIVATE_MARKERS`, and `ISSUES_TOKEN` (the cross-repo
   credential; mode is determined by the explicit `is-tracker-host` input, not token
-  presence — ADR 0032). The exact contract and what a Consumer stub must export is in
-  [`consumer-setup.md`](./consumer-setup.md).
+  presence — ADR 0032). The exact contract and what a Consumer's `with:` inputs
+  must cover is in [`consumer-setup.md`](./consumer-setup.md).
 - **`python3 harness/cli.py digest --jsonl F --result-out F --cost-out F`** —
   every loop. Reduces the `stream-json` JSONL to the last result event's `.result`
   (whole, multi-line preserved) and the `total_cost_usd=…  duration_ms=…
@@ -203,19 +165,27 @@ rarely; when it does, it is a **manual rollout** across the ~3 owned repos.
   a one-line fix there, picked up by every consumer on next run. Float policy: no
   SHA pin — tracks `mattpocock/skills@main` automatically per ADR 0020(b). Supply-chain
   implication: third-party changes enter unattended runs unreviewed; pin a SHA in
-  your own envelope if that tradeoff is unacceptable.
+  your own thin caller stub's `uses:` ref if that tradeoff is unacceptable.
 
 The `publish` parser is unit-tested (`harness/tests/`, gated by
 `.github/workflows/harness-tests.yml`) precisely because it is the #117 drift
 surface — a tested stdlib parser replaces the brittle `sed`/`jq` hand-escaping
 that caused it ([ADR 0004](../adr/0004-runbook-helpers-are-python-stdlib.md)).
 
-## Conventions baked into the skeleton
+## Conventions in the reusable body
 
-- **Off-the-hour cron + stateless hash-stagger.** Schedule off the top of the hour
-  (`17`/`37` past, pre-peak) to dodge GitHub's busy-hour cron delay, and pick a slot
-  **after** any upstream that produces this loop's input (a Consumer runs after the
-  knowledge mirror's synthesis push). To avoid hand-coordinating slots as more repos
+The `*-reusable.yml` bodies implement all load-bearing conventions. A consumer
+vendoring the thin caller stub inherits them automatically — **do not re-author
+cron gate logic, `concurrency`, `--allowedTools`, `--model`, `--max-budget-usd`,
+or the cost-ledger `digest` step in the thin caller stub.** Authors adding or
+modifying a reusable body are responsible for these:
+
+- **Off-the-hour cron + stateless hash-stagger.** The cron **schedule**
+  (`on.schedule.cron`) lives in each caller stub (the one per-consumer
+  customization); all gate logic (e.g. the first-Monday check) lives in the
+  reusable body. Schedule off the top of the hour and pick a slot **after** any
+  upstream that produces this loop's input (a Consumer runs after the knowledge
+  mirror's synthesis push). To avoid hand-coordinating slots as more repos
   onboard, derive the minute/hour from the job's own identity — a **stateless hash
   slot** (agent-research [ADR 0022](https://github.com/dividedby/agent-research/blob/main/docs/adr/0022-consumer-workflows-self-stagger-by-hash.md)):
 
@@ -230,9 +200,9 @@ that caused it ([ADR 0004](../adr/0004-runbook-helpers-are-python-stdlib.md)).
   window** (where `apply` / `improve-codebase-architecture` across all repos consume
   the same run's synthesis) is `WINDOW_START=0`, `WINDOW_HOURS=4` on
   **Mon/Wed/Sat UTC** (`* * 1,3,6`) — the `* * 1,3,6` mask avoids the UTC-midnight
-  day-of-week straddle a CT-evening window would hit. **First-Monday cadence** (e.g. staleness-review):
-  POSIX cron can't express it, so fire every Monday and gate the job on
-  `[ "$(date -u +%-d)" -le 7 ]`.
+  day-of-week straddle a CT-evening window would hit. **First-Monday cadence**
+  (e.g. staleness-review): POSIX cron can't express it, so the stub fires every
+  Monday and the reusable body gates on `[ "$(date -u +%-d)" -le 7 ]`.
 - **`concurrency` with `cancel-in-progress: false`** so a long run is never
   killed mid-flight by the next tick.
 - **Scoped `--allowedTools`, plus `--disallowedTools` for the filing tool.** Grant
@@ -248,15 +218,11 @@ that caused it ([ADR 0004](../adr/0004-runbook-helpers-are-python-stdlib.md)).
   direct write. A publish-seam loop (arch-review) instead scopes `gh` to read-only
   subcommands so the agent cannot file at all — the harness `publish` step is the
   sole filing path.
-- **Adapt the runner to the repo's existing convention.** If the repo already
-  runs Claude via `anthropics/claude-code-base-action`, match that instead of the
-  `claude.ai/install.sh` + `claude -p` shown here. The skill is used by file path,
-  so no skill-discovery config is needed either way.
 - **Emit the cost-ledger line.** `harness/cli.py digest` writes the single
   `total_cost_usd=<…>  duration_ms=<…>  num_turns=<…>` line that a cross-repo
   **cost hub** (`dividedby/agent-research`) scrapes from each participating repo's
   run logs to project monthly spend. Every proposal loop must emit it — it is part
-  of the skeleton, not a per-loop add-on. Use `--output-format stream-json
+  of the reusable body, not a per-loop add-on. Use `--output-format stream-json
   --verbose` (not plain `json`, which buffers and goes dark on a hang) so the final
   `result` event lands in the log before `claude` exits; cost is then captured even
   on a failed run. The hub reads logs via a least-privilege `Actions: Read` PAT it

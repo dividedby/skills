@@ -17,16 +17,16 @@ report issue per run** — the complement to Dependabot, which owns library deps
 ## What differs from the harness skeleton
 
 - **Skill source:** `dividedby/skills` → `skills/engineering/staleness-audit`. The
-  prompt follows the skill **by file path** via a `@SKILL_DIR@` placeholder the
-  envelope substitutes at `cat`-time (`sed "s#@SKILL_DIR@#$SKILL_DIR#g"`) — the
+  reusable body always clones `dividedby/skills` fresh and sets
+  `SKILL_DIR=$RUNNER_TEMP/skills-src/skills/engineering/staleness-audit` — this
+  is identical for both the home-repo canary (called via local `./`) and every
+  consumer (called via `@claude-loops-v1`). The `uses:` ref form is the only
+  home-vs-consumer difference; SKILL_DIR is the same for both. The prompt
+  follows the skill **by file path** via a `@SKILL_DIR@` placeholder the
+  reusable body substitutes at `cat`-time (`sed "s#@SKILL_DIR@#$SKILL_DIR#g"`) — the
   env-parametrization of [ADR 0015](../adr/0015-apply-agent-research-prompt-is-consumer-portable-via-env.md)
-  applied to the staleness skill path, so one fetched-fresh prompt serves the host
-  and every downstream repo. The **home repo** sets `SKILL_DIR=skills/engineering/staleness-audit`
-  and reads the skill straight from the `ref: main` checkout (no `cp -R`, no
-  skill-discovery config). A **downstream** repo clones `dividedby/skills` into a
-  temp dir and sets `SKILL_DIR` to that clone's
-  `…/skills/engineering/staleness-audit` — no checkout pollution, the same
-  substitution does the rest.
+  applied to the staleness skill path, so one fetched-fresh prompt serves all
+  callers from a single fresh clone.
 - **Ecosystem-general.** The prompt does **not** assume Node. It tells the agent to
   scan whatever pins the repo actually has — Node (`.nvmrc`, `engines.node`),
   Python (`requires-python`/`python` in `pyproject.toml`, `.python-version`,
@@ -86,32 +86,37 @@ report issue per run** — the complement to Dependabot, which owns library deps
 
 ## Reference
 
-`dividedby/skills` → `.github/workflows/staleness-review.yml` is a working
-**envelope** instance; the prompt + publish seam it calls live in the
-fetched-fresh harness (`harness/prompts/staleness-audit.md`, `harness/cli.py`).
-Copy the envelope and set `SKILL_DIR` + the provenance label for the porting repo.
-The home-repo envelope reads `harness/` straight from its own `ref: main` checkout;
-a downstream repo clones `dividedby/skills` into a temp dir for both the harness
-and the skill — see [`proposal-loop-harness.md`](./proposal-loop-harness.md).
+`dividedby/skills` → `.github/workflows/staleness-review.yml` is the **home-repo**
+thin caller stub; it calls the reusable body via local `./` (canary). Consumer
+repos vendor a thin caller stub that pins `@claude-loops-v1` (#382):
+
+```yaml
+uses: dividedby/skills/.github/workflows/staleness-review-reusable.yml@claude-loops-v1
+secrets:
+  CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+```
+
+The stub carries no `SKILL_DIR`, no provenance label, no `claude -p` flags — all
+of that lives in the reusable body (`staleness-review-reusable.yml`), which clones
+`dividedby/skills` fresh each run for the harness, the prompt, and the skill.
+See [`proposal-loop-harness.md`](./proposal-loop-harness.md) for the canonical
+thin-stub form (both home-repo `./` and consumer `@claude-loops-v1` variants).
 
 ## To propagate to another repo
 
-1. Copy the workflow envelope. The envelope itself is the **only vendored piece**
-   (ADR 0014): the harness + skill it calls are cloned fresh from
-   `dividedby/skills` each run, so prompt/seam fixes reach every Consumer
-   automatically — but envelope changes (tool grants, `--model` pin,
-   `--max-budget-usd`, cron) do **not** propagate and need a PR per Consumer.
-2. Set `SKILL_DIR` to the cloned skill path
-   (`$RUNNER_TEMP/<clone>/skills/engineering/staleness-audit`) so the prompt's
-   `@SKILL_DIR@` resolves; keep the full tool scoping from the Tools bullet above
-   (read-only `gh`, `WebSearch`/`WebFetch`, and the load-bearing `Bash(python3 $SKILL_DIR/lib/:*)`)
-   and `permissions: contents: read, issues: write`.
-3. Ensure the `CLAUDE_CODE_OAUTH_TOKEN` secret exists.
-4. Confirm the repo actually pins a toolchain — any ecosystem (Node, Python, Go, …),
+1. Vendor the thin caller stub: create `.github/workflows/staleness-review.yml`
+   in the target repo with `on: schedule` (derive the cron slot with the
+   hash-stagger rule in [`proposal-loop-harness.md`](./proposal-loop-harness.md);
+   or use the same `8 13 * * 1` Monday slot as skills for a first-Monday monthly
+   cadence) + `workflow_dispatch`, and the `permissions:` / `uses:` / `secrets:`
+   block shown in "Reference" above. No `SKILL_DIR`, no provenance label, no
+   `claude -p` flags — those live in the reusable body.
+2. Ensure the `CLAUDE_CODE_OAUTH_TOKEN` secret exists in the target repo.
+3. Confirm the repo actually pins a toolchain — any ecosystem (Node, Python, Go, …),
    not just Node (otherwise the loop just files a `skipped` report each run —
    harmless, but pointless).
-5. `workflow_dispatch` once to verify it files ≤1 report issue (or skips), then let
-   the monthly cron take over.
+4. `workflow_dispatch` once to verify it files ≤1 report issue (or skips), then
+   let the monthly cron take over.
 
 A repo can run this loop alongside the
 [architecture-review](./arch-review-setup.md) and
