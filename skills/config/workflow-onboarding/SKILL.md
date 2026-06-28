@@ -121,7 +121,7 @@ Do not copy the `dividedby/skills` skill list verbatim — it reflects the sourc
 
 After execution:
 
-- Re-run the label list and confirm all 5 LOOP/NETWORK labels are present with correct color and description.
+- Re-run the label list and confirm all 6 LOOP/NETWORK labels are present with correct color and description.
 - Confirm CHANNELS labels are absent.
 - Confirm `docs/agents/installed-skills.md` exists in the target.
 
