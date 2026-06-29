@@ -46,6 +46,16 @@ GitHub Contents API; classifies one of four drift shapes per repo; opens a
 fixer. Report-only — never mutates a consumer repo. Requires the same
 `ISSUES_TOKEN` secret (with `DRIFT_CHECK_TOKEN` as Option-B fallback) as workflow-drift.
 
+**Idea-inbox drift check** — companion detector landed via
+[`check-idea-inbox-drift.yml`](../../.github/workflows/check-idea-inbox-drift.yml)
+(#488, weekly Sun 06:00 UTC — staggered 1h after label-drift). Reads each carrier
+repo's `docs/agents/idea-inbox.md` via the GitHub Contents API; checks eight
+canonical structural anchors (breadcrumb, six drain steps, rolling-window section);
+opens an `idea-inbox-drift` issue in dividedby/skills naming `setup-dividedby-skills`
+as the fixer; references #489 for the one-time bulk reconciliation of existing drift.
+Report-only — never mutates a carrier repo. Requires the same `ISSUES_TOKEN` secret
+as workflow-drift and label-drift.
+
 **Reading the crons:** schedules are UTC (authoritative). **CT** is shown for CDT
 (Mar–Nov, UTC−5); **subtract 1h in CST** (Nov–Mar). Day codes: `* * 6` =
 Saturday, `* * 1` = Monday, `* * 3` = Wednesday. Rows are ordered by UTC time within each table.
