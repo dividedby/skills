@@ -103,7 +103,7 @@ plus the union of every channel's already-spoken-for keys:
 - **Be ruthlessly critical before the gate.** The budget is a ceiling, not a
   target: inject only candidates you would defend individually — each must clear
   the bar that would have made it *the* single proposal under the old one-cap
-  regime. A typical run files 0–2; filing 5 means 5 independently excellent
+  regime. A typical run files 0–2; filing 2 means 2 independently excellent
   proposals. Filler erodes the maintainer's trust faster than silence.
 - `priority` is your integer ranking of the candidates (higher = stronger).
 - The gate drops any candidate whose key is already open and any below
