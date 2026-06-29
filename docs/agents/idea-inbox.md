@@ -35,7 +35,10 @@ end-to-end, adapting to what *this* idea needs:
    whether the idea (a) already exists → note it and move it to `✅ Actioned`
    pointing at the existing issue, (b) fits INTO an open issue → comment there
    instead of filing new, or (c) BLOCKS / DEPENDS ON an open issue → record that
-   relationship.
+   relationship. When an idea cites another issue/PR, check its **current state and
+   resolution** — a closed issue's closing comment / recommendation may already
+   answer or obviate the idea. Don't trust a pre-decision body section that the
+   close superseded.
 2. **Decision-map** — when the idea is loose or tangled (multiple unknowns, unclear
    entry point, or competing approaches), decompose it into a **sequence of
    investigation tickets** before picking pipeline steps. Each ticket resolves one
