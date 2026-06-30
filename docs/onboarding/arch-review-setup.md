@@ -127,6 +127,17 @@ hard-fails the run if it is missing). See
 [`proposal-loop-harness.md`](./proposal-loop-harness.md) for the canonical
 thin-stub form (both home-repo `./` and consumer `@claude-loops-v1` variants).
 
+## Second opinions are interactive, not in-loop
+
+A multi-agent `/council` panel is **deliberately not** wired into this scheduled
+loop — the per-run cost (7–12×) breaks the loop's sonnet pin + `--max-budget-usd`
+backstop, and the in-session `Workflow` primitive it needs is the wrong tool for
+headless cron (spike [#495](https://github.com/dividedby/skills/issues/495);
+rationale in [`.out-of-scope/council-in-scheduled-arch-loop.md`](../../.out-of-scope/council-in-scheduled-arch-loop.md)).
+For a high-stakes proposal, invoke `/council` **interactively at triage** on the
+filed `source:architecture-review` issue before acting — pay-per-use, only on the
+proposals worth it.
+
 ## To propagate to another repo
 
 1. Vendor the thin caller stub: create
