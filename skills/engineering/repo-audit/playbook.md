@@ -1,6 +1,11 @@
 # Repo Audit — Leverage-Hunt Catalog
 
-What to look for under each leverage category in Stage 2. Load this when running the hunt.
+What to look for under each lens in the Stage 2 panel sweep. Each persona loads
+its own section when running its Round 1 blind sweep; the Convention & Backlog
+Keeper loads the final section. The four original categories (Delete/lean,
+Performance, Architectural deepening, Missing features/capabilities) and the
+altitude bar reference are unchanged — this catalog is the per-persona signal
+guide the panel relies on.
 
 ---
 
@@ -68,6 +73,19 @@ Apply the **deletion test** to anything suspect: would deleting it concentrate c
 **Frontend/UX as an optional input.** For repos with meaningful UI, scan for: visual hierarchy problems, missing empty states, inaccessible patterns (contrast, keyboard nav, ARIA semantics), and onboarding friction. Feed findings into this category.
 
 **Docs as an optional input.** Where docs appear stale or sparse, surface mismatches between documented and actual behaviour as missing-capability findings (the capability to trust the docs is missing). Apply `doc-it`'s posture: report-only on ADRs and CONTEXT.md, apply changes to reference docs.
+
+---
+
+## Convention & backlog
+
+**Signals (Convention & Backlog Keeper lens):**
+- Convention drift: naming, structure, or patterns that diverge from the documented conventions (ADRs, CLAUDE.md, CODING_STANDARDS.md, label vocabulary, changelog format) without a recorded decision behind the divergence.
+- Structural inconsistencies across sibling skills or modules — fields missing in some but present in others, register entries out of sync with the actual directory.
+- Open issues in the Stage 1 backlog that are duplicates of each other, or that the other personas' findings would supersede or make obsolete — surface these for Stage 3's reconcile step.
+- Backlog entries that have already been implemented but not closed — a gap between `git log` and open issues.
+- ADRs with `Proposed` status where the decision has already been made in code.
+
+**Note:** This lens is cross-cutting — it does not generate epics of its own. Its primary value is enriching the Stage 3 reconcile step with the open-issue signals the other personas were not tasked to track.
 
 ---
 

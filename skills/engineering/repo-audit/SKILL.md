@@ -33,52 +33,166 @@ Read the repo's Claude config (`.claude/`, `CLAUDE.md` / `AGENTS.md`, hooks) and
 
 ---
 
-## Stage 2 — Leverage hunt
+## Stage 2 — Leverage hunt (blind panel fan-out)
 
-Hunt across four categories. For each finding, immediately note which open issue it touches (or that none does) — you will need this in Stage 3.
+Stage 2 is structured as a blind multi-persona panel that runs via the built-in
+Workflow tool's `parallel()` primitive — the same mechanism `/council` uses for
+adversarial diversity. Five personas, each with a distinct evaluative lens, hunt
+the codebase independently and cannot see each other's findings during their
+sweep. A cross-review round deduplicates and ranks before synthesis. The
+synthesised panel output feeds Stage 3 unchanged — the reconcile-against-backlog
+hard gate and altitude bar remain exactly as before.
 
-### Delete / lean
+For each finding, the persona responsible notes which open issue it touches (or
+that none does). Stage 3 will need this annotation.
 
-Look for code, workflows, dependencies, and features that can be deleted outright or radically simplified without hurting users. The best finding here is a deletion that makes everything else easier.
+### Pre-flight — log the panel lineup
 
-**Optional inputs that feed this category:**
-- Staleness scan (dead code, orphaned workflows, stale deps) — run where the repo looks large or long-lived.
-- Prior-art check — run where the repo may be reimplementing something that already exists.
-- Deterministic detectors (dead exports/files/deps, orphan modules, cycles, copy-paste duplication) — run where Stage-1 context shows a JS/TS or Python stack. Ephemeral (`npx`/`uvx`/`pipx run`), optional, skip-and-note if the runner is absent. See the playbook for the detector→language map and output discipline.
+Before any persona runs, log the five-seat lineup and a one-line rationale for
+each seat (why this lens, calibrated against the Stage 1 context — what the repo
+is, how large it is, what its CI/test footprint looks like). No silent selection.
+This mirrors the Step 0 selector log in `/council`.
 
-### Performance
+Illustrative lineup log:
 
-Look for obvious hot paths, N+1 queries, unnecessary work, and scaling risks visible from architecture and code patterns. Flag where measurement is needed before optimising.
+```
+Panel lineup for: "dividedby/skills"
+  ✓ Deletionist            — large, long-lived repo; deletion is highest-leverage first move
+  ✓ Performance Analyst    — harness/ Python + Actions matrix; hot-path and N+1 risks to check
+  ✓ Architect              — ~12 skills, shared harness; seam and depth findings likely
+  ✓ Capability Scout       — mission-driven repo (skills catalog); gap between stated goals and wiring
+  ✓ Convention & Backlog   — strong conventions (ADRs, labels, changelog); open-issue set loaded in Stage 1
+```
 
-### Architectural deepening
+### Round 1 — Blind parallel sweep
 
-Walk the codebase using the Explore method from `improve-codebase-architecture`: move organically through the code, noting where you experience friction — concepts that require bouncing between many small modules, interfaces nearly as complex as their implementations, logic scattered across callers with no locality, untestable seams. Apply the **deletion test** to anything that looks shallow.
+Each persona runs independently via `parallel()`. Personas do **not** see each
+other's output during Round 1. Every seat receives the same Stage-1 context
+(repo layout, tech stack, CI inventory, open issues) and its own lens; nothing
+else.
 
-Use `codebase-design` vocabulary throughout (module, interface, depth, seam, and related terms). A finding here must name the module(s) involved and describe the deepening opportunity in those terms. For a full architectural deep-dive a maintainer can run separately, see `improve-codebase-architecture` (user-invoked, produces an HTML report).
+**Five-seat roster:**
 
-**Optional inputs:**
-- Security check — run where the repo handles auth, user data, or external APIs.
-- Test coverage scan — run where coverage appears thin or test strategy is unclear.
+| Persona | Lens | Maps to |
+|---|---|---|
+| **Deletionist** | Dead code, orphaned workflows, unused deps, pass-through abstractions — the deletion test applied everywhere | Delete / lean |
+| **Performance Analyst** | Hot paths, N+1 queries, unnecessary work, scaling risks visible from architecture | Performance |
+| **Architect** | Explore walk (from `improve-codebase-architecture`): friction, shallow modules, untestable seams, interface/implementation symmetry; `codebase-design` vocabulary throughout | Architectural deepening |
+| **Capability Scout** | Gaps between what the repo does and what it clearly should do — missing journeys, absent error handling, undocumented failure modes | Missing features / capabilities |
+| **Convention & Backlog Keeper** | Convention drift (ADRs, labels, changelog, config), naming/structural inconsistencies, and which open issues the other lenses would touch or supersede — grounded against the Stage 1 open-issue set | Cross-cutting; convention and reconciliation signal for Stage 3 |
 
-### Missing features / capabilities
+Each seat returns a structured response:
 
-Look for gaps between what the repo currently does and what it clearly should do given its purpose — missing user journeys, absent error handling, undocumented failure modes.
+```
+persona: <name>
+findings:
+  - category: <delete-lean | performance | arch-deepening | missing-capability | convention>
+    finding: <one concrete finding>
+    evidence: <specific — file, pattern, or signal observed>
+    open-issue: <issue number or "none">
+    altitude: <file | batch | drop>
+```
 
-**Optional inputs:**
-- Frontend/UX review — run for repos with meaningful UI surface.
-- Docs review — run where docs appear stale, missing, or inconsistent with code.
+Optional inputs that personas may draw on (same as the prior sequential hunt):
+- Deletionist: staleness scan, prior-art check, deterministic detectors (see playbook)
+- Architect: security check (auth/user-data/external-API repos), test coverage scan
+- Capability Scout: frontend/UX review, docs review
+
+### Round 2 — Anonymized cross-review / dedup
+
+Seat responses are anonymized (persona labels stripped) and redistributed. Each
+persona reads the full set and:
+
+1. Flags duplicates — two or more findings describing the same root cause; names
+   the one to keep and why.
+2. Ranks the three strongest findings across all seats (not its own).
+3. Surfaces any gap the first round missed.
+
+This round produces a **deduplicated ranked finding map** — not a new set of
+verdicts. Duplicates are collapsed; surviving findings are annotated with their
+cross-seat rank.
+
+### Synthesis — merge into Stage 3 input
+
+A synthesis pass (higher effort, reads all Round 1 responses de-anonymized plus
+the Round 2 dedup map) produces the Stage 3 input:
+
+- One unified finding list, duplicates resolved, altitude ratings confirmed.
+- Per-finding annotation: category, altitude (file / batch / drop), and which
+  open issue it touches.
+- A brief panel-diversity note — what the multi-lens sweep surfaced that a
+  single sequential pass would likely have missed.
+
+This is the only output Stage 3 sees. The Stage 3 contract (reconcile against
+backlog, group into epics, ordered roadmap, altitude check, failure condition) is
+unchanged.
+
+### Graceful degradation — Workflow tool unavailable
+
+If the Workflow tool is unavailable or invocation fails, fall back to the prior
+sequential hunt: hunt across the four categories (Delete/lean, Performance,
+Architectural deepening, Missing features/capabilities) in a single pass, using
+the playbook for each. Note the degradation and proceed. The audit still
+completes; the blind-isolation and cross-review discipline is skipped, not the
+findings.
 
 ### Altitude bar
 
-Every finding passes through a three-way filter before it survives to Stage 3:
+Every finding passes through the three-way filter (applied per persona in Round
+1, confirmed in synthesis) before it reaches Stage 3:
 
-- **File** — meaningful impact, justifies its own issue or epic. Architectural deepening, significant deletions, performance wins, real capability gaps.
-- **Batch** — low individual impact but worth tracking; collect into a single "minor cleanups" issue or fold into an existing one.
-- **Drop** — trivial or not worth the cost of tracking. Drop it, don't file it.
+- **File** — meaningful impact, justifies its own issue or epic.
+- **Batch** — low individual impact; collect into a single "minor cleanups" issue.
+- **Drop** — trivial or not worth the cost of tracking.
 
-Nothing below this bar ships as a standalone issue. Trivia gets one "minor cleanups" batch at most, or is dropped.
+Nothing below this bar ships as a standalone issue. Trivia gets one "minor
+cleanups" batch at most, or is dropped.
 
-**Completion criterion:** findings across all four categories collected; each assigned file / batch / drop; every finding annotated with which open issue it touches (or none).
+**Completion criterion:** panel lineup logged; all five personas ran blind in
+Round 1; Round 2 dedup map produced; synthesis merged findings into the Stage 3
+input; each finding annotated with category, altitude, and open-issue reference.
+
+### Illustrative Workflow sketch
+
+The sketch below shows the orchestration shape, not a literal script (ADR 0002).
+This skill drives the same `/council` Workflow primitive — see ADR 0036.
+
+```
+// ponytail: illustrative only — not a runnable literal script (ADR 0002)
+
+const ctx    = stage1Context;   // repo layout, open issues, CI inventory
+const lineup = logLineup(ctx);  // pre-flight: log five seats + rationale
+
+// Round 1: each persona hunts blind in parallel
+const round1 = await parallel(
+  lineup.seats.map(seat =>
+    agent(seat.persona, { model: "sonnet", input: { ctx, lens: seat.lens } })
+  )
+);
+
+// Round 2: anonymized cross-review / dedup
+const anonymized = stripPersonaLabels(round1);
+const round2 = await parallel(
+  lineup.seats.map(seat =>
+    agent(seat.persona + "-review", { model: "sonnet", input: anonymized })
+  )
+);
+
+// Synthesis: merge into Stage 3 input
+const stage3Input = await agent("synthesis", {
+  model:  "sonnet",
+  effort: "high",
+  input:  { round1, dedupMap: round2 },
+});
+
+return stage3Input;   // feeds Stage 3 unchanged
+```
+
+Key orchestration properties (same guarantees as `/council` Round 1–3):
+- Round 1 isolation is strict: no persona sees another's output during the sweep.
+- Round 2 is dedup/rank, not re-hunting.
+- Synthesis is a dedicated pass that reads all prior output with a merge
+  responsibility explicit in its prompt — not the last persona to finish.
 
 ---
 
