@@ -2,6 +2,7 @@
   "name": "dividedby-skills",
   "skills": [
     "./skills/engineering/autonomous-loop",
+    "./skills/engineering/council",
     "./skills/engineering/doc-it",
     "./skills/engineering/flow-pr",
     "./skills/engineering/frontend-design",
