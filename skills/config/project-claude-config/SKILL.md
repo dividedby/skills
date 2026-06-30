@@ -28,7 +28,7 @@ Dispatch Explore to report:
 - **What exists.** For `.claude/settings.json` (root), return the **full content** — it is small and it is the audit object; key-path findings need the actual keys. Note any `settings.local.json` (read-only, personal, outranks the shared file) and any nested `packages/*/.claude/settings.json` (NOT loaded — dead config). For every `CLAUDE.md` / `AGENTS.md` (root + nested), return section headers plus anything that looks long, duplicative, or derivable — request excerpts only where a judgment call needs them, not full bodies.
 - **Fact triggers** for the catalog: configured formatter, fast typecheck/lint command, secret files (`.env*`, `*.pem`, `credentials/`), irreplaceable-data dirs (`data/`, `migrations/`), language/stack, package manager, CI workflows that run an agent headless.
 - **Repo shape:** monorepo layout (workspaces/packages/apps), build·test·lint·run tooling from manifests and README.
-- **Label-doc shape:** check `docs/agents/` for the dividedby label-doc convention and report any drift — a stray `labels.md`, a short-form/pointer `triage-labels.md`, a `labels.md`-only repo, or no label doc at all. Detection only; the [audit-checklist.md](audit-checklist.md) "Label-doc drift check" defines the `flag` and the handoff to `setup-dividedby-skills` (ADR 0023). This skill never edits the label doc.
+- **Label-doc shape:** check `docs/agents/` for the dividedby label-doc convention and report any drift — a stray `labels.md`, a short-form/pointer `triage-labels.md`, a `labels.md`-only repo, or no label doc at all. Detection only; the [audit-checklist.md](audit-checklist.md) "Lens 4" section defines the `flag` and the handoff to `setup-dividedby-skills` (ADR 0023). This skill never edits the label doc.
 
 ## Step 3 — Route by state
 
@@ -37,7 +37,38 @@ From the detect report, assign each concern a posture:
 - **Missing or trivial → scaffold** (additive). An empty `{}` settings.json or an untouched boilerplate CLAUDE.md is greenfield, not audit material. Follow [scaffold-stubs.md](scaffold-stubs.md): earn-the-line stubs built from repo facts, with a "here's what I inferred — confirm/correct" framing.
 - **Present with real content → audit** (subtractive). Follow [audit-checklist.md](audit-checklist.md): a concise finding list (`cut` / `move-to-<doc>` / `keep` / `fix-contradiction` / `add` / `gate` / `flag` — defined there) with `file:line` or key-path refs.
 
-Work the harness concern before the instructions concern: settle the proposed hook set first, then scaffold/trim instructions against what those hooks would enforce. **One interview (Step 4) and one approval batch (Step 5) cover both concerns** — the ordering is internal, never a second round-trip to the user.
+When either concern takes the **audit** posture, fan out to four independent config-critic lenses in `parallel()` — each reads the same Step 2 detect snapshot and produces its own finding list using the verbs in [audit-checklist.md](audit-checklist.md), without seeing the others' output:
+
+1. **CLAUDE.md / instruction-budget** (Lens 1) — line-class audit, earn-the-line filter, startup-context load, monorepo split.
+2. **Progressive-disclosure & `<important if>` gating** (Lens 2) — section sizing, pointer hygiene, situational-section gating. The `<important if>` gating check ([#399](https://github.com/dividedby/skills/issues/399)) runs here as-is; it is not re-implemented.
+3. **Hooks & settings harness** (Lens 3) — hook re-declaration, permission posture, catalog trigger coverage, heredoc commit patterns.
+4. **Skill-registration & label-doc drift** (Lens 4) — plugin/skill references in instruction files, label-doc drift detection and `setup-dividedby-skills` hand-off.
+
+After all four return, a synthesis pass dedups overlapping findings and ranks the merged set by impact. That ranked set — not the individual lens outputs — feeds Steps 4 and 5. **The fan-out is internal: one interview (Step 4) and one approval batch (Step 5) cover both concerns; there is no second round-trip to the user.** Within the synthesis, harness findings (Lens 3) are settled before instruction findings (Lenses 1 and 2), so instruction proposals reflect what the harness would already enforce.
+
+If the Workflow tool is unavailable or the fan-out fails, fall back to the single-pass sequential audit (today's behavior): run the [audit-checklist.md](audit-checklist.md) checks in order and note the fallback in the output.
+
+### Illustrative workflow sketch
+
+```
+// ponytail: illustrative only — not a runnable literal script (ADR 0002)
+
+const snapshot = detectReport;  // Step 2 output, shared across all lenses
+
+const [lens1, lens2, lens3, lens4] = await parallel(
+  agent("instruction-budget",  { input: snapshot }),
+  agent("disclosure-gating",   { input: snapshot }),
+  agent("hooks-harness",       { input: snapshot }),
+  agent("skill-label-drift",   { input: snapshot }),
+);
+
+// Synthesis: dedup + rank; harness (lens3) settled before instructions (lens1, lens2)
+const rankedFindings = await agent("synthesis", {
+  input: { lens1, lens2, lens3, lens4 },
+});
+
+// rankedFindings feeds the single Step 4 interview and Step 5 proposal batch
+```
 
 ## Step 4 — Interview: gap-filler only, capped at the stub bar
 
@@ -45,7 +76,7 @@ The interview is **gated behind Explore** — ask only for facts the repo cannot
 
 ## Step 5 — Propose from the catalog, validate, get approval
 
-Every harness recommendation comes from [CATALOG.md](CATALOG.md): fact-gated (its trigger matched in Step 2) and past the annoyance filter; instruction-side keeps/cuts follow the catalog's Instructions section. List catalog/anti-catalog entries you **deliberately rejected** and why. Recommend `deny`-only for permissions — never an allowlist.
+The proposal is built from the ranked synthesis output of Step 3 — not from re-running the audit inline. Every harness recommendation comes from [CATALOG.md](CATALOG.md): fact-gated (its trigger matched in Step 2) and past the annoyance filter; instruction-side keeps/cuts follow the catalog's Instructions section. List catalog/anti-catalog entries you **deliberately rejected** and why. Recommend `deny`-only for permissions — never an allowlist.
 
 Before showing the proposal, **WebFetch the catalog's canonical doc anchors for the harness items you're proposing** (Hooks + Settings, plus Permissions if a permission is proposed) to confirm the specific events, matchers, and keys are current and non-deprecated. Scope the check to your proposal, not the whole catalog; instruction-file proposals have no keys or events and need no fetch.
 
