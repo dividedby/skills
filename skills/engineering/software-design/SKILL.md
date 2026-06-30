@@ -200,7 +200,30 @@ not write them yourself**. Surface them and defer to the responsible skill:
 
 `CONTEXT.md` and `docs/adr/` are owned by `/grill-with-docs`.
 
-### 8. Rewrite issue bodies into the TDD-ready format
+### 8. Invoke `/council` for adversarial design review (advisory)
+
+Hand `/council` the confirmed module map from step 6 and the strongest open
+objections surfaced so far — hard-to-reverse seam decisions, unresolved
+trade-offs, or any conclusion the team has already convinced itself of. These
+emerge naturally across steps 3–7 as clusters are cut, modules named, and
+durable items flagged.
+
+`/council` returns its standard four-block output (Synthesis, Rationale,
+Panel Dissent, Confidence). Append the Panel Dissent block — and any
+synthesis point that names a risk the design session did not surface — as an
+advisory "panel dissent" section. Present it to the user alongside the
+confirmed design. Ask whether to proceed to step 9 or revisit any module
+decisions. The user ratifies; this skill does not.
+
+**Advisory only.** The council output never gates issue carving. It is
+additional evidence, not a veto.
+
+**Graceful degradation.** If the Workflow tool is unavailable, `/council` is
+explicitly skipped, or the invocation fails for any reason, note the skip in
+the conversation and proceed directly to step 9. This sub-step is an
+advisory enrichment, not a structural requirement.
+
+### 9. Rewrite issue bodies into the TDD-ready format
 
 For each issue, rewrite the body. Each rewritten issue is one observable
 behavior. Required fields, in order: **Module** (canonical name from step
@@ -218,7 +241,7 @@ Split any issue that mixes modules. After splitting and rewriting, order
 the full set: **tracer bullet first** (the issue that proves the path works
 end-to-end), then core behavior, then edge cases, then integration.
 
-### 9. Propose all mutations as a single batch
+### 10. Propose all mutations as a single batch
 
 Before writing anything to the tracker or to disk, render the full set of
 changes in conversation:
@@ -271,6 +294,7 @@ After the last issue ships, mark the Design Plan `status: shipped`.
 [ ] No issue mixes responsibilities from two modules
 [ ] Issues ordered: tracer bullet → core behavior → edge cases → integration
 [ ] New terms or trade-offs surfaced for /grill-with-docs extraction
+[ ] /council invoked on confirmed design; Panel Dissent block appended and reviewed (or skip noted)
 [ ] Full batch of rewrites previewed and approved before writing
 [ ] Design Plan written and linked from affected issues
 ```
