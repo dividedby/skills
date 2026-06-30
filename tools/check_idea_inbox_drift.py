@@ -39,7 +39,6 @@ from typing import Optional
 REPOS: dict[str, str] = {
     "dividedby/infra": "main",
     "dividedby/agent-research": "main",
-    "dividedby/bench": "main",
     "dividedby/claude-config": "main",
     "dividedby/dokdiv": "main",
     "dividedby/dokploy-maintenance": "main",

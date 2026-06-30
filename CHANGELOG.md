@@ -25,6 +25,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
 ### Removed
 
+- `dividedby/bench` archived (read-only since 2026-06-21) and dropped from the `check-idea-inbox-drift` fleet detector's `REPOS` map — an archived carrier can't be reconciled, so flagging it would file an un-fixable `idea-inbox-drift` issue; matches the script's "archived repos dropped by hand" policy (#489)
 - `context-firewall` skill retired — de-registered from `plugin.json`, top-level `README.md`, and `skills/engineering/README.md`; directory deleted; knowledge preserved in `autonomous-loop/FIREWALL.md` (ADR 0033, #448)
 - **Breaking:** Option-B dual-secret fallbacks removed now that `SKILLS_TRACKER_TOKEN` and `DRIFT_CHECK_TOKEN` are decommissioned (ADR 0032 cutover complete) — consumer repos must use `ISSUES_TOKEN`: `apply-agent-research-reusable.yml` drops the `SKILLS_TRACKER_TOKEN` secret declaration and fallback; `check-workflow-drift.yml` and `check-label-drift.yml` rename the env var to `ISSUES_TOKEN` and drop the `DRIFT_CHECK_TOKEN` fallback; docstrings and NOTICE messages in `check_workflow_drift.py` and `check_label_drift.py` simplified accordingly
 - `tweakcc-maint` archived and decommissioned: dropped from the workflow-drift and label-drift fleet detectors; ADR 0014 updated to reflect that the reusable-rail migration (ADR 0029) covers the active consumer fleet only (moodreader, agent-research, goodreads-bot + skills canary) (#416)
