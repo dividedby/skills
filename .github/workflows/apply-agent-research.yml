@@ -7,8 +7,8 @@ name: Apply Agent Research
 # window — slot = sha1("skills/apply-agent-research") within the 00–04 UTC band,
 # so onboarding a Consumer needs no schedule coordination (agent-research ADR 0022
 # hash-stagger). The UTC slot rolls back one calendar day in CT (UTC−5):
-# Mon/Wed/Sat UTC → Sun/Tue/Fri CT evening. Per-run cap reduced to ≤2 issues
-# across all channels (ADR 0019, amended 2026-06-20; a ceiling, not a target);
+# Mon/Wed/Sat UTC → Sun/Tue/Fri CT evening. Per-run cap reduced to ≤1 issue
+# across all channels (ADR 0019, amended 2026-06-30; a ceiling, not a target);
 # frequency raised to 3×/week to compensate.
 
 on:

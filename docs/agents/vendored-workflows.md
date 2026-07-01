@@ -79,13 +79,13 @@ Repo roles: **skills** = host (carries the harness in-tree and the reusable
 
 | Repo | cron (UTC) | CT (CDT) | timeout | budget | issues/run |
 |---|---|---|---|---|---|
-| moodreader | `3 0 * * 1,3,6` | Sun/Tue/Fri 19:03 | 20m | $3 | 2 |
-| skills | `5 0 * * 1,3,6` | Sun/Tue/Fri 19:05 | 20m | $3 | 2 |
-| tweakcc-maint | `34 1 * * 1,3,6` | Sun/Tue/Fri 20:34 | 20m | $3 | 2 |
-| agent-research | `4 3 * * 1,3,6` | Sun/Tue/Fri 22:04 | 20m | $3 | 2 |
-| goodreads-bot | `11 3 * * 1,3,6` | Sun/Tue/Fri 22:11 | 20m | $3 | 2 |
+| moodreader | `3 0 * * 1,3,6` | Sun/Tue/Fri 19:03 | 20m | $3 | 1 |
+| skills | `5 0 * * 1,3,6` | Sun/Tue/Fri 19:05 | 20m | $3 | 1 |
+| tweakcc-maint | `34 1 * * 1,3,6` | Sun/Tue/Fri 20:34 | 20m | $3 | 1 |
+| agent-research | `4 3 * * 1,3,6` | Sun/Tue/Fri 22:04 | 20m | $3 | 1 |
+| goodreads-bot | `11 3 * * 1,3,6` | Sun/Tue/Fri 22:11 | 20m | $3 | 1 |
 
-- **Issue cap:** flat cap of 2 estate-wide, no per-repo override, propagates via the fetched-fresh harness. Reference [ADR 0019](../adr/0019-proposal-loops-file-a-budgeted-ranked-top-k.md) (as amended 2026-06-20).
+- **Issue cap:** flat cap of 1 estate-wide, no per-repo override, propagates via the fetched-fresh harness. Reference [ADR 0019](../adr/0019-proposal-loops-file-a-budgeted-ranked-top-k.md) (as amended 2026-06-30).
 - Uses the harness **`publish` seam** (cap = `MAX_PROPOSALS`, [ADR 0019](../adr/0019-proposal-loops-file-a-budgeted-ranked-top-k.md)).
 - Depth rubric fetched fresh from `mattpocock/skills@main`
   ([ADR 0020](../adr/0020-arch-review-fetches-depth-rubric-fresh-and-adds-simplification-legibility-lenses.md)).
@@ -98,11 +98,11 @@ Repo roles: **skills** = host (carries the harness in-tree and the reusable
 
 | Repo | cron (UTC) | CT (CDT) | timeout | budget | issues/run |
 |---|---|---|---|---|---|
-| moodreader | `39 0 * * 1,3,6` | Sun/Tue/Fri 19:39 | 20m | $3 | 2 |
-| skills | `19 1 * * 1,3,6` | Sun/Tue/Fri 20:19 | 20m | $3 | 2 |
-| goodreads-bot | `45 1 * * 1,3,6` | Sun/Tue/Fri 20:45 | 20m | $3 | 2 |
-| tweakcc-maint | `27 3 * * 1,3,6` | Sun/Tue/Fri 22:27 | 20m | $3 | 2 |
-| agent-research | `37 3 * * 1,3,6` | Sun/Tue/Fri 22:37 | 20m job / 15m run | **$15** | 2 |
+| moodreader | `39 0 * * 1,3,6` | Sun/Tue/Fri 19:39 | 20m | $3 | 1 |
+| skills | `19 1 * * 1,3,6` | Sun/Tue/Fri 20:19 | 20m | $3 | 1 |
+| goodreads-bot | `45 1 * * 1,3,6` | Sun/Tue/Fri 20:45 | 20m | $3 | 1 |
+| tweakcc-maint | `27 3 * * 1,3,6` | Sun/Tue/Fri 22:27 | 20m | $3 | 1 |
+| agent-research | `37 3 * * 1,3,6` | Sun/Tue/Fri 22:37 | 20m job / 15m run | **$15** | 1 |
 
 - **agent-research is the producer**, not a consumer: higher budget ($15),
   shorter run-step timeout (15m), and it reads its **native `knowledge/` corpus**

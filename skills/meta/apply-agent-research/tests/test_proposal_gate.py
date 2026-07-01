@@ -1,6 +1,7 @@
 import os
 import sys
 import unittest
+from unittest import mock
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "lib"))
 
@@ -53,12 +54,10 @@ class ProposalGateTest(unittest.TestCase):
         candidates = [
             {"dedup_key": f"cand-{i:02d}", "priority": i} for i in range(10)
         ]
-        # budget=3 clamps to MAX_BUDGET=2; still exercises ranked top-k selection
+        # budget=3 clamps to MAX_BUDGET; still exercises ranked top-k selection
         result = decide(candidates, open_issues=[], budget=3)
-        self.assertEqual(
-            [c["dedup_key"] for c in result["file"]],
-            ["cand-09", "cand-08"],
-        )
+        expected = ["cand-09", "cand-08", "cand-07"][:MAX_BUDGET]
+        self.assertEqual([c["dedup_key"] for c in result["file"]], expected)
 
     def test_budget_is_a_ceiling_not_a_target(self):
         candidates = [{"dedup_key": "only", "priority": 5}]
@@ -73,12 +72,16 @@ class ProposalGateTest(unittest.TestCase):
         self.assertEqual(len(result["file"]), MAX_BUDGET)
 
     def test_duplicate_keys_within_batch_keep_best_only(self):
+        # The dedup-skip branch only fires once the loop has room for a second
+        # item; raise MAX_BUDGET locally so this pure-function regression
+        # guard keeps exercising it even though the system-wide cap is 1.
         candidates = [
             {"dedup_key": "same", "priority": 5},
             {"dedup_key": "same", "priority": 3},
             {"dedup_key": "other", "priority": 4},
         ]
-        result = decide(candidates, open_issues=[], budget=5)
+        with mock.patch("proposal_gate.MAX_BUDGET", 5):
+            result = decide(candidates, open_issues=[], budget=5)
         self.assertEqual(
             [(c["dedup_key"], c["priority"]) for c in result["file"]],
             [("same", 5), ("other", 4)],

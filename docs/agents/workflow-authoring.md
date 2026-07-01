@@ -92,7 +92,7 @@ the estate's scheduling convention — and is summarised in step 5.
    `[ "$(date -u +%-d)" -le 7 ] || exit 0` — exactly the `first-monday-gate` job
    `staleness-review` uses.
 
-## The reference cadence (this repo, 2026-06-20 amendment)
+## The reference cadence (this repo, 2026-06-30 amendment)
 
 Encode new workflows against the three loops this repo runs. All hash-staggered
 (step 5) into the early-UTC band (Sun/Tue/Fri evening CT), all sonnet, all
@@ -100,17 +100,17 @@ Encode new workflows against the three loops this repo runs. All hash-staggered
 
 | Loop | Model | Cron (UTC) | ≈ CT | cap |
 | --- | --- | --- | --- | --: |
-| `improve-codebase-architecture` | sonnet | `5 0 * * 1,3,6` | Sun/Tue/Fri 19:05 | ≤2 |
-| `apply-agent-research` | sonnet | `19 1 * * 1,3,6` | Sun/Tue/Fri 20:19 | ≤2 |
+| `improve-codebase-architecture` | sonnet | `5 0 * * 1,3,6` | Sun/Tue/Fri 19:05 | ≤1 |
+| `apply-agent-research` | sonnet | `19 1 * * 1,3,6` | Sun/Tue/Fri 20:19 | ≤1 |
 | `staleness-review` | sonnet | `8 13 * * 1` (1st-Mon gate) | Mon 08:08 | 1 |
 
 Two non-obvious choices worth copying:
 
 - **The per-run cap lives in the reusable body**, not in the thin caller stub:
   `harness/cli.py publish` clamps to `MAX_PROPOSALS` (ADR 0019, lowered 5 → 2 on
-  2026-06-20), and `apply-agent-research`'s skill gate clamps to its own
-  `MAX_BUDGET`. Changing the thin caller stub's comment does not change the cap —
-  change the reusable body.
+  2026-06-20, then 2 → 1 on 2026-06-30), and `apply-agent-research`'s skill gate
+  clamps to its own `MAX_BUDGET`. Changing the thin caller stub's comment does
+  not change the cap — change the reusable body.
 - **`apply-agent-research` consumes the published knowledge mirror**, so its
   cadence rides behind the producer (agent-research synthesizes Mon/Wed/Fri and
   pushes the mirror; consumers read it). The 3×/week consumer cadence is the

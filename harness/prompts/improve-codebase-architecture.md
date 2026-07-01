@@ -6,7 +6,7 @@ questions — make the call yourself.
 You **do not file anything yourself.** Your entire output is a single `<output>`
 block at the very end of your response (schema below). A deterministic workflow
 step parses that block and publishes the issues — this is what enforces the
-two-issues-per-run cap and the provenance label in code rather than trusting the
+one-issue-per-run cap and the provenance label in code rather than trusting the
 prompt. Do **not** run `gh issue create`; if you do, you will create a duplicate.
 
 ## Scope
@@ -164,16 +164,16 @@ code may be minimal and well-structured but still physically hard to navigate.
    are examples, not requirements — never block a run on a tool the
    environment lacks.
 
-4. Pick your top candidates — **at most two**, none a loose duplicate of any
-   prior proposal — and be **ruthlessly critical** about each:
+4. Pick your top candidate — **at most one**, not a loose duplicate of any
+   prior proposal — and be **ruthlessly critical** about it:
 
-   - Two is a hard cap, **not a target or a quota**. A typical run should
-     file 0–1. Filing two means you found two proposals each strong enough
-     that you would have chosen it as *the* single proposal of the run.
+   - One is a hard cap, **not a target or a quota**. A typical run should
+     file 0–1. File it only if it is strong enough that you would have
+     chosen it as *the* single proposal of the run.
    - Apply the bar **per proposal, independently**: if a candidate would not
      survive as a standalone issue on its own evidence, drop it — do not let
      it ride along with a stronger sibling.
-   - Rank the survivors best-first; they are filed in the order you emit them.
+   - Rank the survivors best-first; only the top one is filed.
    - Filler erodes the loop's credibility with the maintainer faster than
      silence does. When in doubt, leave it out.
 
@@ -260,10 +260,10 @@ markers in the prose itself.
 </body-1>
 ```
 
-With two or more proposals, list them best-first in `proposals` and add a
-matching `<body-2>`, `<body-3>`, … block for each — the numbering follows the
-array order, 1-indexed. A proposal without its matching `<body-N>` block fails
-the run.
+The per-run cap (see Rules, below) is 1, so `proposals` normally holds a single
+entry and only `<body-1>` is emitted. The schema still numbers by array order,
+1-indexed (`<body-2>`, `<body-3>`, … if the cap is ever raised); a proposal
+without its matching `<body-N>` block fails the run.
 
 Nothing fresh worth filing — emit only the `<output>` block, no `<body-N>`:
 
@@ -279,8 +279,8 @@ Nothing fresh worth filing — emit only the `<output>` block, no `<body-N>`:
 Field rules:
 
 - `status` — `"proposed"` or `"skipped"`. Required.
-- `proposals` — required when proposed; non-empty array of **at most 2**
-  `{title, oneLineSummary}` objects, best-first.
+- `proposals` — required when proposed; non-empty array of **at most 1**
+  `{title, oneLineSummary}` object.
 - `title` — required per proposal; ≤256 chars; begins with `defect:` or `deepening:`. Keep it on one line.
 - `oneLineSummary` — required per proposal; one line.
 - `candidatesConsidered` — required when proposed; non-empty array of short strings.
@@ -294,7 +294,7 @@ Field rules:
   `gh issue create`. The workflow publishes the issues (and applies the
   `source:architecture-review` label) from your `<output>` + `<body-N>` blocks.
   Your only job is to read, decide, and emit them.
-- Two proposals per run, maximum — and the workflow enforces the cap
-  regardless. Two is a ceiling, not a target: every proposal must
+- One proposal per run, maximum — and the workflow enforces the cap
+  regardless. One is a ceiling, not a target: the proposal must
   independently clear the bar that would have made it the run's single best.
 - No questions. There is no user.
