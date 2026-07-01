@@ -149,7 +149,7 @@ jobs:
           claude -p \
             --output-format stream-json --verbose \
             --model claude-sonnet-5 \
-            --max-budget-usd 3.00 \
+            --max-budget-usd 4.00 \
             --allowedTools "Bash(gh issue list:*) Bash(gh issue view:*) Bash(git log:*) Bash(git diff:*) Bash(git show:*) Bash(git blame:*) Bash(git ls-files:*) Bash(git status:*) Read Grep Glob" \
             --append-system-prompt "$(
               cat "$HARNESS/prompts/improve-codebase-architecture.md"

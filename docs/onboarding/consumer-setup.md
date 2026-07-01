@@ -57,7 +57,7 @@ pushes to the default branch.
   with:
     is-knowledge-source: false      # true only for dividedby/agent-research
     private-markers: ""             # space-separated private tokens; empty if public
-    max-budget-usd: "3.00"
+    max-budget-usd: "4.00"
   secrets:
     CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
     ISSUES_TOKEN: ${{ secrets.ISSUES_TOKEN }}

@@ -46,7 +46,7 @@ the estate's scheduling convention — and is summarised in step 5.
 2. **Carry a `--max-budget-usd` backstop.** Every headless `claude -p` invocation
    takes `--max-budget-usd`, sized ~2.5–3× the workflow's observed max (#181).
    It's a backstop against a runaway run, not a routine ceiling — a healthy run
-   should never hit it. The three loops here run at `$3.00`. No history yet? Size
+   should never hit it. The three loops here run at `$4.00`. No history yet? Size
    off the nearest same-shape workflow and revisit once runs accrue.
 
 3. **Emit `total_cost_usd` so the run is metered.** Run with
@@ -117,4 +117,4 @@ Two non-obvious choices worth copying:
   ADR 0019 amendment.
 
 Per-run cost rolls into the cross-repo `COST_SURFACE` projection (step 4); keep
-the `$3` backstop unless a loop's observed max moves.
+the `$4` backstop unless a loop's observed max moves.
