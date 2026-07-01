@@ -1,11 +1,12 @@
 name: gate
 
-# Single always-run merge gate. The per-area workflows (hook-self-tests,
-# harness-tests, apply-agent-research-lib-tests) are path-filtered so they don't
-# run on doc-only commits — which makes them unusable as *required* status checks
-# (a required check that never runs deadlocks the PR). This job has no path
-# filter, runs every stdlib self-test in the repo in one sub-second pass, and is
-# the single required check branch protection gates merges on.
+# Single always-run merge gate — the sole CI workflow for tests. The three
+# per-area workflows this once complemented (hook-self-tests, harness-tests,
+# apply-agent-research-lib-tests) were path-filtered subsets of this suite that
+# also re-ran on push, double-running the same tests gate already covers at PR
+# time; they were removed. This job has no path filter, runs every stdlib
+# self-test in the repo in one sub-second pass, and is the single required check
+# branch protection gates merges on.
 
 on:
   pull_request:

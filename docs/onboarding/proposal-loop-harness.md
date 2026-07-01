@@ -168,7 +168,7 @@ rarely; when it does, it is a **manual rollout** to update the reusable bodies.
   your own thin caller stub's `uses:` ref if that tradeoff is unacceptable.
 
 The `publish` parser is unit-tested (`harness/tests/`, gated by
-`.github/workflows/harness-tests.yml`) precisely because it is the #117 drift
+`.github/workflows/gate.yml`) precisely because it is the #117 drift
 surface — a tested stdlib parser replaces the brittle `sed`/`jq` hand-escaping
 that caused it ([ADR 0004](../adr/0004-runbook-helpers-are-python-stdlib.md)).
 
