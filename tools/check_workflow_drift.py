@@ -110,7 +110,7 @@ BODY_ANCHORS: dict[str, list[str]] = {
         "--output-format stream-json",
         "git clone --depth 1",
         # C-1: SHA-pinned checkout (40-char hex after @).
-        "actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10",
+        "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
         # C-3: scoped git (at least one specific read-only subcommand present).
         "Bash(git log:*)",
     ],
@@ -122,7 +122,7 @@ BODY_ANCHORS: dict[str, list[str]] = {
         "--output-format stream-json",
         "git clone --depth 1",
         # C-1: SHA-pinned checkout.
-        "actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10",
+        "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
         # C-3: scoped git and scoped python3.
         "Bash(git log:*)",
         "Bash(python3 $SKILL_DIR/lib/:*)",
@@ -135,7 +135,7 @@ BODY_ANCHORS: dict[str, list[str]] = {
         "--output-format stream-json",
         "git clone --depth 1",
         # C-1: SHA-pinned checkout (40-char hex after @).
-        "actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10",
+        "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
         # C-3: scoped git (at least one specific read-only subcommand present).
         "Bash(git log:*)",
         # C-3: scoped python3 (skill's own cli.py).
