@@ -28,8 +28,9 @@ the grant the body's `issues: write` exceeds the caller's token and the run
 **startup-fails**. The reusable body also declares the same `permissions`; the
 two must agree.
 
-**Snapshot date:** 2026-06-20 — live divergence check landed via
-[`check-workflow-drift.yml`](../../.github/workflows/check-workflow-drift.yml)
+**Snapshot date:** 2026-06-20 — live divergence check landed via the
+`workflow-drift` job in
+[`fleet-drift.yml`](../../.github/workflows/fleet-drift.yml)
 (#365, weekly Sun 04:00 UTC, central in skills). The scheduled job reads each
 consumer repo's vendored files via the GitHub Contents API, checks structural
 anchors (anchor-presence, not full normalization), and opens a `workflow-drift`
@@ -37,24 +38,26 @@ issue in dividedby/skills for any drifted repo. To refresh this table, re-read
 `.github/workflows/{improve-codebase-architecture,apply-agent-research,staleness-review}.yml`
 in each repo.
 
-**Label-doc drift check** — companion detector landed via
-[`check-label-drift.yml`](../../.github/workflows/check-label-drift.yml)
-(#415, weekly Sun 05:00 UTC — staggered 1h after workflow-drift). Reads each
-consumer's `docs/agents/triage-labels.md` and `docs/agents/labels.md` via the
-GitHub Contents API; classifies one of four drift shapes per repo; opens a
+**Label-doc drift check** — companion detector landed via the `label-drift` job
+in [`fleet-drift.yml`](../../.github/workflows/fleet-drift.yml)
+(#415, weekly Sun 04:00 UTC — same run as workflow-drift, independent job).
+Reads each consumer's `docs/agents/triage-labels.md` and `docs/agents/labels.md`
+via the GitHub Contents API; classifies one of four drift shapes per repo; opens a
 `label-drift` issue in dividedby/skills naming `setup-dividedby-skills` as the
 fixer. Report-only — never mutates a consumer repo. Requires the same
 `ISSUES_TOKEN` secret (with `DRIFT_CHECK_TOKEN` as Option-B fallback) as workflow-drift.
 
-**Idea-inbox drift check** — companion detector landed via
-[`check-idea-inbox-drift.yml`](../../.github/workflows/check-idea-inbox-drift.yml)
-(#488, weekly Sun 06:00 UTC — staggered 1h after label-drift). Reads each carrier
-repo's `docs/agents/idea-inbox.md` via the GitHub Contents API; checks eight
-canonical structural anchors (breadcrumb, six drain steps, rolling-window section);
-opens an `idea-inbox-drift` issue in dividedby/skills naming `setup-dividedby-skills`
-as the fixer; references #489 for the one-time bulk reconciliation of existing drift.
-Report-only — never mutates a carrier repo. Requires the same `ISSUES_TOKEN` secret
-as workflow-drift and label-drift.
+**Idea-inbox drift check** — companion detector landed via the
+`idea-inbox-drift` job in
+[`fleet-drift.yml`](../../.github/workflows/fleet-drift.yml)
+(#488, weekly Sun 04:00 UTC — same run as workflow-drift and label-drift,
+independent job). Reads each carrier repo's `docs/agents/idea-inbox.md` via the
+GitHub Contents API; checks eight canonical structural anchors (breadcrumb, six
+drain steps, rolling-window section); opens an `idea-inbox-drift` issue in
+dividedby/skills naming `setup-dividedby-skills` as the fixer; references #489
+for the one-time bulk reconciliation of existing drift. Report-only — never
+mutates a carrier repo. Requires the same `ISSUES_TOKEN` secret as
+workflow-drift and label-drift.
 
 **Reading the crons:** schedules are UTC (authoritative). **CT** is shown for CDT
 (Mar–Nov, UTC−5); **subtract 1h in CST** (Nov–Mar). Day codes: `* * 6` =
