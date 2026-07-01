@@ -44,7 +44,7 @@ on:
       max-budget-usd:
         description: "Per-run spend backstop passed to claude --max-budget-usd"
         type: string
-        default: "3.00"
+        default: "4.00"
     secrets:
       CLAUDE_CODE_OAUTH_TOKEN:
         required: true

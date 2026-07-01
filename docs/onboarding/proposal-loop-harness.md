@@ -97,7 +97,7 @@ jobs:
     # with:
     #   is-knowledge-source: false
     #   private-markers: ""
-    #   max-budget-usd: "3.00"
+    #   max-budget-usd: "4.00"
     # secrets:  # (in addition to CLAUDE_CODE_OAUTH_TOKEN above)
     #   ISSUES_TOKEN: ${{ secrets.ISSUES_TOKEN }}
 ```

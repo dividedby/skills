@@ -27,7 +27,7 @@ name: Changelog Health
 #
 # ADR 0014 (fetched-fresh harness): harness is read from the local checkout,
 #   not vendored — a fix to cli.py reaches the next scheduled run automatically.
-# ADR 0019 (budget/cap): --max-budget-usd 3.00 backstop per repo (6 jobs/run);
+# ADR 0019 (budget/cap): --max-budget-usd 4.00 backstop per repo (6 jobs/run);
 #   single-open-advisory dedup is enforced in-code via `cli.py publish --dedup-open`,
 #   not in the prompt.
 # No CI gate: this loop is advisory-only.
@@ -165,7 +165,7 @@ jobs:
           claude -p \
             --output-format stream-json --verbose \
             --model claude-sonnet-5 \
-            --max-budget-usd 3.00 \
+            --max-budget-usd 4.00 \
             --allowedTools "Bash(git log:*) Bash(git diff:*) Bash(git show:*) Bash(git ls-files:*) Bash(git status:*) Read Grep Glob" \
             --append-system-prompt "$(cat "$HARNESS/prompts/changelog-health.md")" \
             "Run the weekly changelog-health pass for ${GH_REPO}. The repo under evaluation is checked out at your current working directory. Read the grading rubric from ${SKILLS_DIR}/docs/agents/changelog-guideline.md. Follow the instructions in the system prompt." \
