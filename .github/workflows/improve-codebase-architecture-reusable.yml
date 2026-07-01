@@ -8,8 +8,8 @@ name: Improve Codebase Architecture (Reusable Body)
 # The leanest proposal loop (docs/onboarding/arch-review-setup.md): no
 # knowledge-mirror input, no cross-repo channels — the input IS the checked-out
 # caller repo. It reads the codebase (informed by CONTEXT.md + docs/adr/) and
-# files its few best refactor proposals (≤2 per run, cap in code — ADR 0019 as
-# amended 2026-06-20; a ceiling, not a target) into the caller's own tracker
+# files its single best refactor proposal (≤1 per run, cap in code — ADR 0019 as
+# amended 2026-06-30; a ceiling, not a target) into the caller's own tracker
 # under source:architecture-review.
 #
 # Secrets: explicit pass-through of CLAUDE_CODE_OAUTH_TOKEN only. Never `inherit`.
@@ -35,7 +35,7 @@ name: Improve Codebase Architecture (Reusable Body)
 # scoped to read-only subcommands — it cannot `gh issue create`). It explores,
 # decides, and ends its run with a single schema-validated <output> JSON block
 # plus a raw <body> block. The "Publish proposal" step (harness/cli.py publish)
-# parses that block and files the issues itself — so the ≤2-proposals-per-run cap
+# parses that block and files the issues itself — so the ≤1-proposal-per-run cap
 # and the provenance label live in CODE, not in prompt-adherence.
 
 on:
@@ -128,7 +128,7 @@ jobs:
           # The agent is read-only: it explores, decides, and emits a single
           # <output> JSON block plus raw <body-N> blocks (see prompt). It does NOT
           # file the issues — the Publish step does, via the harness, which enforces
-          # the ≤2-issues-per-run cap (ADR 0019) and the label in code. gh access is
+          # the ≤1-issue-per-run cap (ADR 0019) and the label in code. gh access is
           # scoped to read-only subcommands (list/view/search) so the agent *cannot*
           # create an issue itself. This is a propose-only loop (no local writes,
           # no edit permission mode). git is scoped to read-only subcommands
@@ -179,7 +179,7 @@ jobs:
         id: publish
         run: |
           set -euo pipefail
-          # Parse <output>/<body-N>, file <=2 labeled issues (cap in code, ADR
+          # Parse <output>/<body-N>, file <=1 labeled issue (cap in code, ADR
           # 0019), write the rich step summary, emit issue_url(s). Fails loudly
           # (exit 1) on a missing/garbled block — the failure() Summarise step
           # below then surfaces the raw log.

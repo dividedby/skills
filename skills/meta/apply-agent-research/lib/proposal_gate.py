@@ -1,13 +1,13 @@
 """Proposal gate: the pure decision that picks the few proposals worth filing.
 
 Called by the ``apply-agent-research`` skill (via ``cli.py``). The cap (a shared
-per-run budget, default 1, wired to 2 across all channels) and dedup live here so
+per-run budget, default 1, wired to 1 across all channels) and dedup live here so
 they do not depend on model judgment. The caller gathers candidates and
 open-issue dedup keys across every enabled channel and injects them in ONE call;
 this module never touches the tracker.
 """
 
-MAX_BUDGET = 2
+MAX_BUDGET = 1
 
 
 def decide(candidates, open_issues, min_priority=1, budget=1):

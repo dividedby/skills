@@ -142,8 +142,8 @@ parts are:
      `anthropics/claude-code-base-action` if its other workflows use it).
 
 3. **Channel outputs ([ADR 0019](../adr/0019-proposal-loops-file-a-budgeted-ranked-top-k.md)) —
-   at most **two issues per run, shared across all enabled channels** via one budgeted
-   gate pass, zero fine (two is a ceiling, not a target).** Into the repo's
+   at most **one issue per run, shared across all enabled channels** via one budgeted
+   gate pass, zero fine (one is a ceiling, not a target).** Into the repo's
    **own** tracker (ensure each label idempotently in the workflow):
    - **self-improvement** (`source:agent-research`) — agent-meta improvements
      from KB notes.
@@ -243,7 +243,7 @@ parts are:
 ## Verify
 
 `workflow_dispatch` a manual run. Confirm it: clones the mirror (or reads native
-knowledge); runs the guard tests green; files **≤2 issues per run, shared across all enabled channels** (ADR 0019 superseded ADR 0011's per-channel cap — one budgeted gate pass) into this repo's
+knowledge); runs the guard tests green; files **≤1 issue per run, shared across all enabled channels** (ADR 0019 superseded ADR 0011's per-channel cap — one budgeted gate pass) into this repo's
 own tracker (or prints `SKIPPED: <channel>: …`); and — if warranted — files-or-+1's
 a `skill-request` and/or a `skill-promotion` in `dividedby/skills`. Confirm the
 step summary carries the `total_cost_usd=…  duration_ms=…  num_turns=…` ledger
@@ -252,7 +252,7 @@ line (present even on a failed run). Watch the run; report the issue links.
 ## Guardrails (do not violate)
 
 - The loop **proposes, never applies**: no edits, commits, or PRs — only issues.
-  At most two issues per run, shared across all enabled channels (one budgeted gate pass — ADR 0019 superseded ADR 0011's per-channel cap); zero is fine.
+  At most one issue per run, shared across all enabled channels (one budgeted gate pass — ADR 0019 superseded ADR 0011's per-channel cap); zero is fine.
 - Every filed body passes the real leak guard; no private content reaches a public
   tracker. Keep prose generalized regardless.
 - Duplicate `skill-request`s and `skill-promotion`s **aggregate** (+1); they never

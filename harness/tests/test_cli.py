@@ -278,9 +278,14 @@ class PublishCommandTest(unittest.TestCase):
         return fake_run
 
     def test_multi_proposal_files_each_with_matching_body(self):
+        # Regression coverage for title/body pairing across N>1 proposals is
+        # independent of the per-run cap value; raise it locally so this test
+        # keeps exercising multi-proposal filing even though MAX_PROPOSALS=1.
         self._multi_log(2)
         captured = []
-        with mock.patch("cli.subprocess.run", side_effect=self._fake_gh(captured)):
+        with mock.patch.object(cli, "MAX_PROPOSALS", 2), mock.patch(
+            "cli.subprocess.run", side_effect=self._fake_gh(captured)
+        ):
             code, out = self._publish()
         self.assertEqual(code, 0)
         self.assertEqual(len(captured), 2)
@@ -400,13 +405,18 @@ class PublishCommandTest(unittest.TestCase):
 
     def test_irreparable_output_salvages_bodies(self):
         """Genuine garbage <output> + present <body-N> blocks → exit 0, 2 issues filed."""
+        # Salvage-path multi-body handling is independent of the per-run cap
+        # value; raise it locally so this regression guard still exercises
+        # >1 salvaged proposal even though MAX_PROPOSALS=1.
         self._log(
             "<output>not json {[</output>\n"
             "<body-1>\n# First proposal\nBody one.\n</body-1>\n"
             "<body-2>\n# Second proposal\nBody two.\n</body-2>\n"
         )
         captured = []
-        with mock.patch("cli.subprocess.run", side_effect=self._fake_gh(captured)):
+        with mock.patch.object(cli, "MAX_PROPOSALS", 2), mock.patch(
+            "cli.subprocess.run", side_effect=self._fake_gh(captured)
+        ):
             with mock.patch("sys.stderr", new_callable=io.StringIO) as err:
                 code, out = self._publish()
         self.assertEqual(code, 0)

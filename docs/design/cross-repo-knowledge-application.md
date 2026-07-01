@@ -69,13 +69,13 @@ too narrow" stance for this case (see the ADR 0003 amendment).
 - **Writes (output):** proposes via the tracker only. It **never auto-applies**:
   no skill edits, no PRs, and **no commits at all** (the integration map that was
   the one allowed auto-commit is dropped). Pure read → file issue.
-- **One budgeted gate pass across all channels:** the run files at most **five
-  issues total**, picked best-first by a single gate pass over every enabled
+- **One budgeted gate pass across all channels:** the run files at most **one
+  issue total**, picked best-first by a single gate pass over every enabled
   channel's merged candidates
   ([ADR 0019](../adr/0019-proposal-loops-file-a-budgeted-ranked-top-k.md),
-  superseding the per-channel one-cap of ADR 0011). Five is a ceiling, not a
-  target — each candidate must independently clear the old single-best bar, and
-  a typical run files 0–2. The "no menu" discipline still holds per issue.
+  superseding the per-channel one-cap of ADR 0011). One is a ceiling, not a
+  target — the candidate must independently clear the old single-best bar, and
+  a typical run files 0–1. The "no menu" discipline still holds per issue.
 - **Leak guard:** every filed `title + body` passes `sanitizer.check()` first.
   The KB is public, so the guard's job is no longer protecting the KB — it
   protects against leaking the **host repo's own** private content into a public
@@ -83,7 +83,7 @@ too narrow" stance for this case (see the ADR 0003 amendment).
 
 ## Channels
 
-A single run can file at most five issues total across the applicable channels
+A single run can file at most one issue total across the applicable channels
 (zero is the common case). The channels target different concerns and, for the
 cross-repo pair, different repos — they share one ranked budget
 ([ADR 0019](../adr/0019-proposal-loops-file-a-budgeted-ranked-top-k.md)):

@@ -1,5 +1,24 @@
 # Proposal loops file a budgeted ranked top-k, not one issue per run/channel
 
+> **Amended 2026-06-30.** Per-run cap **2 → 1** for both `MAX_PROPOSALS`
+> (`harness/cli.py`, reaching arch-review estate-wide) and the
+> apply-agent-research gate `budget` (`proposal_gate.MAX_BUDGET`). Each
+> scheduled run now files at most its single best proposal, or nothing.
+> **Rationale:** in practice the 2-ceiling behaved as a target — loops filed 2
+> nearly every run, and the second was consistently marginal, reading as
+> tracker noise rather than signal. Reverting to a one-issue cap restores the
+> pre-ADR-0019 discipline: the run files THE single best finding that clears
+> the bar, or it files nothing. The ceiling-not-target discipline is preserved
+> at k=1: a typical run still files 0–1, and silence is preferred over filler.
+> Cadence is unchanged (3×/week Mon/Wed/Sat for `improve-codebase-architecture`
+> and `apply-agent-research`; `staleness-review` monthly) — `staleness-review`
+> already files a single ranked report and is unaffected by this amendment.
+> Caps stay mechanical (in-code) and reach every consumer via the
+> fetched-fresh harness/skill
+> ([ADR 0014](0014-harness-is-fetched-fresh-only-the-workflow-envelope-is-vendored.md));
+> no tag move is needed. This supersedes only the cap value set below; the
+> cadence change from the 2026-06-20 amendment stands.
+
 > **Amended 2026-06-20.** Two parameters change together now that the
 > `claude -p` SDK credit — the cost constraint this ADR's "Why" rested on (the
 > weekly cadence set by the 2026-06-08 cost-rebalance) — has been walked back by

@@ -31,8 +31,8 @@ is what lets the helpers travel with the installed skill into a Consumer repo.
     echo "<body>" | python3 <skill-dir>/lib/cli.py sanitize [--marker M ...]
 
     # pick the ranked candidates to file, up to the run budget (default 1,
-    # hard-capped at 2; exact-key dedup against open issues)
-    echo '{"candidates": [...], "open_issues": [...], "budget": 2}' \
+    # hard-capped at 1; exact-key dedup against open issues)
+    echo '{"candidates": [...], "open_issues": [...], "budget": 1}' \
         | python3 <skill-dir>/lib/cli.py gate
 
     # guarded write: sanitize title+body, then `gh issue create` ONLY on ALLOW
@@ -249,7 +249,7 @@ def main(argv=None, stdin=None, out=None):
     p_sanitize.set_defaults(func=_sanitize)
 
     p_gate = sub.add_parser(
-        "gate", help="pick the budgeted (<=2) ranked candidates to file, from stdin JSON"
+        "gate", help="pick the budgeted (<=1) ranked candidates to file, from stdin JSON"
     )
     p_gate.set_defaults(func=_gate)
 

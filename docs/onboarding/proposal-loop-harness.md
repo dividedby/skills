@@ -145,7 +145,7 @@ rarely; when it does, it is a **manual rollout** to update the reusable bodies.
 - **`python3 harness/cli.py publish --log F --label L [--label-color H]
   [--label-description T] [--cost-file F] [--heading H] [--repo R]`** —
   publish-seam loops only. Parses the agent's `<output>` JSON + raw `<body-N>`
-  blocks (or the legacy single `<body>`), files ≤2 issues under `L` (cap in code —
+  blocks (or the legacy single `<body>`), files ≤1 issue under `L` (cap in code —
   [ADR 0019](../adr/0019-proposal-loops-file-a-budgeted-ranked-top-k.md)), writes
   the rich step summary, and emits `issue_url` / `issue_urls` to
   `$GITHUB_OUTPUT`. **Recovers loudly, then fails loud** — on a malformed

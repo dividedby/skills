@@ -21,7 +21,7 @@ No edits, no commits, no PRs. The producer/decider split
 ([ADR 0003](../../../docs/adr/0003-skill-improvement-workflows-propose-via-issues.md))
 is what makes unattended operation safe.
 
-The **≤2-per-run cap** and **leak guard** are enforced by code, not prompt
+The **≤1-per-run cap** and **leak guard** are enforced by code, not prompt
 discipline. They ship with this skill under [`lib/`](lib/) and travel wherever the
 skill is installed. The mechanical details — dedup keys, the gate, the leak guard,
 and the filing path — are in [proposal-flow.md](proposal-flow.md).
@@ -122,7 +122,7 @@ Channels, each filing into the host repo's tracker unless noted:
 - **skill-audit** (`source:skill-audit`) — redundant-skill findings from Step 4.
 - **[skills-repo only]** — see *Skills-repo specialization* below.
 
-The gate returns at most **two** ranked candidates. For each, file through the
+The gate returns at most **one** ranked candidate. File it through the
 **guarded path** (`cli.py file`), never `gh issue create` directly. Every filed body
 passes the leak guard before reaching the tracker. File what the gate returned, then
 stop — no second pass, no commits.

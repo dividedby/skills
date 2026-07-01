@@ -69,6 +69,10 @@ class GateCommandTest(unittest.TestCase):
         self.assertEqual([c["dedup_key"] for c in result["file"]], ["deepen-x"])
 
     def test_honors_budget(self):
+        # Pins that the CLI forwards the payload's "budget" field to decide()
+        # rather than hardcoding the default; raise MAX_BUDGET locally so a
+        # budget above 1 is observable even though the system-wide ceiling
+        # (checked separately in test_proposal_gate.py) is now 1.
         payload = {
             "candidates": [
                 {"dedup_key": "deepen-x", "priority": 3},
@@ -78,7 +82,8 @@ class GateCommandTest(unittest.TestCase):
             "open_issues": [],
             "budget": 2,
         }
-        code, out = _run(["gate"], stdin=json.dumps(payload))
+        with mock.patch("proposal_gate.MAX_BUDGET", 5):
+            code, out = _run(["gate"], stdin=json.dumps(payload))
         self.assertEqual(code, 0)
         result = json.loads(out)
         self.assertEqual(
