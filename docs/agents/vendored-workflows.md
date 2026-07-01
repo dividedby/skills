@@ -159,7 +159,7 @@ by construction. Bands in use:
 - **Tokens:** own-repo `GITHUB_TOKEN` (minted by `workflow_call` in caller
   context; never passed explicitly); `CLAUDE_CODE_OAUTH_TOKEN` passed explicitly
   through `secrets:` (never `inherit`).
-- **Model:** pinned to `claude-sonnet-4-6` (no floating alias).
+- **Model:** pinned to `claude-sonnet-5` (no floating alias).
 
 ## The publish seam (which loops it covers)
 

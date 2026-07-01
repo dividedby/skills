@@ -73,9 +73,9 @@ class TestCheckFile(unittest.TestCase):
     def test_missing_model_pin_is_reported(self):
         # Model-pin anchor lives on the reusable body, not the thin-caller stub.
         anchors = self._body_anchors()
-        content = "\n".join(a for a in anchors if a != "--model claude-sonnet-4-6")
+        content = "\n".join(a for a in anchors if a != "--model claude-sonnet-5")
         missing = check_file(content, anchors)
-        self.assertIn("--model claude-sonnet-4-6", missing)
+        self.assertIn("--model claude-sonnet-5", missing)
 
     def test_missing_budget_backstop_is_reported(self):
         # Budget-backstop anchor lives on the reusable body, not the thin-caller stub.

@@ -227,7 +227,7 @@ modifying a reusable body are responsible for these:
   `result` event lands in the log before `claude` exits; cost is then captured even
   on a failed run. The hub reads logs via a least-privilege `Actions: Read` PAT it
   holds — see the onboarding doc's manual steps for the token the human must mint.
-- **Pin `--model` — default `claude-sonnet-4-6`.** Always pass an explicit
+- **Pin `--model` — default `claude-sonnet-5`.** Always pass an explicit
   `--model`, using an exact model ID rather than a floating alias like `sonnet`;
   never rely on the `CLAUDE_CODE_OAUTH_TOKEN` default. An unpinned loop runs
   whatever the subscription default happens to be, which can silently flip (e.g.

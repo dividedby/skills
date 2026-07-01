@@ -171,7 +171,7 @@ jobs:
           # AND the final result event (with total_cost_usd) reaches the log before
           # claude exits — so cost is captured even on a failed run (#58) and the
           # cross-repo ledger scrapes it.
-          # --model is pinned to claude-sonnet-4-6 (not the floating `sonnet` alias)
+          # --model is pinned to claude-sonnet-5 (not the floating `sonnet` alias)
           # so an unattended run can't silently inherit the next release (#180).
           # --max-budget-usd is a per-run spend backstop, sized ~2.5–3× the observed
           # max from the cost ledger — never trips a healthy run, caps a runaway well
@@ -182,7 +182,7 @@ jobs:
           # No tighter scope is possible (printf is a shell builtin with no subpath).
           claude -p \
             --output-format stream-json --verbose \
-            --model claude-sonnet-4-6 \
+            --model claude-sonnet-5 \
             --max-budget-usd ${{ inputs.max-budget-usd }} \
             --allowedTools "Bash(gh issue list:*) Bash(gh issue view:*) Bash(gh search:*) Bash(git log:*) Bash(git diff:*) Bash(git show:*) Bash(git ls-files:*) Bash(git status:*) Bash(python3 $SKILL_DIR/lib/cli.py:*) Bash(printf:*) Read Grep Glob Write" \
             --disallowedTools "Bash(gh issue create:*) Bash(gh issue comment:*)" \

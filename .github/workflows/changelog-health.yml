@@ -164,7 +164,7 @@ jobs:
           set -euo pipefail
           claude -p \
             --output-format stream-json --verbose \
-            --model claude-sonnet-4-6 \
+            --model claude-sonnet-5 \
             --max-budget-usd 3.00 \
             --allowedTools "Bash(git log:*) Bash(git diff:*) Bash(git show:*) Bash(git ls-files:*) Bash(git status:*) Read Grep Glob" \
             --append-system-prompt "$(cat "$HARNESS/prompts/changelog-health.md")" \

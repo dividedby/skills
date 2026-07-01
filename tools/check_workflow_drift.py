@@ -105,7 +105,7 @@ BODY_ANCHORS: dict[str, list[str]] = {
     ARCH_BODY_PATH: [
         "permissions:",
         "issues: write",
-        "--model claude-sonnet-4-6",
+        "--model claude-sonnet-5",
         "--max-budget-usd",
         "--output-format stream-json",
         "git clone --depth 1",
@@ -117,7 +117,7 @@ BODY_ANCHORS: dict[str, list[str]] = {
     STALE_BODY_PATH: [
         "permissions:",
         "issues: write",
-        "--model claude-sonnet-4-6",
+        "--model claude-sonnet-5",
         "--max-budget-usd",
         "--output-format stream-json",
         "git clone --depth 1",
@@ -130,7 +130,7 @@ BODY_ANCHORS: dict[str, list[str]] = {
     APPLY_BODY_PATH: [
         "permissions:",
         "issues: write",
-        "--model claude-sonnet-4-6",
+        "--model claude-sonnet-5",
         "--max-budget-usd",
         "--output-format stream-json",
         "git clone --depth 1",

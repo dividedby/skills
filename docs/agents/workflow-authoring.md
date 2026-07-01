@@ -35,7 +35,7 @@ the estate's scheduling convention — and is summarised in step 5.
 1. **Pin `--model` explicitly — to the exact model ID.** Never rely on the OAuth
    default — it can silently flip to opus. And a floating alias (`sonnet`,
    `opus`) is not a pin: it silently inherits the next model release into an
-   unattended loop. Pin the exact ID (e.g. `claude-sonnet-4-6`) and bump it only
+   unattended loop. Pin the exact ID (e.g. `claude-sonnet-5`) and bump it only
    after testing the loop's prompts on the new model (#180). Tier per the #161
    cost/quality verdicts: **sonnet is cheaper *and* scored ≥ opus** on the
    proposal-loop tasks, so every loop here pins sonnet. Opus is reserved for a
