@@ -114,8 +114,10 @@ cross-seat rank.
 
 ### Synthesis — merge into Stage 3 input
 
-A synthesis pass (higher effort, reads all Round 1 responses de-anonymized plus
-the Round 2 dedup map) produces the Stage 3 input:
+> **Temporary — revert on/after 2026-07-07 (Fable 5 sunset).** The synthesis agent runs on **Fable 5** for a trial. Revert: every `fable` in this file → `sonnet`.
+
+A synthesis pass (fable, higher effort — reads all Round 1 responses de-anonymized
+plus the Round 2 dedup map) produces the Stage 3 input:
 
 - One unified finding list, duplicates resolved, altitude ratings confirmed.
 - Per-finding annotation: category, altitude (file / batch / drop), and which
@@ -151,8 +153,6 @@ cleanups" batch at most, or is dropped.
 **Completion criterion:** panel lineup logged; all five personas ran blind in
 Round 1; Round 2 dedup map produced; synthesis merged findings into the Stage 3
 input; each finding annotated with category, altitude, and open-issue reference.
-
-> **Temporary — revert on/after 2026-07-07 (Fable 5 sunset).** The synthesis agent runs on **Fable 5** for a trial. Revert: `fable` below → `sonnet`.
 
 ### Illustrative Workflow sketch
 
