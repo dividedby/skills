@@ -34,6 +34,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
 ### Changed
 
+- `council`'s chair and highest-leverage (opus-tier) seats, and `repo-audit`'s synthesis agent, temporarily run on Claude Fable 5 for a trial; marked for revert on/after 2026-07-07 (Fable 5 sunset)
 - Repos running the scheduled `improve-codebase-architecture` and `apply-agent-research` proposal loops now see at most one filed issue per run instead of two — each run surfaces only its single best finding that clears the bar, or nothing, restoring the pre-ADR-0019 one-issue discipline (ADR 0019, amended 2026-06-30)
 - The four scheduled proposal loops (`apply-agent-research`, `changelog-health`, `improve-codebase-architecture`, `staleness-review`) now run on `claude-sonnet-5` instead of `claude-sonnet-4-6` — a considered model-pin decision for output quality; repos vendoring these reusable loops inherit the new pin (same $3/$15 sticker, though Sonnet 5's tokenizer runs ~30% more tokens per task) (#504)
 - Those same scheduled loops now carry a `$4.00` per-run spend ceiling (`--max-budget-usd`, was `$3.00`) — restoring the documented ~2.5–3× headroom over observed cost under Sonnet 5's larger token footprint; it is a runaway backstop, not a target, so expected per-run spend is unchanged and repos vendoring these loops inherit the wider margin (#504)
