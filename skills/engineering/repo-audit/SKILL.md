@@ -114,8 +114,10 @@ cross-seat rank.
 
 ### Synthesis — merge into Stage 3 input
 
-A synthesis pass (higher effort, reads all Round 1 responses de-anonymized plus
-the Round 2 dedup map) produces the Stage 3 input:
+> **Temporary — revert on/after 2026-07-07 (Fable 5 sunset).** The synthesis agent runs on **Fable 5** for a trial. Revert: every `fable` in this file → `sonnet`.
+
+A synthesis pass (fable, higher effort — reads all Round 1 responses de-anonymized
+plus the Round 2 dedup map) produces the Stage 3 input:
 
 - One unified finding list, duplicates resolved, altitude ratings confirmed.
 - Per-finding annotation: category, altitude (file / batch / drop), and which
@@ -180,7 +182,7 @@ const round2 = await parallel(
 
 // Synthesis: merge into Stage 3 input
 const stage3Input = await agent("synthesis", {
-  model:  "sonnet",
+  model:  "fable",
   effort: "high",
   input:  { round1, dedupMap: round2 },
 });
