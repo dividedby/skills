@@ -35,6 +35,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
 ### Changed
 
+- `harness/prompts/staleness-audit.md` and `harness/prompts/changelog-health.md`:
+  every filed/updated report now ends with an invisible, escaped
+  `<!-- state: {...} -->` block carrying `as_of` plus a per-finding
+  fingerprint. `staleness-audit` fetches and parses the prior report's block
+  (it already has `gh issue view`) and, when nothing changed, answers cheaply
+  with "no changes since `as_of`" instead of re-filing an identical report;
+  when something did change, the lede names the delta instead of presenting
+  a fresh scan with no context. `changelog-health` emits the block on every
+  proposed run but cannot yet parse a prior one back — it has no `gh` in its
+  allowlist by design (the agent never holds a repo-write credential) — so
+  the block is seeded now for a human, or a future deterministic pre-fetch
+  step, to diff against (#531)
 - `harness/prompts/changelog-health.md`: every run now also critiques its own
   grading checklist (`docs/agents/changelog-guideline.md`'s eight rows) —
   flagging blind spots a clearly-wrong changelog would still pass, outcomes

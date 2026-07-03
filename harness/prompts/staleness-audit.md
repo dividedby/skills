@@ -40,8 +40,20 @@ no slash command to invoke here; this prompt is the concrete wiring.
    gh issue list --label source:staleness-review --state all --limit 100
    ```
 
-   If a recent open report already says exactly the same thing (the same pins, the
-   same gaps), emit a `skipped` output rather than filing a duplicate.
+   Take the single most recent one (by creation date) and, if one exists, fetch
+   its body:
+
+   ```
+   gh issue view <number>
+   ```
+
+   Parse the trailing `<!-- state: {...} -->` block from that body (schema in
+   step 3) — this is the prior run's `as_of` date and per-finding status, for
+   the delta-only refresh in step 3. A prior report filed before this
+   convention existed has no such block; treat that as no prior state and
+   proceed to a full scan. If a recent open report already says exactly the
+   same thing (the same pins, the same gaps), emit a `skipped` output rather
+   than filing a duplicate.
 
 2. Follow `@SKILL_DIR@/SKILL.md`. Its scan station walks **whatever toolchain pins
    this repo actually has** — do not assume one ecosystem. Match the repo's real
@@ -76,7 +88,37 @@ no slash command to invoke here; this prompt is the concrete wiring.
    lede naming what was scanned, and a closing note that every `action` is a
    recommendation (no apply path on this loop).
 
-4. If the audit finds no pins, or the report is identical to a recent open
+   End the body with an invisible state block, on its own line after the
+   recommend-only note:
+
+   ```
+   <!-- state: {"as_of": "YYYY-MM-DD", "findings": [{"target": "...", "current": "...", "action": "..."}]} -->
+   ```
+
+   `as_of` is today's date. `findings` has one entry per ranked-table row,
+   carrying just the row's identity (`target`/`current`/`action`), not the
+   full migration prose — this is a compact fingerprint for the *next* run to
+   diff against, not a second copy of the report. It is not part of the
+   human-facing report — don't reference it in the prose above it. Escape
+   every field value before it goes in the block: a literal `<` becomes
+   `&lt;` (a version constraint like `<1.2.0` would otherwise read as markup
+   or corrupt the comment) — required because `target`/`current`/`action`
+   are scraped from toolchain files and upstream release pages, not authored
+   text you control.
+
+   **Delta-only refresh.** Compare this run's `findings` against the prior
+   report's parsed state block (step 1). If every `target`/`current`/`action`
+   triple is unchanged, that is a valid, cheap "no changes since `as_of`"
+   result — emit `skipped` (step 4) instead of re-filing an identical report.
+   If anything changed (new finding, resolved finding, version bump, a newly
+   past EOL date), file the report as usual — the ranked table still carries
+   every current finding in full (never split findings across issues) — but
+   open the lede by naming the delta explicitly (e.g. "1 new finding, 2
+   resolved, 1 unchanged since 2026-06-01") instead of presenting it as if
+   there were no prior context.
+
+4. If the audit finds no pins, or the report is identical to the prior
+   report's parsed state (step 3's delta check) or to a recent open
    `source:staleness-review` report, emit a `skipped` output. Do not reach for
    something to file.
 
@@ -110,8 +152,12 @@ that order, as the very last things you write:
 </output>
 <body>
 The full report body as raw markdown: a short lede, the ranked table verbatim,
-and the recommend-only note. No escaping — write it exactly as it should appear in
-the filed issue. Do not include the <body> / </body> markers in the prose itself.
+the recommend-only note, and — as its last line — the invisible
+`<!-- state: {...} -->` block from step 3. No escaping at the block level —
+write the body exactly as it should appear in the filed issue; the per-field
+`<` -> `&lt;` escaping inside the state block's JSON values is step 3's own
+rule, not a rule about this outer block. Do not include the <body> / </body>
+markers in the prose itself.
 </body>
 ```
 

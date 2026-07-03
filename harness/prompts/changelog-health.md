@@ -93,6 +93,31 @@ Write a single advisory body (the `<body>` block) containing:
   - For each violation, cite the rule number from the grading checklist and
     quote the offending text.
 
+**c. State block** — end the body with an invisible block, on its own line,
+after everything else:
+
+```
+<!-- state: {"as_of": "YYYY-MM-DD", "items": [{"kind": "missing-entry"|"rule-violation", "id": "..."}]} -->
+```
+
+`as_of` is today's date. `items` has one entry per thing you flagged in (a)
+or (b) — `kind` distinguishes a missing-`## [Unreleased]` entry from a rubric
+violation, `id` is a short identifier (the commit/PR ref for a missing entry,
+the rule number for a violation) — a compact fingerprint of this advisory,
+not a second copy of it. Escape every field value first: a literal `<`
+becomes `&lt;`, since `id` values are drawn from commit subjects and quoted
+changelog text you don't author. Not part of the human-facing advisory —
+don't reference it in the prose above it.
+
+This loop cannot parse a *prior* advisory's state block today — it has no
+`gh` in its allowlist (the agent never holds a repo-write credential here,
+by design; only the deterministic publish step does, and `--dedup-open`
+already keeps at most one open advisory). Emit the block anyway on every
+proposed run: it's a durable, escaped fingerprint for a human, or a future
+deterministic pre-fetch step, to diff against and answer "no changes since
+`as_of`" cheaply once that plumbing exists. Do not invent a `gh` call to read
+it yourself.
+
 The advisory must be clearly marked as a proposal/nudge, not a gate.
 
 ### 5. Critique the eval criteria itself
@@ -150,9 +175,11 @@ that order, as the very last things you write:
 }
 </output>
 <body>
-The full advisory body as raw markdown. No escaping — write it exactly as it
-should appear in the filed issue. Do not include the <body> / </body> markers
-in the prose itself.
+The full advisory body as raw markdown, ending with step 4c's invisible
+`<!-- state: {...} -->` block. No escaping at the block level — write the
+body exactly as it should appear in the filed issue; the per-field `<` ->
+`&lt;` escaping inside the state block's JSON values is step 4c's own rule.
+Do not include the <body> / </body> markers in the prose itself.
 </body>
 <eval_feedback>
 Optional. Only present when step 5 found something to flag. Raw markdown, a
@@ -182,7 +209,8 @@ Field rules:
 - `oneLineSummary` — required when proposed; one line.
 - `reason` — required when skipped.
 - The `<body>` block — present when proposed, omitted when skipped; raw
-  markdown, no JSON escaping.
+  markdown, no JSON escaping; ends with the `<!-- state: {...} -->` block
+  (step 4c).
 - The `<eval_feedback>` block — optional, either shape, present only when
   step 5 found a rubric blind spot, uncovered outcome, or unverifiable
   criterion to flag; raw markdown, no JSON escaping.
