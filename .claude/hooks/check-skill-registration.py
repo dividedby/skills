@@ -16,6 +16,17 @@ KEBAB_RE = re.compile(r"^[a-z0-9-]+$")
 _BLOCK_SCALAR_INDICATORS = {">", ">-", ">+", "|", "|-", "|+"}
 
 
+def _dequote(value):
+    """Strip one matching pair of leading/trailing quotes from a YAML plain scalar.
+
+    `name: "demo"` parses to the value `demo`, not `"demo"` — without this the
+    quote characters count toward length checks and break the kebab-case regex.
+    """
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
+        return value[1:-1]
+    return value
+
+
 def frontmatter_fields(text):
     """Return the top-level scalar keys of the leading `---` frontmatter block.
 
@@ -45,7 +56,7 @@ def frontmatter_fields(text):
                     i += 1
                 fields[key] = " ".join(bl for bl in block_lines if bl)
                 continue
-            fields[key] = value
+            fields[key] = _dequote(value)
         i += 1
     return None  # opened with `---` but never closed -> malformed
 

@@ -145,8 +145,12 @@ Label-stripping removes authorship bias; trace-stripping removes agreement
 bias — a visible chain of reasoning reads as supporting evidence even when
 the conclusion is wrong (the same isolation math-olympiad's verifier step
 uses: strip the trace before a second pass ever sees the work). Each seat's
-Round 2 prompt states explicitly: "assume you are the first and only
-reviewer" — no seat reasons as if peers have already weighed in.
+Round 2 prompt states explicitly: review every peer argument as unvetted —
+as if no reviewer had confirmed it before you — so surviving into this round
+is never mistaken for agreement from an earlier pass. This governs how a
+seat *weighs* the arguments it ranks (no argument gets credit for having
+"already convinced someone"), not whether it sees them — ranking three peer
+arguments still requires seeing all of them.
 
 Each seat reads the full (label- and trace-stripped) set and:
 
@@ -278,7 +282,7 @@ Key orchestration properties:
 - Round 2 is peer-rank, not re-evaluation: seats rank arguments, not re-state verdicts.
 - Round 2 isolation is dual: label-stripped (no authorship signal) and
   trace-stripped (no derivation, only the structured fields) — each seat
-  reasons as the first and only reviewer.
+  weighs peer arguments as unvetted, never as pre-confirmed by an earlier pass.
 - The Chair is a dedicated agent, not the last seat to run — it reads all output
   with the synthesis responsibility explicit in its prompt.
 - `CouncilOutputSchema` enforces the four-block output contract (Synthesis /

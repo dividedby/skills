@@ -45,6 +45,9 @@ CASES = [
     ("---\nname: demo\ndescription: >\n  " + ("a " * 600) + "\n---\n", True, True, BLOCK),
     # right at the limits -> passes
     (f"---\nname: {'a' * 64}\ndescription: {'a' * 1024}\n---\n", True, True, ALLOW),
+    # quoted scalars dequote before checks (new behavior)
+    ('---\nname: "demo"\ndescription: ok.\n---\n', True, True, ALLOW),  # quoted name still kebab-case after dequote
+    (f'---\nname: demo\ndescription: "{"a" * 1024}"\n---\n', True, True, ALLOW),  # quoted description: quotes don't count toward the 1024 limit
 ]
 
 # (skill_md_body, registered_in_plugin, linked_in_readme, should_be_blocked, warning_substring_or_none)

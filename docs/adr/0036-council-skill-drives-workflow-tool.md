@@ -72,8 +72,9 @@ cross-reviewer toward agreement — a visible chain of reasoning reads as
 supporting evidence even when the conclusion is wrong. Round 2 redistribution
 now strips the trace too: each seat receives only the structured
 verdict/finding/evidence, never the derivation, and each seat's prompt states
-it is the first and only reviewer. `repo-audit`'s Round 2 (also Workflow-tool-
-driven per this ADR) carries the same tightening.
+that it weighs peer arguments as unvetted — never pre-confirmed by an earlier
+pass. `repo-audit`'s Round 2 (also Workflow-tool-driven per this ADR) carries
+the same tightening.
 
 Authoring rules for skills that drive the Workflow tool:
 

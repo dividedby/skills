@@ -40,8 +40,14 @@ no slash command to invoke here; this prompt is the concrete wiring.
    gh issue list --label source:staleness-review --state all --limit 100
    ```
 
-   Take the single most recent one (by creation date) and, if one exists, fetch
-   its body:
+   Take the single most recent **open** one (by creation date) — a closed or
+   dismissed report carries no prior state to diff against (closed means
+   "resolved," not "unchanged"). If the most recent report is closed, or none
+   exists, that is the same as no prior state: proceed to a full scan. Do not
+   walk further back to an older open report, and do not diff against a
+   closed one.
+
+   If a most-recent-open report exists, fetch its body:
 
    ```
    gh issue view <number>
@@ -49,11 +55,12 @@ no slash command to invoke here; this prompt is the concrete wiring.
 
    Parse the trailing `<!-- state: {...} -->` block from that body (schema in
    step 3) — this is the prior run's `as_of` date and per-finding status, for
-   the delta-only refresh in step 3. A prior report filed before this
+   the delta-only refresh in step 3, which compares **only** against this
+   most-recent-open report's state. A prior report filed before this
    convention existed has no such block; treat that as no prior state and
-   proceed to a full scan. If a recent open report already says exactly the
-   same thing (the same pins, the same gaps), emit a `skipped` output rather
-   than filing a duplicate.
+   proceed to a full scan. If the open report already says exactly the same
+   thing (the same pins, the same gaps), emit a `skipped` output rather than
+   filing a duplicate.
 
 2. Follow `@SKILL_DIR@/SKILL.md`. Its scan station walks **whatever toolchain pins
    this repo actually has** — do not assume one ecosystem. Match the repo's real
@@ -106,21 +113,28 @@ no slash command to invoke here; this prompt is the concrete wiring.
    are scraped from toolchain files and upstream release pages, not authored
    text you control.
 
-   **Delta-only refresh.** Compare this run's `findings` against the prior
-   report's parsed state block (step 1). If every `target`/`current`/`action`
-   triple is unchanged, that is a valid, cheap "no changes since `as_of`"
-   result — emit `skipped` (step 4) instead of re-filing an identical report.
-   If anything changed (new finding, resolved finding, version bump, a newly
-   past EOL date), file the report as usual — the ranked table still carries
-   every current finding in full (never split findings across issues) — but
-   open the lede by naming the delta explicitly (e.g. "1 new finding, 2
-   resolved, 1 unchanged since 2026-06-01") instead of presenting it as if
-   there were no prior context.
+   **Delta-only refresh.** Compare this run's `findings` against the
+   most-recent-open report's parsed state block (step 1) — never against a
+   closed report's state. Escape this run's fresh `target`/`current`/`action`
+   values the same way (`<` → `&lt;`) *before* comparing, so the comparison is
+   escaped-form vs. escaped-form — the stored state is already escaped, and an
+   unescaped fresh value (e.g. a raw `<1.2.0` constraint) would never match its
+   stored `&lt;1.2.0` form and would look "changed" every run even when
+   nothing moved. If every `target`/`current`/`action` triple (compared in
+   escaped form) is unchanged, that is a valid, cheap "no changes since
+   `as_of`" result — emit `skipped` (step 4) instead of re-filing an identical
+   report. If anything changed (new finding, resolved finding, version bump, a
+   newly past EOL date), file the report as usual — the ranked table still
+   carries every current finding in full (never split findings across
+   issues) — but open the lede by naming the delta explicitly (e.g. "1 new
+   finding, 2 resolved, 1 unchanged since 2026-06-01") instead of presenting
+   it as if there were no prior context.
 
-4. If the audit finds no pins, or the report is identical to the prior
-   report's parsed state (step 3's delta check) or to a recent open
-   `source:staleness-review` report, emit a `skipped` output. Do not reach for
-   something to file.
+4. If the audit finds no pins, or the report is identical to the
+   most-recent-open report's parsed state (step 3's delta check), emit a
+   `skipped` output. A closed prior report never triggers a skip on its own —
+   only an open report with unchanged state does. Do not reach for something
+   to file.
 
 ## Output contract
 

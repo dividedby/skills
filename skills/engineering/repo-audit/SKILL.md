@@ -108,8 +108,12 @@ Label-stripping removes authorship bias; trace-stripping removes agreement
 bias — a visible chain of reasoning reads as supporting evidence even when
 the conclusion is wrong (the same isolation math-olympiad's verifier step
 uses: strip the trace before a second pass ever sees the work). Each
-persona's Round 2 prompt states explicitly: "assume you are the first and
-only reviewer" — no persona reasons as if peers have already weighed in.
+persona's Round 2 prompt states explicitly: review every peer argument as
+unvetted — as if no reviewer had confirmed it before you — so surviving into
+this round is never mistaken for agreement from an earlier pass. This
+governs how a persona *weighs* the findings it ranks and dedupes (no finding
+gets credit for having "already convinced someone"), not whether it sees
+them — ranking and dedup still require seeing the full peer set.
 
 Each persona reads the full (label- and trace-stripped) set and:
 
@@ -206,7 +210,8 @@ Key orchestration properties (same guarantees as `/council` Round 1–3):
 - Round 2 is dedup/rank, not re-hunting.
 - Round 2 isolation is dual: label-stripped (no authorship signal) and
   trace-stripped (no derivation, only the structured findings list) — each
-  persona reasons as the first and only reviewer.
+  persona weighs peer findings as unvetted, never as pre-confirmed by an
+  earlier pass.
 - Synthesis is a dedicated pass that reads all prior output with a merge
   responsibility explicit in its prompt — not the last persona to finish.
 
