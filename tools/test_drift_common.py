@@ -80,6 +80,88 @@ class TestFetchFile(unittest.TestCase):
         )
 
 
+class TestResolveTagSha(unittest.TestCase):
+    """resolve_tag_sha: lightweight/annotated tags, exact-match filtering, failures."""
+
+    @mock.patch("tools._drift_common.subprocess.run")
+    def test_lightweight_tag(self, mock_run):
+        matching_refs = (
+            '[{"ref": "refs/tags/claude-loops-v1", '
+            '"object": {"sha": "aaa1", "type": "commit"}}]'
+        )
+        commit = '{"committer": {"date": "2026-06-20T12:00:00Z"}}'
+        mock_run.side_effect = [
+            _completed(stdout=matching_refs),
+            _completed(stdout=commit),
+        ]
+        sha, date = _drift_common.resolve_tag_sha(
+            "dividedby/skills", "claude-loops-v1", "tok"
+        )
+        self.assertEqual(sha, "aaa1")
+        self.assertEqual(date, "2026-06-20T12:00:00Z")
+        self.assertEqual(mock_run.call_count, 2)
+
+    @mock.patch("tools._drift_common.subprocess.run")
+    def test_annotated_tag_dereferenced(self, mock_run):
+        matching_refs = (
+            '[{"ref": "refs/tags/claude-loops-v1", '
+            '"object": {"sha": "tagobj1", "type": "tag"}}]'
+        )
+        tag_obj = '{"object": {"sha": "commit1", "type": "commit"}}'
+        commit = '{"committer": {"date": "2026-06-21T00:00:00Z"}}'
+        mock_run.side_effect = [
+            _completed(stdout=matching_refs),
+            _completed(stdout=tag_obj),
+            _completed(stdout=commit),
+        ]
+        sha, date = _drift_common.resolve_tag_sha(
+            "dividedby/skills", "claude-loops-v1", "tok"
+        )
+        self.assertEqual(sha, "commit1")
+        self.assertEqual(date, "2026-06-21T00:00:00Z")
+        self.assertEqual(mock_run.call_count, 3)
+
+    @mock.patch("tools._drift_common.subprocess.run")
+    def test_exact_match_among_prefix_matches(self, mock_run):
+        # matching-refs is a prefix match: claude-loops-v1 also matches
+        # claude-loops-v10. The exact ref must be selected, not the first hit.
+        matching_refs = (
+            '[{"ref": "refs/tags/claude-loops-v10", '
+            '"object": {"sha": "wrong", "type": "commit"}}, '
+            '{"ref": "refs/tags/claude-loops-v1", '
+            '"object": {"sha": "right", "type": "commit"}}]'
+        )
+        commit = '{"committer": {"date": "2026-06-22T00:00:00Z"}}'
+        mock_run.side_effect = [
+            _completed(stdout=matching_refs),
+            _completed(stdout=commit),
+        ]
+        sha, _ = _drift_common.resolve_tag_sha(
+            "dividedby/skills", "claude-loops-v1", "tok"
+        )
+        self.assertEqual(sha, "right")
+
+    @mock.patch("tools._drift_common.subprocess.run")
+    def test_missing_tag_raises(self, mock_run):
+        mock_run.return_value = _completed(stdout="[]")
+        with self.assertRaises(RuntimeError):
+            _drift_common.resolve_tag_sha("dividedby/skills", "claude-loops-v1", "tok")
+
+    @mock.patch("tools._drift_common.subprocess.run")
+    def test_api_failure_raises(self, mock_run):
+        mock_run.return_value = _completed(returncode=1, stderr="gh: rate limited")
+        with self.assertRaises(RuntimeError):
+            _drift_common.resolve_tag_sha("dividedby/skills", "claude-loops-v1", "tok")
+
+    @mock.patch("tools._drift_common.subprocess.run")
+    def test_malformed_json_raises(self, mock_run):
+        # gh's own contract (well-formed JSON) breaking should fail loud, not
+        # escape as an uncaught JSONDecodeError/KeyError.
+        mock_run.return_value = _completed(stdout="not json")
+        with self.assertRaises(RuntimeError):
+            _drift_common.resolve_tag_sha("dividedby/skills", "claude-loops-v1", "tok")
+
+
 class TestOpenIssues(unittest.TestCase):
     """open_issues' lossy fallback: a gh failure is treated as no open issues."""
 
