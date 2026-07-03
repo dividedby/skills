@@ -58,7 +58,7 @@ the estate's scheduling convention — and is summarised in step 5.
    logic lives in the **fetched-fresh harness**, so one fix reaches every loop.
    A workflow that doesn't emit this line is **unmetered spend** — do not ship it
    (global rule in `~/.claude/CLAUDE.md`). A crashed/empty run (no `result` event
-   at all) or a completed-but-failed run (`result.is_error: true`) PREPENDS
+   at all) or a completed-but-failed run (`result.is_error: true`) **prepends**
    `error=no-result` / `error=is_error` to that line, so COST_SURFACE can tell a
    failed run apart from a genuinely cheap one instead of both collapsing into
    `total_cost_usd=n/a` or an indistinguishable low number; a clean run's line

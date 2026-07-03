@@ -104,9 +104,10 @@ jobs:
       - name: Fetch depth rubric
         run: |
           set -euo pipefail
-          # skills ADR 0020(c): hard-fail on any fetch error. Reads LANGUAGE.md/
-          # DEEPENING.md from the mattpocock/skills clone the previous step
-          # already made — no separate network call (#525; the old hardcoded
+          # skills ADR 0020(c): hard-fail on any fetch error. Reads SKILL.md/
+          # DEEPENING.md (written out as depth-LANGUAGE.md/depth-DEEPENING.md,
+          # #525) from the mattpocock/skills clone the previous step already
+          # made — no separate network call (the old hardcoded
           # raw.githubusercontent.com URLs had already broken once, 2026-06-17).
           python3 "$HARNESS/cli.py" fetch-rubric --out-dir "$RUNNER_TEMP" --source-dir "$MATTPOCOCK_SKILLS"
 
@@ -121,7 +122,8 @@ jobs:
           #      proposal discipline + the lockstep <output>/<body> schema). Unlike
           #      the skills host repo (which reads harness/ from its own checkout),
           #      this reusable body always reads from the harness CLONE at $HARNESS.
-          #   2. The DEPTH RUBRIC (LANGUAGE.md + DEEPENING.md), read from the
+          #   2. The DEPTH RUBRIC (source: SKILL.md + DEEPENING.md, written out
+          #      as depth-LANGUAGE.md + depth-DEEPENING.md), read from the
           #      mattpocock/skills clone made two steps earlier (no separate
           #      network fetch since #525). Assembled by the preceding step;
           #      hard-fails if absent — same spirit as the test -f below.

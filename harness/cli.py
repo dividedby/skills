@@ -37,6 +37,8 @@ import re
 import subprocess
 import sys
 import tempfile
+import urllib.error
+import urllib.request
 
 # --- pure helpers (no I/O, unit-tested directly) ---------------------------
 
@@ -59,6 +61,20 @@ MAX_PROPOSALS = 1
 # `test -f` steps reference that name).
 _RUBRIC_LANGUAGE_REL = "skills/engineering/codebase-design/SKILL.md"
 _RUBRIC_DEEPENING_REL = "skills/engineering/codebase-design/DEEPENING.md"
+
+# Legacy fallback ONLY: a consumer still pinned at claude-loops-v1 pre-#525
+# vendors the OLD reusable-yml fetch-rubric step, which calls this CLI without
+# --source-dir. Until that tag moves past this commit (#523/#516), fetch-rubric
+# must still serve them a network fetch of the same two files. DELETE this
+# fallback and these two URL constants once the tag has moved.
+_RUBRIC_LANGUAGE_URL = (
+    "https://raw.githubusercontent.com/mattpocock/skills/main"
+    "/skills/engineering/codebase-design/SKILL.md"
+)
+_RUBRIC_DEEPENING_URL = (
+    "https://raw.githubusercontent.com/mattpocock/skills/main"
+    "/skills/engineering/codebase-design/DEEPENING.md"
+)
 
 
 def extract_block(text, tag):
@@ -294,11 +310,12 @@ def parse_digest(lines):
 def cost_line(digest):
     """The single cost-ledger line the cross-repo cost hub scrapes from logs.
 
-    When ``digest["error"]`` is set, ``error=<class>`` is PREPENDED (so a
+    When ``digest["error"]`` is set, ``error=<class>`` is prepended (so a
     truncated tail can't drop it) — ``error=no-result`` (crashed/empty run) or
     ``error=is_error`` (a completed run the CLI itself flagged as failed).
-    A clean run has no ``error`` field and the line is byte-identical to the
-    pre-#531 format — COST_SURFACE's parser is unaffected on the common path.
+    On a clean run the ``error`` key is still present but ``None`` — falsy, so
+    the LINE carries no ``error=`` substring and is byte-identical to the
+    pre-#531 format; COST_SURFACE's parser is unaffected on the common path.
     """
     error = digest.get("error")
     prefix = f"error={error}  " if error else ""
@@ -380,7 +397,9 @@ def _summary_skipped(heading, cost, output):
     )
 
 
-def _file_proposals(proposals, args, repo, cost, summary_file, warn_noun, output_for_summary, out):
+def _file_proposals(
+    proposals, args, repo, cost, summary_file, warn_noun, output_for_summary, out,
+):
     """File <=MAX_PROPOSALS proposals and write the gh-output + step-summary.
 
     Shared by ``_publish``'s salvage-recovery and normal-status paths — they
@@ -417,7 +436,10 @@ def _file_proposals(proposals, args, repo, cost, summary_file, warn_noun, output
     gh_output = args.output_file or os.environ.get("GITHUB_OUTPUT")
     _append(gh_output, f"issue_url={filed[0]['url']}\n")
     _append(gh_output, "issue_urls=" + ",".join(f["url"] for f in filed) + "\n")
-    _append(summary_file, _summary_proposed(args.heading, cost, filed, output_for_summary, truncated))
+    _append(
+        summary_file,
+        _summary_proposed(args.heading, cost, filed, output_for_summary, truncated),
+    )
     return 0
 
 
@@ -532,32 +554,49 @@ def _find_open(label, repo):
 
 
 def _fetch_rubric(args, out):
-    """Copy the depth rubric files from a local mattpocock/skills clone into --out-dir.
+    """Get the depth rubric files (SKILL.md/DEEPENING.md) into --out-dir.
 
-    Reads from ``--source-dir`` — the clone the reusable workflow already makes
-    one step earlier to install the /improve-codebase-architecture skill — instead
-    of a network fetch (#525: the two hardcoded raw.githubusercontent.com URLs
-    this replaced were a hard external failure point, and had already broken once,
-    2026-06-17). Hard-fails (exit 1) with a loud, actionable message if either
-    source file is missing at that path — no silent fallback to the network. An
-    unattended run with a missing rubric would produce unsound depth proposals
-    (ADR 0020 c).
+    Clone-first (#525): with ``--source-dir`` — the mattpocock/skills clone the
+    reusable workflow already makes one step earlier to install the
+    /improve-codebase-architecture skill — reads both files locally, no network
+    call. Hard-fails (exit 1) with a loud, actionable message if either source
+    file is missing at that path.
+
+    Legacy fallback: without ``--source-dir`` (a consumer still pinned at
+    claude-loops-v1 pre-#525, calling this CLI via the OLD reusable-yml step),
+    downloads the same two files over the network from mattpocock/skills@main,
+    hard-failing on any URL error. DELETE this branch (and the two URL
+    constants) once claude-loops-v1 has moved past this commit (#523/#516).
+
+    Either lane: an unattended run with a missing rubric would produce
+    unsound depth proposals (ADR 0020 c) — no silent fallback either way.
     """
     files = [
-        ("depth-LANGUAGE.md", _RUBRIC_LANGUAGE_REL),
-        ("depth-DEEPENING.md", _RUBRIC_DEEPENING_REL),
+        ("depth-LANGUAGE.md", _RUBRIC_LANGUAGE_REL, _RUBRIC_LANGUAGE_URL),
+        ("depth-DEEPENING.md", _RUBRIC_DEEPENING_REL, _RUBRIC_DEEPENING_URL),
     ]
-    for filename, rel_path in files:
-        src = os.path.join(args.source_dir, rel_path)
-        if not os.path.isfile(src):
-            print(
-                f"::error::fetch-rubric: {filename}: not found at {src} "
-                "(expected a mattpocock/skills clone at --source-dir)",
-                file=sys.stderr,
-            )
-            return 1
-        with open(src, "rb") as fh:
-            data = fh.read()
+    for filename, rel_path, url in files:
+        if args.source_dir:
+            src = os.path.join(args.source_dir, rel_path)
+            if not os.path.isfile(src):
+                print(
+                    f"::error::fetch-rubric: {filename}: not found at {src} "
+                    "(expected a mattpocock/skills clone at --source-dir)",
+                    file=sys.stderr,
+                )
+                return 1
+            with open(src, "rb") as fh:
+                data = fh.read()
+        else:
+            try:
+                with urllib.request.urlopen(url) as resp:
+                    data = resp.read()
+            except urllib.error.URLError as exc:
+                print(
+                    f"::error::fetch-rubric: {filename}: {url}: {exc}",
+                    file=sys.stderr,
+                )
+                return 1
         dest = os.path.join(args.out_dir, filename)
         with open(dest, "wb") as fh:
             fh.write(data)
@@ -602,8 +641,12 @@ def main(argv=None, out=None):
         help="directory to write depth-LANGUAGE.md and depth-DEEPENING.md into",
     )
     p_fetch.add_argument(
-        "--source-dir", required=True, dest="source_dir",
-        help="root of a local mattpocock/skills clone (e.g. from git clone --depth 1)",
+        "--source-dir", dest="source_dir", default=None,
+        help=(
+            "root of a local mattpocock/skills clone (e.g. from git clone --depth 1); "
+            "omit to fall back to a network fetch (legacy — consumers still pinned at "
+            "claude-loops-v1 pre-#525; delete once the tag moves past it, #523/#516)"
+        ),
     )
     p_fetch.set_defaults(func=_fetch_rubric)
 
@@ -617,9 +660,12 @@ def main(argv=None, out=None):
         # A gh failure (auth expiry, rate limit, …) inside _create_issue/_find_open
         # must not surface as an uncaught traceback — route it through the same
         # loud ::error:: exit path as a parse failure (#525).
-        detail = (exc.stderr or exc.output or str(exc) or "").strip()
+        detail = (exc.stderr or exc.output or str(exc)).strip()
         cmd = " ".join(exc.cmd) if isinstance(exc.cmd, list) else str(exc.cmd)
-        print(f"::error::gh command failed (exit {exc.returncode}): {cmd}: {detail}", file=sys.stderr)
+        print(
+            f"::error::gh command failed (exit {exc.returncode}): {cmd}: {detail}",
+            file=sys.stderr,
+        )
         return exc.returncode or 1
 
 

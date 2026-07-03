@@ -164,16 +164,21 @@ rarely; when it does, it is a **manual rollout** to update the reusable bodies.
   Pair it with an `if: failure()` summarise step that surfaces the raw log.
   Reads `$GH_REPO` / `$GITHUB_STEP_SUMMARY` / `$GITHUB_OUTPUT` from the Actions env.
 
-- **`python3 harness/cli.py fetch-rubric --out-dir DIR`** —
-  arch-review only. Downloads the depth rubric from `mattpocock/skills@main`
-  codebase-design paths into `DIR/depth-LANGUAGE.md` and `DIR/depth-DEEPENING.md`.
-  **Hard-fails (exit 1)** on any network or HTTP error per ADR 0020(c) — an
+- **`python3 harness/cli.py fetch-rubric --out-dir DIR [--source-dir CLONE]`** —
+  arch-review only. Clone-first (#525): given `--source-dir`, reads `SKILL.md`/
+  `DEEPENING.md` from a local `mattpocock/skills` clone into `DIR/depth-LANGUAGE.md`
+  and `DIR/depth-DEEPENING.md` — no network call. Without `--source-dir` (legacy —
+  a consumer still pinned at the `claude-loops-v1` tag from before #525; DELETE
+  once the tag moves past that commit, #523/#516), falls back to downloading the
+  same two files from `mattpocock/skills@main`. **Hard-fails (exit 1)** either way
+  — missing clone file, or any network/HTTP error — per ADR 0020(c), since an
   unattended run with a missing rubric would produce unsound depth proposals. The
-  two upstream URLs live once in `harness/cli.py`; a future upstream path change is
-  a one-line fix there, picked up by every consumer on next run. Float policy: no
-  SHA pin — tracks `mattpocock/skills@main` automatically per ADR 0020(b). Supply-chain
-  implication: third-party changes enter unattended runs unreviewed; pin a SHA in
-  your own thin caller stub's `uses:` ref if that tradeoff is unacceptable.
+  upstream paths (and, for the legacy lane, URLs) live once in `harness/cli.py`;
+  a future upstream path change is a one-line fix there, picked up by every
+  consumer on next run. Float policy: no SHA pin on the clone — tracks
+  `mattpocock/skills@main` automatically per ADR 0020(b). Supply-chain implication:
+  third-party changes enter unattended runs unreviewed; pin a SHA in your own thin
+  caller stub's `uses:` ref if that tradeoff is unacceptable.
 
 The `publish` parser is unit-tested (`harness/tests/`, gated by
 `.github/workflows/gate.yml`) precisely because it is the #117 drift
