@@ -57,8 +57,9 @@ def resolve_tag_sha(repo: str, tag: str, read_token: str) -> tuple[str, str]:
     the commit they point at.
 
     Returns (commit_sha, commit_committer_iso_date). Raises ``RuntimeError`` if
-    the tag isn't found or any ``gh api`` call fails — this is a loud failure,
-    not a lossy one, since a silently-unresolved tag would blind the drift check.
+    the tag isn't found, any ``gh api`` call fails, or a response can't be
+    parsed as expected — this is a loud failure, not a lossy one, since a
+    silently-unresolved tag would blind the drift check.
     """
     result = _gh(
         ["api", f"repos/{repo}/git/matching-refs/tags/{tag}"],
@@ -67,31 +68,54 @@ def resolve_tag_sha(repo: str, tag: str, read_token: str) -> tuple[str, str]:
     )
     if result.returncode != 0:
         raise RuntimeError(
-            f"gh api matching-refs/tags/{tag}: exit {result.returncode}: {result.stderr.strip()}"
+            f"gh api matching-refs/tags/{tag}: exit {result.returncode}: "
+            f"{result.stderr.strip()}"
         )
-    refs = json.loads(result.stdout)
-    exact_ref = f"refs/tags/{tag}"
-    matches = [r for r in refs if r["ref"] == exact_ref]
-    if not matches:
-        raise RuntimeError(f"tag {tag!r} not found in {repo} (no exact matching-ref)")
+    try:
+        refs = json.loads(result.stdout)
+        exact_ref = f"refs/tags/{tag}"
+        matches = [r for r in refs if r["ref"] == exact_ref]
+        if not matches:
+            raise RuntimeError(f"tag {tag!r} not found in {repo} (no exact matching-ref)")
+        obj = matches[0]["object"]
+        sha = obj["sha"]
+        obj_type = obj["type"]
+    except (json.JSONDecodeError, KeyError, TypeError) as exc:
+        raise RuntimeError(
+            f"gh api matching-refs/tags/{tag}: malformed response: {exc}"
+        ) from exc
 
-    obj = matches[0]["object"]
-    sha = obj["sha"]
-    if obj["type"] == "tag":
+    if obj_type == "tag":
         # Annotated tag: the ref points at a tag object, not a commit. Dereference.
-        result = _gh(["api", f"repos/{repo}/git/tags/{sha}"], token=read_token, check=False)
+        result = _gh(
+            ["api", f"repos/{repo}/git/tags/{sha}"], token=read_token, check=False
+        )
         if result.returncode != 0:
             raise RuntimeError(
-                f"gh api git/tags/{sha}: exit {result.returncode}: {result.stderr.strip()}"
+                f"gh api git/tags/{sha}: exit {result.returncode}: "
+                f"{result.stderr.strip()}"
             )
-        sha = json.loads(result.stdout)["object"]["sha"]
+        try:
+            sha = json.loads(result.stdout)["object"]["sha"]
+        except (json.JSONDecodeError, KeyError, TypeError) as exc:
+            raise RuntimeError(
+                f"gh api git/tags/{sha}: malformed response: {exc}"
+            ) from exc
 
-    result = _gh(["api", f"repos/{repo}/git/commits/{sha}"], token=read_token, check=False)
+    result = _gh(
+        ["api", f"repos/{repo}/git/commits/{sha}"], token=read_token, check=False
+    )
     if result.returncode != 0:
         raise RuntimeError(
-            f"gh api git/commits/{sha}: exit {result.returncode}: {result.stderr.strip()}"
+            f"gh api git/commits/{sha}: exit {result.returncode}: "
+            f"{result.stderr.strip()}"
         )
-    commit_date = json.loads(result.stdout)["committer"]["date"]
+    try:
+        commit_date = json.loads(result.stdout)["committer"]["date"]
+    except (json.JSONDecodeError, KeyError, TypeError) as exc:
+        raise RuntimeError(
+            f"gh api git/commits/{sha}: malformed response: {exc}"
+        ) from exc
     return sha, commit_date
 
 

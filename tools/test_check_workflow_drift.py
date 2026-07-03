@@ -105,9 +105,11 @@ class TestCheckFile(unittest.TestCase):
 
 
 class TestRepoSkipAnchors(unittest.TestCase):
-    """Q1 (#524): agent-research's SHA+comment pin style shouldn't false-positive
-    against the literal @claude-loops-v1 anchor; moodreader/goodreads-bot keep it
-    (the pin-drift lane subsumes the check for agent-research specifically)."""
+    """agent-research pins by SHA + trailing `# claude-loops-v1` comment (#470),
+    so the literal `@claude-loops-v1` substring never appears there — skip that
+    one anchor for that repo only; moodreader/goodreads-bot (tag-literal pins)
+    still enforce it, since the pin-drift lane subsumes the check for
+    agent-research specifically."""
 
     def test_agent_research_skips_claude_loops_v1_literal(self):
         anchors = ANCHORS[APPLY_PATH]
@@ -197,6 +199,8 @@ class TestExtractPin(unittest.TestCase):
 
 
 class TestIsShaPin(unittest.TestCase):
+    """is_sha_pin is pure: full 40-char lowercase hex vs anything else."""
+
     def test_full_40_char_hex_is_sha_pin(self):
         self.assertTrue(is_sha_pin(TAG_SHA))
 
@@ -208,14 +212,27 @@ class TestIsShaPin(unittest.TestCase):
 
 
 class TestResolveEffectiveRef(unittest.TestCase):
+    """resolve_effective_ref: SHA -> itself, exact tag -> tag_sha, else -> None (loud)."""
+
     def test_sha_pin_resolves_to_itself(self):
         self.assertEqual(resolve_effective_ref(TAG_SHA, "deadbeef" * 5), TAG_SHA)
 
     def test_tag_pin_resolves_to_tag_sha(self):
         self.assertEqual(resolve_effective_ref(TAG_NAME, TAG_SHA), TAG_SHA)
 
+    def test_similar_tag_name_is_not_silently_treated_as_the_tag(self):
+        # claude-loops-v10 is a distinct tag; must not fall back to tag_sha.
+        self.assertIsNone(resolve_effective_ref("claude-loops-v10", TAG_SHA))
+
+    def test_uppercase_hex_is_not_silently_treated_as_the_tag(self):
+        # Uppercase hex isn't a valid SHA pin (GitHub SHAs are lowercase) and
+        # isn't the tag literal either — must not resolve to tag_sha.
+        self.assertIsNone(resolve_effective_ref(TAG_SHA.upper(), TAG_SHA))
+
 
 class TestTagAgeDays(unittest.TestCase):
+    """tag_age_days is pure: ISO commit date + injectable now -> whole days."""
+
     def test_zero_days_same_instant(self):
         now = datetime(2026, 7, 3, 12, 0, 0, tzinfo=timezone.utc)
         self.assertEqual(tag_age_days("2026-07-03T12:00:00Z", now=now), 0)
@@ -231,6 +248,8 @@ class TestTagAgeDays(unittest.TestCase):
 
 
 class TestBodyDiff(unittest.TestCase):
+    """body_diff is pure: unified diff of other vs main, "" if identical."""
+
     def test_identical_content_returns_empty_string(self):
         self.assertEqual(body_diff("same\n", "same\n", APPLY_BODY_PATH), "")
 
@@ -241,6 +260,13 @@ class TestBodyDiff(unittest.TestCase):
         self.assertIn("-line one", diff)
         self.assertIn("+line two", diff)
 
+    def test_other_label_overrides_default_tag_name_in_diff_header(self):
+        # A pin-lane diff against a non-tag SHA shouldn't be mislabeled as
+        # the tag in the diff header.
+        diff = body_diff("a\n", "b\n", APPLY_BODY_PATH, other_label="abc1234")
+        self.assertIn(f"abc1234:{APPLY_BODY_PATH}", diff)
+        self.assertNotIn(f"{TAG_NAME}:{APPLY_BODY_PATH}", diff)
+
 
 class TestPinDriftPureChain(unittest.TestCase):
     """extract_pin -> resolve_effective_ref -> body_diff, wired end to end with no I/O."""
@@ -248,7 +274,9 @@ class TestPinDriftPureChain(unittest.TestCase):
     def test_sha_pin_matching_tag_no_drift(self):
         # agent-research-style: SHA pin equal to the tag's current SHA, body unchanged.
         filename = os.path.basename(APPLY_BODY_PATH)
-        stub_content = f"uses: dividedby/skills/.github/workflows/{filename}@{TAG_SHA} # {TAG_NAME}\n"
+        stub_content = (
+            f"uses: dividedby/skills/.github/workflows/{filename}@{TAG_SHA} # {TAG_NAME}\n"
+        )
         pin = extract_pin(stub_content, filename)
         effective_ref = resolve_effective_ref(pin, TAG_SHA)
         self.assertEqual(effective_ref, TAG_SHA)
@@ -269,7 +297,9 @@ class TestPinDriftPureChain(unittest.TestCase):
         # and its body content differs from main.
         filename = os.path.basename(APPLY_BODY_PATH)
         stale_sha = "a" * 40
-        stub_content = f"uses: dividedby/skills/.github/workflows/{filename}@{stale_sha} # {TAG_NAME}\n"
+        stub_content = (
+            f"uses: dividedby/skills/.github/workflows/{filename}@{stale_sha} # {TAG_NAME}\n"
+        )
         pin = extract_pin(stub_content, filename)
         effective_ref = resolve_effective_ref(pin, TAG_SHA)
         self.assertEqual(effective_ref, stale_sha)
@@ -278,8 +308,12 @@ class TestPinDriftPureChain(unittest.TestCase):
 
 
 class TestTagIssueTitle(unittest.TestCase):
+    """_tag_issue_title is pure and deterministic (no args)."""
+
     def test_deterministic_format(self):
-        expected = f"[workflow-drift] {TAG_NAME} tag: reusable body has diverged from main"
+        expected = (
+            f"[workflow-drift] {TAG_NAME} tag: reusable body has diverged from main"
+        )
         self.assertEqual(_tag_issue_title(), expected)
         self.assertEqual(_tag_issue_title(), _tag_issue_title())
 
