@@ -40,7 +40,7 @@ Setting up and auditing a project's Claude config — instruction files and the 
 
 ## Proposal loops
 
-Scheduled, skill-driven workflows that propose improvements via labeled issues (a human decides — never auto-applied) — `improve-codebase-architecture`, `apply-agent-research`, `staleness-review`, and `changelog-health`. Onboarding docs for standing them up in other repos:
+Scheduled workflows that propose improvements via labeled issues (a human decides — never auto-applied) — `improve-codebase-architecture`, `apply-agent-research`, `staleness-review`, and `changelog-health`. Onboarding docs for standing them up in other repos:
 
 - **[proposal-loop-harness](./docs/onboarding/proposal-loop-harness.md)** — the shared skeleton the loops follow (propose-via-issues, scheduling; three vendor a fetch-fresh skill install, `changelog-health` is centralized and host-only).
 - **[consumer-setup](./docs/onboarding/consumer-setup.md)** — wire a repo up as an `apply-agent-research` Consumer (agent-meta self-improvement + the cross-repo `skill-request` / `skill-promotion` channels).

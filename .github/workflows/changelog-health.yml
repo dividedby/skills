@@ -1,6 +1,6 @@
 name: Changelog Health
 
-# Centralized weekly changelog-health evaluator (#457, fanned out to 7 repos in #458).
+# Centralized weekly changelog-health evaluator (#457, fanned out per-repo in #458; currently 7 enrolled).
 #
 # Flag-not-rewrite advisory loop: reads each enrolled repo's CHANGELOG.md against
 # recent git log and the fleet changelog rubric (docs/agents/changelog-guideline.md),

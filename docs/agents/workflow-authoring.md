@@ -94,11 +94,13 @@ the estate's scheduling convention — and is summarised in step 5.
 
 ## The reference cadence (this repo, 2026-06-30 amendment)
 
-Encode new workflows against the four loops this repo runs — three MWF-window
-proposal loops plus `changelog-health` (Thursday). All hash-staggered (step 5)
-within the same 00–04 UTC off-peak band, all sonnet, all **propose-only** —
-never edit/commit/merge. The three MWF loops file budgeted, ranked issues;
-`changelog-health` is advisory-only, filing at most one dedup'd issue per repo.
+Encode new workflows against the four loops this repo runs. All sonnet, all
+**propose-only** — never edit/commit/merge. Cadence: the two Mon/Wed/Sat loops
+are hash-staggered (step 5) into the 00–04 UTC off-peak band (ADR 0022), and
+weekly `changelog-health` derives its Thu 01:33 UTC slot the same way; monthly
+`staleness-review` uses a hand-chosen slot instead (`8 13 * * 1`). The three
+proposal loops file budgeted, ranked issues; `changelog-health` is
+advisory-only, filing at most one dedup'd issue per repo.
 
 | Loop | Model | Cron (UTC) | ≈ CT | cap |
 | --- | --- | --- | --- | --: |
