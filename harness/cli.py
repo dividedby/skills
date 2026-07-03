@@ -37,8 +37,6 @@ import re
 import subprocess
 import sys
 import tempfile
-import urllib.error
-import urllib.request
 
 # --- pure helpers (no I/O, unit-tested directly) ---------------------------
 
@@ -49,19 +47,18 @@ _NA = "n/a"
 # the run's single best proposal, the one that clears the bar on its own.
 MAX_PROPOSALS = 1
 
-# Depth rubric URLs from mattpocock/skills@main.
+# Depth rubric paths, relative to a mattpocock/skills clone root. The reusable
+# workflow already clones that repo one step earlier (to install the
+# /improve-codebase-architecture skill); fetch-rubric reads these two files
+# from that local clone via --source-dir rather than a network call — the two
+# raw.githubusercontent.com URLs this replaced were a hard external failure
+# point that broke once already (2026-06-17, #525).
 # Note: upstream renamed improve-codebase-architecture/LANGUAGE.md →
 # codebase-design/SKILL.md (2026-06-17), but the OUTPUT filename stays
 # depth-LANGUAGE.md for envelope compatibility (the downstream `cat` and
 # `test -f` steps reference that name).
-_RUBRIC_LANGUAGE_URL = (
-    "https://raw.githubusercontent.com/mattpocock/skills/main"
-    "/skills/engineering/codebase-design/SKILL.md"
-)
-_RUBRIC_DEEPENING_URL = (
-    "https://raw.githubusercontent.com/mattpocock/skills/main"
-    "/skills/engineering/codebase-design/DEEPENING.md"
-)
+_RUBRIC_LANGUAGE_REL = "skills/engineering/codebase-design/SKILL.md"
+_RUBRIC_DEEPENING_REL = "skills/engineering/codebase-design/DEEPENING.md"
 
 
 def extract_block(text, tag):
@@ -258,11 +255,16 @@ def _title_from_body(body: str) -> str:
 def parse_digest(lines):
     """Reduce ``stream-json`` JSONL lines to the run's result + cost fields.
 
-    Returns ``{"result", "total_cost_usd", "duration_ms", "num_turns"}`` taken
-    from the LAST ``type == "result"`` event (the whole ``.result`` text, so a
-    multi-line ``<output>``/``<body>`` block survives intact). Non-JSON lines are
-    skipped. With no result event, ``result`` is ``""`` and the cost fields are
-    ``"n/a"`` — a crashed/empty run still produces a well-formed digest.
+    Returns ``{"result", "total_cost_usd", "duration_ms", "num_turns", "error"}``
+    taken from the LAST ``type == "result"`` event (the whole ``.result`` text,
+    so a multi-line ``<output>``/``<body>`` block survives intact). Non-JSON
+    lines are skipped. With no result event, ``result`` is ``""``, the cost
+    fields are ``"n/a"``, and ``error`` is ``"no-result"`` — a crashed/empty run
+    still produces a well-formed digest, and is now distinguishable from a
+    genuinely cheap one (#531 item 3). ``error`` is ``"is_error"`` when the
+    result event itself carries ``is_error: true`` (the stream-json field the
+    Claude Code CLI sets on a failed-but-completed run); otherwise ``None`` on
+    a clean run.
     """
     last = None
     for line in lines:
@@ -276,19 +278,32 @@ def parse_digest(lines):
         if isinstance(event, dict) and event.get("type") == "result":
             last = event
     if last is None:
-        return {"result": "", "total_cost_usd": _NA, "duration_ms": _NA, "num_turns": _NA}
+        return {
+            "result": "", "total_cost_usd": _NA, "duration_ms": _NA,
+            "num_turns": _NA, "error": "no-result",
+        }
     return {
         "result": last.get("result") or "",
         "total_cost_usd": last.get("total_cost_usd", _NA),
         "duration_ms": last.get("duration_ms", _NA),
         "num_turns": last.get("num_turns", _NA),
+        "error": "is_error" if last.get("is_error") else None,
     }
 
 
 def cost_line(digest):
-    """The single cost-ledger line the cross-repo cost hub scrapes from logs."""
+    """The single cost-ledger line the cross-repo cost hub scrapes from logs.
+
+    When ``digest["error"]`` is set, ``error=<class>`` is PREPENDED (so a
+    truncated tail can't drop it) — ``error=no-result`` (crashed/empty run) or
+    ``error=is_error`` (a completed run the CLI itself flagged as failed).
+    A clean run has no ``error`` field and the line is byte-identical to the
+    pre-#531 format — COST_SURFACE's parser is unaffected on the common path.
+    """
+    error = digest.get("error")
+    prefix = f"error={error}  " if error else ""
     return (
-        f"total_cost_usd={digest['total_cost_usd']}  "
+        f"{prefix}total_cost_usd={digest['total_cost_usd']}  "
         f"duration_ms={digest['duration_ms']}  "
         f"num_turns={digest['num_turns']}"
     )
@@ -307,7 +322,10 @@ def _digest(args, out):
         with open(args.jsonl, encoding="utf-8") as fh:
             digest = parse_digest(fh)
     except OSError:
-        digest = {"result": "", "total_cost_usd": _NA, "duration_ms": _NA, "num_turns": _NA}
+        digest = {
+            "result": "", "total_cost_usd": _NA, "duration_ms": _NA,
+            "num_turns": _NA, "error": "no-result",
+        }
     with open(args.result_out, "w", encoding="utf-8") as fh:
         fh.write(digest["result"])
     with open(args.cost_out, "w", encoding="utf-8") as fh:
@@ -360,6 +378,47 @@ def _summary_skipped(heading, cost, output):
             "",
         ]
     )
+
+
+def _file_proposals(proposals, args, repo, cost, summary_file, warn_noun, output_for_summary, out):
+    """File <=MAX_PROPOSALS proposals and write the gh-output + step-summary.
+
+    Shared by ``_publish``'s salvage-recovery and normal-status paths — they
+    differed only in the truncation-warning wording (``warn_noun``) and which
+    dict backs the summary's candidatesConsidered section
+    (``output_for_summary``: ``{}`` for a salvaged run, the real ``<output>``
+    dict otherwise). Extracted so a filing fix reaches both paths (#525).
+    """
+    truncated = max(0, len(proposals) - MAX_PROPOSALS)
+    if truncated:
+        print(
+            f"WARNING: {len(proposals)} {warn_noun}; filing only the "
+            f"first {MAX_PROPOSALS} (in-code cap)",
+            file=out,
+        )
+        proposals = proposals[:MAX_PROPOSALS]
+
+    _ensure_label(args.label, args.label_color, args.label_description, repo)
+
+    filed = []
+    for proposal in proposals:
+        with tempfile.NamedTemporaryFile(
+            "w", suffix=".md", delete=False, encoding="utf-8"
+        ) as bf:
+            bf.write(proposal["body"])
+            body_path = bf.name
+        try:
+            url = _create_issue(proposal["title"], body_path, args.label, repo)
+        finally:
+            os.unlink(body_path)
+        print(f"Published {url}", file=out)
+        filed.append({"url": url, "oneLineSummary": proposal["oneLineSummary"]})
+
+    gh_output = args.output_file or os.environ.get("GITHUB_OUTPUT")
+    _append(gh_output, f"issue_url={filed[0]['url']}\n")
+    _append(gh_output, "issue_urls=" + ",".join(f["url"] for f in filed) + "\n")
+    _append(summary_file, _summary_proposed(args.heading, cost, filed, output_for_summary, truncated))
+    return 0
 
 
 def _publish(args, out):
@@ -420,34 +479,11 @@ def _publish(args, out):
 
     if salvaged_proposals is not None:
         # Degraded path: file salvaged proposals directly (skip status/parse_proposals).
-        proposals = salvaged_proposals[:MAX_PROPOSALS]
-        truncated = max(0, len(salvaged_proposals) - MAX_PROPOSALS)
-        if truncated:
-            print(
-                f"WARNING: {len(salvaged_proposals)} salvaged proposals; filing only the "
-                f"first {MAX_PROPOSALS} (in-code cap)",
-                file=out,
-            )
-        _ensure_label(args.label, args.label_color, args.label_description, repo)
-        filed = []
-        for proposal in proposals:
-            with tempfile.NamedTemporaryFile(
-                "w", suffix=".md", delete=False, encoding="utf-8"
-            ) as bf:
-                bf.write(proposal["body"])
-                body_path = bf.name
-            try:
-                url = _create_issue(proposal["title"], body_path, args.label, repo)
-            finally:
-                os.unlink(body_path)
-            print(f"Published {url}", file=out)
-            filed.append({"url": url, "oneLineSummary": proposal["oneLineSummary"]})
-        gh_output = args.output_file or os.environ.get("GITHUB_OUTPUT")
-        _append(gh_output, f"issue_url={filed[0]['url']}\n")
-        _append(gh_output, "issue_urls=" + ",".join(f["url"] for f in filed) + "\n")
         # Use a degraded summary (no candidatesConsidered from the corrupted output).
-        _append(summary_file, _summary_proposed(args.heading, cost, filed, {}, truncated))
-        return 0
+        return _file_proposals(
+            salvaged_proposals, args, repo, cost, summary_file,
+            "salvaged proposals", {}, out,
+        )
 
     status = output.get("status")
 
@@ -461,36 +497,10 @@ def _publish(args, out):
         raise ValueError(f"unknown status {status!r} in <output>")
 
     proposals = parse_proposals(output, text)  # raises ValueError -> exit 1
-    truncated = max(0, len(proposals) - MAX_PROPOSALS)
-    if truncated:
-        print(
-            f"WARNING: {len(proposals)} proposals emitted; filing only the "
-            f"first {MAX_PROPOSALS} (in-code cap)",
-            file=out,
-        )
-        proposals = proposals[:MAX_PROPOSALS]
-
-    _ensure_label(args.label, args.label_color, args.label_description, repo)
-
-    filed = []
-    for proposal in proposals:
-        with tempfile.NamedTemporaryFile(
-            "w", suffix=".md", delete=False, encoding="utf-8"
-        ) as bf:
-            bf.write(proposal["body"])
-            body_path = bf.name
-        try:
-            url = _create_issue(proposal["title"], body_path, args.label, repo)
-        finally:
-            os.unlink(body_path)
-        print(f"Published {url}", file=out)
-        filed.append({"url": url, "oneLineSummary": proposal["oneLineSummary"]})
-
-    gh_output = args.output_file or os.environ.get("GITHUB_OUTPUT")
-    _append(gh_output, f"issue_url={filed[0]['url']}\n")
-    _append(gh_output, "issue_urls=" + ",".join(f["url"] for f in filed) + "\n")
-    _append(summary_file, _summary_proposed(args.heading, cost, filed, output, truncated))
-    return 0
+    return _file_proposals(
+        proposals, args, repo, cost, summary_file,
+        "proposals emitted", output, out,
+    )
 
 
 def _ensure_label(label, color, description, repo):
@@ -522,25 +532,32 @@ def _find_open(label, repo):
 
 
 def _fetch_rubric(args, out):
-    """Download the depth rubric files from mattpocock/skills@main into --out-dir.
+    """Copy the depth rubric files from a local mattpocock/skills clone into --out-dir.
 
-    Hard-fails (exit 1) on any network or HTTP error — an unattended run with a
-    missing rubric would produce unsound depth proposals (ADR 0020 c).
+    Reads from ``--source-dir`` — the clone the reusable workflow already makes
+    one step earlier to install the /improve-codebase-architecture skill — instead
+    of a network fetch (#525: the two hardcoded raw.githubusercontent.com URLs
+    this replaced were a hard external failure point, and had already broken once,
+    2026-06-17). Hard-fails (exit 1) with a loud, actionable message if either
+    source file is missing at that path — no silent fallback to the network. An
+    unattended run with a missing rubric would produce unsound depth proposals
+    (ADR 0020 c).
     """
     files = [
-        ("depth-LANGUAGE.md", _RUBRIC_LANGUAGE_URL),
-        ("depth-DEEPENING.md", _RUBRIC_DEEPENING_URL),
+        ("depth-LANGUAGE.md", _RUBRIC_LANGUAGE_REL),
+        ("depth-DEEPENING.md", _RUBRIC_DEEPENING_REL),
     ]
-    for filename, url in files:
-        try:
-            with urllib.request.urlopen(url) as resp:
-                data = resp.read()
-        except urllib.error.URLError as exc:
+    for filename, rel_path in files:
+        src = os.path.join(args.source_dir, rel_path)
+        if not os.path.isfile(src):
             print(
-                f"::error::fetch-rubric: {filename}: {url}: {exc}",
+                f"::error::fetch-rubric: {filename}: not found at {src} "
+                "(expected a mattpocock/skills clone at --source-dir)",
                 file=sys.stderr,
             )
             return 1
+        with open(src, "rb") as fh:
+            data = fh.read()
         dest = os.path.join(args.out_dir, filename)
         with open(dest, "wb") as fh:
             fh.write(data)
@@ -578,11 +595,15 @@ def main(argv=None, out=None):
 
     p_fetch = sub.add_parser(
         "fetch-rubric",
-        help="download depth rubric from mattpocock/skills@main into --out-dir",
+        help="copy depth rubric from a local mattpocock/skills clone into --out-dir",
     )
     p_fetch.add_argument(
         "--out-dir", required=True, dest="out_dir",
         help="directory to write depth-LANGUAGE.md and depth-DEEPENING.md into",
+    )
+    p_fetch.add_argument(
+        "--source-dir", required=True, dest="source_dir",
+        help="root of a local mattpocock/skills clone (e.g. from git clone --depth 1)",
     )
     p_fetch.set_defaults(func=_fetch_rubric)
 
@@ -592,6 +613,14 @@ def main(argv=None, out=None):
     except ValueError as exc:
         print(f"::error::{exc}", file=sys.stderr)
         return 1
+    except subprocess.CalledProcessError as exc:
+        # A gh failure (auth expiry, rate limit, …) inside _create_issue/_find_open
+        # must not surface as an uncaught traceback — route it through the same
+        # loud ::error:: exit path as a parse failure (#525).
+        detail = (exc.stderr or exc.output or str(exc) or "").strip()
+        cmd = " ".join(exc.cmd) if isinstance(exc.cmd, list) else str(exc.cmd)
+        print(f"::error::gh command failed (exit {exc.returncode}): {cmd}: {detail}", file=sys.stderr)
+        return exc.returncode or 1
 
 
 if __name__ == "__main__":

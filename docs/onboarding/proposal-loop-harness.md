@@ -146,7 +146,9 @@ rarely; when it does, it is a **manual rollout** to update the reusable bodies.
 - **`python3 harness/cli.py digest --jsonl F --result-out F --cost-out F`** —
   every loop. Reduces the `stream-json` JSONL to the last result event's `.result`
   (whole, multi-line preserved) and the `total_cost_usd=…  duration_ms=…
-  num_turns=…` ledger line. Best-effort (exit 0 even with no result event); run it
+  num_turns=…` ledger line. A failed run (no result event, or `result.is_error:
+  true`) prepends `error=no-result` / `error=is_error` to that line; a clean run's
+  line is unchanged. Best-effort (exit 0 even with no result event); run it
   `if: always()` so cost is captured on a failed agent run too.
 - **`python3 harness/cli.py publish --log F --label L [--label-color H]
   [--label-description T] [--cost-file F] [--heading H] [--repo R]`** —

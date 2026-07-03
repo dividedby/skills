@@ -247,7 +247,9 @@ knowledge); runs the guard tests green; files **≤1 issue per run, shared acros
 own tracker (or prints `SKIPPED: <channel>: …`); and — if warranted — files-or-+1's
 a `skill-request` and/or a `skill-promotion` in `dividedby/skills`. Confirm the
 step summary carries the `total_cost_usd=…  duration_ms=…  num_turns=…` ledger
-line (present even on a failed run). Watch the run; report the issue links.
+line (present even on a failed run — prepended with `error=no-result` /
+`error=is_error` in that case; unchanged on a clean run). Watch the run; report
+the issue links.
 
 ## Guardrails (do not violate)
 

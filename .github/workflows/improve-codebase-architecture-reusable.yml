@@ -91,19 +91,24 @@ jobs:
       - name: Install /improve-codebase-architecture skill
         run: |
           set -euo pipefail
-          tmp=$(mktemp -d)
-          git clone --depth 1 https://github.com/mattpocock/skills.git "$tmp/mattpocock-skills"
+          # Cloned into $RUNNER_TEMP (not a throwaway mktemp dir) so the next
+          # step can reuse this same checkout to read the depth rubric locally
+          # (#525) instead of a second network fetch.
+          git clone --depth 1 https://github.com/mattpocock/skills.git "$RUNNER_TEMP/mattpocock-skills"
           mkdir -p ~/.claude/skills
-          cp -R "$tmp/mattpocock-skills/skills/engineering/improve-codebase-architecture" ~/.claude/skills/
+          cp -R "$RUNNER_TEMP/mattpocock-skills/skills/engineering/improve-codebase-architecture" ~/.claude/skills/
           test -f ~/.claude/skills/improve-codebase-architecture/SKILL.md
-          echo "Installed skill from mattpocock/skills@$(git -C "$tmp/mattpocock-skills" rev-parse --short HEAD)"
+          echo "MATTPOCOCK_SKILLS=$RUNNER_TEMP/mattpocock-skills" >> "$GITHUB_ENV"
+          echo "Installed skill from mattpocock/skills@$(git -C "$RUNNER_TEMP/mattpocock-skills" rev-parse --short HEAD)"
 
       - name: Fetch depth rubric
         run: |
           set -euo pipefail
-          # skills ADR 0020(c): hard-fail on any fetch error. The mattpocock/skills
-          # URLs live once in harness/cli.py fetch-rubric (dividedby/skills).
-          python3 "$HARNESS/cli.py" fetch-rubric --out-dir "$RUNNER_TEMP"
+          # skills ADR 0020(c): hard-fail on any fetch error. Reads LANGUAGE.md/
+          # DEEPENING.md from the mattpocock/skills clone the previous step
+          # already made — no separate network call (#525; the old hardcoded
+          # raw.githubusercontent.com URLs had already broken once, 2026-06-17).
+          python3 "$HARNESS/cli.py" fetch-rubric --out-dir "$RUNNER_TEMP" --source-dir "$MATTPOCOCK_SKILLS"
 
       - name: Run /improve-codebase-architecture
         env:
@@ -116,8 +121,9 @@ jobs:
           #      proposal discipline + the lockstep <output>/<body> schema). Unlike
           #      the skills host repo (which reads harness/ from its own checkout),
           #      this reusable body always reads from the harness CLONE at $HARNESS.
-          #   2. The DEPTH RUBRIC fetched fresh from mattpocock/skills@main
-          #      (LANGUAGE.md + DEEPENING.md). Assembled by the preceding step;
+          #   2. The DEPTH RUBRIC (LANGUAGE.md + DEEPENING.md), read from the
+          #      mattpocock/skills clone made two steps earlier (no separate
+          #      network fetch since #525). Assembled by the preceding step;
           #      hard-fails if absent — same spirit as the test -f below.
           #   3. The caller repo's LOCAL Repo-context include
           #      (.github/arch-review-context.md). Scope is load-bearing — a skeleton
