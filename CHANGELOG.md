@@ -35,6 +35,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
 ### Changed
 
+- `harness/prompts/changelog-health.md`: every run now also critiques its own
+  grading checklist (`docs/agents/changelog-guideline.md`'s eight rows) —
+  flagging blind spots a clearly-wrong changelog would still pass, outcomes
+  no rule covers, or criteria that can't be mechanically checked — via an
+  optional `<eval_feedback>` block, emitted whether the run proposes an
+  advisory or skips; flag-only (ADR 0034) and explicitly non-actionable by
+  the loop itself, for the human rubric owner to read (#531)
 - `.claude/hooks/check-skill-registration.py` now enforces the skill-spec's
   frontmatter limits — kebab-case `name:` ≤64 chars, `description:` ≤1024
   chars (over-limit descriptions silently truncate in `available_skills`,

@@ -95,15 +95,45 @@ Write a single advisory body (the `<body>` block) containing:
 
 The advisory must be clearly marked as a proposal/nudge, not a gate.
 
+### 5. Critique the eval criteria itself
+
+Every run does this step — whether step 3 landed on "proposed" or "skipped".
+You just graded this repo's changelog against the eight-row checklist in
+`docs/agents/changelog-guideline.md`; now grade the checklist itself. Look
+for:
+
+- **Blind spots** — an assertion a clearly-wrong changelog would still pass.
+  E.g. could a changelog with a breaking change buried in `Added` instead of
+  flagged `**Breaking:**`, or with every entry a bare `(#123)` and no prose,
+  slip through all eight rows clean?
+- **Uncovered outcomes** — something this repo's changelog should plainly get
+  right that none of the eight rows would ever catch.
+- **Unverifiable criteria** — a row phrased so you cannot mechanically decide
+  pass/fail from the diff plus `git log` alone, and had to guess.
+
+This is a critique of the rubric, not of the repo. It is **flag-only** (ADR
+0034: never rewrite) and it is **not actionable by this loop** — you do not
+edit `docs/agents/changelog-guideline.md`, propose a rewrite of it, or fold it
+into the advisory in step 4. It exists so the human who owns the rubric can
+see where it's thin. If nothing is worth flagging, omit the block entirely —
+"the checklist held up" is a valid, cheap non-finding and needs no block.
+
 ## Output contract
 
 End your response with a small machine-parsed `<output>` JSON block, **followed
-by** — only when proposing — one `<body>` block holding the raw advisory.
+by** — only when proposing — one `<body>` block holding the raw advisory, and
+**optionally, every run** — proposed or skipped — one `<eval_feedback>` block
+(step 5's rubric critique).
 
 The split is deliberate and load-bearing: the `<output>` JSON carries only
 **short, single-line** fields, so it stays valid JSON. The advisory body — long
 prose with embedded markdown — goes in the `<body>` block as **raw markdown**,
 where it needs **no JSON escaping**. Do **not** put the body inside the JSON.
+
+`<eval_feedback>` is a third, independent block, also raw markdown, also
+outside the JSON. It is not part of the advisory the workflow files — nothing
+in the publish pipeline reads it or acts on it; it is a flag for a human to
+read later, never a proposal. Omit it when step 5 found nothing to flag.
 
 Emit valid JSON in `<output>`, copy the field names exactly, and add no fields
 beyond those listed. It has one of two shapes.
@@ -124,9 +154,15 @@ The full advisory body as raw markdown. No escaping — write it exactly as it
 should appear in the filed issue. Do not include the <body> / </body> markers
 in the prose itself.
 </body>
+<eval_feedback>
+Optional. Only present when step 5 found something to flag. Raw markdown, a
+few bullets naming the rubric blind spot, uncovered outcome, or unverifiable
+criterion. Not filed, not acted on — for the rubric owner only.
+</eval_feedback>
 ```
 
-Nothing to flag — emit only the `<output>` block, no `<body>`:
+Nothing to flag — emit only the `<output>` block, no `<body>` — and still,
+optionally, an `<eval_feedback>` block if step 5 found something to flag:
 
 ```
 <output>
@@ -147,6 +183,9 @@ Field rules:
 - `reason` — required when skipped.
 - The `<body>` block — present when proposed, omitted when skipped; raw
   markdown, no JSON escaping.
+- The `<eval_feedback>` block — optional, either shape, present only when
+  step 5 found a rubric blind spot, uncovered outcome, or unverifiable
+  criterion to flag; raw markdown, no JSON escaping.
 
 ## Rules
 
@@ -157,6 +196,11 @@ Field rules:
   `--dedup-open` — you do not need to check for open advisories yourself.
 - **Flag, never rewrite.** The advisory proposes entries the maintainer
   hand-applies. It never modifies `CHANGELOG.md` or any other file.
+- **`eval_feedback` is non-actionable by this loop.** It is a flag for the
+  human who owns `docs/agents/changelog-guideline.md`, not an instruction to
+  the loop and not part of the filed advisory. The loop never edits the
+  rubric doc, never treats a rubric critique as grounds to change grading
+  behavior mid-run, and never files it as its own issue.
 - **No questions.** There is no user.
 - End every run with exactly one `<output>` block (plus one `<body>` only when
-  proposing).
+  proposing, plus one optional `<eval_feedback>` either way).
