@@ -4,7 +4,9 @@ the dedup path. No network calls, no filesystem I/O.
 Run: python3 -m unittest tools.test_check_workflow_drift
 """
 
+import os
 import unittest
+from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
 
 from tools.check_workflow_drift import (
@@ -13,11 +15,22 @@ from tools.check_workflow_drift import (
     APPLY_BODY_PATH,
     ARCH_PATH,
     BODY_ANCHORS,
+    REPO_SKIP_ANCHORS,
+    STALE_BODY_PATH,
     STALE_PATH,
     SKILLS_SKIP_ANCHORS,
+    TAG_NAME,
     _issue_title,
+    _tag_issue_title,
+    body_diff,
     check_file,
+    extract_pin,
+    is_sha_pin,
+    resolve_effective_ref,
+    tag_age_days,
 )
+
+TAG_SHA = "559431b5ec587899b1c88b6ad31c5283df82bd7d"
 
 
 class TestCheckFile(unittest.TestCase):
@@ -91,6 +104,24 @@ class TestCheckFile(unittest.TestCase):
         self.assertEqual(check_file(content, anchors), [])
 
 
+class TestRepoSkipAnchors(unittest.TestCase):
+    """Q1 (#524): agent-research's SHA+comment pin style shouldn't false-positive
+    against the literal @claude-loops-v1 anchor; moodreader/goodreads-bot keep it
+    (the pin-drift lane subsumes the check for agent-research specifically)."""
+
+    def test_agent_research_skips_claude_loops_v1_literal(self):
+        anchors = ANCHORS[APPLY_PATH]
+        content = "\n".join(a for a in anchors if a != "@claude-loops-v1")
+        skip = REPO_SKIP_ANCHORS.get("dividedby/agent-research", set())
+        self.assertEqual(check_file(content, anchors, skip=skip), [])
+
+    def test_moodreader_still_requires_claude_loops_v1_literal(self):
+        anchors = ANCHORS[APPLY_PATH]
+        content = "\n".join(a for a in anchors if a != "@claude-loops-v1")
+        skip = REPO_SKIP_ANCHORS.get("dividedby/moodreader", set())
+        self.assertIn("@claude-loops-v1", check_file(content, anchors, skip=skip))
+
+
 class TestDedup(unittest.TestCase):
     """When an open issue already exists for a repo, no create call is made."""
 
@@ -127,6 +158,130 @@ class TestDedup(unittest.TestCase):
             fake_file_issue(repo, drifted, "tok", False)
 
         self.assertEqual(filed, [repo])
+
+
+class TestExtractPin(unittest.TestCase):
+    """extract_pin is pure: stub content + body filename -> pin string or None."""
+
+    def _stub(self, uses_line: str) -> str:
+        return f"    {uses_line}\n"
+
+    def test_extracts_tag_literal_pin(self):
+        filename = os.path.basename(APPLY_BODY_PATH)
+        content = self._stub(
+            f"uses: dividedby/skills/.github/workflows/{filename}@{TAG_NAME}"
+        )
+        self.assertEqual(extract_pin(content, filename), TAG_NAME)
+
+    def test_extracts_sha_pin_ignoring_trailing_comment(self):
+        filename = os.path.basename(APPLY_BODY_PATH)
+        content = self._stub(
+            f"uses: dividedby/skills/.github/workflows/{filename}@{TAG_SHA} # {TAG_NAME}"
+        )
+        self.assertEqual(extract_pin(content, filename), TAG_SHA)
+
+    def test_returns_none_when_unparsable(self):
+        filename = os.path.basename(APPLY_BODY_PATH)
+        content = "no uses: line in here at all\n"
+        self.assertIsNone(extract_pin(content, filename))
+
+    def test_cross_match_guard_does_not_match_a_different_body_file(self):
+        # Content only has a `uses:` line for the staleness body; asking for
+        # the apply body's pin must not falsely match it.
+        stale_filename = os.path.basename(STALE_BODY_PATH)
+        apply_filename = os.path.basename(APPLY_BODY_PATH)
+        content = self._stub(
+            f"uses: dividedby/skills/.github/workflows/{stale_filename}@{TAG_NAME}"
+        )
+        self.assertIsNone(extract_pin(content, apply_filename))
+
+
+class TestIsShaPin(unittest.TestCase):
+    def test_full_40_char_hex_is_sha_pin(self):
+        self.assertTrue(is_sha_pin(TAG_SHA))
+
+    def test_tag_literal_is_not_sha_pin(self):
+        self.assertFalse(is_sha_pin(TAG_NAME))
+
+    def test_short_hex_abbreviation_is_not_sha_pin(self):
+        self.assertFalse(is_sha_pin(TAG_SHA[:7]))
+
+
+class TestResolveEffectiveRef(unittest.TestCase):
+    def test_sha_pin_resolves_to_itself(self):
+        self.assertEqual(resolve_effective_ref(TAG_SHA, "deadbeef" * 5), TAG_SHA)
+
+    def test_tag_pin_resolves_to_tag_sha(self):
+        self.assertEqual(resolve_effective_ref(TAG_NAME, TAG_SHA), TAG_SHA)
+
+
+class TestTagAgeDays(unittest.TestCase):
+    def test_zero_days_same_instant(self):
+        now = datetime(2026, 7, 3, 12, 0, 0, tzinfo=timezone.utc)
+        self.assertEqual(tag_age_days("2026-07-03T12:00:00Z", now=now), 0)
+
+    def test_positive_days_with_injected_now(self):
+        now = datetime(2026, 7, 10, 12, 0, 0, tzinfo=timezone.utc)
+        self.assertEqual(tag_age_days("2026-07-03T12:00:00Z", now=now), 7)
+
+    def test_handles_z_suffix(self):
+        # fromisoformat needs "+00:00", not a bare "Z" — regression guard.
+        now = datetime(2026, 7, 4, 0, 0, 0, tzinfo=timezone.utc)
+        self.assertEqual(tag_age_days("2026-07-03T00:00:00Z", now=now), 1)
+
+
+class TestBodyDiff(unittest.TestCase):
+    def test_identical_content_returns_empty_string(self):
+        self.assertEqual(body_diff("same\n", "same\n", APPLY_BODY_PATH), "")
+
+    def test_differing_content_returns_unified_diff_with_labels(self):
+        diff = body_diff("line one\n", "line two\n", APPLY_BODY_PATH)
+        self.assertIn(f"main:{APPLY_BODY_PATH}", diff)
+        self.assertIn(f"{TAG_NAME}:{APPLY_BODY_PATH}", diff)
+        self.assertIn("-line one", diff)
+        self.assertIn("+line two", diff)
+
+
+class TestPinDriftPureChain(unittest.TestCase):
+    """extract_pin -> resolve_effective_ref -> body_diff, wired end to end with no I/O."""
+
+    def test_sha_pin_matching_tag_no_drift(self):
+        # agent-research-style: SHA pin equal to the tag's current SHA, body unchanged.
+        filename = os.path.basename(APPLY_BODY_PATH)
+        stub_content = f"uses: dividedby/skills/.github/workflows/{filename}@{TAG_SHA} # {TAG_NAME}\n"
+        pin = extract_pin(stub_content, filename)
+        effective_ref = resolve_effective_ref(pin, TAG_SHA)
+        self.assertEqual(effective_ref, TAG_SHA)
+        self.assertEqual(body_diff("main body\n", "main body\n", APPLY_BODY_PATH), "")
+
+    def test_tag_literal_pin_diff_detected(self):
+        # moodreader-style: tag-literal pin resolves to tag_sha; body has drifted.
+        filename = os.path.basename(APPLY_BODY_PATH)
+        stub_content = f"uses: dividedby/skills/.github/workflows/{filename}@{TAG_NAME}\n"
+        pin = extract_pin(stub_content, filename)
+        effective_ref = resolve_effective_ref(pin, TAG_SHA)
+        self.assertEqual(effective_ref, TAG_SHA)
+        diff = body_diff("main body\n", "old tag body\n", APPLY_BODY_PATH)
+        self.assertNotEqual(diff, "")
+
+    def test_stale_sha_pin_diff_detected(self):
+        # A SHA pin that predates the current tag: effective_ref != tag_sha,
+        # and its body content differs from main.
+        filename = os.path.basename(APPLY_BODY_PATH)
+        stale_sha = "a" * 40
+        stub_content = f"uses: dividedby/skills/.github/workflows/{filename}@{stale_sha} # {TAG_NAME}\n"
+        pin = extract_pin(stub_content, filename)
+        effective_ref = resolve_effective_ref(pin, TAG_SHA)
+        self.assertEqual(effective_ref, stale_sha)
+        diff = body_diff("main body\n", "stale pinned body\n", APPLY_BODY_PATH)
+        self.assertNotEqual(diff, "")
+
+
+class TestTagIssueTitle(unittest.TestCase):
+    def test_deterministic_format(self):
+        expected = f"[workflow-drift] {TAG_NAME} tag: reusable body has diverged from main"
+        self.assertEqual(_tag_issue_title(), expected)
+        self.assertEqual(_tag_issue_title(), _tag_issue_title())
 
 
 class TestIssueTitle(unittest.TestCase):

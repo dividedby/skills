@@ -38,6 +38,17 @@ issue in dividedby/skills for any drifted repo. To refresh this table, re-read
 `.github/workflows/{improve-codebase-architecture,apply-agent-research,staleness-review}.yml`
 in each repo.
 
+**Tag-vs-main + pin-drift check (#524)** — the same job also resolves the
+`claude-loops-v1` tag to its current commit and (a) diffs each reusable body's
+tag-pinned content against `main` (one shared issue, fleet-wide, when the tag
+lags), and (b) resolves each consumer's own `uses:` pin — a tag literal or a
+40-char SHA with a trailing `# claude-loops-v1` comment — and diffs the
+resolved content against `main` (folded into that consumer's existing
+`workflow-drift` issue). agent-research pins by SHA + trailing comment rather
+than the tag literal (#470); its 3 stubs are exempted from the literal
+`@claude-loops-v1` anchor check (`REPO_SKIP_ANCHORS`) since the pin-drift lane
+now covers pin correctness there directly.
+
 **Label-doc drift check** — companion detector landed via the `label-drift` job
 in [`fleet-drift.yml`](../../.github/workflows/fleet-drift.yml)
 (#415, weekly Sun 04:00 UTC — same run as workflow-drift, independent job).
