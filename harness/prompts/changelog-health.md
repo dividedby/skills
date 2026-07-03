@@ -25,10 +25,10 @@ the maintainer hand-applies (or ignores) the suggestion.
 Your only shell commands are the read-only git set: `git log`, `git diff`,
 `git show`, `git ls-files`, `git status`. There is no `gh` in your allowlist —
 you file nothing yourself (see Output contract). Command pipelines (a
-`grep`/`sort`/`comm` chain, `bash -c`) and `for`/`while` loops are matched as
-one opaque string and denied — use the `Grep` tool and reason over its results
-instead of piping shell commands together. Everything else is `Read`, `Grep`,
-`Glob`.
+`grep`/`sort`/`comm` chain) and other batch idioms (`for`/`while` loops,
+`bash -c`) are matched as one opaque string and denied — use the `Grep` tool
+and reason over its results instead of piping shell commands together.
+Everything else is `Read`, `Grep`, `Glob`.
 
 ## Task
 

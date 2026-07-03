@@ -68,8 +68,8 @@ Applying the depth rubric in this unattended propose flow:
 - Map modules and their interfaces first (Task step 2) before scoring depth. A
   judgment made without mapping the system tends to flag surface symptoms rather
   than the structural move that fixes them.
-- The research and reality-gate requirements (Task step 3) apply equally here —
-  cite primary sources; do not fabricate quotes.
+- The reality-gate requirements (Task step 3) apply equally here — cite repo
+  evidence; do not fabricate quotes.
 - If a file is both shallow and oversized, file it as a **depth** finding and fold
   the legibility angle in as supporting context (not a second proposal).
 
@@ -149,33 +149,32 @@ it in a loop. Everything else is `Read`, `Grep`, `Glob`.
    is eligible for depth; only code that survives both is eligible for
    legibility.
 
-3. **Research before proposing.** Before settling on a candidate, use
-   `WebSearch` / `WebFetch` to check current thinking on the area you're
-   proposing to improve — module/seam boundaries, testing strategy, and the
-   patterns relevant to that area. Cite 1–3 sources in the issue body so a
-   future reader can see the basis for the proposal. Prefer primary
-   sources (specs, framework docs, well-known authors) over listicles.
+3. **Ground findings in repo evidence — no web tools here.** `WebSearch` /
+   `WebFetch` are not allowlisted in this scheduled sandbox (see the
+   Tool-use constraint above); skip external research and base every
+   candidate on what `Read` / `Grep` / `Glob` and the read-only git commands
+   above can show you in this repo. Cite 1–3 concrete repo paths in the issue
+   body so a future reader can see the basis for the proposal.
 
    **Reality gate.** A claim about how a tool, flag, API, model, or version
-   behaves counts as *verified* only if you fetched the primary source
-   in-session and can quote it — not recalled from memory, not paraphrased,
-   not reconstructed from what the source "probably says". Inventing or
-   approximating a source quote is a disqualifying error: drop the finding
-   entirely rather than file it on a fabricated basis.
+   behaves counts as *verified* only if you can quote it from a file in this
+   repo or from the output of the read-only git commands above — not recalled
+   from memory, not paraphrased, not reconstructed from what the source
+   "probably says". Inventing or approximating a quote is a disqualifying
+   error: drop the finding entirely rather than file it on a fabricated basis.
 
-   **Deterministic analyzers are first-class evidence.** Running the target
-   ecosystem's deterministic analyzers and reading their output in-session
-   counts as verified evidence — no web fetch needed, because the claim is
-   machine-derived from the repo in front of you. Illustrative menu (use
-   whatever the ecosystem actually offers): duplication (`jscpd` —
-   token-based, ~200 formats, JSON reporter), complexity hotspots (`lizard`
-   across many languages, `scc` for fast per-file estimates), dead code
-   (`vulture` or `ruff`'s unused-code rules for Python, `golang.org/x/tools`'
-   `deadcode` for Go, `cargo-machete` for unused Rust dependencies),
-   architecture boundaries and import cycles (`import-linter`, `pydeps` for
-   Python; `fallow audit`/`fallow health` for TypeScript/JavaScript). These
-   are examples, not requirements — never block a run on a tool the
-   environment lacks.
+   **Deterministic analyzers are first-class evidence — when shell access to
+   them exists; in this loop it does not.** Where a loop's allowlist does
+   grant analyzer shell access, running the target ecosystem's deterministic
+   analyzers and reading their output in-session counts as verified evidence,
+   no web fetch needed. Illustrative menu (use whatever the ecosystem actually
+   offers, only where a loop *can* run it): duplication (`jscpd`), complexity
+   hotspots (`lizard`, `scc`), dead code (`vulture`, `ruff`, `deadcode`,
+   `cargo-machete`), architecture boundaries and import cycles
+   (`import-linter`, `pydeps`, `fallow`). This loop's own allowlist has no such
+   shell access, so approximate the same evidence with `Read` / `Grep` /
+   `Glob`: grep for duplicated blocks, read for unused exports, trace imports
+   by hand for cycles.
 
 4. Pick your top candidate — **at most one**, not a loose duplicate of any
    prior proposal — and be **ruthlessly critical** about it:
@@ -226,7 +225,9 @@ it in a loop. Everything else is `Read`, `Grep`, `Glob`.
    - **Lens marker.** Include `<!-- lens: simplification|depth|legibility -->`
      (exactly one value) in the body alongside the `<!-- capability: … -->` and
      `<!-- dedup-key: … -->` markers.
-   - **Sources section** listing the research links you used.
+   - **Sources section** citing the repo paths/lines (and git command output)
+     that ground the finding — this loop has no web access, so no external
+     links.
 
 6. If every reasonable candidate is already covered by a prior
    `source:architecture-review` proposal, emit a `skipped` output. Do not

@@ -154,11 +154,11 @@ jobs:
           set -euo pipefail
           # Bash is scoped to the exact subcommands the loop runs; bare Bash is NOT
           # granted (least-privilege, #307). The per-run GATE runs as
-          # `printf '%s' '<json>' | python3 "$SKILL_DIR/lib/cli.py" gate` (run from
+          # `printf '%s' '<json>' | python3 $SKILL_DIR/lib/cli.py gate` (run from
           # the repo root), so printf and python3 are allowlisted — printf is a
           # scoped output builtin, not a file-write primitive. Issue bodies are written
           # to a tempfile via the Write tool, then passed with --body-file to the
-          # guarded `python3 "$SKILL_DIR/lib/cli.py" file|comment`. The leak GUARD is
+          # guarded `python3 $SKILL_DIR/lib/cli.py file|comment`. The leak GUARD is
           # folded into that guarded filing path (cli.py file/comment sanitizes, then
           # shells to gh ONLY on ALLOW). --disallowedTools removes the casual
           # `gh issue create` / `gh issue comment` bypass so filing goes through that
@@ -177,7 +177,7 @@ jobs:
           # max from the cost ledger — never trips a healthy run, caps a runaway well
           # below an unbounded 20-minute spend (#181).
           # ponytail: Bash(printf:*) is granted because the gate step uses
-          # `printf '%s' '<json>' | python3 "$SKILL_DIR/lib/cli.py" gate` — printf
+          # `printf '%s' '<json>' | python3 $SKILL_DIR/lib/cli.py gate` — printf
           # is the narrowest tty-safe way to pipe JSON without shell escaping problems.
           # No tighter scope is possible (printf is a shell builtin with no subpath).
           claude -p \

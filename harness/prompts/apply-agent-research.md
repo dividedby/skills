@@ -53,18 +53,17 @@ supplied by cli.py itself — never read it.
 - Inline data munging → use the `cli.py` subcommands that already exist; do not
   reach for `python3 -c` for ad-hoc parsing.
 - Batch idioms are denied too: a `for`/`while` loop, `bash -c`, or a command
-  pipeline is matched as one opaque string, not its allowlisted parts. Make one
-  singular allowlisted call per item — even repeated N times — instead of
-  looping.
-- Invoke `cli.py` exactly as shown in this prompt, UNQUOTED:
-  `python3 $SKILL_DIR/lib/cli.py mode`. The allowlist entry is built from
-  `$SKILL_DIR` already shell-expanded to its real absolute path before your run
-  starts, so the match is a literal prefix against that resolved path — wrapping
-  it in quotes (`python3 "<resolved-path>/cli.py" mode`) changes the string and
-  gets denied every time (verified: run 28496791248, 2026-07-01 — the quoted
-  form was denied 3× with `This command requires approval`; the same call
-  unquoted succeeded immediately after, and every later `cli.py` call in that
-  run stayed unquoted and succeeded).
+  pipeline is matched as one opaque string, not its allowlisted parts — with
+  one exception: the `printf '%s' '<json>' | python3 $SKILL_DIR/lib/cli.py
+  gate` pipe (step 5) is sanctioned; `Bash(printf:*)` is allowlisted precisely
+  for it. Every other pipe is denied. Make one singular allowlisted call per
+  item — even repeated N times — instead of looping.
+- **Quoting.** Every `cli.py` example in this prompt writes `$SKILL_DIR`
+  symbolically — substitute the concrete path you were given for it in your
+  task inputs, and invoke it UNQUOTED: `python3 <that concrete path>/lib/cli.py
+  mode`. The allowlist is built from that same resolved path, so the match is a
+  literal prefix against it; wrapping the path in quotes changes the string and
+  gets denied (verified in run 28496791248, 2026-07-01 — see #527).
 - Never write or run an ad-hoc script (`python3 /tmp/scratch.py`, a new `.py`
   file) — the allowlist has no pattern that can match it.
 
@@ -83,7 +82,10 @@ supplied by cli.py itself — never read it.
   there: `$SKILLS_SRC/docs/design/skill-request-flow.md`,
   `$SKILLS_SRC/docs/design/skill-promotion-flow.md`, and the ADRs they cite.
 - **`$SKILL_DIR`** — the installed skill. Every skill/CLI call goes through it:
-  `python3 $SKILL_DIR/lib/cli.py {gate,file,comment}`. Never a hardcoded path.
+  `python3 $SKILL_DIR/lib/cli.py {gate,file,comment}`. Never hardcode a skill
+  path guessed from another repo or a prior run — always resolve it from the
+  value given to you this run (see the Tool-use constraint above for how to
+  invoke it, unquoted).
 - **`$PRIVATE_MARKERS`** — space-separated private tokens for the leak guard. Expand
   to one repeatable `--marker <token>` per token on **every** guarded `file` /
   `comment` call (see Filing). Empty (the host case, and any fully-public repo) → no
@@ -209,9 +211,9 @@ independently clear the bar that would have made it the run's single best.
    on `title + body` and act **only on ALLOW**. Route each filed candidate to its
    own channel's destination/label/token. **Pass every private marker:** expand
    `$PRIVATE_MARKERS` (space-separated) to one `--marker <token>` per token on every
-   `file` / `comment` call (none when it is empty). Write each body to a file (e.g. a
-   heredoc into `$RUNNER_TEMP/body.md`) ending in the `dedup-key` marker + a short
-   Sources line citing the knowledge note(s), then:
+   `file` / `comment` call (none when it is empty). Write each body via the
+   `Write` tool (into `$RUNNER_TEMP/body.md`) ending in the `dedup-key` marker +
+   a short Sources line citing the knowledge note(s), then:
    - **self-improvement** (own tracker — host and consumer):
 
          python3 $SKILL_DIR/lib/cli.py file \

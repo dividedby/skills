@@ -71,9 +71,9 @@ the estate's scheduling convention — and is summarised in step 6.
    of an allowlisted command are matched as one opaque string by the
    literal-prefix matcher and denied, and to steer the agent to one singular
    call per item plus the built-in tools (`Read`/`Grep`/`Glob`) for everything
-   else. Skipping this costs real money in denial-retry turns — one fleet
-   loop measured $2.08/run with the block missing vs $0.29/run once it was
-   added (#527).
+   else. Skipping this costs real money in denial-retry turns: denial-heavy
+   runs have measured $2.08 and $1.02 per run against $0.24–$0.55 clean-run
+   baselines for the same jobs (#527).
 
 5. **Onboard into the cost surface — cross-repo.** This repo has no local cost
    registry; the estate's cost hub lives in **agent-research**. Add the
