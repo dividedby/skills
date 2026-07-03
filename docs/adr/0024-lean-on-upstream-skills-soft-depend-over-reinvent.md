@@ -66,3 +66,16 @@ principle they each applied in a narrower domain.
   land.
 - Consumers reading this repo's installed-skill snapshot (`docs/agents/installed-skills.md`)
   will see Matt's skills listed — the snapshot is the ground truth for remote loops.
+
+## Amendment (2026-07-02)
+
+**Second upstream: `anthropics/claude-plugins-official`.** This ADR's dependency
+contract — delete + soft-depend first, thin wrapper only when justified, compose
+by reference — was written against `mattpocock/skills` alone. The official
+catalog is now a second upstream to evaluate skill-by-skill against the same
+preference order: it is already in the maintainer's installed baseline
+([`docs/agents/installed-skills.md`](../agents/installed-skills.md)), alongside
+Matt's suite, so overlap is a live question, not a hypothetical. Nothing about
+the contract itself changes — only its scope, from one upstream to two. The
+`## Upstream soft-dependencies` section in `CONTEXT.md` and the `## Upstream`
+section in `README.md` now name both.
