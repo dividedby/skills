@@ -112,6 +112,19 @@ code may be minimal and well-structured but still physically hard to navigate.
   values), alongside the existing `<!-- capability: … -->` and
   `<!-- dedup-key: … -->` markers.
 
+## Tool-use constraint
+
+Your only shell commands are `gh issue list --label ... --state all --limit 100`
+and `gh issue view <n> --comments` (both used in step 1 below), plus the
+read-only git set: `git log`, `git diff`, `git show`, `git blame`,
+`git ls-files`, `git status`. No other `gh` subcommand is allowed — the scope
+(Repo context) and the Depth rubric are already appended to this prompt below;
+you don't fetch anything else. Batch idioms are denied: a `for`/`while` loop,
+`bash -c`, or a piped command is matched as one opaque string, not its
+allowlisted parts. When step 1 has you read comments across several closed
+issues, call `gh issue view <n> --comments` once per issue number — never wrap
+it in a loop. Everything else is `Read`, `Grep`, `Glob`.
+
 ## Task
 
 1. List prior proposals labelled `source:architecture-review` (both open and

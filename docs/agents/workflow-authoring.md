@@ -12,7 +12,7 @@ This doc is for two distinct audiences — read the section that matches your ro
   block). You inherit `--model`, `--max-budget-usd`, `--allowedTools`, the cron
   gate, `concurrency`, and the cost-ledger `digest` step from the reusable body.
   **Do not re-author any of those in your stub.** The only thing you set is the
-  cron schedule (derived by the hash-stagger rule in step 5) and any
+  cron schedule (derived by the hash-stagger rule in step 6) and any
   loop-specific `with:` inputs. See the per-loop setup docs for your stub form.
 
 Post-#382 / [ADR 0029](../adr/0029-apply-agent-research-joins-the-reusable-body-rail.md),
@@ -28,7 +28,7 @@ budget/cap + the 2026-06-20 cadence amendment) and ADR
 [0014](../adr/0014-harness-is-fetched-fresh-only-the-workflow-envelope-is-vendored.md)
 (the reusable-body rail; thin caller stubs vendor only `on:`/`permissions:`/`uses:`/`secrets:`).
 The hash-stagger rule itself lives one repo over, in **agent-research ADR 0022** —
-the estate's scheduling convention — and is summarised in step 5.
+the estate's scheduling convention — and is summarised in step 6.
 
 ## The checklist
 
@@ -64,7 +64,18 @@ the estate's scheduling convention — and is summarised in step 5.
    `total_cost_usd=n/a` or an indistinguishable low number; a clean run's line
    carries no `error=` field and is byte-identical to the pre-error-field format.
 
-4. **Onboard into the cost surface — cross-repo.** This repo has no local cost
+4. **Mirror the allowlist in the prompt itself.** Every `claude`-invoking loop's
+   prompt needs a short tool-use-constraint block naming its own
+   `--allowedTools` set: which shell commands are actually granted, that batch
+   idioms (`for`/`while` loops, `bash -c`, piped commands) and quoting variants
+   of an allowlisted command are matched as one opaque string by the
+   literal-prefix matcher and denied, and to steer the agent to one singular
+   call per item plus the built-in tools (`Read`/`Grep`/`Glob`) for everything
+   else. Skipping this costs real money in denial-retry turns — one fleet
+   loop measured $2.08/run with the block missing vs $0.29/run once it was
+   added (#527).
+
+5. **Onboard into the cost surface — cross-repo.** This repo has no local cost
    registry; the estate's cost hub lives in **agent-research**. Add the
    `(repo, workflow) -> runs/month` entry to `COST_SURFACE` in agent-research's
    `kb_afk/cost_surface.py` (the single registry the per-repo token map and the
@@ -74,7 +85,7 @@ the estate's scheduling convention — and is summarised in step 5.
    add its `<CONSUMER>_ACTIONS_TOKEN` secret to that `cost-ledger.yml` (GHA can't
    enumerate secrets).
 
-5. **Cron off-the-hour, and self-stagger by hash.** Never schedule on the top of
+6. **Cron off-the-hour, and self-stagger by hash.** Never schedule on the top of
    the hour (GitHub's busy-hour cron delay). Derive the slot from the job
    identity so onboarding a new consumer needs zero schedule coordination
    (agent-research ADR 0022):
@@ -91,7 +102,7 @@ the estate's scheduling convention — and is summarised in step 5.
    fires a day early; the Friday-evening band lives on **Saturday UTC** (`* * 6`,
    `WINDOW_START=0`, `WINDOW_HOURS=4` = Fri 19–23 CT).
 
-6. **First-Monday (or first-of-month) cadence? Guard it in the job.** POSIX cron
+7. **First-Monday (or first-of-month) cadence? Guard it in the job.** POSIX cron
    can't express "first Monday" (restricting both day-of-month and day-of-week
    ORs them). Schedule every Monday and gate the run:
    `[ "$(date -u +%-d)" -le 7 ] || exit 0` — exactly the `first-monday-gate` job
@@ -101,7 +112,7 @@ the estate's scheduling convention — and is summarised in step 5.
 
 Encode new workflows against the four loops this repo runs. All sonnet, all
 **propose-only** — never edit/commit/merge. Cadence: the two Mon/Wed/Sat loops
-are hash-staggered (step 5) into the 00–04 UTC off-peak band (ADR 0022), and
+are hash-staggered (step 6) into the 00–04 UTC off-peak band (ADR 0022), and
 weekly `changelog-health` derives its Thu 01:33 UTC slot the same way; monthly
 `staleness-review` uses a hand-chosen slot instead (`8 13 * * 1`). The three
 proposal loops file budgeted, ranked issues; `changelog-health` is
@@ -126,5 +137,5 @@ Two non-obvious choices worth copying:
   pushes the mirror; consumers read it). The 3×/week consumer cadence is the
   ADR 0019 amendment.
 
-Per-run cost rolls into the cross-repo `COST_SURFACE` projection (step 4); keep
+Per-run cost rolls into the cross-repo `COST_SURFACE` projection (step 5); keep
 the `$4` backstop unless a loop's observed max moves.

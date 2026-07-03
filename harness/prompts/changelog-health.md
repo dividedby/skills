@@ -20,6 +20,16 @@ or finds rubric violations, it proposes advisory `## [Unreleased]` lines and/or
 cites the offending rule numbers. The advisory is a human nudge, not a gate:
 the maintainer hand-applies (or ignores) the suggestion.
 
+## Tool-use constraint
+
+Your only shell commands are the read-only git set: `git log`, `git diff`,
+`git show`, `git ls-files`, `git status`. There is no `gh` in your allowlist —
+you file nothing yourself (see Output contract). Command pipelines (a
+`grep`/`sort`/`comm` chain, `bash -c`) and `for`/`while` loops are matched as
+one opaque string and denied — use the `Grep` tool and reason over its results
+instead of piping shell commands together. Everything else is `Read`, `Grep`,
+`Glob`.
+
 ## Task
 
 One repo per job run (the matrix fans out at the workflow level). The repo

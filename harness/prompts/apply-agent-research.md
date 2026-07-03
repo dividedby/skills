@@ -17,7 +17,7 @@ before acting** — this prompt is only the concrete wiring.
 
 Determine your mode first by running:
 
-    python3 "$SKILL_DIR/lib/cli.py" mode
+    python3 $SKILL_DIR/lib/cli.py mode
 
 This prints `host` or `consumer` and exits 0. Branch your whole run on that output.
 
@@ -48,9 +48,25 @@ supplied by cli.py itself — never read it.
 - Read a file → `Read` tool, not `cat`.
 - Search text → `Grep` tool, not `| grep`.
 - Write a file → `Write` tool, not `echo … >` or `tee`.
+- List a directory → `Glob` tool, not `ls`.
 - Parse `gh` JSON → `gh … --jq '<expr>'`, not `gh … | python3 -c` or `| grep`.
 - Inline data munging → use the `cli.py` subcommands that already exist; do not
   reach for `python3 -c` for ad-hoc parsing.
+- Batch idioms are denied too: a `for`/`while` loop, `bash -c`, or a command
+  pipeline is matched as one opaque string, not its allowlisted parts. Make one
+  singular allowlisted call per item — even repeated N times — instead of
+  looping.
+- Invoke `cli.py` exactly as shown in this prompt, UNQUOTED:
+  `python3 $SKILL_DIR/lib/cli.py mode`. The allowlist entry is built from
+  `$SKILL_DIR` already shell-expanded to its real absolute path before your run
+  starts, so the match is a literal prefix against that resolved path — wrapping
+  it in quotes (`python3 "<resolved-path>/cli.py" mode`) changes the string and
+  gets denied every time (verified: run 28496791248, 2026-07-01 — the quoted
+  form was denied 3× with `This command requires approval`; the same call
+  unquoted succeeded immediately after, and every later `cli.py` call in that
+  run stayed unquoted and succeeded).
+- Never write or run an ad-hoc script (`python3 /tmp/scratch.py`, a new `.py`
+  file) — the allowlist has no pattern that can match it.
 
 ## Inputs (env the stub exports — read, do not guess)
 
@@ -130,7 +146,7 @@ independently clear the bar that would have made it the run's single best.
      `$SKILLS_SRC/docs/agents/installed-skills.md`. If either covers it, **do not
      file** — print `SKIPPED: skill-request: already covered by <name>`.
    - Otherwise check for an existing open request via cli.py:
-     `python3 "$SKILL_DIR/lib/cli.py" find-open --repo dividedby/skills --label skill-request --capability <slug>`
+     `python3 $SKILL_DIR/lib/cli.py find-open --repo dividedby/skills --label skill-request --capability <slug>`
      (empty output → no open match; a number → that issue already exists). The slug
      names the *wanted capability*, so a different repo with the same gap produces
      the same slug.
@@ -155,7 +171,7 @@ independently clear the bar that would have made it the run's single best.
    (`$SKILLS_SRC/docs/design/skill-promotion-flow.md`) — for each **promotable**
    local skill from the supply-side audit (ADR 0010): check for an existing open
    offer via:
-   `python3 "$SKILL_DIR/lib/cli.py" find-open --repo dividedby/skills --label skill-promotion --capability <slug>`
+   `python3 $SKILL_DIR/lib/cli.py find-open --repo dividedby/skills --label skill-promotion --capability <slug>`
    then **file** (capability offered/generalized; why it clears general merit and is
    skill-shaped; a pointer to where the implementation lives — never a paste;
    not-already-covered; `$GH_REPO`; the marker) **or `+1`**, exactly like step 3 but
@@ -165,7 +181,7 @@ independently clear the bar that would have made it the run's single best.
    merge every enabled channel's candidates, and run the budgeted gate **once**
    with `"budget": 1` and the union of every channel's spoken-for keys, exactly as
    `proposal-flow.md` describes:
-   `printf '%s' '<json>' | python3 "$SKILL_DIR/lib/cli.py" gate` (run from the repo
+   `printf '%s' '<json>' | python3 $SKILL_DIR/lib/cli.py gate` (run from the repo
    root). Be ruthlessly critical *before* the gate: inject only candidates you
    would defend individually — the budget is a ceiling, not a quota, and filler
    erodes the maintainer's trust faster than silence. The leak guard is **not** a
@@ -198,14 +214,14 @@ independently clear the bar that would have made it the run's single best.
    Sources line citing the knowledge note(s), then:
    - **self-improvement** (own tracker — host and consumer):
 
-         python3 "$SKILL_DIR/lib/cli.py" file \
+         python3 $SKILL_DIR/lib/cli.py file \
            --title "<title>" --body-file "$RUNNER_TEMP/body.md" \
            --label source:agent-research <expanded --marker flags>
 
    - **host-mode skills-on-general-merit / drained skill-request** → file into the
      own tracker the same way (own provenance label, own token).
    - **consumer-mode `skill-request` / `skill-promotion`** → cross-repo via
-     `python3 "$SKILL_DIR/lib/cli.py" file` / `comment` with `--repo dividedby/skills`,
+     `python3 $SKILL_DIR/lib/cli.py file` / `comment` with `--repo dividedby/skills`,
      the channel's label, and the expanded `--marker` flags, as in steps 3–4.
      cli.py supplies the cross-repo token automatically from `$ISSUES_TOKEN`;
      never set `GH_TOKEN` yourself.

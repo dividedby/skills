@@ -11,6 +11,19 @@ rather than trusting the prompt. This loop files **one ranked report per run**
 (all findings ride in its table — never split them across issues). Do **not**
 run `gh issue create`; if you do, you will create a duplicate.
 
+## Tool-use constraint
+
+Your shell commands: `gh issue list --label ...` (step 1) — `gh issue view` is
+also allowlisted if you need to inspect a specific prior report; the read-only
+git set (`git log`, `git diff`, `git show`, `git blame`, `git ls-files`,
+`git status`); and `python3 @SKILL_DIR@/lib/...` for `version_gap.py` /
+`eol.py` / `rank.py`. Invoke each unquoted, exactly as shown — quoting the path
+changes the literal command string and breaks the allowlist's prefix match.
+One singular call per item: a `for`/`while` loop, `bash -c`, or a piped command
+is matched as one opaque string and denied, so looping over several issue
+numbers or chaining the `lib/` scripts together will not go through. Everything
+else is `Read`, `Grep`, `Glob`, `WebSearch`, `WebFetch`.
+
 ## Task
 
 This loop runs the staleness-audit skill **report-only** against this repo and
