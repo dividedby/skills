@@ -1,6 +1,6 @@
 # Vendored Claude-powered Workflows
 
-A reference map of the three **proposal-loop** workflows across the five repos
+A reference map of the three **proposal-loop** workflows across the four repos
 that run them: cron slots, timing, per-run budget, issue caps, and cross-repo
 dependencies. It doubles as the reference surface for
 [#365](https://github.com/dividedby/skills/issues/365) (guard envelope drift) and
@@ -65,18 +65,18 @@ Saturday, `* * 1` = Monday, `* * 3` = Wednesday. Rows are ordered by UTC time wi
 
 ## Presence matrix
 
-All five repos run all three loops.
+All four repos run all three loops.
 
-| Loop | skills | moodreader | agent-research | goodreads-bot | tweakcc-maint |
-|---|:--:|:--:|:--:|:--:|:--:|
-| `improve-codebase-architecture` | ✓ | ✓ | ✓ | ✓ | ✓ |
-| `apply-agent-research` | ✓ | ✓ | ✓ | ✓ | ✓ |
-| `staleness-review` | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Loop | skills | moodreader | agent-research | goodreads-bot |
+|---|:--:|:--:|:--:|:--:|
+| `improve-codebase-architecture` | ✓ | ✓ | ✓ | ✓ |
+| `apply-agent-research` | ✓ | ✓ | ✓ | ✓ |
+| `staleness-review` | ✓ | ✓ | ✓ | ✓ |
 
 Repo roles: **skills** = host (carries the harness in-tree and the reusable
 `workflow_call` bodies); **agent-research** = knowledge-base producer;
-**goodreads-bot** = deployed app (default branch `staging`); **moodreader**,
-**tweakcc-maint** = consumers.
+**goodreads-bot** = deployed app (default branch `staging`); **moodreader** =
+consumer.
 
 ## `improve-codebase-architecture` — Mon/Wed/Sat (3×/week)
 
@@ -84,7 +84,6 @@ Repo roles: **skills** = host (carries the harness in-tree and the reusable
 |---|---|---|---|---|---|
 | moodreader | `3 0 * * 1,3,6` | Sun/Tue/Fri 19:03 | 20m | $3 | 1 |
 | skills | `5 0 * * 1,3,6` | Sun/Tue/Fri 19:05 | 20m | $3 | 1 |
-| tweakcc-maint | `34 1 * * 1,3,6` | Sun/Tue/Fri 20:34 | 20m | $3 | 1 |
 | agent-research | `4 3 * * 1,3,6` | Sun/Tue/Fri 22:04 | 20m | $3 | 1 |
 | goodreads-bot | `11 3 * * 1,3,6` | Sun/Tue/Fri 22:11 | 20m | $3 | 1 |
 
@@ -104,7 +103,6 @@ Repo roles: **skills** = host (carries the harness in-tree and the reusable
 | moodreader | `39 0 * * 1,3,6` | Sun/Tue/Fri 19:39 | 20m | $3 | 1 |
 | skills | `19 1 * * 1,3,6` | Sun/Tue/Fri 20:19 | 20m | $3 | 1 |
 | goodreads-bot | `45 1 * * 1,3,6` | Sun/Tue/Fri 20:45 | 20m | $3 | 1 |
-| tweakcc-maint | `27 3 * * 1,3,6` | Sun/Tue/Fri 22:27 | 20m | $3 | 1 |
 | agent-research | `37 3 * * 1,3,6` | Sun/Tue/Fri 22:37 | 20m job / 15m run | **$15** | 1 |
 
 - **agent-research is the producer**, not a consumer: higher budget ($15),
@@ -120,7 +118,6 @@ Repo roles: **skills** = host (carries the harness in-tree and the reusable
 |---|---|---|---|---|---|
 | goodreads-bot | `7 13 * * 1` | Mon 08:07 | 20m | $3 | 1 |
 | skills | `8 13 * * 1` | Mon 08:08 | 20m | $3 | 1 |
-| tweakcc-maint | `9 13 * * 1` | Mon 08:09 | 20m | $3 | 1 |
 | moodreader | `10 13 * * 1` | Mon 08:10 | 20m | $3 | 1 |
 | agent-research | `17 13 * * 1` | Mon 08:17 | 20m | $3 | 1 |
 

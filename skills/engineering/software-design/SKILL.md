@@ -13,7 +13,7 @@ description: >
 
 This skill turns a PRD and a published backlog into a clear design: named
 modules, located seams, an explicit testing strategy, and TDD-ready issue
-bodies that `/tdd` can implement one behavior at a time.
+bodies that `/tdd` or `/implement` can carry one behavior at a time.
 
 It is an **orchestration wrapper**: the deep-module/seam vocabulary and
 testability doctrine live in `/codebase-design`; the ubiquitous-language
@@ -55,9 +55,11 @@ The skill exits early if any of these is true:
 Early-exit behavior has two paths:
 
 - **Backend single-module** — post `design-skipped: single-module change`
-  on each affected issue and tell the user to run `/tdd` directly.
+  on each affected issue and tell the user to run `/tdd` or `/implement`
+  directly.
 - **UI-only** — post `routed-to: /frontend-design` on each affected
-  issue and tell the user to run `/frontend-design` next, then `/tdd`.
+  issue and tell the user to run `/frontend-design` next, then `/tdd` or
+  `/implement`.
 
 Even on early-exit, the stamping pass (step 2) still runs for every
 frontend-flavored issue.

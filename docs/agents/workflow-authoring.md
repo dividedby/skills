@@ -46,7 +46,7 @@ the estate's scheduling convention — and is summarised in step 5.
 2. **Carry a `--max-budget-usd` backstop.** Every headless `claude -p` invocation
    takes `--max-budget-usd`, sized ~2.5–3× the workflow's observed max (#181).
    It's a backstop against a runaway run, not a routine ceiling — a healthy run
-   should never hit it. The three loops here run at `$4.00`. No history yet? Size
+   should never hit it. The four loops here run at `$4.00`. No history yet? Size
    off the nearest same-shape workflow and revisit once runs accrue.
 
 3. **Emit `total_cost_usd` so the run is metered.** Run with
@@ -94,15 +94,18 @@ the estate's scheduling convention — and is summarised in step 5.
 
 ## The reference cadence (this repo, 2026-06-30 amendment)
 
-Encode new workflows against the three loops this repo runs. All hash-staggered
-(step 5) into the early-UTC band (Sun/Tue/Fri evening CT), all sonnet, all
-**propose-only** — they file budgeted, ranked issues, never edit/commit/merge.
+Encode new workflows against the four loops this repo runs — three MWF-window
+proposal loops plus `changelog-health` (Thursday). All hash-staggered (step 5)
+within the same 00–04 UTC off-peak band, all sonnet, all **propose-only** —
+never edit/commit/merge. The three MWF loops file budgeted, ranked issues;
+`changelog-health` is advisory-only, filing at most one dedup'd issue per repo.
 
 | Loop | Model | Cron (UTC) | ≈ CT | cap |
 | --- | --- | --- | --- | --: |
 | `improve-codebase-architecture` | sonnet | `5 0 * * 1,3,6` | Sun/Tue/Fri 19:05 | ≤1 |
 | `apply-agent-research` | sonnet | `19 1 * * 1,3,6` | Sun/Tue/Fri 20:19 | ≤1 |
 | `staleness-review` | sonnet | `8 13 * * 1` (1st-Mon gate) | Mon 08:08 | 1 |
+| `changelog-health` | sonnet | `33 1 * * 4` | Wed 20:33 | ≤1 (dedup) |
 
 Two non-obvious choices worth copying:
 
