@@ -72,6 +72,20 @@ seats, but **does not add seats above 5** (swap-not-add keeps cost flat).
 Security is force-seated on any auth/payments/secrets/migrations signal even if
 `--seats` does not name it.
 
+### Falsifier FP-exclusion list
+
+The Falsifier hunts for the objection that breaks the proposal — not for
+noise dressed up as an objection. It does not report:
+
+- Pre-existing issues — already present before this diff, not introduced by it.
+- Issues a linter, typechecker, or compiler would catch on its own (CI covers these).
+- Issues explicitly silenced in the code (e.g. a lint-ignore comment) — deliberately suppressed, not missed.
+- Changes in functionality that look intentional and are directly related to the broader change.
+- Real issues, but on lines the diff didn't touch.
+- General code-quality gripes (test coverage, docs, style) absent a documented standard (CLAUDE.md, ADR, or repo convention) that the diff violates.
+
+Mirrored verbatim in `flow-pr`'s step-4 review gate (`skills/engineering/flow-pr/SKILL.md`) — keep the two lists in sync.
+
 ---
 
 ## Step 0 — Selector

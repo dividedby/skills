@@ -35,6 +35,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
 ### Changed
 
+- `council` (Falsifier seat) and `flow-pr` (step-4 review gate): both now carry
+  the same short false-positive exclusion list — pre-existing issues,
+  linter/typechecker-catchable issues, deliberately-silenced issues,
+  intentional-looking changes, findings on unmodified lines, and general
+  quality gripes absent a documented standard — so the adversarial critic and
+  the review gate stop re-litigating noise the official code-review plugin's
+  own false-positive list already rules out; wording kept verbatim-identical
+  in both files, each pointing at the other to stay in sync (#531)
 - `harness/prompts/staleness-audit.md` and `harness/prompts/changelog-health.md`:
   every filed/updated report now ends with an invisible, escaped
   `<!-- state: {...} -->` block carrying `as_of` plus a per-finding
