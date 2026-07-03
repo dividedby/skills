@@ -228,11 +228,13 @@ _Avoid_: wontfix doc, rejected-skill note, out-of-scope file.
 
 ## Upstream soft-dependencies
 
-This repo defers to `mattpocock/skills` for the capabilities listed below rather
-than reinventing them — the default posture is delete-and-soft-depend per
-[ADR 0024](./docs/adr/0024-lean-on-upstream-skills-soft-depend-over-reinvent.md).
-Soft-dependency means expected to be installed alongside this plugin; these skills
-are never vendored here.
+This repo defers to two upstream catalogs for the capabilities listed below
+rather than reinventing them — the default posture is delete-and-soft-depend per
+[ADR 0024](./docs/adr/0024-lean-on-upstream-skills-soft-depend-over-reinvent.md),
+which now names both. Soft-dependency means expected to be installed alongside
+this plugin; nothing from either catalog is vendored here.
+
+**From `mattpocock/skills`:**
 
 **Foundation:** `codebase-design`, `domain-modeling`, `writing-great-skills`
 
@@ -241,6 +243,10 @@ are never vendored here.
 
 `resolving-merge-conflicts` is intentionally **not** listed — it is not currently
 installed in the maintainer environment, so we declare no contract on it until it is.
+
+**From `anthropics/claude-plugins-official`:** `code-review`, `commit-commands`,
+`typescript-lsp` — already installed in the maintainer's baseline
+([`docs/agents/installed-skills.md`](./docs/agents/installed-skills.md)).
 
 **Authoring standard.** Every kept or reworked skill in this repo is (re)written to
 the `writing-great-skills` standard.

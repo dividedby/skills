@@ -34,6 +34,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
 ### Changed
 
+- ADR 0024 amended: the delete-and-soft-depend upstream-reuse evaluation now also covers `anthropics/claude-plugins-official` (the official catalog) alongside `mattpocock/skills`, same preference order; `CONTEXT.md`'s "Upstream soft-dependencies" and `README.md`'s "Upstream" sections updated to name both, noting the official catalog's `code-review`, `commit-commands`, `typescript-lsp` are already in the maintainer's installed baseline (#521)
 - `council`'s chair and highest-leverage (opus-tier) seats, and `repo-audit`'s synthesis agent, temporarily run on Claude Fable 5 for a trial; marked for revert on/after 2026-07-07 (Fable 5 sunset)
 - Repos running the scheduled `improve-codebase-architecture` and `apply-agent-research` proposal loops now see at most one filed issue per run instead of two — each run surfaces only its single best finding that clears the bar, or nothing, restoring the pre-ADR-0019 one-issue discipline (ADR 0019, amended 2026-06-30)
 - The four scheduled proposal loops (`apply-agent-research`, `changelog-health`, `improve-codebase-architecture`, `staleness-review`) now run on `claude-sonnet-5` instead of `claude-sonnet-4-6` — a considered model-pin decision for output quality; repos vendoring these reusable loops inherit the new pin (same $3/$15 sticker, though Sonnet 5's tokenizer runs ~30% more tokens per task) (#504)
