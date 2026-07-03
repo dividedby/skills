@@ -20,11 +20,15 @@ Usage
 """
 
 import argparse
-import base64
 import os
-import subprocess
 import sys
-from typing import Optional
+
+try:
+    from tools._drift_common import _gh, ensure_label, fetch_file, open_issues
+    from tools._drift_common import file_issue as _file_issue_io
+except ImportError:
+    from _drift_common import _gh, ensure_label, fetch_file, open_issues
+    from _drift_common import file_issue as _file_issue_io
 
 # ---------------------------------------------------------------------------
 # Config
@@ -221,84 +225,9 @@ def check_forbidden(content: str, forbidden: list[str]) -> list[str]:
 # ---------------------------------------------------------------------------
 # I/O helpers
 # ---------------------------------------------------------------------------
-
-
-def _gh(args: list[str], token: str, check: bool = True) -> subprocess.CompletedProcess:
-    """Run a ``gh`` subprocess with GH_TOKEN set to *token*."""
-    # Inherit PATH and HOME so gh can find its config.
-    full_env = {**os.environ, "GH_TOKEN": token}
-    return subprocess.run(
-        ["gh"] + args,
-        capture_output=True,
-        text=True,
-        check=check,
-        env=full_env,
-    )
-
-
-def fetch_file(repo: str, branch: str, path: str, read_token: str) -> Optional[str]:
-    """Fetch *path* from *repo* at *branch* via the GitHub Contents API.
-
-    Returns decoded text on success, or ``None`` if the file is missing (404).
-    Raises ``RuntimeError`` on any other error.
-    """
-    api_path = f"repos/{repo}/contents/{path}"
-    result = _gh(
-        ["api", f"{api_path}?ref={branch}", "--jq", ".content"],
-        token=read_token,
-        check=False,
-    )
-    if result.returncode != 0:
-        stderr = result.stderr.strip()
-        if "404" in stderr or "Not Found" in stderr:
-            return None
-        raise RuntimeError(
-            f"gh api {api_path}: exit {result.returncode}: {stderr}"
-        )
-    encoded = result.stdout.strip()
-    if not encoded:
-        return None
-    # GitHub returns base64 with embedded newlines; strip them.
-    decoded = base64.b64decode(encoded.replace("\n", "")).decode("utf-8")
-    return decoded
-
-
-def ensure_label(write_token: str, dry_run: bool) -> None:
-    """Best-effort: create the workflow-drift label in skills if absent."""
-    if dry_run:
-        print(f"[dry-run] would ensure label '{LABEL}' in {SKILLS_REPO_WRITE}")
-        return
-    _gh(
-        [
-            "label", "create", LABEL,
-            "--repo", SKILLS_REPO_WRITE,
-            "--color", LABEL_COLOR,
-            "--description", LABEL_DESCRIPTION,
-        ],
-        token=write_token,
-        check=False,  # exits non-zero if label already exists; that's fine
-    )
-
-
-def open_issues_for_repo(repo: str, write_token: str) -> set[str]:
-    """Return the set of open issue titles tagged workflow-drift for *repo*."""
-    result = _gh(
-        [
-            "issue", "list",
-            "--repo", SKILLS_REPO_WRITE,
-            "--label", LABEL,
-            "--state", "open",
-            "--json", "title",
-            "--jq", ".[].title",
-        ],
-        token=write_token,
-        check=False,
-    )
-    if result.returncode != 0:
-        # Can't read; treat as no open issues (worst case: duplicate filed).
-        print(f"WARNING: could not fetch open issues: {result.stderr.strip()}", file=sys.stderr)
-        return set()
-    return set(result.stdout.strip().splitlines())
+#
+# _gh, fetch_file, ensure_label, open_issues are shared with check_label_drift.py
+# and check_idea_inbox_drift.py — see tools/_drift_common.py (#526).
 
 
 def _issue_title(repo: str) -> str:
@@ -307,12 +236,11 @@ def _issue_title(repo: str) -> str:
     return f"[workflow-drift] {short}: vendored workflows have diverged"
 
 
-def file_issue(repo: str, drifted: dict[str, list[str]], write_token: str, dry_run: bool) -> None:
-    """Open or print a drift issue for *repo* in skills.
+def build_issue_body(repo: str, drifted: dict[str, list[str]]) -> str:
+    """Build the markdown body for a workflow-drift issue.
 
     *drifted* maps filename → list of missing anchors.
     """
-    title = _issue_title(repo)
     lines = [
         f"## Workflow drift detected in `{repo}`",
         "",
@@ -338,34 +266,18 @@ def file_issue(repo: str, drifted: dict[str, list[str]], write_token: str, dry_r
         "Reference: [`docs/agents/vendored-workflows.md`](../../docs/agents/vendored-workflows.md),",
         "[ADR 0014](../../docs/adr/0014-harness-is-fetched-fresh-only-the-workflow-envelope-is-vendored.md).",
     ]
-    body = "\n".join(lines)
+    return "\n".join(lines)
 
-    if dry_run:
-        print(f"[dry-run] would file issue in {SKILLS_REPO_WRITE}:")
-        print(f"  title: {title}")
-        for path, missing in sorted(drifted.items()):
-            print(f"  {path}: missing {missing}")
-        return
 
-    import tempfile, os
-    with tempfile.NamedTemporaryFile("w", suffix=".md", delete=False, encoding="utf-8") as fh:
-        fh.write(body)
-        body_path = fh.name
-    try:
-        result = _gh(
-            [
-                "issue", "create",
-                "--repo", SKILLS_REPO_WRITE,
-                "--title", title,
-                "--body-file", body_path,
-                "--label", LABEL,
-            ],
-            token=write_token,
-        )
-        url = result.stdout.strip().splitlines()[-1]
-        print(f"Filed: {url}")
-    finally:
-        os.unlink(body_path)
+def file_issue(repo: str, drifted: dict[str, list[str]], write_token: str, dry_run: bool) -> None:
+    """Open or print a drift issue for *repo* in skills.
+
+    *drifted* maps filename → list of missing anchors.
+    """
+    title = _issue_title(repo)
+    body = build_issue_body(repo, drifted)
+    dry_run_extra = [f"  {path}: missing {missing}" for path, missing in sorted(drifted.items())]
+    _file_issue_io(SKILLS_REPO_WRITE, title, body, LABEL, write_token, dry_run, dry_run_extra)
 
 
 # ---------------------------------------------------------------------------
@@ -400,13 +312,13 @@ def main(argv=None):
         write_token = read_token  # fallback: use the same token for both
 
     # Ensure the label exists before we need it.
-    ensure_label(write_token, args.dry_run)
+    ensure_label(LABEL, LABEL_COLOR, LABEL_DESCRIPTION, write_token, args.dry_run)
 
     # Fetch open drift issues once (used for dedup across all repos).
     if args.dry_run:
         open_titles: set[str] = set()
     else:
-        open_titles = open_issues_for_repo(SKILLS_REPO_WRITE, write_token)
+        open_titles = open_issues(LABEL, write_token)
 
     any_error = False
 
