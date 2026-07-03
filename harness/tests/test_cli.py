@@ -109,10 +109,39 @@ class ParseDigestTest(unittest.TestCase):
         d = cli.parse_digest([json.dumps({"type": "assistant"})])
         self.assertEqual(d["result"], "")
         self.assertEqual(d["total_cost_usd"], "n/a")
+        self.assertEqual(d["error"], "no-result")
+
+    def test_is_error_result_event_flags_error(self):
+        """A completed-but-failed run (is_error: true) carries the error class,
+        even though the cost fields are real numbers, not n/a (#531 item 3)."""
+        lines = [json.dumps({
+            "type": "result", "result": "boom", "total_cost_usd": 0.05,
+            "duration_ms": 500, "num_turns": 1, "is_error": True,
+        })]
+        d = cli.parse_digest(lines)
+        self.assertEqual(d["error"], "is_error")
+        self.assertEqual(d["total_cost_usd"], 0.05)
+
+    def test_clean_result_event_has_no_error(self):
+        lines = [json.dumps({"type": "result", "result": "ok", "total_cost_usd": 0.1})]
+        self.assertIsNone(cli.parse_digest(lines)["error"])
 
     def test_cost_line_format(self):
         d = {"total_cost_usd": 0.42, "duration_ms": 1234, "num_turns": 7}
         self.assertEqual(cli.cost_line(d), "total_cost_usd=0.42  duration_ms=1234  num_turns=7")
+
+    def test_cost_line_clean_run_byte_identical_with_explicit_no_error(self):
+        """A digest with error=None (the normal clean-run shape) must produce the
+        exact pre-#531 line — no consumer-visible format change on the happy path."""
+        d = {"total_cost_usd": 0.42, "duration_ms": 1234, "num_turns": 7, "error": None}
+        self.assertEqual(cli.cost_line(d), "total_cost_usd=0.42  duration_ms=1234  num_turns=7")
+
+    def test_cost_line_prepends_error_field_when_present(self):
+        d = {"total_cost_usd": "n/a", "duration_ms": "n/a", "num_turns": "n/a", "error": "no-result"}
+        self.assertEqual(
+            cli.cost_line(d),
+            "error=no-result  total_cost_usd=n/a  duration_ms=n/a  num_turns=n/a",
+        )
 
 
 class DigestCommandTest(unittest.TestCase):
@@ -145,7 +174,33 @@ class DigestCommandTest(unittest.TestCase):
                         "--result-out", self.result, "--cost-out", self.cost])
         self.assertEqual(code, 0)
         with open(self.cost) as fh:
-            self.assertIn("total_cost_usd=n/a", fh.read())
+            line = fh.read().strip()
+        self.assertEqual(line, "error=no-result  total_cost_usd=n/a  duration_ms=n/a  num_turns=n/a")
+
+    def test_crashed_run_no_result_event_carries_error_fingerprint(self):
+        """A run with a JSONL log but no `result` event (e.g. it was killed
+        mid-stream) must be distinguishable from a cheap clean run in the cost
+        line the cross-repo cost hub scrapes (#531 item 3)."""
+        self._write(["some npm noise on stdout", json.dumps({"type": "assistant", "text": "..."})])
+        code, _ = _run(["digest", "--jsonl", self.jsonl,
+                        "--result-out", self.result, "--cost-out", self.cost])
+        self.assertEqual(code, 0)
+        with open(self.cost) as fh:
+            line = fh.read().strip()
+        self.assertEqual(line, "error=no-result  total_cost_usd=n/a  duration_ms=n/a  num_turns=n/a")
+
+    def test_clean_run_cost_line_is_byte_identical_to_pre_error_field_format(self):
+        """The happy path's cost line must be unchanged by the #531 error-class
+        addition — COST_SURFACE's parser is unaffected on a normal run."""
+        self._write([
+            json.dumps({"type": "result", "result": "<output>\n{}\n</output>",
+                        "total_cost_usd": 0.5, "duration_ms": 10, "num_turns": 2}),
+        ])
+        code, _ = _run(["digest", "--jsonl", self.jsonl,
+                        "--result-out", self.result, "--cost-out", self.cost])
+        self.assertEqual(code, 0)
+        with open(self.cost) as fh:
+            self.assertEqual(fh.read().strip(), "total_cost_usd=0.5  duration_ms=10  num_turns=2")
 
 
 class PublishCommandTest(unittest.TestCase):
@@ -516,56 +571,126 @@ class PublishCommandTest(unittest.TestCase):
         list_calls = [c for c in calls if c[:3] == ["gh", "issue", "list"]]
         self.assertEqual(list_calls, [])
 
+    def test_gh_failure_during_create_issue_exits_cleanly(self):
+        """A gh CalledProcessError (auth expiry, rate limit, …) during issue
+        filing must route through the ``::error::`` exit path, not an uncaught
+        traceback (#525)."""
+        self._log(
+            '<output>\n{"status": "proposed", "title": "t",'
+            ' "oneLineSummary": "s", "candidatesConsidered": ["c"]}\n</output>\n'
+            "<body>\nbody text\n</body>\n"
+        )
+
+        def fake_run(cmd, **kw):
+            if cmd[:3] == ["gh", "issue", "create"]:
+                raise cli.subprocess.CalledProcessError(
+                    1, cmd, output="", stderr="HTTP 401: Bad credentials"
+                )
+            return SimpleNamespace(returncode=0)
+
+        with mock.patch("cli.subprocess.run", side_effect=fake_run):
+            with mock.patch("sys.stderr", new_callable=io.StringIO) as err:
+                code, out = self._publish()
+        self.assertEqual(code, 1)
+        self.assertIn("::error::", err.getvalue())
+        self.assertIn("Bad credentials", err.getvalue())
+
+    def test_gh_failure_during_dedup_lookup_exits_cleanly(self):
+        """Same, but for the --dedup-open `gh issue list` call (_find_open)."""
+        self._log(
+            '<output>\n{"status": "proposed", "title": "t", "oneLineSummary": "s"}\n</output>\n'
+            "<body>\nbody text\n</body>\n"
+        )
+
+        def fake_run(cmd, **kw):
+            if cmd[:3] == ["gh", "issue", "list"]:
+                raise cli.subprocess.CalledProcessError(1, cmd, output="", stderr="rate limited")
+            return SimpleNamespace(returncode=0)
+
+        with mock.patch("cli.subprocess.run", side_effect=fake_run):
+            with mock.patch("sys.stderr", new_callable=io.StringIO) as err:
+                code, out = self._publish_dedup()
+        self.assertEqual(code, 1)
+        self.assertIn("::error::", err.getvalue())
+        self.assertIn("rate limited", err.getvalue())
+
 
 class FetchRubricCommandTest(unittest.TestCase):
-    def setUp(self):
-        self.dir = tempfile.mkdtemp()
+    """Clone-first (--source-dir, no network call, #525) with a legacy
+    network-fetch fallback for consumers still pinned at claude-loops-v1
+    pre-#525 (DELETE once the tag moves past this commit, #523/#516)."""
 
-    def _mock_urlopen(self, data=b"content", status=200):
-        """Return a context-manager mock whose .read() yields *data*."""
-        resp = mock.MagicMock()
-        resp.status = status
-        resp.read.return_value = data
-        resp.__enter__ = mock.Mock(return_value=resp)
-        resp.__exit__ = mock.Mock(return_value=False)
-        return resp
+    def setUp(self):
+        self.out_dir = tempfile.mkdtemp()
+        self.source_dir = tempfile.mkdtemp()
+        self.rubric_dir = os.path.join(
+            self.source_dir, "skills", "engineering", "codebase-design"
+        )
+        os.makedirs(self.rubric_dir)
+
+    def _write_source(self, lang=b"lang content", deepening=b"deepening content"):
+        with open(os.path.join(self.rubric_dir, "SKILL.md"), "wb") as fh:
+            fh.write(lang)
+        with open(os.path.join(self.rubric_dir, "DEEPENING.md"), "wb") as fh:
+            fh.write(deepening)
+
+    def _run_fetch(self):
+        return _run([
+            "fetch-rubric", "--out-dir", self.out_dir, "--source-dir", self.source_dir,
+        ])
 
     def test_both_files_written_on_success(self):
-        resp = self._mock_urlopen(b"content")
-        with mock.patch("cli.urllib.request.urlopen", return_value=resp) as m:
-            code, out = _run(["fetch-rubric", "--out-dir", self.dir])
+        self._write_source()
+        code, out = self._run_fetch()
         self.assertEqual(code, 0)
-        lang = os.path.join(self.dir, "depth-LANGUAGE.md")
-        deep = os.path.join(self.dir, "depth-DEEPENING.md")
-        self.assertTrue(os.path.exists(lang))
-        self.assertTrue(os.path.exists(deep))
+        lang = os.path.join(self.out_dir, "depth-LANGUAGE.md")
+        deep = os.path.join(self.out_dir, "depth-DEEPENING.md")
         with open(lang, "rb") as fh:
-            self.assertEqual(fh.read(), b"content")
+            self.assertEqual(fh.read(), b"lang content")
         with open(deep, "rb") as fh:
-            self.assertEqual(fh.read(), b"content")
+            self.assertEqual(fh.read(), b"deepening content")
         self.assertIn("Fetched depth-LANGUAGE.md", out)
         self.assertIn("Fetched depth-DEEPENING.md", out)
 
-    def test_hard_fail_on_url_error(self):
-        with mock.patch(
-            "cli.urllib.request.urlopen",
-            side_effect=cli.urllib.error.URLError("simulated"),
-        ):
-            code, out = _run(["fetch-rubric", "--out-dir", self.dir])
+    def test_hard_fail_when_source_missing_entirely(self):
+        # rubric_dir exists but is empty — neither source file present.
+        code, out = self._run_fetch()
         self.assertEqual(code, 1)
-        self.assertFalse(os.path.exists(os.path.join(self.dir, "depth-LANGUAGE.md")))
-        self.assertFalse(os.path.exists(os.path.join(self.dir, "depth-DEEPENING.md")))
+        self.assertFalse(os.path.exists(os.path.join(self.out_dir, "depth-LANGUAGE.md")))
+        self.assertFalse(os.path.exists(os.path.join(self.out_dir, "depth-DEEPENING.md")))
 
-    def test_hard_fail_on_http_error(self):
-        with mock.patch(
-            "cli.urllib.request.urlopen",
-            side_effect=cli.urllib.error.HTTPError(
-                "http://example.com", 404, "Not Found", {}, None
-            ),
-        ):
-            code, out = _run(["fetch-rubric", "--out-dir", self.dir])
+    def test_hard_fail_reports_actionable_path(self):
+        with mock.patch("sys.stderr", new_callable=io.StringIO) as err:
+            code, out = self._run_fetch()
         self.assertEqual(code, 1)
-        self.assertFalse(os.path.exists(os.path.join(self.dir, "depth-LANGUAGE.md")))
+        self.assertIn("::error::", err.getvalue())
+        self.assertIn(self.rubric_dir, err.getvalue())
+
+    def test_hard_fail_on_second_file_missing(self):
+        """First file present, second absent — must still fail loud (exit 1);
+        depth-LANGUAGE.md is already written by the time the second file's
+        absence is discovered, so it legitimately remains on disk."""
+        with open(os.path.join(self.rubric_dir, "SKILL.md"), "wb") as fh:
+            fh.write(b"lang content")
+        code, out = self._run_fetch()
+        self.assertEqual(code, 1)
+        self.assertTrue(os.path.exists(os.path.join(self.out_dir, "depth-LANGUAGE.md")))
+        self.assertFalse(os.path.exists(os.path.join(self.out_dir, "depth-DEEPENING.md")))
+
+    def test_legacy_lane_without_source_dir_falls_back_to_network(self):
+        """No --source-dir (a consumer still pinned at claude-loops-v1 pre-#525,
+        vendoring the OLD reusable-yml step) must still work via the network
+        fallback — DELETE this test alongside the fallback (#523/#516)."""
+        resp = mock.MagicMock()
+        resp.read.return_value = b"network content"
+        resp.__enter__ = mock.Mock(return_value=resp)
+        resp.__exit__ = mock.Mock(return_value=False)
+        with mock.patch("cli.urllib.request.urlopen", return_value=resp):
+            code, out = _run(["fetch-rubric", "--out-dir", self.out_dir])
+        self.assertEqual(code, 0)
+        with open(os.path.join(self.out_dir, "depth-LANGUAGE.md"), "rb") as fh:
+            self.assertEqual(fh.read(), b"network content")
+        self.assertIn("Fetched depth-LANGUAGE.md", out)
 
 
 if __name__ == "__main__":

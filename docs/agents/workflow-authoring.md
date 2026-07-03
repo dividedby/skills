@@ -57,7 +57,12 @@ the estate's scheduling convention — and is summarised in step 5.
    event and writes the `total_cost_usd=… num_turns=…` cost line — the scrape
    logic lives in the **fetched-fresh harness**, so one fix reaches every loop.
    A workflow that doesn't emit this line is **unmetered spend** — do not ship it
-   (global rule in `~/.claude/CLAUDE.md`).
+   (global rule in `~/.claude/CLAUDE.md`). A crashed/empty run (no `result` event
+   at all) or a completed-but-failed run (`result.is_error: true`) **prepends**
+   `error=no-result` / `error=is_error` to that line, so COST_SURFACE can tell a
+   failed run apart from a genuinely cheap one instead of both collapsing into
+   `total_cost_usd=n/a` or an indistinguishable low number; a clean run's line
+   carries no `error=` field and is byte-identical to the pre-error-field format.
 
 4. **Onboard into the cost surface — cross-repo.** This repo has no local cost
    registry; the estate's cost hub lives in **agent-research**. Add the
