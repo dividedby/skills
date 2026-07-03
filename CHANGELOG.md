@@ -34,6 +34,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
 ### Changed
 
+- `software-design` now offers `/implement` alongside `/tdd` as the terminal step at all three routing points, matching the `to-prd / to-issues / tdd / implement` chain convention in force since #326 (ADR 0005 amended inline) (#520)
+- `flow-pr` carries a fallback note on its `/review` review-gate dependency: upstream renamed the skill `code-review` (2026-07-01), which collides with the built-in `/code-review` command — the installed pre-rename copy still answers to `/review`, so references stay unchanged until the local install syncs (#520)
 - ADR 0024 amended: the delete-and-soft-depend upstream-reuse evaluation now also covers `anthropics/claude-plugins-official` (the official catalog) alongside `mattpocock/skills`, same preference order; `CONTEXT.md`'s "Upstream soft-dependencies" and `README.md`'s "Upstream" sections updated to name both, noting the official catalog's `code-review`, `commit-commands`, `typescript-lsp` are already in the maintainer's installed baseline (#521)
 - `council`'s chair and highest-leverage (opus-tier) seats, and `repo-audit`'s synthesis agent, temporarily run on Claude Fable 5 for a trial; marked for revert on/after 2026-07-07 (Fable 5 sunset)
 - Repos running the scheduled `improve-codebase-architecture` and `apply-agent-research` proposal loops now see at most one filed issue per run instead of two — each run surfaces only its single best finding that clears the bar, or nothing, restoring the pre-ADR-0019 one-issue discipline (ADR 0019, amended 2026-06-30)
@@ -74,6 +76,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 - Consumer cross-repo `skill-request`/`skill-promotion` filing silently no-opped under the hardened scoped `--allowedTools` introduced in #394: the `GH_TOKEN="$SKILLS_TRACKER_TOKEN" gh …` env-prefix was denied by the allowlist. cli.py now selects `SKILLS_TRACKER_TOKEN` itself for any `--repo dividedby/skills` call (`find-open`/`file`/`comment`) — no env-prefix, no token value in the shell, no tag move required (#418)
 - Consumer-mode detection also broke under the scoped allowlist: the agent could not inspect `$SKILLS_TRACKER_TOKEN` via `printenv`, `env`, shell expansion, or `python3 -c` — all denied by the sandbox. Fixed via the allowlist-safe `cli.py mode` subcommand (prints `host` or `consumer`, never the token value) (#418)
 - `apply-agent-research` prompt: steered agent away from denied shell helpers (`cat`, piped `grep`, `echo`/`tee`, `python3 -c`) toward the allowlisted built-in tools (`Read`, `Grep`, `Write`, `gh --jq`, `cli.py` subcommands) to prevent incidental approval denials in unattended runs (#427)
+- Doc-truth sweep from the 2026-07 repo audit: removed the archived `tweakcc-maint` consumer from the vendored-workflow references and presence matrix; corrected `changelog-health`'s fan-out count (6 → 7 enrolled repos) and folded it into the fleet's loop-count language as the fourth scheduled loop; linked the previously-orphaned `staleness-setup` onboarding doc from the top-level README; regenerated the `installed-skills.md` snapshot against the maintainer's current global install (#520)
 
 ## [2026-06-23]
 

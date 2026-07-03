@@ -21,6 +21,13 @@ Defers:
 - **Issue filing** → repo's intake convention
 - **Merge mechanics** → [`merge-mechanics.md`](merge-mechanics.md)
 
+> `/review` here means the installed two-axis Standards+Spec skill (Matt's,
+> pre-rename) — it's still what resolves locally today. Upstream renamed the
+> skill `code-review` on 2026-07-01, which collides with the built-in
+> `/code-review` command and the official code-review plugin; when the
+> installed copy adopts the rename, update these refs. #529 owns the larger
+> review-gate verdict.
+
 ---
 
 ## Default branch detection

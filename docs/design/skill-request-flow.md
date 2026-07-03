@@ -206,8 +206,9 @@ right for a single-maintainer, few-repo setup.
   [`consumer-setup.md`](../onboarding/consumer-setup.md) step 7. Built per Consumer
   as Consumers are onboarded — the filing code lives in each Consumer's own repo,
   not here. As of 2026-06 the onboarded Consumers running this loop are
-  `agent-research`, `goodreads-bot`, and `tweakcc-maint` (plus the host loop in
-  this repo itself); `+1` aggregation is still unproven only because no organic
+  `agent-research` and `goodreads-bot` (plus the host loop in
+  this repo itself; `tweakcc-maint` ran this loop too before it was archived
+  2026-06-23); `+1` aggregation is still unproven only because no organic
   same-`capability`-slug collision has occurred yet, not for lack of Consumers (#75).
 
 ## Invariants

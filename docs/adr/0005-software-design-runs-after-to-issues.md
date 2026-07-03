@@ -9,6 +9,12 @@ and `tdd` are Matt Pocock's skills (installed via `/setup-matt-pocock-skills`),
 not editable in this repo — so `software-design` must adapt to them, not the
 reverse.
 
+**Amendment (2026-07-02, #520):** the chain's terminal step is `/tdd` **or**
+`/implement` — both are terminal implementation skills per the workflow chain
+convention set in #326 (`to-prd / to-issues / tdd / implement`). The chain
+above names `/tdd` alone because it predates that convention; nothing else in
+this ADR's reasoning changes.
+
 **Why after, not before.** The reorder ("settle the design, then build issues
 from it") is appealing but collapses on two facts:
 

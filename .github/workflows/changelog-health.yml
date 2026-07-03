@@ -1,6 +1,6 @@
 name: Changelog Health
 
-# Centralized weekly changelog-health evaluator (#457, fanned out to 6 repos in #458).
+# Centralized weekly changelog-health evaluator (#457, fanned out per-repo in #458; currently 7 enrolled).
 #
 # Flag-not-rewrite advisory loop: reads each enrolled repo's CHANGELOG.md against
 # recent git log and the fleet changelog rubric (docs/agents/changelog-guideline.md),
@@ -27,7 +27,7 @@ name: Changelog Health
 #
 # ADR 0014 (fetched-fresh harness): harness is read from the local checkout,
 #   not vendored — a fix to cli.py reaches the next scheduled run automatically.
-# ADR 0019 (budget/cap): --max-budget-usd 4.00 backstop per repo (6 jobs/run);
+# ADR 0019 (budget/cap): --max-budget-usd 4.00 backstop per repo (7 jobs/run);
 #   single-open-advisory dedup is enforced in-code via `cli.py publish --dedup-open`,
 #   not in the prompt.
 # No CI gate: this loop is advisory-only.

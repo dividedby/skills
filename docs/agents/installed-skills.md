@@ -41,14 +41,14 @@ Matt Pocock's skill suite (`mattpocock/skills`, upstream of this repo's
 in `~/.claude/skills/`:
 
 `apply-agent-research`, `ask-matt`, `autonomous-loop`, `cba-searching`,
-`codebase-design`, `decision-mapping`, `diagnosing-bugs`,
+`codebase-design`, `council`, `decision-mapping`, `diagnosing-bugs`,
 `doc-it`, `domain-modeling`, `find-skills`, `flow-pr`, `frontend-design`,
 `grill-with-docs`, `grilling`, `handoff`, `implement`,
 `improve-codebase-architecture`, `playwright-cli`, `project-claude-config`,
 `prototype`, `repo-audit`, `review`, `setup-dividedby-skills`,
-`setup-matt-pocock-skills`, `software-design`, `staleness-audit`, `tdd`,
-`teach`, `to-issues`, `to-prd`, `triage`, `writing-beats`, `writing-fragments`,
-`writing-great-skills`, `writing-shape`.
+`setup-matt-pocock-skills`, `skill-divergence-audit`, `software-design`,
+`staleness-audit`, `tdd`, `teach`, `to-issues`, `to-prd`, `triage`,
+`workflow-onboarding`, `write-well`, `writing-great-skills`.
 
 `setup-dividedby-skills` and `triage` are this repo's own skills (config bucket,
 issues #292 / #293) installed globally; `setup-matt-pocock-skills` remains
@@ -61,6 +61,10 @@ version that resolves for the `triage` name in this repo's workflow.
 
 `ponytail` — forces the laziest working solution (YAGNI; stdlib/native before
 dependencies); intensity levels lite/full/ultra, plus a ponytail-review pass.
+
+`terrashark` — Terraform/OpenTofu structure, security, and testing guardrails;
+installed project-scoped to `~/repos/infra` only, not available in this
+repo's own sessions.
 
 From `claude-plugins-official` (`anthropics/claude-plugins-official`):
 `code-review`, `commit-commands`, `typescript-lsp`.

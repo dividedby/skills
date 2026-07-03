@@ -2,8 +2,11 @@
 
 A **[proposal loop](../../CONTEXT.md)** is a scheduled, skill-driven GitHub
 Actions workflow that reads some input, then **proposes via labeled issues and
-never applies** — no commits, edits, or PRs. All three of this owner's proposal
-loops share this harness; only the *skill*, the *input*, and the *label* differ:
+never applies** — no commits, edits, or PRs. Four of this owner's proposal
+loops share this harness's `cli.py`; only the *skill*, the *input*, and the
+*label* differ. Three vendor a thin caller stub per consumer repo (below);
+the fourth — `changelog-health` — is centralized and host-only, with no
+per-repo setup doc:
 
 - **[`consumer-setup.md`](./consumer-setup.md)** — `apply-agent-research`
   (KB + governance docs → agent-meta improvements). The rich one: adds the
@@ -22,8 +25,9 @@ loops share this harness; only the *skill*, the *input*, and the *label* differ:
   validation, and its skill *can* mutate (a verify-gated apply station) yet the
   loop runs it **report-only** — no `Edit`/`Write`, so the cron never applies.
 
-This file is the **common skeleton** all three reference. Read it first, then the
-loop-specific doc.
+This file is the **common skeleton** the three vendored loops reference
+(`changelog-health` needs no separate setup doc — its workflow file is
+self-contained). Read it first, then the loop-specific doc.
 
 ## The load-bearing decisions
 
@@ -37,8 +41,10 @@ loop-specific doc.
   for a security-relevant skill (a leak guard) that drift is the worst failure
   mode. The skill is used **by file path**, so any readable location works.
 - **Vendor only the thin caller stub; everything load-bearing lives in the reusable body** ([ADR 0014](../adr/0014-harness-is-fetched-fresh-only-the-workflow-envelope-is-vendored.md), [ADR 0029](../adr/0029-apply-agent-research-joins-the-reusable-body-rail.md)).
-  All three loops run as GitHub Actions `workflow_call` reusable bodies in
-  `dividedby/skills` (#382). The drift-prone logic — the `stream-json` cost
+  All three vendored loops run as GitHub Actions `workflow_call` reusable
+  bodies in `dividedby/skills` (#382) — `changelog-health` doesn't follow this
+  pattern; it's a single centralized workflow in the host repo, no vendoring
+  needed. The drift-prone logic — the `stream-json` cost
   scrape, the `<output>`/`<body>` publish seam, the `claude -p` invocation with
   scoped `--allowedTools`, pinned `--model`, `--max-budget-usd`, the first-Monday
   gate, and the loop prompts — lives in the `*-reusable.yml` bodies and resolves
