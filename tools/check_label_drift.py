@@ -25,10 +25,10 @@ import sys
 from typing import Optional
 
 try:
-    from tools._drift_common import _gh, ensure_label, fetch_file, open_issues
+    from tools._drift_common import ensure_label, fetch_file, open_issues
     from tools._drift_common import file_issue as _file_issue_io
 except ImportError:
-    from _drift_common import _gh, ensure_label, fetch_file, open_issues
+    from _drift_common import ensure_label, fetch_file, open_issues
     from _drift_common import file_issue as _file_issue_io
 
 # ---------------------------------------------------------------------------
@@ -222,7 +222,7 @@ def build_issue_body(
 # I/O helpers
 # ---------------------------------------------------------------------------
 #
-# _gh, fetch_file, ensure_label, open_issues are shared with check_workflow_drift.py
+# fetch_file, ensure_label, open_issues are shared with check_workflow_drift.py
 # and check_idea_inbox_drift.py — see tools/_drift_common.py (#526).
 
 
@@ -241,7 +241,9 @@ def file_issue(
     if missing_tiers:
         dry_run_extra.append(f"  missing tiers: {missing_tiers}")
 
-    _file_issue_io(SKILLS_REPO_WRITE, title, body, LABEL, write_token, dry_run, dry_run_extra)
+    _file_issue_io(
+        SKILLS_REPO_WRITE, title, body, LABEL, write_token, dry_run, dry_run_extra
+    )
 
 
 # ---------------------------------------------------------------------------

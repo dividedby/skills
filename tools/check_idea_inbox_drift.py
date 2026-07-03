@@ -23,10 +23,10 @@ import argparse
 import sys
 
 try:
-    from tools._drift_common import _gh, ensure_label, fetch_file, open_issues
+    from tools._drift_common import ensure_label, fetch_file, open_issues
     from tools._drift_common import file_issue as _file_issue_io
 except ImportError:
-    from _drift_common import _gh, ensure_label, fetch_file, open_issues
+    from _drift_common import ensure_label, fetch_file, open_issues
     from _drift_common import file_issue as _file_issue_io
 
 # ---------------------------------------------------------------------------
@@ -140,7 +140,7 @@ def build_issue_body(repo: str, missing: list[str]) -> str:
 # I/O helpers
 # ---------------------------------------------------------------------------
 #
-# _gh, fetch_file, ensure_label, open_issues are shared with check_workflow_drift.py
+# fetch_file, ensure_label, open_issues are shared with check_workflow_drift.py
 # and check_label_drift.py — see tools/_drift_common.py (#526).
 
 
@@ -153,7 +153,10 @@ def file_issue(
     """Open or print an idea-inbox-drift issue for *repo* in skills."""
     title = _issue_title(repo)
     body = build_issue_body(repo, missing)
-    _file_issue_io(SKILLS_REPO_WRITE, title, body, LABEL, write_token, dry_run, [f"  missing: {missing}"])
+    _file_issue_io(
+        SKILLS_REPO_WRITE, title, body, LABEL, write_token, dry_run,
+        [f"  missing: {missing}"],
+    )
 
 
 # ---------------------------------------------------------------------------

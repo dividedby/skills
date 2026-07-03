@@ -24,10 +24,10 @@ import os
 import sys
 
 try:
-    from tools._drift_common import _gh, ensure_label, fetch_file, open_issues
+    from tools._drift_common import ensure_label, fetch_file, open_issues
     from tools._drift_common import file_issue as _file_issue_io
 except ImportError:
-    from _drift_common import _gh, ensure_label, fetch_file, open_issues
+    from _drift_common import ensure_label, fetch_file, open_issues
     from _drift_common import file_issue as _file_issue_io
 
 # ---------------------------------------------------------------------------
@@ -226,7 +226,7 @@ def check_forbidden(content: str, forbidden: list[str]) -> list[str]:
 # I/O helpers
 # ---------------------------------------------------------------------------
 #
-# _gh, fetch_file, ensure_label, open_issues are shared with check_label_drift.py
+# fetch_file, ensure_label, open_issues are shared with check_label_drift.py
 # and check_idea_inbox_drift.py — see tools/_drift_common.py (#526).
 
 
@@ -269,15 +269,21 @@ def build_issue_body(repo: str, drifted: dict[str, list[str]]) -> str:
     return "\n".join(lines)
 
 
-def file_issue(repo: str, drifted: dict[str, list[str]], write_token: str, dry_run: bool) -> None:
+def file_issue(
+    repo: str, drifted: dict[str, list[str]], write_token: str, dry_run: bool
+) -> None:
     """Open or print a drift issue for *repo* in skills.
 
     *drifted* maps filename → list of missing anchors.
     """
     title = _issue_title(repo)
     body = build_issue_body(repo, drifted)
-    dry_run_extra = [f"  {path}: missing {missing}" for path, missing in sorted(drifted.items())]
-    _file_issue_io(SKILLS_REPO_WRITE, title, body, LABEL, write_token, dry_run, dry_run_extra)
+    dry_run_extra = [
+        f"  {path}: missing {missing}" for path, missing in sorted(drifted.items())
+    ]
+    _file_issue_io(
+        SKILLS_REPO_WRITE, title, body, LABEL, write_token, dry_run, dry_run_extra
+    )
 
 
 # ---------------------------------------------------------------------------

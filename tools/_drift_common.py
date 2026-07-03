@@ -20,19 +20,6 @@ from typing import Optional
 SKILLS_REPO = "dividedby/skills"
 
 
-def _gh(args: list[str], token: str, check: bool = True) -> subprocess.CompletedProcess:
-    """Run a ``gh`` subprocess with GH_TOKEN set to *token*."""
-    # Inherit PATH and HOME so gh can find its config.
-    full_env = {**os.environ, "GH_TOKEN": token}
-    return subprocess.run(
-        ["gh"] + args,
-        capture_output=True,
-        text=True,
-        check=check,
-        env=full_env,
-    )
-
-
 def fetch_file(repo: str, branch: str, path: str, read_token: str) -> Optional[str]:
     """Fetch *path* from *repo* at *branch* via the GitHub Contents API.
 
@@ -100,7 +87,10 @@ def open_issues(label: str, write_token: str, repo: str = SKILLS_REPO) -> set[st
     )
     if result.returncode != 0:
         # Can't read; treat as no open issues (worst case: duplicate filed).
-        print(f"WARNING: could not fetch open issues: {result.stderr.strip()}", file=sys.stderr)
+        print(
+            f"WARNING: could not fetch open issues: {result.stderr.strip()}",
+            file=sys.stderr,
+        )
         return set()
     return set(result.stdout.strip().splitlines())
 
@@ -126,7 +116,9 @@ def file_issue(
             print(line)
         return
 
-    with tempfile.NamedTemporaryFile("w", suffix=".md", delete=False, encoding="utf-8") as fh:
+    with tempfile.NamedTemporaryFile(
+        "w", suffix=".md", delete=False, encoding="utf-8"
+    ) as fh:
         fh.write(body)
         body_path = fh.name
     try:
@@ -144,3 +136,16 @@ def file_issue(
         print(f"Filed: {url}")
     finally:
         os.unlink(body_path)
+
+
+def _gh(args: list[str], token: str, check: bool = True) -> subprocess.CompletedProcess:
+    """Run a ``gh`` subprocess with GH_TOKEN set to *token*."""
+    # Inherit PATH and HOME so gh can find its config.
+    full_env = {**os.environ, "GH_TOKEN": token}
+    return subprocess.run(
+        ["gh"] + args,
+        capture_output=True,
+        text=True,
+        check=check,
+        env=full_env,
+    )
