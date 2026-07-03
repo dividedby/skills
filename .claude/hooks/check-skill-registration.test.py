@@ -34,6 +34,17 @@ CASES = [
     ("---\nname: demo\ndescription:   \n---\n", True, True, BLOCK),       # whitespace-only desc
     ("# Demo\n\nNo frontmatter at all.\n", True, True, BLOCK),            # no frontmatter block
     ("---\nname: demo\ndescription: unterminated\n", True, True, BLOCK),  # never closed
+    # spec-limit gaps (new behavior)
+    ("---\nname: Demo\ndescription: ok.\n---\n", True, True, BLOCK),       # not kebab-case
+    ("---\nname: -demo\ndescription: ok.\n---\n", True, True, BLOCK),      # leading hyphen
+    ("---\nname: de--mo\ndescription: ok.\n---\n", True, True, BLOCK),     # consecutive hyphens
+    (f"---\nname: {'a' * 65}\ndescription: ok.\n---\n", True, True, BLOCK),  # name over 64 chars
+    ("---\nname: demo\ndescription: uses <tag> syntax.\n---\n", True, True, BLOCK),  # angle bracket
+    (f"---\nname: demo\ndescription: {'a' * 1025}\n---\n", True, True, BLOCK),  # description over 1024 chars
+    # folded block-scalar description over the limit must still be caught
+    ("---\nname: demo\ndescription: >\n  " + ("a " * 600) + "\n---\n", True, True, BLOCK),
+    # right at the limits -> passes
+    (f"---\nname: {'a' * 64}\ndescription: {'a' * 1024}\n---\n", True, True, ALLOW),
 ]
 
 # (skill_md_body, registered_in_plugin, linked_in_readme, should_be_blocked, warning_substring_or_none)
