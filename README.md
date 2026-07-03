@@ -53,8 +53,9 @@ Scheduled, skill-driven workflows that propose improvements via labeled issues (
 
 ## Upstream
 
-These skills soft-depend on two upstream catalogs — install both alongside this
-plugin: `mattpocock/skills` and `anthropics/claude-plugins-official`.
+These skills soft-depend on two upstream catalogs, expected to be installed
+alongside this plugin: `mattpocock/skills` and the
+`anthropics/claude-plugins-official` marketplace.
 
 **From `mattpocock/skills`:**
 
@@ -64,6 +65,6 @@ plugin: `mattpocock/skills` and `anthropics/claude-plugins-official`.
 `implement`, `grilling` / `grill-with-docs`
 
 **From `anthropics/claude-plugins-official`:** `code-review`, `commit-commands`,
-`typescript-lsp`.
+`typescript-lsp`
 
 See [`CONTEXT.md`](./CONTEXT.md) and [ADR 0024](./docs/adr/0024-lean-on-upstream-skills-soft-depend-over-reinvent.md) for the authoritative contract (delete-and-soft-depend posture, thin-wrapper conditions, authoring standard).
