@@ -100,8 +100,18 @@ Optional inputs that personas may draw on (same as the prior sequential hunt):
 
 ### Round 2 — Anonymized cross-review / dedup
 
-Seat responses are anonymized (persona labels stripped) and redistributed. Each
-persona reads the full set and:
+Seat responses are anonymized (persona labels stripped) — and the reasoning
+trace stripped too, not just the label. Each persona's redistributed peer set
+carries **only** the structured `findings` list (category / finding /
+evidence / open-issue / altitude), never the deliberation that produced it.
+Label-stripping removes authorship bias; trace-stripping removes agreement
+bias — a visible chain of reasoning reads as supporting evidence even when
+the conclusion is wrong (the same isolation math-olympiad's verifier step
+uses: strip the trace before a second pass ever sees the work). Each
+persona's Round 2 prompt states explicitly: "assume you are the first and
+only reviewer" — no persona reasons as if peers have already weighed in.
+
+Each persona reads the full (label- and trace-stripped) set and:
 
 1. Flags duplicates — two or more findings describing the same root cause; names
    the one to keep and why.
@@ -172,8 +182,9 @@ const round1 = await parallel(
   )
 );
 
-// Round 2: anonymized cross-review / dedup
-const anonymized = stripPersonaLabels(round1);
+// Round 2: anonymized cross-review / dedup — labels AND reasoning traces
+// stripped, leaving only each persona's structured findings list
+const anonymized = stripPersonaLabelsAndTrace(round1);
 const round2 = await parallel(
   lineup.seats.map(seat =>
     agent(seat.persona + "-review", { model: "sonnet", input: anonymized })
@@ -193,6 +204,9 @@ return stage3Input;   // feeds Stage 3 unchanged
 Key orchestration properties (same guarantees as `/council` Round 1–3):
 - Round 1 isolation is strict: no persona sees another's output during the sweep.
 - Round 2 is dedup/rank, not re-hunting.
+- Round 2 isolation is dual: label-stripped (no authorship signal) and
+  trace-stripped (no derivation, only the structured findings list) — each
+  persona reasons as the first and only reviewer.
 - Synthesis is a dedicated pass that reads all prior output with a merge
   responsibility explicit in its prompt — not the last persona to finish.
 

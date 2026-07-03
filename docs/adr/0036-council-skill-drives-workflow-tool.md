@@ -65,6 +65,16 @@ synthesis in Round 3) is the archetypal use case:
   end of a sequential skill cannot enforce the four-block output contract at
   the session level.
 
+**Amendment (#531): Round 2 isolation is dual, not just label-stripped.**
+Anonymizing seat labels in Round 2 removes authorship bias, but a peer's full
+response still carries the reasoning trace that produced it, which biases a
+cross-reviewer toward agreement — a visible chain of reasoning reads as
+supporting evidence even when the conclusion is wrong. Round 2 redistribution
+now strips the trace too: each seat receives only the structured
+verdict/finding/evidence, never the derivation, and each seat's prompt states
+it is the first and only reviewer. `repo-audit`'s Round 2 (also Workflow-tool-
+driven per this ADR) carries the same tightening.
+
 Authoring rules for skills that drive the Workflow tool:
 
 1. **Principle-level only.** The SKILL.md contains an *illustrative sketch*,

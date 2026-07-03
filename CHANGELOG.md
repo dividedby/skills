@@ -35,6 +35,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
 ### Changed
 
+- `council` and `repo-audit` Round 2 (anonymized cross-review) now strips the
+  reasoning trace, not just the persona label: each seat/persona's
+  redistributed peer set carries only the structured verdict/finding/evidence
+  fields, never the derivation, and each seat's Round 2 prompt states it is
+  "the first and only reviewer" — label-stripping removes authorship bias,
+  trace-stripping removes agreement bias (math-olympiad's verifier-isolation
+  pattern). `repo-audit`'s installed copy (`~/.claude/skills/repo-audit/SKILL.md`)
+  mirrored to stay byte-identical to the repo copy. ADR 0036 gains a one-line
+  amendment recording the tightening (#531)
 - `council` (Falsifier seat) and `flow-pr` (step-4 review gate): both now carry
   the same short false-positive exclusion list — pre-existing issues,
   linter/typechecker-catchable issues, deliberately-silenced issues,

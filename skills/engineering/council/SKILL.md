@@ -137,8 +137,18 @@ recommendation: <what to do, not just what's wrong>
 
 ### Round 2 — Anonymized peer-rank
 
-Seat responses are anonymized (persona labels stripped) and redistributed.
-Each seat reads the full set and:
+Seat responses are anonymized (persona labels stripped) — and the reasoning
+trace stripped too, not just the label. Each seat's redistributed peer set
+carries **only** the structured fields (`verdict` / `core finding` /
+`evidence` / `recommendation`), never the deliberation that produced them.
+Label-stripping removes authorship bias; trace-stripping removes agreement
+bias — a visible chain of reasoning reads as supporting evidence even when
+the conclusion is wrong (the same isolation math-olympiad's verifier step
+uses: strip the trace before a second pass ever sees the work). Each seat's
+Round 2 prompt states explicitly: "assume you are the first and only
+reviewer" — no seat reasons as if peers have already weighed in.
+
+Each seat reads the full (label- and trace-stripped) set and:
 
 1. Ranks the three strongest arguments (not its own)
 2. Identifies one argument that is overclaiming or underweighted
@@ -243,8 +253,9 @@ const round1 = await parallel(
   )
 );
 
-// Round 2: anonymized peer-rank
-const anonymized = stripPersonaLabels(round1);
+// Round 2: anonymized peer-rank — labels AND reasoning traces stripped,
+// leaving only each seat's structured verdict/finding/evidence/recommendation
+const anonymized = stripPersonaLabelsAndTrace(round1);
 const round2 = await parallel(
   lineup.activeSeats.map(seat =>
     agent(seat.persona + "-rank", { model: seat.model, input: { anonymized, myResponse: round1[seat] } })
@@ -265,6 +276,9 @@ return synthesis;
 Key orchestration properties:
 - Round 1 isolation is strict: no seat sees another's output during Round 1.
 - Round 2 is peer-rank, not re-evaluation: seats rank arguments, not re-state verdicts.
+- Round 2 isolation is dual: label-stripped (no authorship signal) and
+  trace-stripped (no derivation, only the structured fields) — each seat
+  reasons as the first and only reviewer.
 - The Chair is a dedicated agent, not the last seat to run — it reads all output
   with the synthesis responsibility explicit in its prompt.
 - `CouncilOutputSchema` enforces the four-block output contract (Synthesis /
