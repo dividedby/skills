@@ -34,6 +34,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
 ### Changed
 
+- `tools/check_workflow_drift.py`, `check_label_drift.py`, and `check_idea_inbox_drift.py` now share one GitHub I/O module (`tools/_drift_common.py`) for the `gh` subprocess wrapper, Contents-API file fetch, label creation, dedup issue lookup, and issue filing, instead of each carrying its own duplicated copy; refactor only, no behavior change, and host-only tooling (not vendored to consumer repos) (#526)
 - `software-design` now offers `/implement` alongside `/tdd` as the terminal step at all three routing points, matching the `to-prd / to-issues / tdd / implement` chain convention in force since #326 (ADR 0005 amended inline) (#520)
 - `flow-pr` carries a fallback note on its `/review` review-gate dependency: upstream renamed the skill `code-review` (2026-07-01), which collides with the built-in `/code-review` command — the installed pre-rename copy still answers to `/review`, so references stay unchanged until the local install syncs (#520)
 - ADR 0024 amended: the delete-and-soft-depend upstream-reuse evaluation now also covers `anthropics/claude-plugins-official` (the official catalog) alongside `mattpocock/skills`, same preference order; `CONTEXT.md`'s "Upstream soft-dependencies" and `README.md`'s "Upstream" sections updated to name both, noting the official catalog's `code-review`, `commit-commands`, `typescript-lsp` are already in the maintainer's installed baseline (#521)
