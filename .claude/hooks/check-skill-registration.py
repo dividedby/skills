@@ -1,29 +1,63 @@
 #!/usr/bin/env python3
 """Stop hook: every skill dir must be registered in plugin.json and README.md,
-and its SKILL.md must carry valid frontmatter (non-empty name + description)."""
-import json, os, sys
+and its SKILL.md must carry valid frontmatter (non-empty name + description,
+each within the skill spec's limits)."""
+import json, os, re, sys
 from pathlib import Path
 
 REQUIRED_FRONTMATTER = ("name", "description")
 ALLOWED_FRONTMATTER_KEYS = {"name", "description", "disable-model-invocation"}
+
+# Spec limits, per skill-creator's quick_validate.py (source-first: read that
+# script rather than guessing at the numbers).
+NAME_MAX_LEN = 64
+DESCRIPTION_MAX_LEN = 1024
+KEBAB_RE = re.compile(r"^[a-z0-9-]+$")
+_BLOCK_SCALAR_INDICATORS = {">", ">-", ">+", "|", "|-", "|+"}
+
+
+def _dequote(value):
+    """Strip one matching pair of leading/trailing quotes from a YAML plain scalar.
+
+    `name: "demo"` parses to the value `demo`, not `"demo"` — without this the
+    quote characters count toward length checks and break the kebab-case regex.
+    """
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
+        return value[1:-1]
+    return value
 
 
 def frontmatter_fields(text):
     """Return the top-level scalar keys of the leading `---` frontmatter block.
 
     Returns None when there is no leading frontmatter block at all. A targeted
-    delimiter-and-key scan — no YAML dependency, stdlib only.
+    delimiter-and-key scan — no YAML dependency, stdlib only. Folded (`>`) and
+    literal (`|`) block scalars are resolved by joining their continuation
+    lines, so a multi-line `description: >` block reads as its real joined
+    text rather than just the bare block indicator.
     """
     lines = text.splitlines()
     if not lines or lines[0].strip() != "---":
         return None
     fields = {}
-    for line in lines[1:]:
+    i = 1
+    while i < len(lines):
+        line = lines[i]
         if line.strip() == "---":
             return fields
         if ":" in line and not line.startswith((" ", "\t", "#")):
             key, _, value = line.partition(":")
-            fields[key.strip()] = value.strip()
+            key, value = key.strip(), value.strip()
+            if value in _BLOCK_SCALAR_INDICATORS:
+                block_lines = []
+                i += 1
+                while i < len(lines) and (lines[i].startswith((" ", "\t")) or not lines[i].strip()):
+                    block_lines.append(lines[i].strip())
+                    i += 1
+                fields[key] = " ".join(bl for bl in block_lines if bl)
+                continue
+            fields[key] = _dequote(value)
+        i += 1
     return None  # opened with `---` but never closed -> malformed
 
 # Defensive loop-guard: bail if this Stop was itself triggered by a hook block.
@@ -65,6 +99,21 @@ for s in skill_dirs:
         for key in REQUIRED_FRONTMATTER:
             if not fields.get(key):
                 problems.append(f"  - {s}/SKILL.md frontmatter is missing or has an empty `{key}:` field")
+        name = fields.get("name", "")
+        if name:
+            if not KEBAB_RE.match(name) or name.startswith("-") or name.endswith("-") or "--" in name:
+                problems.append(f"  - {s}/SKILL.md `name: {name}` is not kebab-case (lowercase letters, digits, "
+                                 "hyphens only; no leading/trailing/double hyphens)")
+            if len(name) > NAME_MAX_LEN:
+                problems.append(f"  - {s}/SKILL.md `name:` is {len(name)} chars, over the {NAME_MAX_LEN}-char limit")
+        description = fields.get("description", "")
+        if description:
+            if "<" in description or ">" in description:
+                problems.append(f"  - {s}/SKILL.md `description:` contains an angle bracket (`<` or `>`), which is disallowed")
+            if len(description) > DESCRIPTION_MAX_LEN:
+                problems.append(f"  - {s}/SKILL.md `description:` is {len(description)} chars, over the "
+                                 f"{DESCRIPTION_MAX_LEN}-char limit (over-limit descriptions are silently truncated "
+                                 "in available_skills, degrading skill-triggering accuracy)")
         unknown = sorted(k for k in fields if k not in ALLOWED_FRONTMATTER_KEYS)
         for key in unknown:
             print(f"skill-registration WARNING: {s}/SKILL.md has unrecognised frontmatter key `{key}`",

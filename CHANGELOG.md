@@ -35,6 +35,49 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
 ### Changed
 
+- `council` and `repo-audit` Round 2 (anonymized cross-review) now strips the
+  reasoning trace, not just the persona label: each seat/persona's
+  redistributed peer set carries only the structured verdict/finding/evidence
+  fields, never the derivation, and each seat's Round 2 prompt states it is
+  "the first and only reviewer" — label-stripping removes authorship bias,
+  trace-stripping removes agreement bias (math-olympiad's verifier-isolation
+  pattern). `repo-audit`'s installed copy (`~/.claude/skills/repo-audit/SKILL.md`)
+  mirrored to stay byte-identical to the repo copy. ADR 0036 gains a one-line
+  amendment recording the tightening (#531)
+- `council` (Falsifier seat) and `flow-pr` (step-4 review gate): both now carry
+  the same short false-positive exclusion list — pre-existing issues,
+  linter/typechecker-catchable issues, deliberately-silenced issues,
+  intentional-looking changes, findings on unmodified lines, and general
+  quality gripes absent a documented standard — so the adversarial critic and
+  the review gate stop re-litigating noise the official code-review plugin's
+  own false-positive list already rules out; wording kept verbatim-identical
+  in both files, each pointing at the other to stay in sync (#531)
+- `harness/prompts/staleness-audit.md` and `harness/prompts/changelog-health.md`:
+  every filed/updated report now ends with an invisible, escaped
+  `<!-- state: {...} -->` block carrying `as_of` plus a per-finding
+  fingerprint. `staleness-audit` fetches and parses the prior report's block
+  (it already has `gh issue view`) and, when nothing changed, answers cheaply
+  with "no changes since `as_of`" instead of re-filing an identical report;
+  when something did change, the lede names the delta instead of presenting
+  a fresh scan with no context. `changelog-health` emits the block on every
+  proposed run but cannot yet parse a prior one back — it has no `gh` in its
+  allowlist by design (the agent never holds a repo-write credential) — so
+  the block is seeded now for a human, or a future deterministic pre-fetch
+  step, to diff against (#531)
+- `harness/prompts/changelog-health.md`: every run now also critiques its own
+  grading checklist (`docs/agents/changelog-guideline.md`'s eight rows) —
+  flagging blind spots a clearly-wrong changelog would still pass, outcomes
+  no rule covers, or criteria that can't be mechanically checked — via an
+  optional `<eval_feedback>` block, emitted whether the run proposes an
+  advisory or skips; flag-only (ADR 0034) and explicitly non-actionable by
+  the loop itself, for the human rubric owner to read (#531)
+- `.claude/hooks/check-skill-registration.py` now enforces the skill-spec's
+  frontmatter limits — kebab-case `name:` ≤64 chars, `description:` ≤1024
+  chars (over-limit descriptions silently truncate in `available_skills`,
+  degrading triggering), and no angle brackets in `description:`; folded/
+  literal YAML block-scalar descriptions are resolved to their real joined
+  text first, so a multi-line `description: >` is checked against its actual
+  length rather than the bare block indicator (#531)
 - Four scheduled-loop prompts (`apply-agent-research`, `improve-codebase-architecture`, `changelog-health`, `staleness-audit`) each gained a tool-use-constraint block mirroring their `--allowedTools` allowlist: loops stop paying the denial-retry tax on `for`/`while` loops, piped commands, and quoted `cli.py` invocations that a literal-prefix matcher can't recognize as allowlisted. `docs/agents/workflow-authoring.md` encodes the convention as a new checklist step for future loops. Propagates immediately — every consumer fetches these prompts fresh from `main` (ADR 0014) (#527)
 - `harness/cli.py` `digest`/`cost_line`: the cost-ledger line's failed-run shape changed — it now prepends an `error=no-result` (crashed/empty run — no `result` event at all) or `error=is_error` (a completed run whose `result` event carries `is_error: true`) field, so COST_SURFACE can tell a failed run apart from a genuinely cheap one instead of both collapsing into `total_cost_usd=n/a` or an indistinguishable low number; a clean run's line carries no `error=` field and is byte-identical to the pre-existing format (#525, #531)
 - `tools/check_workflow_drift.py`, `check_label_drift.py`, and `check_idea_inbox_drift.py` now share one GitHub I/O module (`tools/_drift_common.py`) for the `gh` subprocess wrapper, Contents-API file fetch, label creation, dedup issue lookup, and issue filing, instead of each carrying its own duplicated copy; refactor only, no behavior change, and host-only tooling (not vendored to consumer repos) (#526)

@@ -72,6 +72,20 @@ seats, but **does not add seats above 5** (swap-not-add keeps cost flat).
 Security is force-seated on any auth/payments/secrets/migrations signal even if
 `--seats` does not name it.
 
+### Falsifier FP-exclusion list
+
+The Falsifier hunts for the objection that breaks the proposal — not for
+noise dressed up as an objection. It does not report:
+
+- Pre-existing issues — already present before this diff, not introduced by it.
+- Issues a linter, typechecker, or compiler would catch on its own (CI covers these).
+- Issues explicitly silenced in the code (e.g. a lint-ignore comment) — deliberately suppressed, not missed.
+- Changes in functionality that look intentional and are directly related to the broader change.
+- Real issues, but on lines the diff didn't touch.
+- General code-quality gripes (test coverage, docs, style) absent a documented standard (CLAUDE.md, ADR, or repo convention) that the diff violates.
+
+Mirrored verbatim in `flow-pr`'s step-4 review gate (`skills/engineering/flow-pr/SKILL.md`) — keep the two lists in sync.
+
 ---
 
 ## Step 0 — Selector
@@ -123,8 +137,22 @@ recommendation: <what to do, not just what's wrong>
 
 ### Round 2 — Anonymized peer-rank
 
-Seat responses are anonymized (persona labels stripped) and redistributed.
-Each seat reads the full set and:
+Seat responses are anonymized (persona labels stripped) — and the reasoning
+trace stripped too, not just the label. Each seat's redistributed peer set
+carries **only** the structured fields (`verdict` / `core finding` /
+`evidence` / `recommendation`), never the deliberation that produced them.
+Label-stripping removes authorship bias; trace-stripping removes agreement
+bias — a visible chain of reasoning reads as supporting evidence even when
+the conclusion is wrong (the same isolation math-olympiad's verifier step
+uses: strip the trace before a second pass ever sees the work). Each seat's
+Round 2 prompt states explicitly: review every peer argument as unvetted —
+as if no reviewer had confirmed it before you — so surviving into this round
+is never mistaken for agreement from an earlier pass. This governs how a
+seat *weighs* the arguments it ranks (no argument gets credit for having
+"already convinced someone"), not whether it sees them — ranking three peer
+arguments still requires seeing all of them.
+
+Each seat reads the full (label- and trace-stripped) set and:
 
 1. Ranks the three strongest arguments (not its own)
 2. Identifies one argument that is overclaiming or underweighted
@@ -229,8 +257,9 @@ const round1 = await parallel(
   )
 );
 
-// Round 2: anonymized peer-rank
-const anonymized = stripPersonaLabels(round1);
+// Round 2: anonymized peer-rank — labels AND reasoning traces stripped,
+// leaving only each seat's structured verdict/finding/evidence/recommendation
+const anonymized = stripPersonaLabelsAndTrace(round1);
 const round2 = await parallel(
   lineup.activeSeats.map(seat =>
     agent(seat.persona + "-rank", { model: seat.model, input: { anonymized, myResponse: round1[seat] } })
@@ -251,6 +280,9 @@ return synthesis;
 Key orchestration properties:
 - Round 1 isolation is strict: no seat sees another's output during Round 1.
 - Round 2 is peer-rank, not re-evaluation: seats rank arguments, not re-state verdicts.
+- Round 2 isolation is dual: label-stripped (no authorship signal) and
+  trace-stripped (no derivation, only the structured fields) — each seat
+  weighs peer arguments as unvetted, never as pre-confirmed by an earlier pass.
 - The Chair is a dedicated agent, not the last seat to run — it reads all output
   with the synthesis responsibility explicit in its prompt.
 - `CouncilOutputSchema` enforces the four-block output contract (Synthesis /

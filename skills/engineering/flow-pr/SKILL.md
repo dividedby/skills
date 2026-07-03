@@ -74,6 +74,19 @@ Runs when the user signals done/ship, or when all autonomy triggers below are sa
 
    Skip only on explicit caller opt-out (`/flow-pr skip-review` or a stated "skip review"). Do not auto-classify the diff to decide — diff size and file type are poor proxies for review need.
 
+   **FP-exclusion list.** When judging whether a `/review` finding is
+   actionable, do not treat any of the following as a finding to fix or a
+   blocker to the cap:
+
+   - Pre-existing issues — already present before this diff, not introduced by it.
+   - Issues a linter, typechecker, or compiler would catch on its own (CI covers these).
+   - Issues explicitly silenced in the code (e.g. a lint-ignore comment) — deliberately suppressed, not missed.
+   - Changes in functionality that look intentional and are directly related to the broader change.
+   - Real issues, but on lines the diff didn't touch.
+   - General code-quality gripes (test coverage, docs, style) absent a documented standard (CLAUDE.md, ADR, or repo convention) that the diff violates.
+
+   Mirrored verbatim in `council`'s Falsifier seat brief (`skills/engineering/council/SKILL.md`) — keep the two lists in sync.
+
 5. **CI gate.** Poll `gh pr checks` until all checks pass. Do not merge with red or pending CI.
 
 6. **Merge.** `gh pr merge --merge` (merge-commit only; see [`merge-mechanics.md`](merge-mechanics.md)).
