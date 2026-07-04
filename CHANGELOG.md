@@ -28,6 +28,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
 ### Removed
 
+- Fable-5 trial sunset blockquotes removed from `skills/engineering/council/SKILL.md` and `skills/engineering/repo-audit/SKILL.md` — trial over, models reverted (see Changed) (#111, #544)
 - `dividedby/bench` archived (read-only since 2026-06-21) and dropped from the `check-idea-inbox-drift` fleet detector's `REPOS` map — an archived carrier can't be reconciled, so flagging it would file an un-fixable `idea-inbox-drift` issue; matches the script's "archived repos dropped by hand" policy (#489)
 - `context-firewall` skill retired — de-registered from `plugin.json`, top-level `README.md`, and `skills/engineering/README.md`; directory deleted; knowledge preserved in `autonomous-loop/FIREWALL.md` (ADR 0033, #448)
 - **Breaking:** Option-B dual-secret fallbacks removed now that `SKILLS_TRACKER_TOKEN` and `DRIFT_CHECK_TOKEN` are decommissioned (ADR 0032 cutover complete) — consumer repos must use `ISSUES_TOKEN`: `apply-agent-research-reusable.yml` drops the `SKILLS_TRACKER_TOKEN` secret declaration and fallback; `check-workflow-drift.yml` and `check-label-drift.yml` rename the env var to `ISSUES_TOKEN` and drop the `DRIFT_CHECK_TOKEN` fallback; docstrings and NOTICE messages in `check_workflow_drift.py` and `check_label_drift.py` simplified accordingly
@@ -35,6 +36,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
 ### Changed
 
+- Fable-5 trial reverted: `council` chair + highest-leverage seats (Falsifier, Pragmatist, Security) back to `opus`, and `repo-audit` synthesis agent back to `sonnet`. Model decision recorded on `dividedby/claude-config` #110 (opus[1m] default; agent tiers to pre-trial); execution tracked by #111 (#544)
 - `council` and `repo-audit` Round 2 (anonymized cross-review) now strips the
   reasoning trace, not just the persona label: each seat/persona's
   redistributed peer set carries only the structured verdict/finding/evidence
