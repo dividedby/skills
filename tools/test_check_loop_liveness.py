@@ -11,11 +11,14 @@ from io import StringIO
 from unittest.mock import patch
 
 from tools.check_loop_liveness import (
+    HOST_LOOP_PATHS,
+    build_roster,
     check_liveness,
     cron_cadence_days,
     extract_cron,
     main,
 )
+from tools.check_workflow_drift import SKILLS_BRANCH, SKILLS_REPO
 
 
 class TestExtractCron(unittest.TestCase):
@@ -81,6 +84,22 @@ class TestCheckLiveness(unittest.TestCase):
         # Boundary: age == 2x cadence exactly must not flag (strictly-greater rule).
         reason = check_liveness(7.0, "2026-06-20T12:00:00Z", "success", now=self.NOW)
         self.assertIsNone(reason)
+
+
+class TestBuildRoster(unittest.TestCase):
+    """Roster must add the skills-repo-only host loops without pairing them
+    with consumer repos."""
+
+    def test_host_loops_present_for_skills_repo_only(self):
+        roster = build_roster()
+        for path in HOST_LOOP_PATHS:
+            self.assertIn((SKILLS_REPO, SKILLS_BRANCH, path), roster)
+            entries_for_path = [entry for entry in roster if entry[2] == path]
+            self.assertEqual(
+                entries_for_path,
+                [(SKILLS_REPO, SKILLS_BRANCH, path)],
+                f"{path} must only be checked against the skills repo",
+            )
 
 
 class TestGracefulNoSecret(unittest.TestCase):

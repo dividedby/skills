@@ -9,8 +9,10 @@ the next manual audit (#522) — this check catches that class automatically.
 
 Roster: reused directly from check_workflow_drift.py — REPOS (consumer
 repos) plus the skills canary repo, crossed with the three reusable-rail
-workflow paths it already reads (APPLY_PATH/ARCH_PATH/STALE_PATH). No second
-roster is maintained here (#532 AC).
+workflow paths it already reads (APPLY_PATH/ARCH_PATH/STALE_PATH). Plus two
+host-only loops (changelog-health, skill-divergence-audit) that live only in
+skills and are never vendored to consumers, so they're checked against the
+skills repo only. No second roster is maintained here (#532 AC).
 
 Cadence is parsed from each workflow file's own `cron:` schedule (the
 day-of-week field's comma count -> runs/week -> days between runs). One
@@ -76,6 +78,15 @@ except ImportError:
 # The three reusable-rail loop paths check_workflow_drift.py already reads.
 LOOP_PATHS: tuple[str, ...] = (APPLY_PATH, ARCH_PATH, STALE_PATH)
 
+# Host-only loops: recurring scheduled jobs that live only in the skills repo
+# (never vendored to consumers), checked against SKILLS_REPO only — pairing
+# them with consumer repos would 404 (#532 follow-up: the roster only covered
+# the three reusable-rail loops, not these two).
+HOST_LOOP_PATHS: tuple[str, ...] = (
+    ".github/workflows/changelog-health.yml",
+    ".github/workflows/skill-divergence-audit.yml",
+)
+
 # ponytail: matched against the caller stub's own prose comment (see
 # staleness-review.yml) rather than also fetching the reusable body — the
 # stub already documents the job-level first-Monday gate in a comment.
@@ -96,14 +107,17 @@ LABEL_DESCRIPTION = "A recurring scheduled loop has gone quiet or its latest run
 
 
 def build_roster() -> list[tuple[str, str, str]]:
-    """(repo, branch, workflow_path) for every enrolled repo x reusable-rail loop.
+    """(repo, branch, workflow_path) for every enrolled repo x reusable-rail loop,
+    plus the skills-repo-only host loops (checked once, never against consumers).
 
     Repos come straight from check_workflow_drift.REPOS plus the skills
     canary (SKILLS_REPO/SKILLS_BRANCH) — no second roster maintained here.
     """
     repos = dict(REPOS)
     repos[SKILLS_REPO] = SKILLS_BRANCH
-    return [(repo, branch, path) for repo, branch in repos.items() for path in LOOP_PATHS]
+    roster = [(repo, branch, path) for repo, branch in repos.items() for path in LOOP_PATHS]
+    roster += [(SKILLS_REPO, SKILLS_BRANCH, path) for path in HOST_LOOP_PATHS]
+    return roster
 
 
 def extract_cron(content: str) -> Optional[str]:
