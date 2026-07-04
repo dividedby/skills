@@ -109,14 +109,31 @@ becomes `&lt;`, since `id` values are drawn from commit subjects and quoted
 changelog text you don't author. Not part of the human-facing advisory —
 don't reference it in the prose above it.
 
-This loop cannot parse a *prior* advisory's state block today — it has no
-`gh` in its allowlist (the agent never holds a repo-write credential here,
-by design; only the deterministic publish step does, and `--dedup-open`
-already keeps at most one open advisory). Emit the block anyway on every
-proposed run: it's a durable, escaped fingerprint for a human, or a future
-deterministic pre-fetch step, to diff against and answer "no changes since
-`as_of`" cheaply once that plumbing exists. Do not invent a `gh` call to read
-it yourself.
+**Delta-only refresh.** You still hold no `gh` in your allowlist (the agent
+never holds a repo-write credential here, by design; only the deterministic
+publish step does). Instead, a deterministic pre-fetch step already ran
+before you and left the result at the path given in your task message:
+either the most recent **open** advisory's trailing `<!-- state: {...} -->`
+block for this repo, or a note that none exists. Read that file. A closed
+advisory carries no prior state (closed means "resolved," not "unchanged") —
+the pre-fetch step already accounts for that, so a missing/no-prior-state
+note there is the same as a first-ever run: proceed to draft normally.
+
+If the file holds a real prior state block, parse its `items` array and
+compare against this run's fresh `items` (step 4c, above) to decide whether
+anything actually changed. Escape this run's fresh `id` values the same way
+(`<` → `&lt;`) *before* comparing, so the comparison is escaped-form vs.
+escaped-form — the pre-fetched state is already escaped, and an unescaped
+fresh value would never match its stored `&lt;` form and would look
+"changed" every run even when nothing moved. If every `kind`/`id` pair
+(compared in escaped form) is unchanged, that is a valid, cheap "no changes
+since `as_of`" result — emit `skipped` instead of re-filing an identical
+advisory, even though step 3 found items to flag. If anything changed (new
+item, resolved item), file the advisory as usual — the body still carries
+every current item in full — but open the lede by naming the delta
+explicitly (e.g. "1 new item, 1 resolved, 2 unchanged since 2026-06-01")
+instead of presenting it as if there were no prior context. Do not invoke
+`gh` yourself to check this — the pre-fetch already did.
 
 The advisory must be clearly marked as a proposal/nudge, not a gate.
 
