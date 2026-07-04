@@ -1,18 +1,19 @@
 name: Fleet Drift
 
-# Weekly consolidated drift detection across three independent report-only
+# Weekly consolidated drift detection across four independent report-only
 # checks against consumer/carrier repos: vendored workflow files, label-doc
-# conventions, and idea-inbox.md structure. Each job reads via the GitHub
-# Contents API and opens a drift issue in dividedby/skills for any drifted
-# repo. Report only — no hard gate, no mutation of any other repo.
+# conventions, idea-inbox.md structure, and recurring-loop liveness. Each job
+# reads via the GitHub API and opens an issue in dividedby/skills for any
+# drifted/stale repo. Report only — no hard gate, no mutation of any other repo.
 #
 # Prerequisite: ISSUES_TOKEN secret (fine-grained PAT, owner dividedby, all repos,
-# permissions: Contents:Read + Issues:Write). Until the secret is created each
-# job exits 0 and does nothing (graceful no-op; the script prints a clear notice
-# to the log).
+# permissions: Contents:Read + Actions:Read + Issues:Write). Until the secret is
+# created each job exits 0 and does nothing (graceful no-op; the script prints a
+# clear notice to the log).
 #
 # Reference: docs/agents/vendored-workflows.md, tools/check_workflow_drift.py,
-# tools/check_label_drift.py, tools/check_idea_inbox_drift.py
+# tools/check_label_drift.py, tools/check_idea_inbox_drift.py,
+# tools/check_loop_liveness.py
 
 on:
   schedule:
@@ -80,5 +81,24 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           python3 tools/check_idea_inbox_drift.py \
+            --read-token "$ISSUES_TOKEN" \
+            --write-token "$GITHUB_TOKEN"
+
+  loop-liveness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+
+      - name: Run loop-liveness check
+        env:
+          ISSUES_TOKEN: ${{ secrets.ISSUES_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python3 tools/check_loop_liveness.py \
             --read-token "$ISSUES_TOKEN" \
             --write-token "$GITHUB_TOKEN"
