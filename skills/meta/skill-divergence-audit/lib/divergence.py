@@ -36,6 +36,16 @@ CATEGORIES = frozenset(
     ["MISSING_HERE", "OUTDATED_HERE", "DIVERGED", "NO_UPSTREAM_EQUIVALENT", "ALIGNED"]
 )
 
+# Report display order (matches SKILL.md Step 3): actionable categories in
+# priority order, then the report-only categories.
+CATEGORY_ORDER = {
+    "DIVERGED": 0,
+    "MISSING_HERE": 1,
+    "OUTDATED_HERE": 2,
+    "NO_UPSTREAM_EQUIVALENT": 3,
+    "ALIGNED": 4,
+}
+
 # Only these categories are worth proposing as issues.
 PROPOSAL_CATEGORIES = frozenset(["MISSING_HERE", "OUTDATED_HERE", "DIVERGED"])
 
@@ -216,7 +226,7 @@ def render_report(divergences, *, include_aligned=False):
     lines = ["## Skill Divergence Report", ""]
     lines.append("| skill | category | detail | source |")
     lines.append("|---|---|---|---|")
-    for d in sorted(rows, key=lambda r: (r["category"], r["name"])):
+    for d in sorted(rows, key=lambda r: (CATEGORY_ORDER[r["category"]], r["name"])):
         name = d["name"]
         cat = d["category"]
         detail = d["detail"].replace("|", "\\|")
