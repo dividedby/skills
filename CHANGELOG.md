@@ -36,6 +36,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
 ### Changed
 
+- `changelog-health.yml`: added a deterministic pre-fetch step that reads the most recent **open** advisory's `<!-- state: {...} -->` block for each enrolled repo and hands the parsed text to the evaluator, mirroring `staleness-audit`'s post-#539 delta-only refresh — the model still holds no `gh` credential itself (#540)
 - Fable-5 trial reverted: `council` chair + highest-leverage seats (Falsifier, Pragmatist, Security) back to `opus`, and `repo-audit` synthesis agent back to `sonnet`. Model decision recorded on `dividedby/claude-config` #110 (opus[1m] default; agent tiers to pre-trial); execution tracked by #111 (#544)
 - `council` and `repo-audit` Round 2 (anonymized cross-review) now strips the
   reasoning trace, not just the persona label: each seat/persona's

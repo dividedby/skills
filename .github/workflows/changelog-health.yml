@@ -21,9 +21,14 @@ name: Changelog Health
 #   CLAUDE_CODE_OAUTH_TOKEN — agent authorization (read-only agent run).
 #   ISSUES_TOKEN            — fleet write PAT (Issues:RW + Contents:read across all
 #                             repos, ADR 0032); used by the checkout step to clone
-#                             non-skills repos and by the publish step to file issues.
+#                             non-skills repos, by the deterministic pre-fetch step
+#                             to read the prior open advisory's state block, and by
+#                             the publish step to file issues.
 #                             The agent itself never holds a write credential — the
-#                             default token is contents:read only.
+#                             default token is contents:read only. The pre-fetch
+#                             step is a plain workflow step (not agent-controlled),
+#                             so handing it ISSUES_TOKEN does not cross that line —
+#                             it hands the model parsed text, never the token.
 #
 # ADR 0014 (fetched-fresh harness): harness is read from the local checkout,
 #   not vendored — a fix to cli.py reaches the next scheduled run automatically.
@@ -132,6 +137,36 @@ jobs:
       - name: Set harness path
         run: echo "HARNESS=$GITHUB_WORKSPACE/harness" >> "$GITHUB_ENV"
 
+      - name: Pre-fetch prior open advisory state block
+        # Deterministic (non-agent) equivalent of staleness-audit's own step 1
+        # (which the agent runs itself there, since that loop's agent already
+        # holds `gh issue view`). This loop's agent holds no `gh` at all — giving
+        # it one here would mean handing the matrix step ISSUES_TOKEN, the fleet
+        # write PAT, which this workflow's security boundary (header above)
+        # forbids. So a plain `gh` call in the workflow does the read instead,
+        # and only the parsed text — never the token — reaches the model.
+        #
+        # Most recent OPEN advisory only: a closed one carries no prior state
+        # (closed means resolved, not unchanged) — never walk back further.
+        env:
+          GH_TOKEN: ${{ secrets.ISSUES_TOKEN }}
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/prior-state.txt"
+          number=$(gh issue list --label "$LABEL" --state open --json number,createdAt \
+            | jq -r 'sort_by(.createdAt) | reverse | .[0].number // empty')
+          if [ -n "$number" ]; then
+            state=$(gh issue view "$number" --json body -q .body | grep -o '<!-- state: {.*} -->' || true)
+            if [ -n "$state" ]; then
+              printf '%s\n' "$state" > "$out"
+              echo "Pre-fetched state block from open advisory #$number"
+            else
+              echo "No prior state: open advisory #$number predates the state-block convention." > "$out"
+            fi
+          else
+            echo "No prior state: no open advisory exists for this repo." > "$out"
+          fi
+
       - name: Run changelog-health evaluator
         # CWD = TARGET_DIR so bare git log and Read CHANGELOG.md hit the target repo.
         # Do NOT use `git -C` — the allowedTools match bare `git log`; CWD=TARGET_DIR
@@ -168,7 +203,7 @@ jobs:
             --max-budget-usd 4.00 \
             --allowedTools "Bash(git log:*) Bash(git diff:*) Bash(git show:*) Bash(git ls-files:*) Bash(git status:*) Read Grep Glob" \
             --append-system-prompt "$(cat "$HARNESS/prompts/changelog-health.md")" \
-            "Run the weekly changelog-health pass for ${GH_REPO}. The repo under evaluation is checked out at your current working directory. Read the grading rubric from ${SKILLS_DIR}/docs/agents/changelog-guideline.md. Follow the instructions in the system prompt." \
+            "Run the weekly changelog-health pass for ${GH_REPO}. The repo under evaluation is checked out at your current working directory. Read the grading rubric from ${SKILLS_DIR}/docs/agents/changelog-guideline.md. The most recent open advisory's state block for this repo, pre-fetched by a deterministic workflow step (or a note that none exists), is at ${RUNNER_TEMP}/prior-state.txt. Follow the instructions in the system prompt." \
             | tee "$RUNNER_TEMP/agent.jsonl"
 
       - name: Digest the run (result log + cost ledger)
