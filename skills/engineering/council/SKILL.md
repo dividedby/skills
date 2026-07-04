@@ -40,21 +40,19 @@ judgment — or let the selector (Step 0) make the call.
 
 ---
 
-> **Temporary — revert on/after 2026-07-07 (Fable 5 sunset).** The chair and the opus-tier seats below run on **Fable 5** for a trial. Revert: every `fable` in this file → `opus`.
-
 ## Roster
 
 Eight personas, divided into two tiers. **Seats vary by persona and model
-tier** — fable for the highest-leverage lenses, sonnet for speed-optimized
+tier** — opus for the highest-leverage lenses, sonnet for speed-optimized
 roles.
 
 ### Core seats (always active, 3)
 
 | Persona | Model tier | Lens |
 |---|---|---|
-| **Falsifier** | fable | Find the claim that breaks the proposal. One focused objection per round — no filler. |
+| **Falsifier** | opus | Find the claim that breaks the proposal. One focused objection per round — no filler. |
 | **Minimalist** | sonnet | What can be deleted, deferred, or simplified without losing the value? Shorter is the default. |
-| **Pragmatist** | fable | Given the real constraints (team, timeline, debt), what actually ships and holds? |
+| **Pragmatist** | opus | Given the real constraints (team, timeline, debt), what actually ships and holds? |
 
 ### Conditional seats (5 available, default 2 active)
 
@@ -62,7 +60,7 @@ roles.
 |---|---|---|
 | **Operator** | sonnet | The proposal runs in production — ops burden, failure modes, observability |
 | **Convention Keeper** | sonnet | The codebase has strong conventions and the proposal may violate them |
-| **Security** | fable | **Hard-floor:** any signal of auth, payments, secrets, migrations, or trust boundary. Force-seated by the selector regardless of `--seats`. |
+| **Security** | opus | **Hard-floor:** any signal of auth, payments, secrets, migrations, or trust boundary. Force-seated by the selector regardless of `--seats`. |
 | **Performance** | sonnet | The hot path, query plan, or payload size is on the table |
 | **Frontend-UX-a11y** | sonnet | The output is a visible surface, interaction, or accessibility-affecting change |
 
@@ -105,10 +103,10 @@ Illustrative selector output:
 
 ```
 Panel lineup for: "introduce JWT auth middleware"
-  ✓ Falsifier (core / fable)       — always on
+  ✓ Falsifier (core / opus)       — always on
   ✓ Minimalist (core / sonnet)     — always on
-  ✓ Pragmatist (core / fable)      — always on
-  ✓ Security (force-floor / fable) — auth keyword detected
+  ✓ Pragmatist (core / opus)      — always on
+  ✓ Security (force-floor / opus) — auth keyword detected
   ✓ Convention Keeper (conditional / sonnet) — codebase signal: strong middleware conventions
   ✗ Operator     — no ops-burden signal
   ✗ Performance  — no hot-path signal
@@ -163,7 +161,7 @@ the chair uses in Round 3.
 
 ### Round 3 — Chair synthesis
 
-A dedicated **Chair** agent (fable, higher effort) reads:
+A dedicated **Chair** agent (opus, higher effort) reads:
 
 - All Round 1 responses (de-anonymized)
 - The Round 2 ranked evidence map
@@ -268,7 +266,7 @@ const round2 = await parallel(
 
 // Round 3: chair synthesis
 const synthesis = await agent("chair", {
-  model:  "fable",
+  model:  "opus",
   effort: "high",
   input:  { round1, evidenceMap: round2 },
   schema: CouncilOutputSchema,   // enforces the four-block output contract
