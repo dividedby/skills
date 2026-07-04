@@ -39,6 +39,28 @@ CATEGORIES = frozenset(
 # Only these categories are worth proposing as issues.
 PROPOSAL_CATEGORIES = frozenset(["MISSING_HERE", "OUTDATED_HERE", "DIVERGED"])
 
+# Mirrors CONTEXT.md's "Upstream soft-dependencies" list (the mattpocock/skills
+# side only — ADR 0024): skills we deliberately deleted here and lean on
+# upstream for instead. Pass 2 must not flag these MISSING_HERE on every run —
+# that's not a gap, it's the intended posture. Keep this in sync with
+# CONTEXT.md by hand; this module stays filesystem-free (pure, unit-tested)
+# so it cannot read CONTEXT.md itself.
+SOFT_DEPENDENCY_SKILLS = frozenset(
+    [
+        "codebase-design",
+        "domain-modeling",
+        "writing-great-skills",
+        "diagnosing-bugs",
+        "prototype",
+        "to-prd",
+        "to-issues",
+        "tdd",
+        "implement",
+        "grilling",
+        "grill-with-docs",
+    ]
+)
+
 
 def classify_skill(our_skill, upstream_skills):
     """Classify a single *our* skill against the upstream skill set.
@@ -181,6 +203,8 @@ def diff(our_skills, upstream_skills):
     # Pass 2: upstream skills we lack entirely.
     for skill in upstream_skills:
         name = skill["name"]
+        if name.lower() in SOFT_DEPENDENCY_SKILLS:
+            continue  # deliberately deleted; soft-depended on, not a gap (CONTEXT.md)
         if name.lower() not in our_names:
             src = skill.get("source", "upstream")
             results.append(

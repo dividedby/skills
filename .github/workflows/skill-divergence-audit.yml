@@ -1,0 +1,149 @@
+name: Skill Divergence Audit
+
+# Scheduled proposal loop wiring the skill-divergence-audit skill
+# (skills/meta/skill-divergence-audit) — issue #522, WIRE branch. Diffs this
+# repo's published skills against mattpocock/skills + the agent-research KB,
+# classifies gaps, and files at most one source:skill-audit issue per run
+# (ADR 0019 budget/cap; ADR 0003 propose-via-issues).
+#
+# Host-only: unlike improve-codebase-architecture / apply-agent-research, this
+# loop has no downstream-consumer shape (a Consumer repo has no published
+# skill catalog to diff against Matt's) — so there is no thin-caller-stub /
+# reusable-body split. The harness and the skill both live in this checkout
+# already, so ADR 0014 (fetched-fresh harness) is satisfied trivially: reading
+# them from $GITHUB_WORKSPACE cannot drift from itself. Same rationale
+# changelog-health.yml uses ("skills IS the host") to skip a self-clone of
+# dividedby/skills.
+#
+# Filing goes through the skill's own guarded lib/cli.py (gate + file), the
+# same discipline as apply-agent-research — not the harness-parses-<output>
+# publish seam improve-codebase-architecture uses. No "Publish" step here for
+# that reason; the agent files (or skips) directly during its run.
+#
+# Cron: 50 2 * * 1,3,6 UTC = 21:50 CT Sun/Tue/Fri (3×/week) — inherited
+# cadence/budget from the apply-agent-research / improve-codebase-architecture
+# sibling loops (maintainer ratification, issue #522), hash-staggered per
+# docs/agents/workflow-authoring.md step 6 / agent-research ADR 0022 so it
+# cannot collide with either sibling's slot:
+#   offset = int(sha1("skills/skill-divergence-audit").hexdigest()[:6], 16)
+#          = 0xb6710a = 11956490
+#   minute = 11956490 % 60 = 50
+#   hour   = (11956490 // 60) % 4 = 2   (within the 00–04 UTC off-peak band;
+#            improve-codebase-architecture sits at 00:05, apply-agent-research
+#            at 01:19 — no collision)
+
+on:
+  schedule:
+    - cron: "50 2 * * 1,3,6"
+  workflow_dispatch:
+
+jobs:
+  skill-divergence-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    concurrency:
+      group: skill-divergence-audit
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      issues: write
+
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
+      LABEL: source:skill-audit
+      SKILL_DIR: ${{ github.workspace }}/skills/meta/skill-divergence-audit
+      HARNESS: ${{ github.workspace }}/harness
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 1
+
+      - name: Install Claude Code
+        run: |
+          set -euo pipefail
+          # Unpinned trusted-vendor dependency (#308): no per-version installer URL or
+          # checksum is published to consume; accepted on the same trust root as the
+          # CLAUDE_CODE_OAUTH_TOKEN issuer that authorizes this job.
+          curl -fsSL https://claude.ai/install.sh | bash
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      # Matt's skill set (the skill's own Step 1.2, ADR 0008 fetch-fresh):
+      # cloned into $RUNNER_TEMP, never vendored.
+      - name: Clone mattpocock/skills
+        run: |
+          set -euo pipefail
+          git clone --depth 1 https://github.com/mattpocock/skills.git "$RUNNER_TEMP/mattpocock-skills"
+          echo "MATTPOCOCK_SKILLS=$RUNNER_TEMP/mattpocock-skills" >> "$GITHUB_ENV"
+          echo "Fetched mattpocock/skills@$(git -C "$RUNNER_TEMP/mattpocock-skills" rev-parse --short HEAD)"
+
+      # Agent-research KB mirror (the skill's own Step 1.3) — public,
+      # credential-free, read-only; the same clone apply-agent-research uses.
+      - name: Clone the public knowledge mirror
+        run: |
+          set -euo pipefail
+          git clone --depth 1 https://github.com/dividedby/agent-research-knowledge.git "$RUNNER_TEMP/knowledge-mirror"
+          test -d "$RUNNER_TEMP/knowledge-mirror/knowledge"
+          echo "MIRROR_DIR=$RUNNER_TEMP/knowledge-mirror" >> "$GITHUB_ENV"
+          echo "Mirror at $RUNNER_TEMP/knowledge-mirror@$(git -C "$RUNNER_TEMP/knowledge-mirror" rev-parse --short HEAD)"
+
+      - name: Run skill-divergence-audit
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        run: |
+          set -euo pipefail
+          # Bash is scoped to the exact subcommands the loop runs; bare Bash is NOT
+          # granted (least-privilege, #307). gh is read-only (list/view) for dedup
+          # against prior source:skill-audit issues; git is the read-only set for
+          # evidence citation. The only write path is the guarded
+          # `python3 $SKILL_DIR/lib/cli.py {gate,file}` — direct `gh issue create` /
+          # `gh issue comment` are disallowed below so filing cannot bypass the
+          # leak guard or the ≤1-per-run gate (same defense-in-depth as
+          # apply-agent-research, #306/#307). `printf` is granted only for the
+          # `printf '%s' '<json>' | python3 $SKILL_DIR/lib/cli.py gate` pipe.
+          # WebSearch/WebFetch are excluded: both upstream sources are already
+          # cloned by the steps above, so web access only adds an exfil surface.
+          # --output-format stream-json --verbose: stream every event so a hung
+          # run leaves a trace and the final result event (with total_cost_usd)
+          # lands before claude exits — cost captured even on failure.
+          # --model pinned to the exact model ID (not the floating `sonnet`
+          # alias) — an unattended loop must not silently inherit the next
+          # release (#180). --max-budget-usd is a per-run spend backstop
+          # (#181), matching the sibling loops' $4.00 ceiling (ADR 0019).
+          claude -p \
+            --output-format stream-json --verbose \
+            --model claude-sonnet-5 \
+            --max-budget-usd 4.00 \
+            --allowedTools "Bash(gh issue list:*) Bash(gh issue view:*) Bash(git log:*) Bash(git diff:*) Bash(git show:*) Bash(git ls-files:*) Bash(git status:*) Bash(python3 $SKILL_DIR/lib/cli.py:*) Bash(printf:*) Read Grep Glob Write" \
+            --disallowedTools "Bash(gh issue create:*) Bash(gh issue comment:*)" \
+            --append-system-prompt "$(cat "$HARNESS/prompts/skill-divergence-audit.md")" \
+            "Run the scheduled skill-divergence-audit pass. Matt's skill set is cloned at ${MATTPOCOCK_SKILLS}, the agent-research knowledge mirror is at ${MIRROR_DIR} (read-only), and the installed skill is at ${SKILL_DIR}. Follow the instructions in the system prompt." \
+            | tee "$RUNNER_TEMP/agent.jsonl"
+
+      - name: Digest the run (result log + cost ledger)
+        if: always()
+        run: |
+          set -euo pipefail
+          # JSONL -> clean result text + the total_cost_usd=… ledger line, via the
+          # local harness (this repo IS the host — no fetch-fresh clone needed).
+          # Best-effort by construction (exit 0 even with no result event), so it
+          # runs on a failed agent run too.
+          python3 "$HARNESS/cli.py" digest \
+            --jsonl "$RUNNER_TEMP/agent.jsonl" \
+            --result-out "$RUNNER_TEMP/agent.log" \
+            --cost-out "$RUNNER_TEMP/agent.cost"
+
+      - name: Summarise run
+        if: always()
+        run: |
+          {
+            echo "## Skill divergence audit"
+            echo ""
+            echo "**Cost:** $(cat "$RUNNER_TEMP/agent.cost" 2>/dev/null || echo "n/a")"
+            echo ""
+            echo '```'
+            tail -n 50 "$RUNNER_TEMP/agent.log" 2>/dev/null || echo "(no log produced)"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
