@@ -101,7 +101,7 @@ def main(argv=None, stdin=None, out=None):
     sub = parser.add_subparsers(dest="command", required=True)
 
     p_gate = sub.add_parser(
-        "gate", help="pick the budgeted (<=5) ranked candidates to file, from stdin JSON"
+        "gate", help="pick the budgeted (<=1) ranked candidates to file, from stdin JSON"
     )
     p_gate.set_defaults(func=_gate)
 

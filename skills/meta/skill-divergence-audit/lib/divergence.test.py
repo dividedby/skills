@@ -9,6 +9,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from divergence import (  # noqa: E402
     CATEGORIES,
     PROPOSAL_CATEGORIES,
+    SOFT_DEPENDENCY_SKILLS,
     classify_skill,
     classify_upstream,
     diff,
@@ -160,6 +161,22 @@ class TestDiff(unittest.TestCase):
     def test_source_field_set_on_missing_here(self):
         results = diff([], [upstream_skill("theirs", source="kb")])
         self.assertEqual(results[0]["source"], "kb")
+
+    def test_soft_dependency_skill_excluded_from_missing_here(self):
+        # domain-modeling is a soft-dependency (mattpocock/skills, per
+        # CONTEXT.md) — deliberately not published here; Pass 2 must not
+        # flag it MISSING_HERE on every run.
+        self.assertIn("domain-modeling", SOFT_DEPENDENCY_SKILLS)
+        results = diff([], [upstream_skill("domain-modeling")])
+        self.assertEqual(results, [])
+
+    def test_non_soft_dependency_upstream_skill_still_missing_here(self):
+        # Control: an upstream skill NOT on the soft-dep list is still
+        # reported, so the exclusion isn't silently swallowing everything.
+        self.assertNotIn("brand-new", SOFT_DEPENDENCY_SKILLS)
+        results = diff([], [upstream_skill("brand-new")])
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]["category"], "MISSING_HERE")
 
 
 # ---------------------------------------------------------------------------
