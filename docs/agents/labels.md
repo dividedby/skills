@@ -28,6 +28,11 @@ Where the issue sits in the workflow. Combine freely with a category label.
 | `wontfix`         | `FFFFFF` | Will not be actioned                                             |
 | `idea-inbox`      | `D4C5F9` | The single freeform idea-intake issue for this repo (one per repo) |
 
+`ready-for-agent` grants end-to-end autonomy: an AFK agent may implement,
+verify (verifier APPROVE), and merge to the default branch without human
+review — subject to the universal merge gate in `branching-flow.md` (CI green;
+never merge red).
+
 ## CORE — Category (all repos)
 
 What kind of work it is. Combine freely with a state label.

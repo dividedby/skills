@@ -37,6 +37,9 @@ The per-iteration feedback gate (SKILL.md, element 2) is a graduation
 requirement, not just good practice: an AFK loop with no gate applies unverified
 work at machine speed. Red gate → halt, don't commit. A loop that commits
 through red is disqualified from AFK no matter how good the other guardrails are.
+A passing gate should cost as little context as a failing one costs a lot:
+print a single deterministic marker per check on success, and save full output
+for the failing check.
 
 ### 4. An iteration / cost / time cap bounds the run
 
@@ -125,7 +128,9 @@ firewall is what keeps the last issue as sharp as the first.
 5. **Gate or halt** — the sub-agent runs the issue's feedback gate; a red gate
    halts that item without landing work. Green → close out via `/flow-pr`
    (branch, PR, review gate, CI gate, merge — apply-and-merge-on-green end of
-   the spectrum), never `main`.
+   the spectrum), never `main`. A green gate prints a single deterministic
+   marker per check, not its full output, so a clean run across many items
+   doesn't flood the sub-agent's context.
 6. **Flush, then drop** — flush the completed item's compact outcome to the
    progress file, then drop its detail from context (mechanics:
    [FIREWALL.md § 4](FIREWALL.md)). This is what makes monitor/stop/resume
