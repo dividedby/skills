@@ -219,6 +219,25 @@ class TestRenderReport(unittest.TestCase):
         out = render_report(divs)
         self.assertIn(r"a \| b", out)
 
+    def test_rows_sorted_by_documented_category_priority_not_alphabetical(self):
+        # SKILL.md Step 3 documents: DIVERGED, then MISSING_HERE, then
+        # OUTDATED_HERE, then NO_UPSTREAM_EQUIVALENT. Alphabetically this
+        # would instead put NO_UPSTREAM_EQUIVALENT ahead of OUTDATED_HERE
+        # ("N" < "O") — assert the documented order, not the alphabetical one.
+        divs = [
+            {"name": "d", "category": "NO_UPSTREAM_EQUIVALENT", "detail": "...", "source": "kb", "pillars": []},
+            {"name": "c", "category": "OUTDATED_HERE", "detail": "...", "source": "matt", "pillars": []},
+            {"name": "b", "category": "MISSING_HERE", "detail": "...", "source": "matt", "pillars": []},
+            {"name": "a", "category": "DIVERGED", "detail": "...", "source": "matt", "pillars": []},
+        ]
+        out = render_report(divs)
+        for earlier, later in (
+            ("DIVERGED", "MISSING_HERE"),
+            ("MISSING_HERE", "OUTDATED_HERE"),
+            ("OUTDATED_HERE", "NO_UPSTREAM_EQUIVALENT"),
+        ):
+            self.assertLess(out.index(earlier), out.index(later))
+
 
 # ---------------------------------------------------------------------------
 # to_candidates

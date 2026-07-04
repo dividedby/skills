@@ -41,7 +41,10 @@ cost ceiling hit, or a gate stays red.
 ### 2. Per-iteration feedback gate
 
 Each iteration must pass its own gate — tests, lint, typecheck, build — or
-**halt without committing**. A red gate never lands work.
+**halt without committing**. A red gate never lands work. On a pass, print a
+single deterministic marker per check, not the full tool output — reserve full
+output for the failing check, so the gate itself doesn't become a
+context-rot source over many unattended iterations.
 
 ### 3. HITL→AFK by graduation-by-guardrail
 
