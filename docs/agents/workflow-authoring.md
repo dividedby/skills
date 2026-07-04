@@ -46,7 +46,7 @@ the estate's scheduling convention — and is summarised in step 6.
 2. **Carry a `--max-budget-usd` backstop.** Every headless `claude -p` invocation
    takes `--max-budget-usd`, sized ~2.5–3× the workflow's observed max (#181).
    It's a backstop against a runaway run, not a routine ceiling — a healthy run
-   should never hit it. The four loops here run at `$4.00`. No history yet? Size
+   should never hit it. The five loops here run at `$4.00`. No history yet? Size
    off the nearest same-shape workflow and revisit once runs accrue.
 
 3. **Emit `total_cost_usd` so the run is metered.** Run with
@@ -110,13 +110,15 @@ the estate's scheduling convention — and is summarised in step 6.
 
 ## The reference cadence (this repo, 2026-06-30 amendment)
 
-Encode new workflows against the four loops this repo runs. All sonnet, all
+Encode new workflows against the five loops this repo runs. All sonnet, all
 **propose-only** — never edit/commit/merge. Cadence: the two Mon/Wed/Sat loops
 are hash-staggered (step 6) into the 00–04 UTC off-peak band (ADR 0022), and
-weekly `changelog-health` derives its Thu 01:33 UTC slot the same way; monthly
-`staleness-review` uses a hand-chosen slot instead (`8 13 * * 1`). The three
+weekly `changelog-health` derives its Thu 01:33 UTC slot the same way;
+`skill-divergence-audit` shares the same Mon/Wed/Sat off-peak band; monthly
+`staleness-review` uses a hand-chosen slot instead (`8 13 * * 1`). The
 proposal loops file budgeted, ranked issues; `changelog-health` is
-advisory-only, filing at most one dedup'd issue per repo.
+advisory-only, filing at most one dedup'd issue per repo, and
+`skill-divergence-audit` is propose-only (never edits/commits/merges).
 
 | Loop | Model | Cron (UTC) | ≈ CT | cap |
 | --- | --- | --- | --- | --: |
@@ -124,6 +126,7 @@ advisory-only, filing at most one dedup'd issue per repo.
 | `apply-agent-research` | sonnet | `19 1 * * 1,3,6` | Sun/Tue/Fri 20:19 | ≤1 |
 | `staleness-review` | sonnet | `8 13 * * 1` (1st-Mon gate) | Mon 08:08 | 1 |
 | `changelog-health` | sonnet | `33 1 * * 4` | Wed 20:33 | ≤1 (dedup) |
+| `skill-divergence-audit` | sonnet | `50 2 * * 1,3,6` | Sun/Tue/Fri 21:50 | ≤1 (propose-only) |
 
 Two non-obvious choices worth copying:
 
