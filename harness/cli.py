@@ -425,7 +425,8 @@ def _file_proposals(
     # exists first: `gh issue create` hard-fails on an unknown label and not every
     # target repo predefines these; a pre-existing label makes the create a no-op,
     # so the neutral color only ever applies where the label was missing entirely.
-    for xl in args.extra_label or ():
+    extra_labels = args.extra_label or ()
+    for xl in extra_labels:
         _ensure_label(xl, "ededed", "", repo)
 
     filed = []
@@ -436,7 +437,7 @@ def _file_proposals(
             bf.write(proposal["body"])
             body_path = bf.name
         try:
-            url = _create_issue(proposal["title"], body_path, args.label, repo, args.extra_label or ())
+            url = _create_issue(proposal["title"], body_path, args.label, repo, extra_labels)
         finally:
             os.unlink(body_path)
         print(f"Published {url}", file=out)

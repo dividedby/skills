@@ -134,6 +134,14 @@ jobs:
             --color "5319E7" \
             --description "Issues proposed by the automated apply-agent-research loop" \
             >/dev/null 2>&1 || true
+          # Triage labels the self-improvement prompt applies at filing time (#668).
+          # gh issue create hard-fails on an unknown label, and the skill's guarded
+          # lib/cli.py file has no ensure step of its own (its fix is prompt-only),
+          # so guarantee them here — same best-effort create-if-missing as $LABEL
+          # above; a pre-existing label is a no-op that keeps its own color.
+          for triage_label in needs-triage enhancement chore; do
+            gh label create "$triage_label" >/dev/null 2>&1 || true
+          done
           # This repo owns the skill-request and skill-promotion labels; Consumers
           # apply them, never create them (fine-grained Issues:write may not cover
           # label creation). See docs/design/skill-request-flow.md and
