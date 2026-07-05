@@ -131,7 +131,7 @@ creates:
 
 Both files are written together. Neither is deferred to a follow-up skill.
 The ADR follows the shape defined in
-[`grill-with-docs/ADR-FORMAT.md`](../grill-with-docs/ADR-FORMAT.md) (the
+the installed `/grill-with-docs` skill's `ADR-FORMAT.md` (the
 project's canonical ADR template) — the *Decision* section is the chosen
 direction; the *Consequences* section captures which `banned-patterns.md`
 rows are unlocked and any tentative fields.
