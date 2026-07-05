@@ -71,6 +71,24 @@ canary — always running the latest body before consumers pin). Consumer repos
 vendor a thin caller that pins `@claude-loops-v1`; a tag move is the single
 gated rollout that updates the body for all consumers at once.
 
+A tag move reaches only **tag-pinned** consumers. **SHA-pinned** consumers —
+e.g. agent-research, which pins each `uses:` at an immutable commit with a
+trailing `# claude-loops-v1` comment (supply-chain hardening) — are *not*
+re-pointed by a tag move; bump their pins in a separate per-repo PR. This is
+load-bearing when a new body couples to a **fetched-fresh-harness contract
+change** (`harness/cli.py` and prompts run at `main` every run,
+[ADR 0014](../adr/0014-harness-is-fetched-fresh-only-the-workflow-envelope-is-vendored.md)):
+remove the harness's old-body compatibility shim (a fallback, or an
+optional-then-required arg) **only after** every consumer on *both* lanes runs
+the new body. Rollout order: (1) move the tag; (2) bump every SHA-pinned
+consumer to the tag commit; (3) confirm no consumer still vendors the pre-change
+body; (4) *then* delete the harness shim. Deleting before step 2 breaks the
+SHA-pin lane — on 2026-07-04, #561 removed `fetch-rubric`'s network fallback
+while agent-research was still pinned pre-#525 (caught before a run hit it,
+fixed by agent-research#491). `check_workflow_drift.py`'s pin-drift lane (#524)
+flags a SHA-pin left behind the tag, but weekly and after the fact; the order
+above is the prevention.
+
 ```yaml
 name: <Loop Name>
 
@@ -164,18 +182,17 @@ rarely; when it does, it is a **manual rollout** to update the reusable bodies.
   Pair it with an `if: failure()` summarise step that surfaces the raw log.
   Reads `$GH_REPO` / `$GITHUB_STEP_SUMMARY` / `$GITHUB_OUTPUT` from the Actions env.
 
-- **`python3 harness/cli.py fetch-rubric --out-dir DIR [--source-dir CLONE]`** —
-  arch-review only. Clone-first (#525): given `--source-dir`, reads `SKILL.md`/
-  `DEEPENING.md` from a local `mattpocock/skills` clone into `DIR/depth-LANGUAGE.md`
-  and `DIR/depth-DEEPENING.md` — no network call. Without `--source-dir` (legacy —
-  a consumer still pinned at the `claude-loops-v1` tag from before #525; DELETE
-  once the tag moves past that commit, #523/#516), falls back to downloading the
-  same two files from `mattpocock/skills@main`. **Hard-fails (exit 1)** either way
-  — missing clone file, or any network/HTTP error — per ADR 0020(c), since an
+- **`python3 harness/cli.py fetch-rubric --out-dir DIR --source-dir CLONE`** —
+  arch-review only. Clone-first (#525): reads `SKILL.md`/`DEEPENING.md` from a
+  local `mattpocock/skills` clone (`--source-dir`, **required**) into
+  `DIR/depth-LANGUAGE.md` and `DIR/depth-DEEPENING.md` — no network call.
+  **Hard-fails (exit 1)** on a missing clone file per ADR 0020(c), since an
   unattended run with a missing rubric would produce unsound depth proposals. The
-  upstream paths (and, for the legacy lane, URLs) live once in `harness/cli.py`;
-  a future upstream path change is a one-line fix there, picked up by every
-  consumer on next run. Float policy: no SHA pin on the clone — tracks
+  legacy raw-URL network fallback (for consumers pinned before #525) was removed
+  once the `claude-loops-v1` tag moved past that commit (#523/#516, PR #561);
+  `--source-dir` is now the only lane. The upstream paths live once in
+  `harness/cli.py`; a future upstream path change is a one-line fix there, picked
+  up by every consumer on next run. Float policy: no SHA pin on the clone — tracks
   `mattpocock/skills@main` automatically per ADR 0020(b). Supply-chain implication:
   third-party changes enter unattended runs unreviewed; pin a SHA in your own thin
   caller stub's `uses:` ref if that tradeoff is unacceptable.
