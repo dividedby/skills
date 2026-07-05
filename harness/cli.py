@@ -37,8 +37,6 @@ import re
 import subprocess
 import sys
 import tempfile
-import urllib.error
-import urllib.request
 
 # --- pure helpers (no I/O, unit-tested directly) ---------------------------
 
@@ -52,29 +50,13 @@ MAX_PROPOSALS = 1
 # Depth rubric paths, relative to a mattpocock/skills clone root. The reusable
 # workflow already clones that repo one step earlier (to install the
 # /improve-codebase-architecture skill); fetch-rubric reads these two files
-# from that local clone via --source-dir rather than a network call — the two
-# raw.githubusercontent.com URLs this replaced were a hard external failure
-# point that broke once already (2026-06-17, #525).
+# from that local clone via --source-dir rather than a network call.
 # Note: upstream renamed improve-codebase-architecture/LANGUAGE.md →
 # codebase-design/SKILL.md (2026-06-17), but the OUTPUT filename stays
 # depth-LANGUAGE.md for envelope compatibility (the downstream `cat` and
 # `test -f` steps reference that name).
 _RUBRIC_LANGUAGE_REL = "skills/engineering/codebase-design/SKILL.md"
 _RUBRIC_DEEPENING_REL = "skills/engineering/codebase-design/DEEPENING.md"
-
-# Legacy fallback ONLY: a consumer still pinned at claude-loops-v1 pre-#525
-# vendors the OLD reusable-yml fetch-rubric step, which calls this CLI without
-# --source-dir. Until that tag moves past this commit (#523/#516), fetch-rubric
-# must still serve them a network fetch of the same two files. DELETE this
-# fallback and these two URL constants once the tag has moved.
-_RUBRIC_LANGUAGE_URL = (
-    "https://raw.githubusercontent.com/mattpocock/skills/main"
-    "/skills/engineering/codebase-design/SKILL.md"
-)
-_RUBRIC_DEEPENING_URL = (
-    "https://raw.githubusercontent.com/mattpocock/skills/main"
-    "/skills/engineering/codebase-design/DEEPENING.md"
-)
 
 
 def extract_block(text, tag):
@@ -556,47 +538,29 @@ def _find_open(label, repo):
 def _fetch_rubric(args, out):
     """Get the depth rubric files (SKILL.md/DEEPENING.md) into --out-dir.
 
-    Clone-first (#525): with ``--source-dir`` — the mattpocock/skills clone the
-    reusable workflow already makes one step earlier to install the
-    /improve-codebase-architecture skill — reads both files locally, no network
-    call. Hard-fails (exit 1) with a loud, actionable message if either source
-    file is missing at that path.
-
-    Legacy fallback: without ``--source-dir`` (a consumer still pinned at
-    claude-loops-v1 pre-#525, calling this CLI via the OLD reusable-yml step),
-    downloads the same two files over the network from mattpocock/skills@main,
-    hard-failing on any URL error. DELETE this branch (and the two URL
-    constants) once claude-loops-v1 has moved past this commit (#523/#516).
-
-    Either lane: an unattended run with a missing rubric would produce
-    unsound depth proposals (ADR 0020 c) — no silent fallback either way.
+    Requires ``--source-dir`` — the mattpocock/skills clone the reusable
+    workflow already makes one step earlier to install the
+    /improve-codebase-architecture skill — and reads both files locally, no
+    network call. Hard-fails (exit 1) with a loud, actionable message if
+    either source file is missing at that path: an unattended run with a
+    missing rubric would produce unsound depth proposals (ADR 0020 c), so
+    there is no silent fallback.
     """
     files = [
-        ("depth-LANGUAGE.md", _RUBRIC_LANGUAGE_REL, _RUBRIC_LANGUAGE_URL),
-        ("depth-DEEPENING.md", _RUBRIC_DEEPENING_REL, _RUBRIC_DEEPENING_URL),
+        ("depth-LANGUAGE.md", _RUBRIC_LANGUAGE_REL),
+        ("depth-DEEPENING.md", _RUBRIC_DEEPENING_REL),
     ]
-    for filename, rel_path, url in files:
-        if args.source_dir:
-            src = os.path.join(args.source_dir, rel_path)
-            if not os.path.isfile(src):
-                print(
-                    f"::error::fetch-rubric: {filename}: not found at {src} "
-                    "(expected a mattpocock/skills clone at --source-dir)",
-                    file=sys.stderr,
-                )
-                return 1
-            with open(src, "rb") as fh:
-                data = fh.read()
-        else:
-            try:
-                with urllib.request.urlopen(url) as resp:
-                    data = resp.read()
-            except urllib.error.URLError as exc:
-                print(
-                    f"::error::fetch-rubric: {filename}: {url}: {exc}",
-                    file=sys.stderr,
-                )
-                return 1
+    for filename, rel_path in files:
+        src = os.path.join(args.source_dir, rel_path)
+        if not os.path.isfile(src):
+            print(
+                f"::error::fetch-rubric: {filename}: not found at {src} "
+                "(expected a mattpocock/skills clone at --source-dir)",
+                file=sys.stderr,
+            )
+            return 1
+        with open(src, "rb") as fh:
+            data = fh.read()
         dest = os.path.join(args.out_dir, filename)
         with open(dest, "wb") as fh:
             fh.write(data)
@@ -641,12 +605,8 @@ def main(argv=None, out=None):
         help="directory to write depth-LANGUAGE.md and depth-DEEPENING.md into",
     )
     p_fetch.add_argument(
-        "--source-dir", dest="source_dir", default=None,
-        help=(
-            "root of a local mattpocock/skills clone (e.g. from git clone --depth 1); "
-            "omit to fall back to a network fetch (legacy — consumers still pinned at "
-            "claude-loops-v1 pre-#525; delete once the tag moves past it, #523/#516)"
-        ),
+        "--source-dir", dest="source_dir", required=True,
+        help="root of a local mattpocock/skills clone (e.g. from git clone --depth 1)",
     )
     p_fetch.set_defaults(func=_fetch_rubric)
 

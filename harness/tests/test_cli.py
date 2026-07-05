@@ -616,9 +616,7 @@ class PublishCommandTest(unittest.TestCase):
 
 
 class FetchRubricCommandTest(unittest.TestCase):
-    """Clone-first (--source-dir, no network call, #525) with a legacy
-    network-fetch fallback for consumers still pinned at claude-loops-v1
-    pre-#525 (DELETE once the tag moves past this commit, #523/#516)."""
+    """Clone-first (--source-dir, no network call, #525)."""
 
     def setUp(self):
         self.out_dir = tempfile.mkdtemp()
@@ -676,21 +674,6 @@ class FetchRubricCommandTest(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertTrue(os.path.exists(os.path.join(self.out_dir, "depth-LANGUAGE.md")))
         self.assertFalse(os.path.exists(os.path.join(self.out_dir, "depth-DEEPENING.md")))
-
-    def test_legacy_lane_without_source_dir_falls_back_to_network(self):
-        """No --source-dir (a consumer still pinned at claude-loops-v1 pre-#525,
-        vendoring the OLD reusable-yml step) must still work via the network
-        fallback — DELETE this test alongside the fallback (#523/#516)."""
-        resp = mock.MagicMock()
-        resp.read.return_value = b"network content"
-        resp.__enter__ = mock.Mock(return_value=resp)
-        resp.__exit__ = mock.Mock(return_value=False)
-        with mock.patch("cli.urllib.request.urlopen", return_value=resp):
-            code, out = _run(["fetch-rubric", "--out-dir", self.out_dir])
-        self.assertEqual(code, 0)
-        with open(os.path.join(self.out_dir, "depth-LANGUAGE.md"), "rb") as fh:
-            self.assertEqual(fh.read(), b"network content")
-        self.assertIn("Fetched depth-LANGUAGE.md", out)
 
 
 if __name__ == "__main__":
