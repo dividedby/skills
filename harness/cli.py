@@ -421,6 +421,12 @@ def _file_proposals(
         proposals = proposals[:MAX_PROPOSALS]
 
     _ensure_label(args.label, args.label_color, args.label_description, repo)
+    # needs-triage + category labels applied at filing time (#668). Ensure each
+    # exists first: `gh issue create` hard-fails on an unknown label and not every
+    # target repo predefines these; a pre-existing label makes the create a no-op,
+    # so the neutral color only ever applies where the label was missing entirely.
+    for xl in args.extra_label or ():
+        _ensure_label(xl, "ededed", "", repo)
 
     filed = []
     for proposal in proposals:
@@ -430,7 +436,7 @@ def _file_proposals(
             bf.write(proposal["body"])
             body_path = bf.name
         try:
-            url = _create_issue(proposal["title"], body_path, args.label, repo)
+            url = _create_issue(proposal["title"], body_path, args.label, repo, args.extra_label or ())
         finally:
             os.unlink(body_path)
         print(f"Published {url}", file=out)
@@ -586,8 +592,10 @@ def _ensure_label(label, color, description, repo):
     subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
-def _create_issue(title, body_path, label, repo):
+def _create_issue(title, body_path, label, repo, extra_labels=()):
     cmd = ["gh", "issue", "create", "--title", title, "--body-file", body_path, "--label", label]
+    for xl in extra_labels:
+        cmd += ["--label", xl]
     if repo:
         cmd += ["--repo", repo]
     result = subprocess.run(cmd, check=True, capture_output=True, text=True)
@@ -673,6 +681,8 @@ def main(argv=None, out=None):
     p_publish.add_argument("--label", required=True)
     p_publish.add_argument("--label-color", default="5319E7", dest="label_color")
     p_publish.add_argument("--label-description", default="", dest="label_description")
+    p_publish.add_argument("--extra-label", action="append", dest="extra_label",
+                           help="additional label applied at filing time, e.g. needs-triage / a category (repeatable)")
     p_publish.add_argument("--cost-file", dest="cost_file", help="cost line for the summary")
     p_publish.add_argument("--heading", default="Proposal", help="step-summary heading")
     p_publish.add_argument("--repo", help="owner/name; defaults to $GH_REPO")

@@ -246,6 +246,33 @@ class PublishCommandTest(unittest.TestCase):
         self.assertIn("https://x/issues/1 — do x", s)
         self.assertIn("- x", s)
 
+    def test_extra_labels_ensured_and_applied_at_filing(self):
+        # #668: needs-triage + a category label are applied at filing time, and
+        # each is ensured (gh label create) BEFORE the issue create so an unknown
+        # label in the target repo can't hard-fail the filing.
+        self._log(
+            '<output>\n{"status": "proposed", "title": "deepening: x",'
+            ' "oneLineSummary": "do x", "candidatesConsidered": ["x"]}\n</output>\n'
+            "<body>\nBody.\n</body>\n"
+        )
+        with mock.patch("cli.subprocess.run") as run:
+            run.side_effect = [
+                SimpleNamespace(returncode=0),  # ensure provenance label
+                SimpleNamespace(returncode=0),  # ensure needs-triage
+                SimpleNamespace(returncode=0),  # ensure chore
+                SimpleNamespace(returncode=0, stdout="https://x/issues/9\n"),  # issue create
+            ]
+            code, _ = self._publish(["--extra-label", "needs-triage", "--extra-label", "chore"])
+        self.assertEqual(code, 0)
+        create = run.call_args_list[-1].args[0]
+        self.assertEqual(create[:3], ["gh", "issue", "create"])
+        for want in ("source:architecture-review", "needs-triage", "chore"):
+            self.assertIn(want, create)
+        # both extra labels were ensured via `gh label create` before the create
+        ensured = {c.args[0][3] for c in run.call_args_list
+                   if c.args[0][:3] == ["gh", "label", "create"]}
+        self.assertTrue({"needs-triage", "chore"} <= ensured)
+
     def test_proposed_body_round_trips_unescaped(self):
         """The whole point of the <body> split: raw markdown reaches gh verbatim."""
         body = 'Has "quotes", a newline,\nand ```fences```.'
