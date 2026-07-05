@@ -150,6 +150,9 @@ jobs:
             --log "$RUNNER_TEMP/agent.log" \
             --label "$LABEL" \
             --label-description "Reports filed by the automated staleness-review loop" \
+            --extra-label needs-triage \
+            --extra-label chore \
+            --dedup-open \
             --cost-file "$RUNNER_TEMP/agent.cost" \
             --heading "Staleness review"
 

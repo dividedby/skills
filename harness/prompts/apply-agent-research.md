@@ -214,11 +214,16 @@ independently clear the bar that would have made it the run's single best.
    `file` / `comment` call (none when it is empty). Write each body via the
    `Write` tool (into `$RUNNER_TEMP/body.md`) ending in the `dedup-key` marker +
    a short Sources line citing the knowledge note(s), then:
-   - **self-improvement** (own tracker — host and consumer):
+   - **self-improvement** (own tracker — host and consumer). Apply the triage
+     labels at filing time (#668): always add `--label needs-triage`, plus one
+     category — `--label enhancement` for a new capability/behavior, `--label
+     chore` for a convention/maintenance/tidy proposal. (Size is usually not
+     inferable here — leave it for human triage.)
 
          python3 $SKILL_DIR/lib/cli.py file \
            --title "<title>" --body-file "$RUNNER_TEMP/body.md" \
-           --label source:agent-research <expanded --marker flags>
+           --label source:agent-research --label needs-triage --label <enhancement|chore> \
+           <expanded --marker flags>
 
    - **host-mode skills-on-general-merit / drained skill-request** → file into the
      own tracker the same way (own provenance label, own token).
