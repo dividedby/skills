@@ -47,6 +47,14 @@ _NA = "n/a"
 # the run's single best proposal, the one that clears the bar on its own.
 MAX_PROPOSALS = 1
 
+# Backlog throttle (#543): MAX_PROPOSALS caps a single run's OUTPUT; nothing
+# caps the PILE those runs leave behind. When a loop's own provenance-labeled,
+# still-untriaged backlog reaches this many open issues, the run skips instead
+# of growing a pile nobody has triaged. Lives here (not in the workflow YAML)
+# so the policy reaches every consumer on its next fetch-fresh run (ADR 0014).
+BACKLOG_THRESHOLD = 3
+TRIAGE_LABEL = "needs-triage"
+
 # Depth rubric paths, relative to a mattpocock/skills clone root. The reusable
 # workflow already clones that repo one step earlier (to install the
 # /improve-codebase-architecture skill); fetch-rubric reads these two files
@@ -379,6 +387,19 @@ def _summary_skipped(heading, cost, output):
     )
 
 
+def _summary_backlog_full(heading, label, threshold):
+    return "\n".join(
+        [
+            f"## {heading}",
+            "",
+            f"**Backlog full — skipped.** {threshold} or more open issues already carry "
+            f"both `{label}` and `{TRIAGE_LABEL}`; this run files nothing until some "
+            "of the backlog is triaged.",
+            "",
+        ]
+    )
+
+
 def _file_proposals(
     proposals, args, repo, cost, summary_file, warn_noun, output_for_summary, out,
 ):
@@ -507,6 +528,54 @@ def _publish(args, out):
     )
 
 
+def _backlog_check(args, out):
+    """Skip a run when the loop's own untriaged backlog is already full (#543).
+
+    Counts open issues carrying both ``--label`` (the loop's provenance label)
+    and ``TRIAGE_LABEL``, capped at ``BACKLOG_THRESHOLD``. ADR 0019 already
+    caps a single run's OUTPUT at ``MAX_PROPOSALS``; this caps the
+    ACCUMULATION those runs leave behind — nothing before this measured the
+    pile. Writes ``backlog_full=true|false`` to the gh-output file so the
+    workflow envelope can gate downstream steps; on ``full`` also appends a
+    step-summary section. Always returns 0 — a throttle check is advisory,
+    never a hard failure.
+    """
+    repo = args.repo or os.environ.get("GH_REPO")
+    summary_file = args.summary_file or os.environ.get("GITHUB_STEP_SUMMARY")
+    output_file = args.output_file or os.environ.get("GITHUB_OUTPUT")
+
+    try:
+        count = _count_untriaged(args.label, repo, BACKLOG_THRESHOLD)
+        full = count >= BACKLOG_THRESHOLD
+    except (subprocess.CalledProcessError, ValueError, OSError) as exc:
+        # ponytail: fail open on a lookup error (auth expiry, rate limit, bad
+        # JSON) — a throttle-check outage must not itself block a healthy run.
+        # Ceiling: a genuinely full backlog goes undetected for that one run,
+        # but MAX_PROPOSALS still caps its worst-case output at 1 issue.
+        print(
+            f"::warning::backlog-check: count lookup failed, failing open (proceeding): {exc}",
+            file=sys.stderr,
+        )
+        full = False
+
+    _append(output_file, f"backlog_full={'true' if full else 'false'}\n")
+
+    if full:
+        _append(summary_file, _summary_backlog_full(args.heading, args.label, BACKLOG_THRESHOLD))
+        print(
+            f"BACKLOG FULL: {BACKLOG_THRESHOLD}+ open {args.label} issues still "
+            f"{TRIAGE_LABEL}; skipping this run",
+            file=out,
+        )
+    else:
+        print(
+            f"backlog ok: fewer than {BACKLOG_THRESHOLD} open {args.label} issues "
+            f"still {TRIAGE_LABEL}",
+            file=out,
+        )
+    return 0
+
+
 def _ensure_label(label, color, description, repo):
     cmd = ["gh", "label", "create", label, "--color", color]
     if description:
@@ -533,6 +602,23 @@ def _find_open(label, repo):
     result = subprocess.run(cmd, check=True, capture_output=True, text=True)
     items = json.loads(result.stdout or "[]")
     return items[0]["url"] if items else None
+
+
+def _count_untriaged(label, repo, cap):
+    """Count open issues carrying BOTH ``label`` and ``TRIAGE_LABEL``, capped at ``cap``.
+
+    Modeled on ``_find_open``. Multiple ``gh --label`` flags AND together, so
+    this counts the loop's own provenance-labeled backlog that is still
+    unreviewed. The ``--limit`` cap keeps the lookup cheap — the caller only
+    needs to know whether the count has reached ``BACKLOG_THRESHOLD``, not the
+    exact total.
+    """
+    cmd = ["gh", "issue", "list", "--label", label, "--label", TRIAGE_LABEL,
+           "--state", "open", "--limit", str(cap), "--json", "number"]
+    if repo:
+        cmd += ["--repo", repo]
+    result = subprocess.run(cmd, check=True, capture_output=True, text=True)
+    return len(json.loads(result.stdout or "[]"))
 
 
 def _fetch_rubric(args, out):
@@ -595,6 +681,17 @@ def main(argv=None, out=None):
     p_publish.add_argument("--dedup-open", action="store_true", dest="dedup_open",
                            help="skip filing entirely if an open issue with --label already exists in --repo (single-open-advisory)")
     p_publish.set_defaults(func=_publish)
+
+    p_backlog = sub.add_parser(
+        "backlog-check",
+        help=f"skip a run when its own untriaged backlog is >= {BACKLOG_THRESHOLD}",
+    )
+    p_backlog.add_argument("--label", required=True, help="the loop's own provenance label")
+    p_backlog.add_argument("--heading", default="Proposal", help="step-summary heading")
+    p_backlog.add_argument("--repo", help="owner/name; defaults to $GH_REPO")
+    p_backlog.add_argument("--summary-file", dest="summary_file", help="defaults to $GITHUB_STEP_SUMMARY")
+    p_backlog.add_argument("--output-file", dest="output_file", help="defaults to $GITHUB_OUTPUT")
+    p_backlog.set_defaults(func=_backlog_check)
 
     p_fetch = sub.add_parser(
         "fetch-rubric",

@@ -22,7 +22,7 @@ In document order:
 1. **Name** — 1–3 evocative words. E.g. *Editorial Mono*, *Tactile Brutalism*, *Warm Telemetry*.
 2. **One-paragraph description** — the visual feel in prose; what the user sees and how it makes them feel.
 3. **Typography intent** — voice (editorial / utilitarian / expressive / display-led) and a constraint (serif-leaning, mono-accents, variable-only, no Inter/Roboto, etc.). Maps to type roles + font choices that Step 5 instantiates.
-4. **Palette intent** — temperature/mood and saturation posture (muted / saturated / monochrome+accent). Maps to OKLCH color tokens with `light-dark()` that Step 5 instantiates.
+4. **Palette intent** — temperature/mood and saturation posture (muted / saturated / monochrome+accent). Maps to color tokens (see [design-tokens.md](design-tokens.md)) that Step 5 instantiates.
 5. **Layout personality** — density (airy / dense / editorial-column / dashboard-grid) and rhythm posture (uniform / varied). Maps to grid, spacing, and depth tokens.
 6. **Motion character** — speed (snappy / considered / still) and spring posture (springy / damped / no-spring). Maps to duration / easing / spring policy.
 7. **Anti-direction** — what this direction is **NOT**, in ≥2 named contrasts. Forces the positive direction to be sharp by naming what it rejects.
@@ -54,13 +54,10 @@ imposing one; mechanical fields last.
 
 ### Anti-direction at position #2
 
-Anti-direction sits immediately after the description and *before* the
-four lenses. This is deliberate: the moment a positive direction is
-sketched in prose, the next question must be "what is this *not*?" so the
-four lens fields are constrained from the first stroke rather than
-retrofitted at the end. Putting Anti-direction late lets the lenses drift
-into generalities; putting it second forces contrast while the description
-is fresh.
+Grilled right after the description, before the four lenses: naming what
+the direction rejects while the description is fresh constrains the
+lenses from the first stroke, instead of retrofitting contrast once
+they've already drifted into generalities.
 
 ### Cap: 2 attempts per field
 
@@ -164,68 +161,47 @@ risks the ADR never being written. The trade-off is accepted; do not
 ```markdown
 # Direction: Warm Telemetry
 
-> Status: committed
-> Created: 2026-03-12
-> ADR: docs/adr/0007-frontend-design-direction.md
+> Status: committed · Created: 2026-03-12 · ADR: docs/adr/0007-frontend-design-direction.md
 
 ## Name
-
 Warm Telemetry
 
 ## Description
-
-A dashboard aesthetic that reads like a well-printed scientific
-instrument panel rather than a generic SaaS app. Surfaces are warm
-near-blacks; numbers and labels carry weight; chrome recedes so data
-charts and tables can dominate. References: the original Bloomberg
-Terminal, Edward Tufte's *Envisioning Information*, the dashboards of
-Honeywell process-control rooms circa 1985.
+Reads like a well-printed instrument panel, not a generic SaaS app: warm
+near-black surfaces, numbers carrying weight, chrome receding for data.
+References: Bloomberg Terminal, Tufte's *Envisioning Information*,
+1985-era Honeywell control rooms.
 
 ## Anti-direction
-
-- **Not** the "cyberpunk dashboard" reflex — no neon, no glow, no
-  monospace-as-aesthetic.
-- **Not** the modern SaaS marketing-site reflex — no gradient hero,
-  no glassmorphism panels, no centered eyebrow-h2-paragraph rhythm.
+- **Not** cyberpunk-dashboard (no neon, no glow, no monospace-as-aesthetic).
+- **Not** SaaS-marketing (no gradient hero, no glassmorphism, no
+  eyebrow-h2-paragraph rhythm).
 
 ## Typography intent
-
-Utilitarian-editorial voice with a tabular-numeric constraint. Sans
-display face for headings (Söhne Breit or similar); humanist sans for
-body (Inter Tight is acceptable here, brand-justified); tabular-mono
-(Berkeley Mono) for all numbers in tables and charts.
+Utilitarian-editorial, tabular-numeric. Sans display (Söhne Breit) for
+headings, humanist sans (Inter Tight, brand-justified) for body,
+tabular-mono (Berkeley Mono) for table/chart numbers.
 
 ## Palette intent
-
-Warm and muted, monochrome plus one earned accent. Base is a
-near-black tuned toward umber (not blue), surfaces step in
-warm-gray. Single accent is a desaturated amber for active state and
-positive deltas; a desaturated rust for negative deltas. No saturated
-hues outside data.
+Warm and muted, monochrome plus one earned accent. Near-black base tuned
+toward umber; desaturated amber for active/positive, rust for negative.
+No saturated hues outside data.
 
 ## Layout personality
-
-Dense and editorial-column. Rhythm is varied — overview sections breathe,
-data sections compress. Grid is 12-column on desktop, single-column on
-mobile with horizontal-scroll data tables. No bento.
+Dense, editorial-column, varied rhythm. 12-column desktop grid,
+single-column mobile with horizontal-scroll tables. No bento.
 
 ## Motion character
-
-Considered and damped. No springs. Durations 120–200ms, ease-out for
-enter, ease-in for exit. Page transitions are a 1-frame fade only.
-Charts animate in once and never re-animate on filter change.
+Considered and damped, no springs. 120–200ms, ease-out enter / ease-in
+exit. Charts animate in once, never on filter change.
 
 ## Banned-pattern overrides
-
-- *(none)*
+*(none)*
 
 ## Token authority path
-
 `app/styles/tokens.css`
 
 ## References
-
 - Honeywell TDC 3000 console photographs
 - Tufte, *Envisioning Information* (1990), ch. 2
-- Bloomberg Terminal at the Bloomberg HQ tour, 2024
 ```

@@ -131,8 +131,7 @@ body-lg      body-md      body-sm
 label-lg     label-md     label-sm
 ```
 
-**Raw px in component code is AI-slop.** Components reference role tokens
-only:
+Raw px in component code is slop (see intro) — reference role tokens:
 
 ```css
 .hero-headline { font: var(--display-lg); }   /* good */
@@ -175,10 +174,8 @@ not reflex.
 
 ## 3. Motion
 
-Motion tokens split by **what is moving**:
-
-- **Spatial motion** (position, scale, layout) → **springs**.
-- **Non-spatial** (opacity, color, blur) → **duration + easing**.
+Motion tokens split by **what is moving**: **spatial** (position, scale,
+layout) → springs; **non-spatial** (opacity, color, blur) → duration + easing.
 
 ### Duration scale (non-spatial)
 
@@ -199,17 +196,16 @@ Never exceed 500ms for UI feedback.
 --motion-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1); /* position change */
 ```
 
-**Plain `linear` is banned for spatial UI transitions.** It is correct
-for continuous/looping motion (spinners, indeterminate progress, parallax,
-opacity-only crossfades). The CSS `linear()` function (Baseline 2023) is
-endorsed for **spring approximation in CSS without JS** — e.g.
-`transition-timing-function: linear(0, 0.18, 0.5, 0.82, 1);`.
+**Plain `linear` is banned for spatial UI transitions** — fine for
+continuous/looping motion (spinners, indeterminate progress, parallax,
+opacity-only crossfades). CSS `linear()` (Baseline 2023) approximates
+springs without JS: `transition-timing-function: linear(0, 0.18, 0.5, 0.82, 1);`.
 
 ### Springs (spatial)
 
-Use a spring library (Framer Motion, Motion One) or `linear()`
-approximation. **Spring settle time must land in the same windows as the
-duration scale** (< 150ms / 200–400ms / 250–350ms). A spring that wobbles
+Use a spring library (Framer Motion, Motion One) or the `linear()`
+approximation above. **Settle time must land in the same windows as the
+duration scale** (< 150ms / 200–400ms / 250–350ms) — a spring wobbling
 for 900ms is decoration, not motion.
 
 ```
@@ -220,36 +216,26 @@ for 900ms is decoration, not motion.
 
 ### Hard rules
 
-- **Animate `transform` and `opacity` only.** Animating `top` / `left` /
-  `width` / `height` triggers layout; transform/opacity compose on the GPU.
-- **Interruptible by default.** Mid-flight animations must accept a new
-  target without jumping back to the start. Spring libraries handle this
-  natively; CSS transitions need `transition` re-applied with the new value.
-- All animations must respect `prefers-reduced-motion`. Provide a
-  `@media (prefers-reduced-motion: reduce)` block that removes or
-  simplifies every transition.
+- **Animate `transform` and `opacity` only** — `top`/`left`/`width`/`height`
+  trigger layout; transform/opacity compose on the GPU.
+- **Interruptible by default.** Mid-flight animations accept a new target
+  without jumping back to the start (spring libraries do this natively;
+  CSS transitions need `transition` re-applied with the new value).
+- **Respect `prefers-reduced-motion`** — a `(prefers-reduced-motion: reduce)`
+  block that removes or simplifies every transition.
+- **`will-change`** only on intent (hover/focus), removed after the
+  animation completes. Never blanket-applied — it creates a persistent
+  GPU layer that degrades scroll performance.
+- A shadow/elevation token (see Spacing & Depth) used as an animation
+  target is spatial — spring or `linear()` it; a linear shadow ramp
+  reads as a tech demo, not a lift.
 
 ### Reach-for
 
-- **View Transitions API** for route-level and large-scope transitions —
-  cross-document on Chromium, same-document elsewhere.
-- **Scroll-driven animations** via `animation-timeline: scroll()` or
-  `view()` — for parallax, sticky reveals, progress indicators tied to
-  scroll position. Falls back gracefully where unsupported.
-
-### Negative rule: `will-change`
-
-Apply `will-change` on intent (hover/focus) and remove after the animation
-completes. **Never blanket-apply** `will-change: transform` to every
-animated element — it creates an implicit GPU layer that consumes memory
-and degrades scroll performance.
-
-### Cross-reference: elevation in motion
-
-When a token from the shadow/elevation scale (see Spacing & Depth) is the
-animation target, treat the shadow change as spatial (use a spring or
-`linear()` approximation) — a linear shadow ramp reads as a tech demo,
-not a lift.
+**View Transitions API** for route-level/large-scope transitions
+(cross-document on Chromium, same-document elsewhere); **scroll-driven
+animations** (`animation-timeline: scroll()`/`view()`) for parallax and
+scroll-tied progress. Both degrade gracefully where unsupported.
 
 ---
 
@@ -291,14 +277,12 @@ mechanism as the color tokens — and keep the geometry shared across modes:
 }
 ```
 
-Dark-mode opacity runs 4–5× higher than light: a dark surface absorbs
-ambient contrast, so a faint shadow simply vanishes against it and needs
-far more opacity to register the same lift. Tune the `oklch` hue channel to
-the direction's ambient palette during Step 5 (cool `220`, warm `40`,
-neutral `0`) — a shadow tinted toward the surface reads more natural than
-neutral black. If a mode needs different blur or offset (not just color),
-fall back to the class-swap mechanism rather than `light-dark()`, which
-cannot vary geometry.
+Dark-mode shadow opacity runs 4–5× higher than light — a dark surface
+absorbs ambient contrast, so a faint shadow needs far more opacity to
+register the same lift. Tune the `oklch` hue toward the direction's
+ambient palette (cool `220`, warm `40`, neutral `0`) rather than neutral
+black; if a mode needs different blur or offset (not just color), fall
+back to class-swap — `light-dark()` can't vary geometry.
 
 Every component uses only named levels. Ad-hoc `box-shadow` values are a
 WARN-tier slop signal during audit.
