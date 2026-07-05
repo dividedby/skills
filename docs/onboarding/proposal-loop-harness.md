@@ -80,14 +80,16 @@ change** (`harness/cli.py` and prompts run at `main` every run,
 [ADR 0014](../adr/0014-harness-is-fetched-fresh-only-the-workflow-envelope-is-vendored.md)):
 remove the harness's old-body compatibility shim (a fallback, or an
 optional-then-required arg) **only after** every consumer on *both* lanes runs
-the new body. Rollout order: (1) move the tag; (2) bump every SHA-pinned
-consumer to the tag commit; (3) confirm no consumer still vendors the pre-change
-body; (4) *then* delete the harness shim. Deleting before step 2 breaks the
-SHA-pin lane — on 2026-07-04, #561 removed `fetch-rubric`'s network fallback
-while agent-research was still pinned pre-#525 (caught before a run hit it,
-fixed by agent-research#491). `check_workflow_drift.py`'s pin-drift lane (#524)
-flags a SHA-pin left behind the tag, but weekly and after the fact; the order
-above is the prevention.
+the new body. Rollout order: (1) move the tag — every consumer floats `@claude-loops-v1`
+(agent-research floated off its #470 SHA in the goodreads-bot#668 follow-on), so
+this reaches all of them; (2) if a consumer is ever SHA-pinned again, bump it to
+the tag commit (none are today); (3) confirm no consumer still vendors the
+pre-change body; (4) *then* delete the harness shim. The SHA-pin lane is exactly
+what floating the tag eliminated: on 2026-07-04, #561 removed `fetch-rubric`'s
+network fallback while agent-research was still SHA-pinned pre-#525 (caught before
+a run hit it, fixed by agent-research#491). `check_workflow_drift.py`'s pin-drift
+lane (#524) still flags a stray SHA left behind the tag, but weekly and after the
+fact; keeping every consumer on the tag literal is the prevention.
 
 ```yaml
 name: <Loop Name>

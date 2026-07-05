@@ -44,10 +44,11 @@ tag-pinned content against `main` (one shared issue, fleet-wide, when the tag
 lags), and (b) resolves each consumer's own `uses:` pin — a tag literal or a
 40-char SHA with a trailing `# claude-loops-v1` comment — and diffs the
 resolved content against `main` (folded into that consumer's existing
-`workflow-drift` issue) (#524). agent-research pins by SHA + trailing comment
-rather than the tag literal (#470); its three stubs are exempted from the
-literal `@claude-loops-v1` anchor check (`REPO_SKIP_ANCHORS`) since the
-pin-drift lane now covers pin correctness there directly.
+`workflow-drift` issue) (#524). Every consumer pins the `@claude-loops-v1` tag
+literal — agent-research floated off its prior #470 SHA pin in the
+goodreads-bot#668 follow-on — so `REPO_SKIP_ANCHORS` is empty and no stub is
+exempted from the literal anchor check. The pin-drift lane still resolves a
+40-char SHA (so a stray SHA pin's drift is still caught), but none is in use.
 
 **Label-doc drift check** — companion detector landed via the `label-drift` job
 in [`fleet-drift.yml`](../../.github/workflows/fleet-drift.yml)

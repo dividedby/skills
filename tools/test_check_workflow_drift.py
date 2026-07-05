@@ -105,17 +105,17 @@ class TestCheckFile(unittest.TestCase):
 
 
 class TestRepoSkipAnchors(unittest.TestCase):
-    """agent-research pins by SHA + trailing `# claude-loops-v1` comment (#470),
-    so the literal `@claude-loops-v1` substring never appears there — skip that
-    one anchor for that repo only; moodreader/goodreads-bot (tag-literal pins)
-    still enforce it, since the pin-drift lane subsumes the check for
-    agent-research specifically."""
+    """REPO_SKIP_ANCHORS is empty: every consumer carries the `@claude-loops-v1`
+    tag literal, so a missing literal is a finding everywhere. agent-research
+    used to be the lone exception (SHA-pinned by #470), but it floated its pin
+    back to the tag literal (goodreads-bot#668 follow-on), so it now enforces the
+    anchor like moodreader/goodreads-bot."""
 
-    def test_agent_research_skips_claude_loops_v1_literal(self):
+    def test_agent_research_no_longer_skips_claude_loops_v1_literal(self):
         anchors = ANCHORS[APPLY_PATH]
         content = "\n".join(a for a in anchors if a != "@claude-loops-v1")
         skip = REPO_SKIP_ANCHORS.get("dividedby/agent-research", set())
-        self.assertEqual(check_file(content, anchors, skip=skip), [])
+        self.assertIn("@claude-loops-v1", check_file(content, anchors, skip=skip))
 
     def test_moodreader_still_requires_claude_loops_v1_literal(self):
         anchors = ANCHORS[APPLY_PATH]
@@ -272,7 +272,8 @@ class TestPinDriftPureChain(unittest.TestCase):
     """extract_pin -> resolve_effective_ref -> body_diff, wired end to end with no I/O."""
 
     def test_sha_pin_matching_tag_no_drift(self):
-        # agent-research-style: SHA pin equal to the tag's current SHA, body unchanged.
+        # No consumer SHA-pins now, but the resolver must still handle a stray
+        # SHA pin: one equal to the tag's current SHA, body unchanged -> no drift.
         filename = os.path.basename(APPLY_BODY_PATH)
         stub_content = (
             f"uses: dividedby/skills/.github/workflows/{filename}@{TAG_SHA} # {TAG_NAME}\n"
