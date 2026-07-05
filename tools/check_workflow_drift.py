@@ -189,14 +189,13 @@ BODY_FORBIDDEN: dict[str, list[str]] = {
 SKILLS_SKIP_ANCHORS: set[str] = {"@claude-loops-v1"}
 
 # Per-CONSUMER-repo anchor skips (distinct from SKILLS_SKIP_ANCHORS above, which
-# is for skills' own canary stubs). agent-research moved its `@claude-loops-v1`
-# tag pin to a SHA pin + trailing `# claude-loops-v1` comment (#470); the tag
-# literal no longer appears there by design, and the pin-drift lane below
-# (extract_pin/resolve_effective_ref) now checks that repo's pin correctness
-# instead of the literal-substring anchor.
-REPO_SKIP_ANCHORS: dict[str, set[str]] = {
-    "dividedby/agent-research": {"@claude-loops-v1"},
-}
+# is for skills' own canary stubs). Currently empty: every consumer — including
+# agent-research, which floated its pin off the #470 SHA back to the
+# `@claude-loops-v1` tag literal (goodreads-bot#668 follow-on) — now carries the
+# tag literal, so no repo needs an anchor waived. The pin-drift lane below
+# (extract_pin/resolve_effective_ref) still catches a stray SHA pin's drift if
+# one is ever reintroduced.
+REPO_SKIP_ANCHORS: dict[str, set[str]] = {}
 
 # The reusable-rail tag consumers pin against (ADR 0029). A SHA-hex pin (with a
 # trailing `# claude-loops-v1` comment) resolves to itself; a literal tag pin
