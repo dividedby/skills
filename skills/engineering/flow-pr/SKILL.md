@@ -83,6 +83,8 @@ Runs when the user signals done/ship, or when all autonomy triggers below are sa
 
    Mirrored verbatim in `council`'s Falsifier seat brief (`skills/engineering/council/SKILL.md`) — keep the two lists in sync.
 
+   **Fix or name the failure.** A finding that survives the FP-exclusion list is confirmed actionable: the fix pass returns the specific fix, or the concrete failure point it hits. "The original is fine" is not available here — that judgment already happened in the FP-exclusion pass; re-arguing it re-opens a decided question and stalls the loop.
+
 5. **CI gate.** Poll `gh pr checks` until all checks pass. Do not merge with red or pending CI.
 
 6. **Merge.** `gh pr merge --merge` (merge-commit only; see [`merge-mechanics.md`](merge-mechanics.md)).
