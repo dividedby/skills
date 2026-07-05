@@ -3,7 +3,7 @@ name: flow-pr
 description: >
   Flow-aware end-to-end PR helper — cuts a feature branch from the repo's
   default branch, commits → pushes → opens a PR with the default branch as
-  base, reviews and fixes the diff (via `/review`), gates on CI, then merges
+  base, reviews and fixes the diff (via `/code-review`), gates on CI, then merges
   to the default branch. When the default branch is not main, promotion
   (default→main) is a separate always-confirmed mode. Invokable as a slash
   command or by the model on a done+green signal.
@@ -17,16 +17,12 @@ layer on top of existing mechanics.
 
 Defers:
 - **Commit message policy** → `/commit`
-- **Code-review logic** → `/review` (flow-pr *runs* it as the review gate; does not implement it)
+- **Code-review logic** → `/code-review` (flow-pr *runs* it as the review gate; does not implement it)
 - **Issue filing** → repo's intake convention
 - **Merge mechanics** → [`merge-mechanics.md`](merge-mechanics.md)
 
-> `/review` here means the installed two-axis Standards+Spec skill (Matt's,
-> pre-rename) — it's still what resolves locally today. Upstream renamed the
-> skill `code-review` on 2026-07-01, which collides with the built-in
-> `/code-review` command and the official code-review plugin; when the
-> installed copy adopts the rename, update these refs. #529 owns the larger
-> review-gate verdict.
+> `/code-review` here means the installed two-axis Standards+Spec skill
+> (Matt's), which is what resolves for that name today (#556).
 
 ---
 
@@ -70,11 +66,11 @@ Runs when the user signals done/ship, or when all autonomy triggers below are sa
 
    If a PR for the branch already exists, update it instead of opening a new one. Check with `gh pr list --head <branch>` first (idempotent).
 
-4. **Review gate (default on).** Invoke `/review` on the PR diff and apply fixes. Loop review → fix → re-review until `/review` reports no actionable findings or a **2-pass cap** is hit. If actionable findings remain at the cap, halt and surface them — do not merge.
+4. **Review gate (default on).** Invoke `/code-review` on the PR diff and apply fixes. Loop review → fix → re-review until `/code-review` reports no actionable findings or a **2-pass cap** is hit. If actionable findings remain at the cap, halt and surface them — do not merge.
 
    Skip only on explicit caller opt-out (`/flow-pr skip-review` or a stated "skip review"). Do not auto-classify the diff to decide — diff size and file type are poor proxies for review need.
 
-   **FP-exclusion list.** When judging whether a `/review` finding is
+   **FP-exclusion list.** When judging whether a `/code-review` finding is
    actionable, do not treat any of the following as a finding to fix or a
    blocker to the cap:
 

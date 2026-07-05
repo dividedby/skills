@@ -615,6 +615,91 @@ class PublishCommandTest(unittest.TestCase):
         self.assertIn("rate limited", err.getvalue())
 
 
+class CountUntriagedTest(unittest.TestCase):
+    def test_builds_expected_gh_command(self):
+        with mock.patch("cli.subprocess.run") as run:
+            run.return_value = SimpleNamespace(returncode=0, stdout="[]")
+            cli._count_untriaged("source:agent-research", "owner/name", 3)
+        cmd = run.call_args.args[0]
+        self.assertEqual(cmd[:3], ["gh", "issue", "list"])
+        self.assertEqual(cmd.count("--label"), 2)
+        self.assertIn("source:agent-research", cmd)
+        self.assertIn("needs-triage", cmd)
+        self.assertIn("--state", cmd)
+        self.assertIn("open", cmd)
+        self.assertIn("--limit", cmd)
+        self.assertIn("3", cmd)
+        self.assertIn("--json", cmd)
+        self.assertIn("number", cmd)
+        self.assertIn("--repo", cmd)
+        self.assertIn("owner/name", cmd)
+
+    def test_counts_returned_items(self):
+        with mock.patch("cli.subprocess.run") as run:
+            run.return_value = SimpleNamespace(
+                returncode=0, stdout=json.dumps([{"number": 1}, {"number": 2}])
+            )
+            count = cli._count_untriaged("source:agent-research", "owner/name", 3)
+        self.assertEqual(count, 2)
+
+
+class BacklogCheckCommandTest(unittest.TestCase):
+    """The backlog throttle: skip a run when the loop's own provenance-labeled
+    backlog is already >= BACKLOG_THRESHOLD issues still needs-triage."""
+
+    def setUp(self):
+        self.dir = tempfile.mkdtemp()
+        self.summary = os.path.join(self.dir, "summary.md")
+        self.output = os.path.join(self.dir, "gh_output")
+
+    def _check(self, extra=None):
+        argv = [
+            "backlog-check", "--label", "source:agent-research",
+            "--heading", "Apply agent research", "--summary-file", self.summary,
+            "--output-file", self.output, "--repo", "owner/name",
+        ]
+        return _run(argv + (extra or []))
+
+    def test_full_backlog_skips_and_summarises(self):
+        with mock.patch("cli.subprocess.run") as run:
+            run.return_value = SimpleNamespace(
+                returncode=0, stdout=json.dumps([{"number": 1}, {"number": 2}, {"number": 3}])
+            )
+            code, out = self._check()
+        self.assertEqual(code, 0)
+        with open(self.output) as fh:
+            self.assertIn("backlog_full=true", fh.read())
+        with open(self.summary) as fh:
+            s = fh.read()
+        self.assertIn("backlog full", s.lower())
+        self.assertIn("BACKLOG FULL", out)
+
+    def test_below_threshold_proceeds_with_no_skip_summary(self):
+        """Boundary: 2 open issues is below the threshold of 3 -> proceed."""
+        with mock.patch("cli.subprocess.run") as run:
+            run.return_value = SimpleNamespace(
+                returncode=0, stdout=json.dumps([{"number": 1}, {"number": 2}])
+            )
+            code, out = self._check()
+        self.assertEqual(code, 0)
+        with open(self.output) as fh:
+            self.assertIn("backlog_full=false", fh.read())
+        self.assertFalse(os.path.exists(self.summary))
+
+    def test_gh_failure_fails_open(self):
+        """A gh lookup failure must never block a run — fail open (#543)."""
+        with mock.patch("cli.subprocess.run") as run:
+            run.side_effect = cli.subprocess.CalledProcessError(
+                1, ["gh", "issue", "list"], output="", stderr="rate limited"
+            )
+            with mock.patch("sys.stderr", new_callable=io.StringIO) as err:
+                code, out = self._check()
+        self.assertEqual(code, 0)
+        with open(self.output) as fh:
+            self.assertIn("backlog_full=false", fh.read())
+        self.assertIn("::warning::", err.getvalue())
+
+
 class FetchRubricCommandTest(unittest.TestCase):
     """Clone-first (--source-dir, no network call, #525)."""
 

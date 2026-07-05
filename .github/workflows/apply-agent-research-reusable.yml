@@ -147,7 +147,22 @@ jobs:
             --description "Cross-repo supply: a Consumer offers a local skill it built for adoption (see ADR 0010, skill-promotion-flow.md)" \
             >/dev/null 2>&1 || true
 
+      - name: Backlog throttle
+        id: backlog
+        run: |
+          set -euo pipefail
+          # ADR 0019 caps each run to 1 proposal; this caps the *accumulation*: if
+          # >= 3 open source:agent-research issues still carry needs-triage, skip the
+          # run instead of growing a pile nobody has triaged. Read-only, capped at the
+          # threshold. Threshold + count logic live in the fetched-fresh harness so the
+          # policy reaches every consumer next run (ADR 0014); this vendored wiring only
+          # reads the boolean it emits.
+          python3 "$HARNESS/cli.py" backlog-check \
+            --label "$LABEL" \
+            --heading "Apply agent research"
+
       - name: Run apply-agent-research
+        if: steps.backlog.outputs.backlog_full != 'true'
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
         run: |
@@ -191,7 +206,7 @@ jobs:
             | tee "$RUNNER_TEMP/agent.jsonl"
 
       - name: Digest the run (result log + cost ledger)
-        if: always()
+        if: always() && steps.backlog.outputs.backlog_full != 'true'
         run: |
           set -euo pipefail
           # JSONL -> clean result text (the LAST result event's .result, whole, so
@@ -206,7 +221,7 @@ jobs:
             --cost-out "$RUNNER_TEMP/agent.cost"
 
       - name: Summarise run
-        if: always()
+        if: always() && steps.backlog.outputs.backlog_full != 'true'
         run: |
           {
             echo "## Apply agent research"

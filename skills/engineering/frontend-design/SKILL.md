@@ -85,15 +85,14 @@ Present surviving proposals. User picks. Confirm: "Proceeding with
 ### 5. Design Language Instantiation
 
 Write the complete `tokens.css` (or Tailwind theme) at the *Token
-authority path* from the direction doc. Direction may not remain prose:
-type roles get size/weight/line-height; palette becomes OKLCH with
-`light-dark()`; spacing, shadow/elevation, radius, motion durations +
-easing all become machine-readable. See [design-tokens.md](design-tokens.md).
+authority path* from the direction doc. Direction may not remain prose —
+type, color, spacing, depth, and motion all become machine-readable
+tokens. Full taxonomy (OKLCH, `light-dark()`, scales): [design-tokens.md](design-tokens.md).
 
 ### 6. Generation
 
-Components reference only tokens from Step 5. No raw px, no inline hex,
-no ad-hoc shadows or margins.
+Components reference only tokens from Step 5 — no raw values (see
+[design-tokens.md](design-tokens.md)).
 
 ### 7. Post-Generation Audit
 
