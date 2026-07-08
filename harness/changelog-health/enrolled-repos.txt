@@ -2,6 +2,7 @@
 # Add a repo here to enroll it in the weekly changelog-health evaluator.
 dividedby/agent-research
 dividedby/claude-config
+dividedby/draftslayer
 dividedby/General-URL-Cleaner-Revived
 dividedby/goodreads-bot
 dividedby/infra
