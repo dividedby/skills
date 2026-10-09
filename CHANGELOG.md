@@ -34,6 +34,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
 ### Removed
 
+- Per-repo Serena MCP config (`.serena/`) removed — Serena is no longer used (dividedby/claude-config#180)
 - `harness/cli.py fetch-rubric`: legacy raw-URL network fallback removed now that the `claude-loops-v1` tag has moved past #525 — every consumer vendors the `--source-dir` clone-first reusable body; `--source-dir` is now a required argument (#523, #516)
 - Fable-5 trial sunset blockquotes removed from `skills/engineering/council/SKILL.md` and `skills/engineering/repo-audit/SKILL.md` — trial over, models reverted (see Changed) (#111, #544)
 - `dividedby/bench` archived (read-only since 2026-06-21) and dropped from the `check-idea-inbox-drift` fleet detector's `REPOS` map — an archived carrier can't be reconciled, so flagging it would file an un-fixable `idea-inbox-drift` issue; matches the script's "archived repos dropped by hand" policy (#489)

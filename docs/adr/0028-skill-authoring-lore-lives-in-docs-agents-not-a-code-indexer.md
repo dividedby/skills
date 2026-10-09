@@ -18,18 +18,17 @@ a spike (#400):
    Python harness plus markdown skills, no god modules), and "where things live"
    is already the top-level `README` catalog plus per-skill `SKILL.md`.
 
-Candidate hosts for the lore: Serena markdown memories (repo `.serena/memories/`
-or global `~/.serena/memories/global/`); a `docs/` knowledge tree; or folding it
-into an existing surface (`installed-skills.md` / `setup-dividedby-skills`).
+Candidate hosts for the lore: agent-memory stores (per-repo or global); a `docs/`
+knowledge tree; or folding it into an existing surface (`installed-skills.md` / `setup-dividedby-skills`).
 
 ## Decision
 
 **Skill-authoring lore lives in `docs/agents/skill-authoring.md`** — a committed,
-in-repo doc, not Serena memories and not a code index.
+in-repo doc, not agent memories and not a code index.
 
 - The deciding constraint is the same one that put a committed snapshot at
   `docs/agents/installed-skills.md`: the lore must be readable by **headless /
-  remote loops that clone the repo**. Global Serena memories live in no repo;
+  remote loops that clone the repo**. Global agent memories live in no repo;
   even repo memories are not the human-/loop-browsable convention surface.
   Authoring lore being cross-repo *argues for global* — exactly what a remote
   single-repo clone cannot see. `docs/agents/` is in-repo, git-versioned,
@@ -37,7 +36,7 @@ in-repo doc, not Serena memories and not a code index.
   pattern.
 - Folding into `installed-skills.md` / `setup-dividedby-skills` is the wrong
   semantic home (capability snapshot ≠ authoring craft) and conflates concerns.
-- A Serena memory **may mirror** the doc for in-session convenience, but the
+- An agent memory **may mirror** the doc for in-session convenience, but the
   committed doc is canonical.
 
 **Scope (ponytail):** start as the single file `docs/agents/skill-authoring.md`;
