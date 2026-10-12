@@ -4,7 +4,7 @@
 Asserts the canonical CORE label set for the SOURCE registry
 (docs/agents/labels.md).
 
-Run: python3 -B skills/config/labels.test.py
+Run: python3 -B docs/agents/labels.test.py
 """
 import re
 import unittest

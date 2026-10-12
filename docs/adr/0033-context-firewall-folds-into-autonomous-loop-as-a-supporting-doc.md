@@ -2,6 +2,8 @@
 
 > **Status: accepted** — supersedes [ADR 0012](0012-autonomous-loop-and-context-firewall-are-two-composing-skills.md). Ratified via PR #449 (decision spike [#446](https://github.com/dividedby/skills/issues/446)). Records the decision only; the skill de-registration + doc re-cut land in #448, the `/flow-pr` close-out in #447 — no skill is moved or deleted until #448.
 
+> **Superseded by [ADR 0040](./0040-retire-unused-catalog-skills-and-fold-flow-pr-into-branching-flow.md)** — `autonomous-loop` and its `FIREWALL.md` are retired.
+
 [ADR 0012](0012-autonomous-loop-and-context-firewall-are-two-composing-skills.md)
 kept `autonomous-loop` and `context-firewall` as **two independently-invokable
 skills**, on the deciding rationale that the firewall has a **loopless** user —

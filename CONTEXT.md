@@ -14,7 +14,7 @@ _Avoid_: command, tool, prompt.
 
 **Bucket**:
 A top-level grouping under `skills/` that clusters skills by use case.
-Currently `engineering/` and `config/`.
+Currently `engineering/`.
 _Avoid_: category, namespace, group.
 
 **Convention**:
@@ -29,8 +29,10 @@ it observes drift in a surface another skill owns, it does not absorb the fix an
 does not imply a whole-repo clearance — it **flags the drift and names the owning
 skill** to hand off. Born from `project-claude-config` reporting "config is fine"
 while a label doc owned by a different skill had drifted
-([ADR 0023](./docs/adr/0023-setup-dividedby-skills-vs-project-claude-config-seam.md);
-that skill has since been retired).
+([ADR 0023](./docs/adr/0023-setup-dividedby-skills-vs-project-claude-config-seam.md));
+the skills that owned the seam have since been retired
+([ADR 0039](./docs/adr/0039-retire-remaining-proposal-loops-and-loop-serving-skills.md),
+[ADR 0040](./docs/adr/0040-retire-unused-catalog-skills-and-fold-flow-pr-into-branching-flow.md)).
 _Avoid_: false all-clear, clean report, whole-repo green.
 
 **Guard hook**:
@@ -38,8 +40,7 @@ A deterministic PreToolUse hook that blocks a class of dangerous commands by
 exiting non-zero (e.g. `bash-guard.py`, `pnpm-guard`, a git-guard). The
 **deterministic** counterpart to a **Convention** (a prose rule): a convention
 only lowers the odds an agent does the harmful thing, a guard hook makes it
-impossible. Proposed/audited via the `config/` skill's (`project-claude-config`) `CATALOG.md`, not
-as a standalone skill. A project-scope guard may re-declare a global one when the
+impossible. A project-scope guard may re-declare a global one when the
 run lacks global config (CI/AFK) — see
 [ADR 0013](./docs/adr/0013-project-scope-hooks-may-redeclare-global-guards-for-ci.md).
 Output convention: silent on pass (no output, exit 0); on a block, emit to stderr exactly the diagnostic the agent needs to correct course — no more — and exit non-zero.
@@ -47,7 +48,7 @@ _Avoid_: safety hook, blocker, validator.
 
 **Supporting file**:
 A markdown file inside a skill folder that the `SKILL.md` links to for
-detail (e.g. `banned-patterns.md`, `direction-doc-format.md`).
+detail (e.g. repo-audit's `playbook.md`).
 _Avoid_: doc, reference, attachment.
 
 **Idea Inbox**:
@@ -56,7 +57,7 @@ unstructured** ideas — raw, unscoped thoughts. Items enter
 **enriched** — the idea plus the ambient context/links available at file time, but
 not yet grilled or scoped — and leave by **draining**: an adaptive promotion that
 picks only the pipeline steps a given idea needs (`/grill-with-docs`, `/to-spec`,
-`/to-tickets`, `/software-design`) and strives to emit a `ready-for-agent` issue
+`/to-tickets`) and strives to emit a `ready-for-agent` issue
 (strong agent brief, HITL steps folded in where needed), moving the item to a
 `✅ Actioned` section with `→ #num`. **Structured, contract-bearing**
 filings (e.g. a fully-scoped bug) **bypass the Inbox**
@@ -64,57 +65,6 @@ and file labeled issues directly. The unifying invariant is that every filing
 becomes a tracked GitHub issue — not that every filing funnels through the Inbox.
 _Avoid_: backlog, triage queue, scratchpad, inbox issue.
 
-
-**Autonomous loop** (a.k.a. AFK loop):
-An unattended agent run that repeats a work cycle until a stop condition,
-guarded by a per-iteration feedback gate and an iteration/cost cap. The general
-category over a **Proposal loop** (its propose-only instance — never applies,
-[ADR 0003](./docs/adr/0003-skill-improvement-workflows-propose-via-issues.md))
-and an **applying loop** (commits or opens PRs on a green gate); a **Run-book**
-is the scheduled wrapper around one. Setup methodology lives in the
-`autonomous-loop` skill, which defers execution to an existing runtime rather
-than reimplementing one.
-_Avoid_: bot, daemon, automation, AFK bot.
-
-**Run-book**:
-A cron-driven prompt that an unattended ("AFK") agent follows to perform a
-recurring workflow. Lives in the repo but is **not itself** a published skill —
-it orchestrates, and may invoke skills as steps, including as a thin scheduled
-wrapper around a single published skill. The reusable *capability* it invokes
-can be a published skill; the run-book is only the schedule and the per-repo
-wiring around it.
-_Avoid_: skill, script, job, automation.
-
-**In-session sub-agent**:
-A sub-agent dispatched via the Agent tool **inside the live Claude Code
-process** — subscription-covered, no new process. The mechanism a loop or
-firewall reaches for **when a session already exists** (interactive or `/loop`):
-it supplies the per-item context boundary the persistent session doesn't give for
-free. Preferred over a **Headless process** whenever a session is available; the
-fallback only fits where none is. Distinct from the `/loop`/`/schedule`/CI-cron
-*runtime selection* ([ADR 0012](./docs/adr/0012-autonomous-loop-and-context-firewall-are-two-composing-skills.md)) — this is *how* a work item runs, not *which runtime* schedules it.
-_Avoid_: child process, claude -p, Task, headless agent.
-
-**Headless process**:
-A fresh `claude -p` / Agent SDK process spawned with **no interactive session** —
-the mechanism for environments that have none (CI, cron, runners), where each
-invocation is its own context boundary (a firewall per run) for free. The
-**fallback when there is no session**, never the default inside one — an agent
-running in the Claude Code CLI is *in* a session and should use an
-**In-session sub-agent** instead. Reserving it for the no-session case also
-avoids drawing on the Agent SDK credit (see #58) — but that cost is secondary;
-the routing is environment-fit first.
-_Avoid_: headless runtime, batch agent, claude -p (generically), detached runtime.
-
-**Proposal loop**:
-The propose-only instance of an **Autonomous loop**: an unattended,
-skill-driven run that reads an input, then **proposes via labeled issues and
-never applies** — no commits, edits, or PRs (the producer/decider split,
-[ADR 0003](./docs/adr/0003-skill-improvement-workflows-propose-via-issues.md)).
-This repo no longer runs any scheduled proposal loops
-([ADR 0039](./docs/adr/0039-retire-remaining-proposal-loops-and-loop-serving-skills.md));
-the term survives as the strictest point on the `autonomous-loop` gate spectrum.
-_Avoid_: bot, pipeline, automation.
 
 **Rejection record**:
 One structured file under `.out-of-scope/` per **explicitly-refused** capability,

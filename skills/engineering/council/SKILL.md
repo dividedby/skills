@@ -82,7 +82,7 @@ noise dressed up as an objection. It does not report:
 - Real issues, but on lines the diff didn't touch.
 - General code-quality gripes (test coverage, docs, style) absent a documented standard (CLAUDE.md, ADR, or repo convention) that the diff violates.
 
-Mirrored verbatim in `flow-pr`'s step-4 review gate (`skills/engineering/flow-pr/SKILL.md`) — keep the two lists in sync.
+This list is canonical for the published plugin. A mirror lives in the maintainer's `~/.claude/branching-flow.md` review gate (not in this repo) — kept in sync by hand.
 
 ---
 

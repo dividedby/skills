@@ -2,6 +2,8 @@
 
 > **Status: accepted** — ratified via PR [#471](https://github.com/dividedby/skills/pull/471). Records a decision from a `/grill-with-docs` session (2026-06-25) triaging [#470](https://github.com/dividedby/skills/issues/470). Names a deliberate exception to [ADR 0024](./0024-lean-on-upstream-skills-soft-depend-over-reinvent.md) for one skill; it does **not** weaken 0024's default.
 
+> **Superseded by [ADR 0040](./0040-retire-unused-catalog-skills-and-fold-flow-pr-into-branching-flow.md)** — `write-well` is retired, so the scoped exception to ADR 0024 no longer has a subject.
+
 ## Context
 
 [ADR 0024](./0024-lean-on-upstream-skills-soft-depend-over-reinvent.md) sets the default: when Matt's upstream skill covers a capability, **delete + soft-depend** (a documented install-alongside expectation), not reinvent. [#470](https://github.com/dividedby/skills/issues/470) proposes a new `engineering/` skill, `write-well` — a lean, English-only prose **draft + de-slop** skill, rebuilt fresh from [`d-wwei/great-writer`](https://github.com/d-wwei/great-writer) (MIT) and folding in concepts from four other repos. Building a self-contained skill is, on its face, the reinvention 0024 biases against, so the exception must be stated.

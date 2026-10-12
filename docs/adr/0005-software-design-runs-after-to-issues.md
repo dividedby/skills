@@ -1,5 +1,7 @@
 # software-design runs after to-issues, not before
 
+> **Superseded by [ADR 0040](./0040-retire-unused-catalog-skills-and-fold-flow-pr-into-branching-flow.md)** — `software-design` is retired, so the run-after-to-issues ordering it fixed no longer applies.
+
 `software-design` runs **after** `/to-issues` has published the backlog
 (`/to-prd → /to-issues → /software-design → /tdd`), enriching each existing
 issue body in place rather than designing modules first and letting

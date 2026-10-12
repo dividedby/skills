@@ -1,7 +1,6 @@
 Skills are organized into bucket folders under skills/:
 
     engineering/ — daily code work
-    config/      — setting up and auditing a project's Claude config (instruction files + settings/hooks harness)
 
 Each skill is registered in `.claude-plugin/plugin.json` (`skills[]`) and linked from the top-level `README.md` with a one-line description — enforced by the `check-skill-registration` Stop hook.
 
@@ -28,7 +27,7 @@ Single-context: one `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agent
 
 Skills in this repo prescribe at the principle level; code examples are illustrative sketches, not literal rules. See [`docs/adr/0002-design-skills-prescribe-at-principle-level.md`](./docs/adr/0002-design-skills-prescribe-at-principle-level.md).
 
-Skills here are user-invoked orchestrators by default — each `SKILL.md` carries `disable-model-invocation: true`, so its description doesn't load into every session's context. Exception: a skill deliberately model-fired on a signal (e.g. `flow-pr` on done+green) omits the flag by design.
+Skills here are user-invoked orchestrators by default — each `SKILL.md` carries `disable-model-invocation: true`, so its description doesn't load into every session's context.
 
 ### Skill authoring
 

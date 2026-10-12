@@ -31,8 +31,7 @@ description: >
 `disable-model-invocation: true` is the **default** for all skills in this repo
 — it keeps the skill's description out of every session's ambient context (see
 [CLAUDE.md § Skill editorial intent](./CLAUDE.md)). Omit the flag only when a
-skill is deliberately model-fired on a signal (current exception: `flow-pr`,
-which the model invokes on done+green).
+skill is deliberately model-fired on a signal.
 
 ### Prescribe at the principle level
 
