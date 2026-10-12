@@ -1,5 +1,7 @@
 # skill-request filing checks existing and installed skills first
 
+> **Superseded by [ADR 0038](./0038-retire-knowledge-application-after-agent-research-decommission.md)** — the `skill-request` filing check is retired with the cross-repo skill-request channel.
+
 Before a [Consumer](../../CONTEXT.md) files a `skill-request` into
 `dividedby/skills`, its loop checks the candidate capability against the
 **existing published skills** (the `skills/` catalog of the freshly-cloned

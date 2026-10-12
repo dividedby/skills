@@ -34,7 +34,7 @@ class TestCronCadenceDays(unittest.TestCase):
     """Cadence parsed from the day-of-week field's comma count."""
 
     def test_three_days_a_week_cadence(self):
-        # Mon/Wed/Sat, e.g. improve-codebase-architecture / apply-agent-research.
+        # Mon/Wed/Sat, e.g. improve-codebase-architecture.
         self.assertAlmostEqual(cron_cadence_days("5 0 * * 1,3,6"), 7 / 3)
 
     def test_weekly_single_day_cadence(self):

@@ -50,13 +50,11 @@ gh issue list --state open --label "needs-triage" --json number,title,createdAt 
 
 2. **Intake routing.** If the issue describes something that belongs in the capture/drain path, reference `docs/agents/idea-inbox.md`. Do not re-file Inbox ideas as tracked issues.
 
-3. **Skill-request path.** If the issue carries `skill-request`, follow **Skill-request triage** below instead of the generic path.
+3. **Recommend.** State your category, state, and size recommendation with reasoning. Wait for direction.
 
-4. **Recommend.** State your category, state, and size recommendation with reasoning. Wait for direction.
+4. **Bug reproduction step.** If the recommended category is `bug`, capture a minimal reproduction before proceeding to apply the outcome: the exact steps, observed behaviour, and expected behaviour. Record this in a comment on the issue if not already present. An agent cannot reliably fix a bug it cannot reproduce.
 
-5. **Bug reproduction step.** If the recommended category is `bug`, capture a minimal reproduction before proceeding to apply the outcome: the exact steps, observed behaviour, and expected behaviour. Record this in a comment on the issue if not already present. An agent cannot reliably fix a bug it cannot reproduce.
-
-6. **Apply the outcome** and label:
+5. **Apply the outcome** and label:
 
    ```bash
    gh issue edit <number> --add-label "<state>,<category>,<size>" --remove-label "<old-state>"
@@ -67,15 +65,6 @@ gh issue list --state open --label "needs-triage" --json number,title,createdAt 
    - `blocked` → post a comment stating what is blocking and on what (issue number, external dependency, or open decision) and apply labels.
    - `wontfix` → post a rationale comment, apply labels, and file a durable rejection entry (see **Rejection KB** below).
    - `needs-triage` → apply the label. Optional comment if there is partial progress.
-
-## Skill-request triage
-
-When an issue carries `skill-request`:
-
-1. Run `/cba-searching` (installed skill — `docs/agents/installed-skills.md`) to check whether the wider open-source world already ships this capability well. Feed the issue description as the target concept.
-2. Route on the scan verdict per `docs/design/skill-request-flow.md` (ADR 0021): accept (`ready-for-agent`), park (`awaiting-corroboration` — supplemental label defined by that flow, not part of core triage vocab), or reject (`wontfix`).
-
-Do not re-derive the accept/park/reject semantics here — delegate to that flow.
 
 ## Agent brief
 

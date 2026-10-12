@@ -1,16 +1,16 @@
 """Report-only loop-liveness check for the fleet's scheduled proposal loops.
 
 Every recurring `claude -p` loop that runs as part of the reusable-rail
-(#382/ADR 0029) — improve-codebase-architecture, apply-agent-research,
+(#382/ADR 0029) — improve-codebase-architecture and
 staleness-review — is expected to fire on its own cron in every enrolled
 repo (including skills' own canary copies). A loop that silently stops
 firing, or whose latest scheduled run failed, otherwise goes unnoticed until
 the next manual audit (#522) — this check catches that class automatically.
 
 Roster: reused directly from check_workflow_drift.py — REPOS (consumer
-repos) plus the skills canary repo, crossed with the three reusable-rail
-workflow paths it already reads (APPLY_PATH/ARCH_PATH/STALE_PATH). Plus two
-host-only loops (changelog-health, skill-divergence-audit) that live only in
+repos) plus the skills canary repo, crossed with the two reusable-rail
+workflow paths it already reads (ARCH_PATH/STALE_PATH). Plus one
+host-only loop (changelog-health) that lives only in
 skills and are never vendored to consumers, so they're checked against the
 skills repo only. No second roster is maintained here (#532 AC).
 
@@ -52,7 +52,6 @@ try:
     from tools._drift_common import _gh, ensure_label, fetch_file, open_issues
     from tools._drift_common import file_issue as _file_issue_io
     from tools.check_workflow_drift import (
-        APPLY_PATH,
         ARCH_PATH,
         REPOS,
         SKILLS_BRANCH,
@@ -63,7 +62,6 @@ except ImportError:
     from _drift_common import _gh, ensure_label, fetch_file, open_issues
     from _drift_common import file_issue as _file_issue_io
     from check_workflow_drift import (
-        APPLY_PATH,
         ARCH_PATH,
         REPOS,
         SKILLS_BRANCH,
@@ -75,16 +73,15 @@ except ImportError:
 # Config
 # ---------------------------------------------------------------------------
 
-# The three reusable-rail loop paths check_workflow_drift.py already reads.
-LOOP_PATHS: tuple[str, ...] = (APPLY_PATH, ARCH_PATH, STALE_PATH)
+# The two reusable-rail loop paths check_workflow_drift.py already reads.
+LOOP_PATHS: tuple[str, ...] = (ARCH_PATH, STALE_PATH)
 
 # Host-only loops: recurring scheduled jobs that live only in the skills repo
 # (never vendored to consumers), checked against SKILLS_REPO only — pairing
 # them with consumer repos would 404 (#532 follow-up: the roster only covered
-# the three reusable-rail loops, not these two).
+# the reusable-rail loops, not the host-only ones).
 HOST_LOOP_PATHS: tuple[str, ...] = (
     ".github/workflows/changelog-health.yml",
-    ".github/workflows/skill-divergence-audit.yml",
 )
 
 # shortcut: matched against the caller stub's own prose comment (see

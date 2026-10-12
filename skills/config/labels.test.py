@@ -154,17 +154,11 @@ class TestLoopNetworkLabels(unittest.TestCase):
     def test_workflow_onboarding(self):
         self.assertIn("workflow-onboarding", self._names())
 
-    def test_source_agent_research(self):
-        self.assertIn("source:agent-research", self._names())
-
     def test_source_architecture_review(self):
         self.assertIn("source:architecture-review", self._names())
 
     def test_source_staleness_review(self):
         self.assertIn("source:staleness-review", self._names())
-
-    def test_source_skill_audit(self):
-        self.assertIn("source:skill-audit", self._names())
 
     def _assert_no_leak(self, core_heading: str, tier_label: str):
         core = _extract_section(self.text, core_heading)
@@ -197,12 +191,6 @@ class TestChannelsLabels(unittest.TestCase):
 
     def test_section_present(self):
         self.assertTrue(self.channels.strip(), "CHANNELS section missing or empty")
-
-    def test_skill_request(self):
-        self.assertIn("skill-request", self._names())
-
-    def test_skill_promotion(self):
-        self.assertIn("skill-promotion", self._names())
 
     def test_awaiting_corroboration(self):
         self.assertIn("awaiting-corroboration", self._names())

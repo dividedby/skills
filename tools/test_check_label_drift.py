@@ -39,7 +39,7 @@ _CANONICAL_TRIAGE = """\
 ## CHANNELS (owned by `dividedby/skills`, applied by consumers)
 
 | Label | Color | Description |
-| `skill-request` | `006B75` | Cross-repo demand for a skill |
+| `awaiting-corroboration` | `BFD4F2` | Triaged but parked pending corroboration |
 """
 
 # A triage-labels.md that is missing the LOOP/NETWORK tier.
@@ -54,7 +54,7 @@ _TRIAGE_MISSING_LOOP = """\
 ## CHANNELS (owned by `dividedby/skills`, applied by consumers)
 
 | Label | Color | Description |
-| `skill-request` | `006B75` | Cross-repo demand for a skill |
+| `awaiting-corroboration` | `BFD4F2` | Triaged but parked pending corroboration |
 """
 
 # A triage-labels.md that is missing CHANNELS.
@@ -191,8 +191,8 @@ class TestIssueTitle(unittest.TestCase):
 
     def test_consistent_across_calls(self):
         self.assertEqual(
-            _issue_title("dividedby/agent-research"),
-            _issue_title("dividedby/agent-research"),
+            _issue_title("dividedby/goodreads-bot"),
+            _issue_title("dividedby/goodreads-bot"),
         )
 
 

@@ -41,7 +41,6 @@ except ImportError:
 #   gh api repos/<r> -q .archived
 REPOS: dict[str, str] = {
     "dividedby/moodreader": "main",
-    "dividedby/agent-research": "main",
     "dividedby/goodreads-bot": "staging",
 }
 

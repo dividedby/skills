@@ -3,7 +3,7 @@
 This stands up `staleness-audit` as a scheduled
 [proposal loop](./proposal-loop-harness.md) in any repo with a pinned toolchain.
 It is a **publish-seam** member of the family (like the
-[architecture-review loop](./arch-review-setup.md)) — no knowledge-mirror input
+[architecture-review loop](./arch-review-setup.md)) — no extra input
 and no cross-repo channels — with one trait unique to it: the underlying skill
 *can* mutate (its verify-gated **apply** station), but the loop runs it
 **report-only**, so the cron never changes a file. **Read the harness doc first**;
@@ -24,9 +24,8 @@ report issue per run** — the complement to Dependabot, which owns library deps
   home-vs-consumer difference; SKILL_DIR is the same for both. The prompt
   follows the skill **by file path** via a `@SKILL_DIR@` placeholder the
   reusable body substitutes at `cat`-time (`sed "s#@SKILL_DIR@#$SKILL_DIR#g"`) — the
-  env-parametrization of [ADR 0015](../adr/0015-apply-agent-research-prompt-is-consumer-portable-via-env.md)
-  applied to the staleness skill path, so one fetched-fresh prompt serves all
-  callers from a single fresh clone.
+  env-parametrization pattern applied to the staleness skill path, so one
+  fetched-fresh prompt serves all callers from a single fresh clone.
 - **Ecosystem-general.** The prompt does **not** assume Node. It tells the agent to
   scan whatever pins the repo actually has — Node (`.nvmrc`, `engines.node`),
   Python (`requires-python`/`python` in `pyproject.toml`, `.python-version`,
@@ -119,6 +118,5 @@ thin-stub form (both home-repo `./` and consumer `@claude-loops-v1` variants).
    let the monthly cron take over.
 
 A repo can run this loop alongside the
-[architecture-review](./arch-review-setup.md) and
-[Consumer](./consumer-setup.md) loops — independent jobs with separate provenance
-labels, sharing only the harness.
+[architecture-review](./arch-review-setup.md) loop — independent jobs with
+separate provenance labels, sharing only the harness.

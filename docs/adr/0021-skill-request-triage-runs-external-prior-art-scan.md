@@ -1,5 +1,7 @@
 # skill-request triage runs an external prior-art scan
 
+> **Superseded by [ADR 0038](./0038-retire-knowledge-application-after-agent-research-decommission.md)** — skill-request triage and its prior-art scan are retired with the skill-request flow.
+
 Skill-request triage runs a GitHub-wide prior-art scan via the installed
 `cba-searching` skill before the maintainer accepts, parks, or rejects a request.
 This is the **external** counterpart to

@@ -191,7 +191,7 @@ class DigestCommandTest(unittest.TestCase):
 
     def test_clean_run_cost_line_is_byte_identical_to_pre_error_field_format(self):
         """The happy path's cost line must be unchanged by the #531 error-class
-        addition — COST_SURFACE's parser is unaffected on a normal run."""
+        addition — log scrapers are unaffected on a normal run."""
         self._write([
             json.dumps({"type": "result", "result": "<output>\n{}\n</output>",
                         "total_cost_usd": 0.5, "duration_ms": 10, "num_turns": 2}),
@@ -646,11 +646,11 @@ class CountUntriagedTest(unittest.TestCase):
     def test_builds_expected_gh_command(self):
         with mock.patch("cli.subprocess.run") as run:
             run.return_value = SimpleNamespace(returncode=0, stdout="[]")
-            cli._count_untriaged("source:agent-research", "owner/name", 3)
+            cli._count_untriaged("source:architecture-review", "owner/name", 3)
         cmd = run.call_args.args[0]
         self.assertEqual(cmd[:3], ["gh", "issue", "list"])
         self.assertEqual(cmd.count("--label"), 2)
-        self.assertIn("source:agent-research", cmd)
+        self.assertIn("source:architecture-review", cmd)
         self.assertIn("needs-triage", cmd)
         self.assertIn("--state", cmd)
         self.assertIn("open", cmd)
@@ -666,7 +666,7 @@ class CountUntriagedTest(unittest.TestCase):
             run.return_value = SimpleNamespace(
                 returncode=0, stdout=json.dumps([{"number": 1}, {"number": 2}])
             )
-            count = cli._count_untriaged("source:agent-research", "owner/name", 3)
+            count = cli._count_untriaged("source:architecture-review", "owner/name", 3)
         self.assertEqual(count, 2)
 
 
@@ -681,8 +681,8 @@ class BacklogCheckCommandTest(unittest.TestCase):
 
     def _check(self, extra=None):
         argv = [
-            "backlog-check", "--label", "source:agent-research",
-            "--heading", "Apply agent research", "--summary-file", self.summary,
+            "backlog-check", "--label", "source:architecture-review",
+            "--heading", "Architecture review", "--summary-file", self.summary,
             "--output-file", self.output, "--repo", "owner/name",
         ]
         return _run(argv + (extra or []))

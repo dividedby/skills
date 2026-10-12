@@ -1,5 +1,7 @@
 # The improve-codebase-architecture prompt is a fetched-fresh skeleton plus a local repo-context include
 
+> **Superseded in part by [ADR 0038](./0038-retire-knowledge-application-after-agent-research-decommission.md)** — the `agent-research` instance and the ADR 0015 comparison are retired; the skeleton-plus-local-include design for `improve-codebase-architecture` stands.
+
 > **Amended by [ADR 0020](0020-arch-review-fetches-depth-rubric-fresh-and-adds-simplification-legibility-lenses.md).**
 > The workflow now fetches the depth rubric (LANGUAGE.md + DEEPENING.md) fresh from
 > `mattpocock/skills@main` at run time and concatenates it between the skeleton and the

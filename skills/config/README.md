@@ -38,7 +38,5 @@ mandatory report-then-confirm gate.
 The issue-tracker workflow skill. Moves issues through a state machine on our
 label vocabulary (`needs-triage` → `ready-for-agent` / `ready-for-human` /
 `blocked` / `wontfix`). Shows what needs attention, triages a specific issue with
-the appropriate outcome comment, and routes `skill-request` issues through the
-[ADR-0021](../../docs/adr/0021-skill-request-triage-runs-external-prior-art-scan.md)
-prior-art scan rather than a generic path. It operates the label vocabulary that
+the appropriate outcome comment. It operates the label vocabulary that
 `setup-dividedby-skills` installs.

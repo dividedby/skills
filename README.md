@@ -30,20 +30,14 @@ Setting up and auditing a project's Claude config — instruction files and the 
 
 - **[project-claude-config](./skills/config/project-claude-config/SKILL.md)** — One state-routed pass over a project's Claude config: scaffold what's missing and critique what's present across both the harness (`.claude/settings.json`) and the instruction files (`CLAUDE.md` / `AGENTS.md`), interviewing only for facts the repo can't reveal.
 - **[setup-dividedby-skills](./skills/config/setup-dividedby-skills/SKILL.md)** — Install the dividedby conventions on top of setup-matt-pocock-skills — size labels, intake/idea-inbox, branching policy, the Conventions block, and HITL verification gates. Every network mutation is gated behind an explicit confirm step. Manual/slash invocation only.
-- **[triage](./skills/config/triage/SKILL.md)** — Move issues through a state machine on our label vocabulary: show what needs attention, triage a specific issue with the appropriate outcome comment, and route skill-request issues through the ADR-0021 prior-art scan.
+- **[triage](./skills/config/triage/SKILL.md)** — Move issues through a state machine on our label vocabulary: show what needs attention, triage a specific issue with the appropriate outcome comment, and apply the outcome.
 - **[workflow-onboarding](./skills/config/workflow-onboarding/SKILL.md)** — Install the loop-specific surface (LOOP/NETWORK labels + installed-skills snapshot) on a repo being onboarded into a proposal loop; runs after setup-dividedby-skills, every mutation gated behind explicit confirmation.
-
-### Meta
-
-- **[apply-agent-research](./skills/meta/apply-agent-research/SKILL.md)** — Apply an external agent-research knowledge base to a repo's own agent-meta: read a public knowledge mirror plus the repo's own governance docs, then propose its single best improvement (at most one per run, clearing a high independent bar) as a labeled issue — never editing, committing, or merging.
-- **[skill-divergence-audit](./skills/meta/skill-divergence-audit/SKILL.md)** — Recurring, report-only audit that diffs this repo's published skills against Matt Pocock's repo and the agent-research KB, classifies each gap, and proposes its single best realignment issue — at most one per run, never editing, committing, or merging.
 
 ## Proposal loops
 
-Scheduled workflows that propose improvements via labeled issues (a human decides — never auto-applied) — `improve-codebase-architecture`, `apply-agent-research`, `staleness-review`, and `changelog-health`. Onboarding docs for standing them up in other repos:
+Scheduled workflows that propose improvements via labeled issues (a human decides — never auto-applied) — `improve-codebase-architecture`, `staleness-review`, and `changelog-health`. Onboarding docs for standing them up in other repos:
 
-- **[proposal-loop-harness](./docs/onboarding/proposal-loop-harness.md)** — the shared skeleton the loops follow (propose-via-issues, scheduling; three vendor a fetch-fresh skill install, `changelog-health` is centralized and host-only).
-- **[consumer-setup](./docs/onboarding/consumer-setup.md)** — wire a repo up as an `apply-agent-research` Consumer (agent-meta self-improvement + the cross-repo `skill-request` / `skill-promotion` channels).
+- **[proposal-loop-harness](./docs/onboarding/proposal-loop-harness.md)** — the shared skeleton the loops follow (propose-via-issues, scheduling; two vendor a fetch-fresh skill install, `changelog-health` is centralized and host-only).
 - **[arch-review-setup](./docs/onboarding/arch-review-setup.md)** — the simpler `improve-codebase-architecture` loop (codebase → refactor proposals).
 - **[staleness-setup](./docs/onboarding/staleness-setup.md)** — the monthly `staleness-review` loop (toolchain pins → ranked staleness report, complementing Dependabot).
 

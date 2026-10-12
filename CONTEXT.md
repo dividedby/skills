@@ -14,7 +14,7 @@ _Avoid_: command, tool, prompt.
 
 **Bucket**:
 A top-level grouping under `skills/` that clusters skills by use case.
-Currently `engineering/`, `config/`, and `meta/`.
+Currently `engineering/` and `config/`.
 _Avoid_: category, namespace, group.
 
 **Convention**:
@@ -58,7 +58,7 @@ picks only the pipeline steps a given idea needs (`/grill-with-docs`, `/to-prd`,
 `/to-issues`, `/software-design`) and strives to emit a `ready-for-agent` issue
 (strong agent brief, HITL steps folded in where needed), moving the item to a
 `✅ Actioned` section with `→ #num`. **Structured, contract-bearing**
-filings (skill-request, skill-promotion, a fully-scoped bug) **bypass the Inbox**
+filings (e.g. a fully-scoped bug) **bypass the Inbox**
 and file labeled issues directly. The unifying invariant is that every filing
 becomes a tracked GitHub issue — not that every filing funnels through the Inbox.
 _Avoid_: backlog, triage queue, scratchpad, inbox issue.
@@ -105,21 +105,11 @@ avoids drawing on the Agent SDK credit (see #58) — but that cost is secondary;
 the routing is environment-fit first.
 _Avoid_: headless runtime, batch agent, claude -p (generically), detached runtime.
 
-**Knowledge mirror**:
-A public, read-only repository holding a verbatim copy of `agent-research`'s
-synthesized `knowledge/` tree — the credential-free read surface that consumers
-clone. Derived from (never authoritative over) the private `agent-research`;
-its raw `sources/` are never mirrored. Pushed by `agent-research`'s synthesize
-workflow, commit-if-changed.
-_Avoid_: cache, export, feed, snapshot.
-
 **Consumer**:
-A repo that runs the `apply-agent-research` loop on *itself* — reading the
-knowledge mirror (or, if it is the knowledge source, its own `knowledge/`
-tree) and proposing agent-meta improvements into its own tracker. In the
-decentralized-pull model a Consumer depends on `dividedby/skills` one-way;
-`agent-research` never depends on a Consumer. A Consumer fetches the skill
-fresh at run time rather than committing a copy (see
+A repo other than `dividedby/skills` that runs a **Proposal loop** on *itself* —
+vendoring only a thin caller stub and proposing into its own tracker. A Consumer
+depends on `dividedby/skills` one-way and fetches the skill fresh at run time
+rather than committing a copy (see
 [ADR 0008](./docs/adr/0008-consumers-fetch-the-skill-fresh-not-vendored.md)).
 _Avoid_: subscriber, client, downstream repo.
 
@@ -130,8 +120,8 @@ applies** — no commits, edits, or PRs (the producer/decider split,
 [ADR 0003](./docs/adr/0003-skill-improvement-workflows-propose-via-issues.md)).
 It fetches its skill fresh each run rather than vendoring it
 ([ADR 0008](./docs/adr/0008-consumers-fetch-the-skill-fresh-not-vendored.md)).
-`apply-agent-research` (KB → agent-meta) and `improve-codebase-architecture`
-(codebase → refactors) are two members of this family, sharing one harness; the
+`improve-codebase-architecture` (codebase → refactors) and `staleness-audit`
+(toolchain pins → a ranked staleness report) are members of this family, sharing one harness; the
 shared shape is documented in
 [`docs/onboarding/proposal-loop-harness.md`](./docs/onboarding/proposal-loop-harness.md).
 _Avoid_: bot, pipeline, automation.
@@ -139,14 +129,11 @@ _Avoid_: bot, pipeline, automation.
 **Proposal-loop harness**:
 The shared, drift-prone logic every **Proposal loop** runs — the publish seam
 (parse the agent's `<output>`/`<body>`, file the one capped issue), the
-cost-ledger scrape, and the loop prompts. Lives in `dividedby/skills` `harness/`
+cost-line `digest`, and the loop prompts. Lives in `dividedby/skills` `harness/`
 and is **fetched fresh each run**, on the same rail as the skill
 ([ADR 0014](./docs/adr/0014-harness-is-fetched-fresh-only-the-workflow-envelope-is-vendored.md)),
-so one fix reaches every loop. A loop's prompt is fetched whole when it is
-portable (`apply-agent-research`, parametrized by env —
-[ADR 0015](./docs/adr/0015-apply-agent-research-prompt-is-consumer-portable-via-env.md));
-for `improve-codebase-architecture` the harness holds only the scope-free
-**skeleton**, paired with a per-repo **Repo-context include**
+so one fix reaches every loop. For `improve-codebase-architecture` the harness
+holds only the scope-free **skeleton**, paired with a per-repo **Repo-context include**
 ([ADR 0016](./docs/adr/0016-arch-review-prompt-is-skeleton-plus-local-repo-context-include.md)).
 Not the cron schedule or permissions — those are the **Workflow envelope**.
 _Avoid_: wiring, glue, scaffolding.
@@ -158,8 +145,7 @@ repo-specific substance — primary/fallback/out-of-scope review scope and the
 binding disciplines/ADRs — that has no env representation. The **Workflow
 envelope** concatenates it onto the fetched-fresh scope-free **skeleton** to form
 the system prompt. Used where a loop's per-repo variation *is content* (what to
-review, which disciplines), not the env-expressible wiring that lets
-`apply-agent-research` stay a single portable prompt
+review, which disciplines), not env-expressible wiring
 ([ADR 0016](./docs/adr/0016-arch-review-prompt-is-skeleton-plus-local-repo-context-include.md)).
 _Avoid_: prompt fragment, local prompt, scope file.
 
@@ -188,33 +174,6 @@ and calls it. It carries no loop logic — only the intentional per-repo
 customization a reconciler should never touch
 ([ADR 0014](./docs/adr/0014-harness-is-fetched-fresh-only-the-workflow-envelope-is-vendored.md)).
 _Avoid_: workflow, wiring, config.
-
-**Local skill**:
-A skill that lives in a **Consumer**'s own repo, not published to
-`dividedby/skills`. Invokable only within that Consumer. The **supply-side
-audit** classifies each as *redundant* (duplicates a published or installed
-skill — adopt the canonical one), *promotable* (novel and broadly useful — a
-**promotion candidate**), or *repo-specific* (legitimately local — keep).
-_Avoid_: private skill, custom skill, internal skill.
-
-**Supply-side audit**:
-The step in a Consumer's `apply-agent-research` loop that enumerates the
-Consumer's **local skills** and matches each against the known skill universe
-(the published `dividedby/skills` catalog + the installed-skill snapshot). It is
-the **mirror of the demand-side already-do-this filter**
-([ADR 0009](./docs/adr/0009-skill-request-checks-existing-and-installed-skills.md)):
-0009 stops a Consumer *requesting* what already exists; the supply-side audit
-inspects what the Consumer *already built*. See
-[ADR 0010](./docs/adr/0010-consumers-audit-local-skills-supply-side.md).
-_Avoid_: local-skill scan, dedup check.
-
-**Skill promotion**:
-A Consumer **offering a local skill up** to `dividedby/skills` for adoption as a
-published skill — the **supply** twin of a **skill-request** (demand). Filed as
-a `skill-promotion` issue with the same capability-key / `+1` / leak-guard
-machinery as a skill-request but inverse semantics. See
-[`docs/design/skill-promotion-flow.md`](./docs/design/skill-promotion-flow.md).
-_Avoid_: skill donation, upstreaming, contribution.
 
 **Rejection record**:
 One structured file under `.out-of-scope/` per **explicitly-refused** capability,

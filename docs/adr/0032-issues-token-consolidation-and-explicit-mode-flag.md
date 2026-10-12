@@ -1,5 +1,7 @@
 # Consolidate write tokens into ISSUES_TOKEN and make host/consumer mode an explicit flag
 
+> **Superseded in part by [ADR 0038](./0038-retire-knowledge-application-after-agent-research-decommission.md)** — the `is-tracker-host` mode flag and cross-repo skill-request filing are retired with `apply-agent-research`; `ISSUES_TOKEN` survives for the drift detectors.
+
 ## Context
 
 Three distinct write PATs served the cross-repo fleet:

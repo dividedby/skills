@@ -1,5 +1,7 @@
 # Proposal caps are per channel, not one global cap per run
 
+> **Superseded by [ADR 0038](./0038-retire-knowledge-application-after-agent-research-decommission.md)** — the `apply-agent-research` loop whose per-channel caps this set (already superseded by ADR 0019) is retired.
+
 > **Superseded by [ADR 0019](0019-proposal-loops-file-a-budgeted-ranked-top-k.md):**
 > the per-channel one-cap became a single per-run budget of 5 shared across all
 > channels, picked by one merged, ranked gate pass. The cross-channel-suppression

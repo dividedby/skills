@@ -1,5 +1,7 @@
 # The already-do-this baseline includes the host's installed-skill inventory
 
+> **Superseded in part by [ADR 0038](./0038-retire-knowledge-application-after-agent-research-decommission.md)** — the `apply-agent-research` loop this baseline fed is retired; `docs/agents/installed-skills.md` survives as a plain already-present-capability snapshot.
+
 [`apply-agent-research`](../../skills/meta/apply-agent-research/SKILL.md)'s
 **already-do-this filter** asks "does this repo already do this?" before
 proposing an improvement. Its baseline was the host repo's own governance docs

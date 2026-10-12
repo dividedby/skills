@@ -1,5 +1,7 @@
 # Consumers audit their local skills (supply-side mirror of ADR 0009)
 
+> **Superseded by [ADR 0038](./0038-retire-knowledge-application-after-agent-research-decommission.md)** — the Consumer supply-side audit and skill-promotion channel are retired with `apply-agent-research`.
+
 A [Consumer](../../CONTEXT.md)'s `apply-agent-research` loop performs a
 **supply-side audit**: it enumerates the Consumer's own **local skills** (skills
 in the repo, not published to `dividedby/skills`) and matches each against the
