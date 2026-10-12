@@ -34,6 +34,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
 ### Removed
 
+- `harness/changelog-health/enrolled-repos.txt` — un-enrolled `dividedby/agent-research`, decommissioned and archived 2026-10-11.
 - `docs/agents/installed-skills.md`: dropped the third-party YAGNI coding plugin, removed globally (dividedby/claude-config#188).
 - Per-repo Serena MCP config (`.serena/`) removed — Serena is no longer used (dividedby/claude-config#180)
 - `harness/cli.py fetch-rubric`: legacy raw-URL network fallback removed now that the `claude-loops-v1` tag has moved past #525 — every consumer vendors the `--source-dir` clone-first reusable body; `--source-dir` is now a required argument (#523, #516)
