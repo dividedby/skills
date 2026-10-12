@@ -37,7 +37,7 @@ except ImportError:
 
 # Repos to audit, mapped to their default branch.
 # Confirmed 2026-06-20 via `gh repo view dividedby/<repo> --json defaultBranchRef`.
-# ponytail: archived repos dropped by hand; if more get archived, skip via
+# shortcut: archived repos dropped by hand; if more get archived, skip via
 #   gh api repos/<r> -q .archived
 REPOS: dict[str, str] = {
     "dividedby/moodreader": "main",

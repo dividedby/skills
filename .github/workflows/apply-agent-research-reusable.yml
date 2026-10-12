@@ -199,7 +199,7 @@ jobs:
           # --max-budget-usd is a per-run spend backstop, sized ~2.5–3× the observed
           # max from the cost ledger — never trips a healthy run, caps a runaway well
           # below an unbounded 20-minute spend (#181).
-          # ponytail: Bash(printf:*) is granted because the gate step uses
+          # shortcut: Bash(printf:*) is granted because the gate step uses
           # `printf '%s' '<json>' | python3 $SKILL_DIR/lib/cli.py gate` — printf
           # is the narrowest tty-safe way to pipe JSON without shell escaping problems.
           # No tighter scope is possible (printf is a shell builtin with no subpath).

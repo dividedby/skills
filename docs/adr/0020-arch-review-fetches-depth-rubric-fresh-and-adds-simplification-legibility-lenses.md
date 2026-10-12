@@ -26,7 +26,7 @@ Additionally:
   naming, greppability, CLI surface) that no existing lens captured. Delivering
   this as a new standalone skill would add an interactive wrapper around a
   demand that is loop-shaped; the arch-review loop is the right delivery vehicle.
-- The ponytail over-engineering discipline (five categories: delete, stdlib,
+- The over-engineering discipline (five categories: delete, stdlib,
   native, yagni, shrink) had no home in the arch-review loop. Simplification is
   the natural first pass before deepening.
 
@@ -56,9 +56,9 @@ clear message on any curl error.
 **(d) Two new local lenses are added to the skeleton at principle level** (ADR 0002
 — prescribe at the principle level):
 
-- **Simplification** (first) — five principle-level categories from the ponytail
+- **Simplification** (first) — five principle-level categories from the over-engineering
   discipline: delete, stdlib, native, yagni, shrink. Modeled in the skeleton as
-  prose, not fetched, because: the ponytail-review skill is a tiny, stable,
+  prose, not fetched, because: the source review checklist is a tiny, stable,
   diff-format-coupled checklist whose five tenets are cheaper to inline than to
   fetch (fetch-fresh pays for large, evolving concept files, not a short checklist).
 - **Legibility** (third, after depth) — four physical-structure dimensions: oversized

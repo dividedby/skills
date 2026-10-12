@@ -555,7 +555,7 @@ def _backlog_check(args, out):
         count = _count_untriaged(args.label, repo, BACKLOG_THRESHOLD)
         full = count >= BACKLOG_THRESHOLD
     except (subprocess.CalledProcessError, ValueError, OSError) as exc:
-        # ponytail: fail open on a lookup error (auth expiry, rate limit, bad
+        # shortcut: fail open on a lookup error (auth expiry, rate limit, bad
         # JSON) — a throttle-check outage must not itself block a healthy run.
         # Ceiling: a genuinely full backlog goes undetected for that one run,
         # but MAX_PROPOSALS still caps its worst-case output at 1 issue.

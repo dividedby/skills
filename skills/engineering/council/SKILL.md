@@ -243,7 +243,7 @@ script. The actual prompts, schema, and effort settings are seat-specific and
 tuned per run; this is a sketch of the orchestration pattern.
 
 ```
-// ponytail: illustrative only — not a runnable literal script (ADR 0002)
+// shortcut: illustrative only — not a runnable literal script (ADR 0002)
 
 const taskText = userInput;
 const lineup   = await agent("selector", { model: "haiku", input: taskText });

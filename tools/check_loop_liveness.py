@@ -87,7 +87,7 @@ HOST_LOOP_PATHS: tuple[str, ...] = (
     ".github/workflows/skill-divergence-audit.yml",
 )
 
-# ponytail: matched against the caller stub's own prose comment (see
+# shortcut: matched against the caller stub's own prose comment (see
 # staleness-review.yml) rather than also fetching the reusable body — the
 # stub already documents the job-level first-Monday gate in a comment.
 FIRST_MONDAY_MARKER = "first monday"

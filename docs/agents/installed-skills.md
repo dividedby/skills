@@ -59,9 +59,6 @@ version that resolves for the `triage` name in this repo's workflow.
 
 ## Installed plugins
 
-`ponytail` — forces the laziest working solution (YAGNI; stdlib/native before
-dependencies); intensity levels lite/full/ultra, plus a ponytail-review pass.
-
 `terrashark` — Terraform/OpenTofu structure, security, and testing guardrails;
 installed project-scoped to `~/repos/infra` only, not available in this
 repo's own sessions.
