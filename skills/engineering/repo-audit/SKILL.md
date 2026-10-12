@@ -172,7 +172,7 @@ The sketch below shows the orchestration shape, not a literal script (ADR 0002).
 This skill drives the same `/council` Workflow primitive — see ADR 0036.
 
 ```
-// ponytail: illustrative only — not a runnable literal script (ADR 0002)
+// shortcut: illustrative only — not a runnable literal script (ADR 0002)
 
 const ctx    = stage1Context;   // repo layout, open issues, CI inventory
 const lineup = logLineup(ctx);  // pre-flight: log five seats + rationale

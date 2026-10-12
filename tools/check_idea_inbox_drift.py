@@ -37,7 +37,7 @@ except ImportError:
 # default branch.  Confirmed 2026-06-29 via
 # `gh repo view dividedby/<repo> --json defaultBranchRef`.
 # dividedby/skills is the canonical source — excluded from this map.
-# ponytail: archived repos dropped by hand; verify via
+# shortcut: archived repos dropped by hand; verify via
 #   gh api repos/<r> -q .archived if more get archived.
 REPOS: dict[str, str] = {
     "dividedby/infra": "main",
@@ -60,7 +60,7 @@ INBOX_PATH = "docs/agents/idea-inbox.md"
 # An anchor is PRESENT if its marker appears anywhere in the file content.
 # No anchor depends on a specific label-doc filename — `triage-labels.md`
 # variants are tolerated by construction.
-# ponytail: presence-substring heuristic — stable short substrings, not full
+# shortcut: presence-substring heuristic — stable short substrings, not full
 # prose phrases. If a future reword ever false-positives, escalate to a
 # numbered-list/section parse rather than lengthening the marker.
 ANCHORS: list[tuple[str, str]] = [

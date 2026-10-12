@@ -51,7 +51,7 @@ If the Workflow tool is unavailable or the fan-out fails, fall back to the singl
 ### Illustrative workflow sketch
 
 ```
-// ponytail: illustrative only — not a runnable literal script (ADR 0002)
+// shortcut: illustrative only — not a runnable literal script (ADR 0002)
 
 const snapshot = detectReport;  // Step 2 output, shared across all lenses
 

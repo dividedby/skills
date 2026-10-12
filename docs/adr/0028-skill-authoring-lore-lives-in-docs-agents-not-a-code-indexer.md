@@ -39,7 +39,7 @@ in-repo doc, not agent memories and not a code index.
 - An agent memory **may mirror** the doc for in-session convenience, but the
   committed doc is canonical.
 
-**Scope (ponytail):** start as the single file `docs/agents/skill-authoring.md`;
+**Scope (minimal):** start as the single file `docs/agents/skill-authoring.md`;
 grow to a `docs/agents/skill-authoring/` tree (index + append-only log) only if
 it earns it.
 
