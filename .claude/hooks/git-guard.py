@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 """PreToolUse Bash guard: hard-block destructive git during unattended runs.
 
-Unattended agent runs
-carry a prose "no destructive git" invariant. In CI / unattended `claude -p`
-the maintainer's global ~/.claude guards are absent, so that invariant rests
-only on prompt discipline. This checked-in hook makes the block deterministic:
+Unattended agent runs carry a prose "no destructive git" invariant. In CI /
+unattended `claude -p` the maintainer's global ~/.claude guards are absent, so
+that invariant rests only on prompt discipline. This checked-in hook makes the block deterministic:
 it inspects the candidate Bash command and exits 2 (with a stderr reason) for
 destructive git, exits 0 for everything else. It stays git-scoped on purpose —
 broader command guards (rm -rf, etc.) are a separate concern.
