@@ -1,5 +1,7 @@
 # Project-scope hooks may re-declare a global guard when the run lacks global config
 
+> **Superseded in part by [ADR 0040](./0040-retire-unused-catalog-skills-and-fold-flow-pr-into-branching-flow.md)** — the decision stands; `project-claude-config` and its `CATALOG.md`, named below as the carve-out's home, are deleted.
+
 > **Amendment (2026-06-09) — the four config skills were consolidated.** The
 > skills named below (`init-project-harness`, `audit-project-harness`) no longer
 > exist as separate skills; they merged into `project-claude-config`

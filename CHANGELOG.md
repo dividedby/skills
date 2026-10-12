@@ -6,6 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-10-12
+
+Retires eight more skills and shrinks the catalog to `council` and `repo-audit`; see the **Breaking** entries under Removed.
+
+### Added
+
+- ADR 0040: retires `doc-it`, `autonomous-loop`, `software-design`, `frontend-design`, `write-well`, `project-claude-config`, `triage` and `flow-pr`; marks ADRs 0005, 0018, 0022, 0023, 0033 and 0035 as superseded
+- `docs/agents/labels.test.py`: the label-doc guard, relocated from `skills/config/labels.test.py` next to the doc it tests; the CI gate now runs `docs/agents/*.test.py`
+
+### Changed
+
+- `council`: the false-positive exclusion list is now canonical for the published plugin; the mirror note points at the maintainer's own `branching-flow.md` instead of the retired `flow-pr`
+- `repo-audit` playbook: the docs-as-input posture is stated inline instead of citing `doc-it`
+- `CLAUDE.md`, `CODING_STANDARDS.md`, `CONTEXT.md`, `docs/agents/idea-inbox.md`, `docs/agents/skill-authoring.md`: dropped the `config/` bucket, the `flow-pr` model-fired exception, the `autonomous-loop` glossary terms (Autonomous loop, Run-book, In-session sub-agent, Headless process, Proposal loop) and the composition-pattern entries for the retired skills
+
+### Removed
+
+- **Breaking:** `doc-it`, `autonomous-loop`, `software-design`, `frontend-design` and `write-well` skills retired (ADR 0040) — de-registered from `plugin.json` and `README.md`; directories (including `autonomous-loop`'s `EVALUATOR-GATE.md`, `FIREWALL.md` and `RUNNING-AFK.md`, and `frontend-design`'s reference docs) and `skills/engineering/README.md` deleted. Anyone who installed them should remove them
+- **Breaking:** `project-claude-config` and `triage` skills retired (ADR 0040) — de-registered and deleted; the `skills/config/` bucket no longer exists
+- **Breaking:** `flow-pr` skill retired (ADR 0040) — de-registered and deleted along with `merge-mechanics.md`. Its PR flow, review gate and autonomy triggers now live in `branching-flow.md` and the `/flow-pr` command in `dividedby/claude-config`; remove the installed skill so the command is the only `/flow-pr`
+
 ## [2.0.0] - 2026-10-12
 
 Retires the remaining proposal loops, the `harness/` Python, and the three skills that served them; see the **Breaking** entries under Removed.

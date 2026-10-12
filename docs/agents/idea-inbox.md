@@ -59,7 +59,6 @@ end-to-end, adapting to what *this* idea needs:
      (CONTEXT.md / ADRs); build shared understanding first.
    - `/to-spec` — when it's big enough to warrant a spec before issues.
    - `/to-tickets` — to carve it into independently-grabbable tracked work.
-   - `/software-design` — when the work spans modules/seams and needs a design pass.
    A small, clear idea may need only `/to-tickets`.
 4. **Labels** — when filing issues, apply labels from `docs/agents/labels.md`: state
    (`needs-triage` to start), category (`bug` / `enhancement` / `chore` / `epic`),

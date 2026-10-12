@@ -14,21 +14,8 @@ Pick the skills you want when prompted. Re-run to update.
 
 ### Engineering
 
-- **[autonomous-loop](./skills/engineering/autonomous-loop/SKILL.md)** — Take a briefed backlog to a safely-running unattended (AFK) agent loop: runtime selection, stop condition, per-iteration feedback gates, HITL→AFK graduation-by-guardrail with a cap, and monitor/stop/resume. Methodology, not a runtime.
 - **[council](./skills/engineering/council/SKILL.md)** — Convene a blind, diverse multi-persona panel (Falsifier, Minimalist, Pragmatist + conditional seats) that returns a synthesized second opinion plus the dissent the chair did not adopt; drives the built-in Workflow tool across three rounds.
-- **[doc-it](./skills/engineering/doc-it/SKILL.md)** — Scan a repo and generate or patch its reference documentation (README, API docs, onboarding guide, CHANGELOG) from source, applying changes directly; audits ADRs and CONTEXT.md for staleness but reports findings only.
-- **[flow-pr](./skills/engineering/flow-pr/SKILL.md)** — End-to-end flow-aware PR helper: reads the repo's default branch as the integration target, cuts a feature branch, commits → pushes → opens PR against the default branch, reviews and fixes the diff (via `/code-review`), gates on CI green, then merges. Promotion (default→main) is always-confirmed and only applies when the default branch is not main.
-- **[frontend-design](./skills/engineering/frontend-design/SKILL.md)** — Design, refine, and audit production-grade frontend interfaces across React, Next.js, Tailwind, and vanilla HTML/CSS/JS that avoid generic AI aesthetics.
 - **[repo-audit](./skills/engineering/repo-audit/SKILL.md)** — User-invoked audit that hunts high-leverage improvements in a repo (delete/lean, performance, architectural deepening, missing features) and produces a small set of epics with an ordered roadmap — reconciled against the existing backlog, not filed beside it.
-- **[software-design](./skills/engineering/software-design/SKILL.md)** — Turns a PRD and published backlog into named modules, located seams, and a testing strategy that makes issues TDD-ready.
-- **[write-well](./skills/engineering/write-well/SKILL.md)** — Draft and de-slop English prose to a defensible core and clean output; two entry points (draft, improve).
-
-### Config
-
-Setting up and auditing a project's Claude config — instruction files and the settings/hooks harness.
-
-- **[project-claude-config](./skills/config/project-claude-config/SKILL.md)** — One state-routed pass over a project's Claude config: scaffold what's missing and critique what's present across both the harness (`.claude/settings.json`) and the instruction files (`CLAUDE.md` / `AGENTS.md`), interviewing only for facts the repo can't reveal.
-- **[triage](./skills/config/triage/SKILL.md)** — Move issues through a state machine on our label vocabulary: show what needs attention, triage a specific issue with the appropriate outcome comment, and apply the outcome.
 
 ## Docs
 

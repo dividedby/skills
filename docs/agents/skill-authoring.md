@@ -13,24 +13,6 @@ When a skill is an **orchestration wrapper**, it calls sub-skills to avoid
 duplicating their vocabulary. The table below records which wrappers call which
 sub-skills, and when that composition fires.
 
-### `software-design` (orchestrator)
-
-**File:** `skills/engineering/software-design/SKILL.md`
-
-The canonical wrapper for multi-module design sessions. It states the
-deep-module/seam framework inline (step 4: depth, seams, adapters, deletion
-test) and checks candidate module/interface names against `CONTEXT.md`
-(step 5), flagging new terms for `/grill-with-docs` extraction. Composes:
-
-- **`/grill-with-docs`** (deferred surface) — owns `CONTEXT.md` and `docs/adr/`.
-  When the design session surfaces a new domain term or an ADR-worthy trade-off,
-  `software-design` surfaces it and defers the write to `/grill-with-docs`.
-- **`/frontend-design`** (routing stamp) — `software-design` stamps frontend-
-  flavored issues with a routing block and hands off; it does not design components.
-
-**Trigger for composition:** the backlog plausibly spans two or more modules and
-module/seam choices are still implicit.
-
 ### `grill-with-docs` (upstream, soft-dependency)
 
 **File:** `~/.claude/skills/grill-with-docs/SKILL.md` (globally installed)
@@ -40,34 +22,7 @@ is reached — and it writes down what crystallises: pins terms into `CONTEXT.md
 and records hard decisions as ADRs in `docs/adr/`.
 
 **Trigger for composition:** any time domain vocabulary needs to be established or
-an architectural decision needs to be recorded. `software-design` defers to it
-when new terms or trade-offs surface mid-session.
-
-### `FIREWALL.md` (copy-in pattern)
-
-**File:** `skills/engineering/autonomous-loop/FIREWALL.md`
-
-Not a skill and not an orchestrator — a generic context-hygiene discipline doc.
-Copy a reference into any multi-item skill (loop or loopless) rather than
-authoring a new sub-agent runtime: point to FIREWALL.md for the per-item
-sub-agent shape, budget-checkpoint placement, and compaction mechanics.
-
-**Trigger for composition:** a skill's workflow runs over a backlog or processes
-multiple items in sequence. Reference the FIREWALL.md discipline in the skill's
-multi-item section rather than re-deriving it inline.
-
-### `autonomous-loop`
-
-**File:** `skills/engineering/autonomous-loop/SKILL.md`
-
-Methodology skill for running unattended agent loops safely. Composes into
-skill-authoring when a skill is designed to run AFK or scheduled — prescribe
-the five autonomous-loop elements (stop condition, proposal gate, budget check,
-HITL hardening, input durability) rather than re-deriving them inline.
-
-**Trigger for composition:** a skill's design session produces a loop that will
-run unattended. Point to `/autonomous-loop` for the discipline; do not author
-a new runtime.
+an architectural decision needs to be recorded.
 
 ---
 
@@ -86,6 +41,8 @@ differently across stacks; hardening one language's idiom into the prescription
 narrows the skill's reach or misleads readers on other stacks.
 
 ### Worked example: issue #12 — temporal coupling in testability.md
+
+_Note: the `software-design` skill this example cites has been retired ([ADR 0040](../adr/0040-retire-unused-catalog-skills-and-fold-flow-pr-into-branching-flow.md)); the example is kept as editorial history._
 
 **The proposed change:** the original text for the temporal-coupling anti-pattern
 read: *"Each operation should be callable independently, or the required order
@@ -115,6 +72,8 @@ only when prose genuinely cannot convey the shape — and then note in the ADR w
 prose failed.
 
 ### Worked example: issue #11 — shadow scale in design-tokens.md
+
+_Note: the `frontend-design` skill this example cites has been retired ([ADR 0040](../adr/0040-retire-unused-catalog-skills-and-fold-flow-pr-into-branching-flow.md)); the example is kept as editorial history._
 
 **The proposed change:** every token taxonomy in `design-tokens.md` (spacing,
 motion, color) shipped concrete starting values. The shadow scale was the outlier:

@@ -31,7 +31,7 @@ jobs:
           set -e
           shopt -s nullglob globstar
           found=0
-          for t in .claude/hooks/*.test.py skills/**/*.test.py; do
+          for t in .claude/hooks/*.test.py docs/agents/*.test.py; do
             echo "== $t =="
             python3 -B "$t"
             found=1

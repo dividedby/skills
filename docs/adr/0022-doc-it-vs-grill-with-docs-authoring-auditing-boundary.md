@@ -1,5 +1,7 @@
 # doc-it and grill-with-docs have non-overlapping scopes: auditing vs authoring
 
+> **Superseded by [ADR 0040](./0040-retire-unused-catalog-skills-and-fold-flow-pr-into-branching-flow.md)** — `doc-it` is retired, so the auditing-vs-authoring boundary with `grill-with-docs` no longer has two sides.
+
 Two skills touch documentation: `doc-it` generates and patches **reference
 docs** (README, API docs, onboarding, CHANGELOG) and audits existing ADRs /
 `CONTEXT.md` for staleness; `grill-with-docs` authors **new decisions and

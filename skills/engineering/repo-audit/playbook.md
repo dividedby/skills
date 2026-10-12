@@ -72,7 +72,7 @@ Apply the **deletion test** to anything suspect: would deleting it concentrate c
 
 **Frontend/UX as an optional input.** For repos with meaningful UI, scan for: visual hierarchy problems, missing empty states, inaccessible patterns (contrast, keyboard nav, ARIA semantics), and onboarding friction. Feed findings into this category.
 
-**Docs as an optional input.** Where docs appear stale or sparse, surface mismatches between documented and actual behaviour as missing-capability findings (the capability to trust the docs is missing). Apply `doc-it`'s posture: report-only on ADRs and CONTEXT.md, apply changes to reference docs.
+**Docs as an optional input.** Where docs appear stale or sparse, surface mismatches between documented and actual behaviour as missing-capability findings (the capability to trust the docs is missing). Posture: report-only on ADRs and CONTEXT.md; reference docs may be changed directly.
 
 ---
 

@@ -1,5 +1,7 @@
 # config/ is one state-routed skill; direction and domain are internal seams
 
+> **Superseded by [ADR 0040](./0040-retire-unused-catalog-skills-and-fold-flow-pr-into-branching-flow.md)** — `project-claude-config`, the one state-routed config skill, is retired and the `config/` bucket is gone.
+
 The `config/` bucket originally held a deliberate 2×2 of four skills —
 direction (`init-`/`audit-`) × domain (`-harness`/`-claude`) — with a
 documented ordering (harness before instructions) and printed-pointer
