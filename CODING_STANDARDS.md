@@ -1,7 +1,7 @@
 # Coding Standards
 
-Standards for the two published surfaces of this repo: **markdown skills** (the
-`skills/` tree) and **harness Python** (`harness/`). Read this alongside
+Standards for the published surface of this repo: **markdown skills** (the
+`skills/` tree). Read this alongside
 [`CLAUDE.md`](./CLAUDE.md) and
 [ADR 0002](./docs/adr/0002-design-skills-prescribe-at-principle-level.md), which
 this document references rather than restates.
@@ -64,68 +64,3 @@ and will block unregistered skills.
 - Reference other docs by relative path from the repo root. Prefer linking over
   re-stating content that already lives in `CLAUDE.md`, `CONTEXT.md`, or an ADR.
 - Defers / dependencies go in a short `Defers:` block near the top, not buried.
-
----
-
-## Harness Python (`harness/`)
-
-### Style
-
-- Python 3. Type annotations on public functions; omit for purely internal
-  one-liners where the type is obvious from context.
-- Follow the project convention seen in `cli.py`: module-level docstring
-  explaining why this module exists, then public helpers, then private helpers
-  (`_` prefix), then subcommand handlers, then `main`.
-- Comments explain *why*, not *what*. Comment non-obvious decisions; omit
-  narration.
-- Line length: stay within ~90 characters (the codebase does not enforce a hard
-  formatter, but existing code is consistently within this range).
-
-### Docstrings
-
-Public functions carry a docstring. Convention (from `cli.py`):
-
-- First line: one sentence describing what the function returns or does.
-- Body (when needed): contract, edge cases, recovery hierarchy.
-- No reStructuredText field markers (`Args:`, `Returns:`) — use prose.
-
-Private helpers (`_` prefix) carry a docstring only when the logic is
-non-obvious.
-
-### Error handling
-
-- Distinguish *loud* failures from *lossy* silent ones. Prefer loud: raise
-  `ValueError` with a clear message and let callers decide whether to degrade
-  or abort (the "loud beats lossy" principle from `#117`).
-- I/O subcommand handlers (the thin transport layer) catch `ValueError` and
-  return exit code 1; they never swallow errors silently.
-- Best-effort operations (e.g. `_ensure_label`) use `subprocess.run` without
-  `check=True` and document why silence is acceptable.
-
-### Module boundaries
-
-- **Pure helpers** (no I/O, deterministic): isolated at the top of the module,
-  unit-tested directly. These hold the load-bearing logic.
-- **Subcommand handlers**: thin wrappers that open files, invoke `gh`, and call
-  the pure helpers. They are not unit-tested in isolation; the pure helpers
-  beneath them are.
-- The harness is invoked by file path (`python3 <clone>/harness/cli.py`), not
-  imported. Keep the public API surface narrow.
-
-### Tests
-
-- Test files live in `harness/tests/`, named `test_<subject>.py`.
-- Use `unittest.TestCase`; no pytest plugins.
-- Bootstrap `sys.path` at the top of each test file so `import cli` resolves
-  without installation.
-- Mock `subprocess` / env at the handler boundary; never let tests call `gh` or
-  touch the filesystem beyond `tempfile`.
-- The "loud beats lossy" contract is what deserves a test: missing/malformed
-  output must fail loudly; the transport layer must not call `gh` on a parse
-  failure.
-
-### Stdlib-only
-
-The harness uses the Python standard library only — no third-party dependencies.
-This keeps the fetch-fresh install path simple (no `pip install` step in the
-workflow envelope). New helpers must stay within this constraint.

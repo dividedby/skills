@@ -1,5 +1,7 @@
 # Skills may drive the built-in Workflow tool; `/council` is the reference pattern
 
+> **Superseded in part by [ADR 0039](./0039-retire-remaining-proposal-loops-and-loop-serving-skills.md)** — the decision stands; the two "not this sense of workflow" references below (`docs/agents/workflow-authoring.md` and the `workflow-onboarding` skill) point at files that are deleted.
+
 > **Status: Accepted** — ratified via PR [#492](https://github.com/dividedby/skills/pull/492) opening. Records the `/council` skill design (issue [#492](https://github.com/dividedby/skills/issues/492)).
 
 ## Disambiguation: two things called "workflow" in this repo

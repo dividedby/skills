@@ -26,7 +26,3 @@ Multi-phase orchestrator that audits a repo end-to-end (code, tests, CI/CD, secu
 ## [`software-design`](./software-design/SKILL.md)
 
 Turns a PRD and published backlog into named modules, explicit seams, a testing strategy, and TDD-ready issue bodies.
-
-## [`staleness-audit`](./staleness-audit/SKILL.md)
-
-Audits pinned toolchain versions (runtime, language, container, CI matrices) for staleness and emits a ranked report; applies safe in-major bumps automatically.

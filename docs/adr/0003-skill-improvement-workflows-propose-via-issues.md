@@ -1,5 +1,7 @@
 # Skill-improvement workflows run AFK and propose via issues
 
+> **Superseded in part by [ADR 0039](./0039-retire-remaining-proposal-loops-and-loop-serving-skills.md)** — the scheduled proposal loops it governed are all retired; the propose-only, producer/decider posture stands as the strictest point on the `autonomous-loop` gate spectrum.
+
 > **Superseded in part by [ADR 0038](./0038-retire-knowledge-application-after-agent-research-decommission.md)** — the `agent-research` KB-fed workflows (self-improvement, gap-scanner) and their run-books are retired; the propose-via-issues, producer/decider posture still governs the surviving proposal loops.
 
 Two recurring workflows consume the [`agent-research`](https://github.com/dividedby/agent-research)

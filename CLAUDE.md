@@ -24,17 +24,6 @@ Default vocabulary: `needs-triage`, `ready-for-agent`, `ready-for-human`, `block
 
 Single-context: one `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.
 
-### Installed skills
-
-Capabilities installed in the maintainer's global environment (`~/.claude/`) are
-available in every session even when not files under this repo's `skills/`. A
-committed snapshot lives at `docs/agents/installed-skills.md`. See
-`docs/agents/installed-skills.md`.
-
-### Workflow authoring
-
-Adding or re-cadencing a scheduled `claude -p` workflow (a proposal loop here or in any consumer): pin `--model` to an exact ID, carry a `--max-budget-usd` backstop, emit `total_cost_usd` via `harness/cli.py digest`, and self-stagger the cron by hash. See `docs/agents/workflow-authoring.md`. Binding decisions: ADR 0019 (budget/cap + cadence), ADR 0014 (fetched-fresh envelope).
-
 ### Skill editorial intent
 
 Skills in this repo prescribe at the principle level; code examples are illustrative sketches, not literal rules. See [`docs/adr/0002-design-skills-prescribe-at-principle-level.md`](./docs/adr/0002-design-skills-prescribe-at-principle-level.md).
@@ -47,11 +36,11 @@ Composition patterns (which wrapper calls which sub-skill) and worked editorial-
 
 ### Changelog
 
-Notable changes land in the top-level [`CHANGELOG.md`](./CHANGELOG.md) (Keep a Changelog format) — the human-readable record the version-bump / roll-up step updates. It tracks the two published surfaces: the skills catalog and `harness/`. What a good entry says — audience, the six categories, `## [Unreleased]` discipline, the 2.0.0 conventions — is the fleet rubric in [`docs/agents/changelog-guideline.md`](./docs/agents/changelog-guideline.md); the hand-maintained + LLM-evaluator (not semantic-release) decision is [ADR 0034](./docs/adr/0034-fleet-changelogs-are-hand-maintained-and-llm-evaluated.md).
+Notable changes land in the top-level [`CHANGELOG.md`](./CHANGELOG.md) (Keep a Changelog format) — the human-readable record the version-bump / roll-up step updates. It tracks the published surface: the skills catalog (and, through 2.0.0, the `harness/` Python). What a good entry says — audience, the six categories, `## [Unreleased]` discipline, the 2.0.0 conventions — is the fleet rubric in [`docs/agents/changelog-guideline.md`](./docs/agents/changelog-guideline.md); the hand-maintained (not semantic-release) decision is [ADR 0034](./docs/adr/0034-fleet-changelogs-are-hand-maintained-and-llm-evaluated.md).
 
 ### Coding standards
 
-Authoring and code style for markdown skills and `harness/` Python. See [`CODING_STANDARDS.md`](./CODING_STANDARDS.md).
+Authoring and code style for markdown skills. See [`CODING_STANDARDS.md`](./CODING_STANDARDS.md).
 
 <important if="filing an issue or idea">
 

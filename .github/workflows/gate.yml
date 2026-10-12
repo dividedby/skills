@@ -40,9 +40,3 @@ jobs:
             echo "no standalone self-tests found — gate would pass having tested nothing"
             exit 1
           fi
-
-      - name: Run unittest suites
-        run: |
-          set -e
-          python3 -m unittest discover -s harness/tests
-          python3 -m unittest discover -s tools

@@ -23,9 +23,9 @@ the five elements below — it never authors the backlog or builds a new runtime
 
 - **`/loop`** — interactive or self-paced, you're around to watch. Good for the
   HITL phase and short burndowns.
-- **`/schedule` or CI-cron `claude -p`** — recurring and unattended. The CI-cron
-  form is what this repo dogfoods; a fresh `claude -p` per run makes the
-  iteration boundary a context boundary for free.
+- **`/schedule` or CI-cron `claude -p`** — recurring and unattended. A fresh
+  `claude -p` per run (the CI-cron form) makes the iteration boundary a context
+  boundary for free.
 - **One-shot serialized burn-down** — a finite run to completion over a fixed
   backlog (how #64→#66 ran). Stops when the backlog empties.
 

@@ -1,5 +1,7 @@
 # The already-do-this baseline includes the host's installed-skill inventory
 
+> **Superseded by [ADR 0039](./0039-retire-remaining-proposal-loops-and-loop-serving-skills.md)** — `docs/agents/installed-skills.md` and its Stop-hook guard are deleted along with the loops that read it.
+
 > **Superseded in part by [ADR 0038](./0038-retire-knowledge-application-after-agent-research-decommission.md)** — the `apply-agent-research` loop this baseline fed is retired; `docs/agents/installed-skills.md` survives as a plain already-present-capability snapshot.
 
 [`apply-agent-research`](../../skills/meta/apply-agent-research/SKILL.md)'s

@@ -1,5 +1,7 @@
 # Fleet changelogs are hand-maintained and LLM-evaluated, not semantic-release
 
+> **Superseded in part by [ADR 0039](./0039-retire-remaining-proposal-loops-and-loop-serving-skills.md)** — the hand-maintained changelog rule stands; the weekly LLM evaluator it also decided on (the `changelog-health` loop) is retired, and the grading checklist is now a manual self-check.
+
 > **Status: accepted** — ratified via PR [#460](https://github.com/dividedby/skills/pull/460) (closing [#456](https://github.com/dividedby/skills/issues/456)). Records the fleet decision from spike [#454](https://github.com/dividedby/skills/issues/454) (drained from the Idea Inbox, maintainer request 2026-06-24). Extends [#397](https://github.com/dividedby/skills/issues/397) fleet-wide; does not overturn it. Records the decision only — the evaluator loop ([#457](https://github.com/dividedby/skills/issues/457)), the 2.0.0 migration of the existing six ([#458](https://github.com/dividedby/skills/issues/458)), and seeding the missing six ([#459](https://github.com/dividedby/skills/issues/459)) are downstream.
 
 Every fleet repo keeps its `CHANGELOG.md` **hand-maintained** in

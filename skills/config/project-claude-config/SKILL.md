@@ -28,7 +28,7 @@ Dispatch Explore to report:
 - **What exists.** For `.claude/settings.json` (root), return the **full content** — it is small and it is the audit object; key-path findings need the actual keys. Note any `settings.local.json` (read-only, personal, outranks the shared file) and any nested `packages/*/.claude/settings.json` (NOT loaded — dead config). For every `CLAUDE.md` / `AGENTS.md` (root + nested), return section headers plus anything that looks long, duplicative, or derivable — request excerpts only where a judgment call needs them, not full bodies.
 - **Fact triggers** for the catalog: configured formatter, fast typecheck/lint command, secret files (`.env*`, `*.pem`, `credentials/`), irreplaceable-data dirs (`data/`, `migrations/`), language/stack, package manager, CI workflows that run an agent headless.
 - **Repo shape:** monorepo layout (workspaces/packages/apps), build·test·lint·run tooling from manifests and README.
-- **Label-doc shape:** check `docs/agents/` for the dividedby label-doc convention and report any drift — a stray `labels.md`, a short-form/pointer `triage-labels.md`, a `labels.md`-only repo, or no label doc at all. Detection only; the [audit-checklist.md](audit-checklist.md) "Lens 4" section defines the `flag` and the handoff to `setup-dividedby-skills` (ADR 0023). This skill never edits the label doc.
+- **Label-doc shape:** check `docs/agents/` for the dividedby label-doc convention and report any drift — a stray `labels.md`, a short-form/pointer `triage-labels.md`, a `labels.md`-only repo, or no label doc at all. Detection only; the [audit-checklist.md](audit-checklist.md) "Lens 4" section defines the `flag` and the by-hand reconciliation against `docs/agents/labels.md` (ADR 0023). This skill never edits the label doc.
 
 ## Step 3 — Route by state
 
@@ -42,7 +42,7 @@ When either concern takes the **audit** posture, fan out to four independent con
 1. **CLAUDE.md / instruction-budget** (Lens 1) — line-class audit, earn-the-line filter, startup-context load, monorepo split.
 2. **Progressive-disclosure & `<important if>` gating** (Lens 2) — section sizing, pointer hygiene, situational-section gating. The `<important if>` gating check ([#399](https://github.com/dividedby/skills/issues/399)) runs here as-is; it is not re-implemented.
 3. **Hooks & settings harness** (Lens 3) — hook re-declaration, permission posture, catalog trigger coverage, heredoc commit patterns.
-4. **Skill-registration & label-doc drift** (Lens 4) — plugin/skill references in instruction files, label-doc drift detection and `setup-dividedby-skills` hand-off.
+4. **Skill-registration & label-doc drift** (Lens 4) — plugin/skill references in instruction files, label-doc drift detection and by-hand reconciliation.
 
 After all four return, a synthesis pass dedups overlapping findings and ranks the merged set by impact. That ranked set — not the individual lens outputs — feeds Steps 4 and 5. **The fan-out is internal: one interview (Step 4) and one approval batch (Step 5) cover both concerns; there is no second round-trip to the user.** Within the synthesis, harness findings (Lens 3) are settled before instruction findings (Lenses 1 and 2), so instruction proposals reflect what the harness would already enforce.
 

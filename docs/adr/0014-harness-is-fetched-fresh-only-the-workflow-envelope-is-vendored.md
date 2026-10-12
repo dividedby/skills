@@ -1,5 +1,7 @@
 # The proposal-loop harness is fetched fresh; only the workflow envelope is vendored
 
+> **Superseded by [ADR 0039](./0039-retire-remaining-proposal-loops-and-loop-serving-skills.md)** — `harness/`, the reusable workflows and the vendored workflow envelopes are deleted.
+
 > **Superseded in part by [ADR 0038](./0038-retire-knowledge-application-after-agent-research-decommission.md)** — the `agent-research`-side examples, the cost-ledger scrape, and the `apply-agent-research` carve-out are retired; the fetched-fresh harness / vendored-envelope rail stands for the surviving loops.
 
 [ADR 0008](0008-consumers-fetch-the-skill-fresh-not-vendored.md) de-vendored the

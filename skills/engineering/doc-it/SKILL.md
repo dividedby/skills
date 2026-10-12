@@ -88,8 +88,7 @@ the de-slop layer
 CHANGELOG drafts (terse entries) receive the voice subset from that same
 de-slop reference: sentence-load density, typographic tells, and
 evidence-bound mode; burstiness, AI-trace, and narrative arc do not apply to
-terse entries. Entry-level changelog consumer-voice authoring lives in
-`setup-dividedby-skills` (Concern G).
+terse entries.
 
 One principle holds across all four types: **link to existing ADRs for
 decisions, do not restate or invent them.** If a design choice is documented

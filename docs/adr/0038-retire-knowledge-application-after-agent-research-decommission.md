@@ -2,6 +2,8 @@
 
 > **Status: Accepted** — maintainer decision (2026-10-11), taken when `dividedby/agent-research` was archived (its ADR 0032) and the `agent-research-knowledge` mirror repository was deleted.
 
+> **Superseded in part by [ADR 0039](./0039-retire-remaining-proposal-loops-and-loop-serving-skills.md)** — the "Unaffected" loops, `harness/`, the `claude-loops-v1` rail and `fleet-drift.yml` named below are themselves retired; the 0038 retirements stand.
+
 ## Context
 
 `dividedby/agent-research` was the private knowledge base (KB) that fed this repo's

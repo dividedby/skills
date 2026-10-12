@@ -1,5 +1,7 @@
 # Consolidate write tokens into ISSUES_TOKEN and make host/consumer mode an explicit flag
 
+> **Superseded by [ADR 0039](./0039-retire-remaining-proposal-loops-and-loop-serving-skills.md)** — `ISSUES_TOKEN` and the host/consumer mode flag served only the retired loops and drift detectors.
+
 > **Superseded in part by [ADR 0038](./0038-retire-knowledge-application-after-agent-research-decommission.md)** — the `is-tracker-host` mode flag and cross-repo skill-request filing are retired with `apply-agent-research`; `ISSUES_TOKEN` survives for the drift detectors.
 
 ## Context
