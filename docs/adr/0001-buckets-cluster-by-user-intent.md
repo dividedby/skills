@@ -1,5 +1,7 @@
 # Buckets cluster by user intent
 
+> **Superseded in part by [ADR 0038](./0038-retire-knowledge-application-after-agent-research-decommission.md)** — the `meta/` bucket no longer exists (both its skills were retired); the intent-based bucketing principle stands.
+
 Skills are grouped under `skills/<bucket>/` by the user's *intent* at the
 moment they reach for a skill ("when I'm coding…", "when I'm writing…"),
 not by skill type, lifecycle phase, or domain. A new bucket is only

@@ -1,5 +1,7 @@
 # skill-request demand corroboration is allowed
 
+> **Superseded by [ADR 0038](./0038-retire-knowledge-application-after-agent-research-decommission.md)** — the `skill-request` flow and its demand corroboration are retired with `apply-agent-research`.
+
 The [`skill-request` flow](../design/skill-request-flow.md) **aggregates**
 duplicate requests: when N Consumer repos each file a `skill-request` for the
 same capability, the duplicates attach as "+1 / also wanted by `<repo>`" to the

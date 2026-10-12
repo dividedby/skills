@@ -2,7 +2,6 @@ Skills are organized into bucket folders under skills/:
 
     engineering/ — daily code work
     config/      — setting up and auditing a project's Claude config (instruction files + settings/hooks harness)
-    meta/        — applying external agent-research knowledge to improve this repo's own agent-meta
 
 Each skill is registered in `.claude-plugin/plugin.json` (`skills[]`) and linked from the top-level `README.md` with a one-line description — enforced by the `check-skill-registration` Stop hook.
 
@@ -29,12 +28,12 @@ Single-context: one `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agent
 
 Capabilities installed in the maintainer's global environment (`~/.claude/`) are
 available in every session even when not files under this repo's `skills/`. A
-committed snapshot lives at `docs/agents/installed-skills.md` so remote loops can
-read it. See `docs/agents/installed-skills.md`.
+committed snapshot lives at `docs/agents/installed-skills.md`. See
+`docs/agents/installed-skills.md`.
 
 ### Workflow authoring
 
-Adding or re-cadencing a scheduled `claude -p` workflow (a proposal loop here or in any consumer): pin `--model` to an exact ID, carry a `--max-budget-usd` backstop, emit `total_cost_usd` via `harness/cli.py digest`, onboard into the cross-repo `COST_SURFACE`, and self-stagger the cron by hash. See `docs/agents/workflow-authoring.md`. Binding decisions: ADR 0019 (budget/cap + cadence), ADR 0014 (fetched-fresh envelope).
+Adding or re-cadencing a scheduled `claude -p` workflow (a proposal loop here or in any consumer): pin `--model` to an exact ID, carry a `--max-budget-usd` backstop, emit `total_cost_usd` via `harness/cli.py digest`, and self-stagger the cron by hash. See `docs/agents/workflow-authoring.md`. Binding decisions: ADR 0019 (budget/cap + cadence), ADR 0014 (fetched-fresh envelope).
 
 ### Skill editorial intent
 

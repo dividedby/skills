@@ -60,18 +60,14 @@ Best-effort effort estimate. Applied when filing or triaging an issue.
 | Label                          | Color    | Description                                                       |
 | ------------------------------ | -------- | ----------------------------------------------------------------- |
 | `workflow-onboarding`          | `0052CC` | Onboarding this repo to a proposal-loop workflow                 |
-| `source:agent-research`        | `5319E7` | Filed by the apply-agent-research loop                           |
 | `source:architecture-review`   | `5319E7` | Filed by the improve-codebase-architecture loop                  |
 | `source:staleness-review`      | `5319E7` | Filed by the staleness-review loop                               |
-| `source:skill-audit`           | `5319E7` | Filed by the skill-divergence-audit loop                         |
 | `source:changelog-health`      | `5319E7` | Filed by the changelog-health loop                               |
 
 ## CHANNELS (owned by `dividedby/skills`, applied by consumers)
 
 | Label                    | Color    | Description                                                |
 | ------------------------ | -------- | --------------------------------------------------------- |
-| `skill-request`          | `006B75` | Cross-repo demand for a skill (aggregated per ADR 0006)   |
-| `skill-promotion`        | `D93FB3` | Cross-repo offer of a local skill for promotion           |
 | `awaiting-corroboration` | `BFD4F2` | Triaged but parked pending cross-repo corroboration       |
 
 ## Issue title convention

@@ -1,5 +1,7 @@
 # Cross-repo credential is selected inside cli.py, not the workflow shell
 
+> **Superseded by [ADR 0038](./0038-retire-knowledge-application-after-agent-research-decommission.md)** — the `apply-agent-research` `cli.py` and its cross-repo credential selection are retired.
+
 > **Superseded in part by [ADR 0032](0032-issues-token-consolidation-and-explicit-mode-flag.md):** the token name is now `ISSUES_TOKEN` (was `SKILLS_TRACKER_TOKEN`); the `repo == dividedby/skills` swap guard is retained and its importance increases (ISSUES_TOKEN has wider repo scope).
 
 ## Context

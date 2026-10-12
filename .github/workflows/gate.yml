@@ -1,8 +1,8 @@
 name: gate
 
 # Single always-run merge gate — the sole CI workflow for tests. The three
-# per-area workflows this once complemented (hook-self-tests, harness-tests,
-# apply-agent-research-lib-tests) were path-filtered subsets of this suite that
+# per-area workflows this once complemented (hook-self-tests, harness-tests, and
+# a path-filtered lib-tests workflow) were path-filtered subsets of this suite that
 # also re-ran on push, double-running the same tests gate already covers at PR
 # time; they were removed. This job has no path filter, runs every stdlib
 # self-test in the repo in one sub-second pass, and is the single required check
@@ -45,5 +45,4 @@ jobs:
         run: |
           set -e
           python3 -m unittest discover -s harness/tests
-          python3 -m unittest discover -s skills/meta/apply-agent-research/tests
           python3 -m unittest discover -s tools

@@ -195,8 +195,10 @@ harness elements match the current output of `setup-dividedby-skills`. The
 lever to fix drift is `setup-dividedby-skills` (re-run, idempotent).
 
 **Axis 2 — Skills-vs-upstream divergence** (applies to the SKILLS REPO ONLY)
-Measured against `mattpocock/skills` upstream. The lever is
-`skill-divergence-audit` (a separate skill). This axis asks "have our published
+Measured against `mattpocock/skills` upstream. No recurring audit drives it
+now (the `skill-divergence-audit` loop was retired —
+[ADR 0038](../adr/0038-retire-knowledge-application-after-agent-research-decommission.md));
+it is a manual, on-demand comparison. This axis asks "have our published
 skills drifted from Matt's revamped foundation?" — a different question from
 "does this repo carry the harness?" and only meaningful for `dividedby/skills`
 itself. The composed-skill relationship (this repo extends Matt's foundation

@@ -1,5 +1,7 @@
 # Skill-improvement workflows run AFK and propose via issues
 
+> **Superseded in part by [ADR 0038](./0038-retire-knowledge-application-after-agent-research-decommission.md)** — the `agent-research` KB-fed workflows (self-improvement, gap-scanner) and their run-books are retired; the propose-via-issues, producer/decider posture still governs the surviving proposal loops.
+
 Two recurring workflows consume the [`agent-research`](https://github.com/dividedby/agent-research)
 knowledge base to improve this repo: a **self-improvement** workflow that
 refines existing skills against how skilled practitioners build agents, and a

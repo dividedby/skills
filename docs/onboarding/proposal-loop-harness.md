@@ -2,17 +2,12 @@
 
 A **[proposal loop](../../CONTEXT.md)** is a scheduled, skill-driven GitHub
 Actions workflow that reads some input, then **proposes via labeled issues and
-never applies** — no commits, edits, or PRs. Four of this owner's proposal
+never applies** — no commits, edits, or PRs. Three of this owner's proposal
 loops share this harness's `cli.py`; only the *skill*, the *input*, and the
-*label* differ. Three vendor a thin caller stub per consumer repo (below);
-the fourth — `changelog-health` — is centralized and host-only, with no
+*label* differ. Two vendor a thin caller stub per consumer repo (below);
+the third — `changelog-health` — is centralized and host-only, with no
 per-repo setup doc:
 
-- **[`consumer-setup.md`](./consumer-setup.md)** — `apply-agent-research`
-  (KB + governance docs → agent-meta improvements). The rich one: adds the
-  knowledge-mirror input and the cross-repo `skill-request` / `skill-promotion`
-  channels. Files through the skill's own guarded `cli.py`, so it uses only the
-  harness's shared `digest` (not the `publish` seam).
 - **[`arch-review-setup.md`](./arch-review-setup.md)** —
   `improve-codebase-architecture` (the codebase → refactor proposals). The
   leanest member: no extra input, no cross-repo channels — harness + a skill,
@@ -25,7 +20,7 @@ per-repo setup doc:
   validation, and its skill *can* mutate (a verify-gated apply station) yet the
   loop runs it **report-only** — no `Edit`/`Write`, so the cron never applies.
 
-This file is the **common skeleton** the three vendored loops reference
+This file is the **common skeleton** the two vendored loops reference
 (`changelog-health` needs no separate setup doc — its workflow file is
 self-contained). Read it first, then the loop-specific doc.
 
@@ -41,7 +36,7 @@ self-contained). Read it first, then the loop-specific doc.
   for a security-relevant skill (a leak guard) that drift is the worst failure
   mode. The skill is used **by file path**, so any readable location works.
 - **Vendor only the thin caller stub; everything load-bearing lives in the reusable body** ([ADR 0014](../adr/0014-harness-is-fetched-fresh-only-the-workflow-envelope-is-vendored.md), [ADR 0029](../adr/0029-apply-agent-research-joins-the-reusable-body-rail.md)).
-  All three vendored loops run as GitHub Actions `workflow_call` reusable
+  Both vendored loops run as GitHub Actions `workflow_call` reusable
   bodies in `dividedby/skills` (#382) — `changelog-health` doesn't follow this
   pattern; it's a single centralized workflow in the host repo, no vendoring
   needed. The drift-prone logic — the `stream-json` cost
@@ -49,8 +44,8 @@ self-contained). Read it first, then the loop-specific doc.
   scoped `--allowedTools`, pinned `--model`, `--max-budget-usd`, the first-Monday
   gate, and the loop prompts — lives in the `*-reusable.yml` bodies and resolves
   fresh from `dividedby/skills` on every run. Each repo commits only the **thin
-  caller stub**: `on:` (cron schedule), `permissions:`, `uses:`, and `secrets:`
-  (plus loop-specific `with:` inputs for `apply-agent-research`). The home repo
+  caller stub**: `on:` (cron schedule), `permissions:`, `uses:`, and `secrets:`.
+  The home repo
   uses a local `./` ref (canary, runs latest body); consumers pin `@claude-loops-v1`.
   One fix in a reusable body reaches every caller on its next run, killing the
   #117/#211 drift class.
@@ -58,7 +53,7 @@ self-contained). Read it first, then the loop-specific doc.
 ## The thin caller stub
 
 Each loop's workflow file in any repo is just `on:` + `permissions:` + `uses:` +
-`secrets:` (plus `apply-agent-research`'s `with:` inputs). Everything
+`secrets:`. Everything
 load-bearing — the `claude -p` invocation, scoped `--allowedTools`, pinned
 `--model` and `--max-budget-usd`, cron gate logic, `concurrency`, the harness
 clone, the cost-ledger `digest` step — lives in the corresponding
@@ -71,23 +66,22 @@ canary — always running the latest body before consumers pin). Consumer repos
 vendor a thin caller that pins `@claude-loops-v1`; a tag move is the single
 gated rollout that updates the body for all consumers at once.
 
-A tag move reaches only **tag-pinned** consumers. **SHA-pinned** consumers —
-e.g. agent-research, which pins each `uses:` at an immutable commit with a
-trailing `# claude-loops-v1` comment (supply-chain hardening) — are *not*
-re-pointed by a tag move; bump their pins in a separate per-repo PR. This is
+A tag move reaches only **tag-pinned** consumers. A **SHA-pinned** consumer —
+one that pins each `uses:` at an immutable commit with a trailing
+`# claude-loops-v1` comment (supply-chain hardening) — is *not* re-pointed by a
+tag move; bump its pins in a separate per-repo PR. This is
 load-bearing when a new body couples to a **fetched-fresh-harness contract
 change** (`harness/cli.py` and prompts run at `main` every run,
 [ADR 0014](../adr/0014-harness-is-fetched-fresh-only-the-workflow-envelope-is-vendored.md)):
 remove the harness's old-body compatibility shim (a fallback, or an
 optional-then-required arg) **only after** every consumer on *both* lanes runs
-the new body. Rollout order: (1) move the tag — every consumer floats `@claude-loops-v1`
-(agent-research floated off its #470 SHA in the goodreads-bot#668 follow-on), so
-this reaches all of them; (2) if a consumer is ever SHA-pinned again, bump it to
+the new body. Rollout order: (1) move the tag — every consumer floats `@claude-loops-v1`,
+so this reaches all of them; (2) if a consumer is ever SHA-pinned again, bump it to
 the tag commit (none are today); (3) confirm no consumer still vendors the
 pre-change body; (4) *then* delete the harness shim. The SHA-pin lane is exactly
 what floating the tag eliminated: on 2026-07-04, #561 removed `fetch-rubric`'s
-network fallback while agent-research was still SHA-pinned pre-#525 (caught before
-a run hit it, fixed by agent-research#491). `check_workflow_drift.py`'s pin-drift
+network fallback while a consumer was still SHA-pinned pre-#525 (caught before
+a run hit it). `check_workflow_drift.py`'s pin-drift
 lane (#524) still flags a stray SHA left behind the tag, but weekly and after the
 fact; keeping every consumer on the tag literal is the prevention.
 
@@ -119,13 +113,6 @@ jobs:
     # uses: dividedby/skills/.github/workflows/<loop-name>-reusable.yml@claude-loops-v1
     secrets:
       CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-    # apply-agent-research consumers add with: inputs (see consumer-setup.md):
-    # with:
-    #   is-knowledge-source: false
-    #   private-markers: ""
-    #   max-budget-usd: "4.00"
-    # secrets:  # (in addition to CLAUDE_CODE_OAUTH_TOKEN above)
-    #   ISSUES_TOKEN: ${{ secrets.ISSUES_TOKEN }}
 ```
 
 The cron schedule is the **only per-consumer customization** in the thin caller
@@ -144,10 +131,7 @@ rarely; when it does, it is a **manual rollout** to update the reusable bodies.
   reusable body. Two reasons a prompt rides the harness rail rather than being
   vendored per repo: for a **publish-seam** loop (arch-review, staleness) the
   prompt and the `publish` parser share the `<output>`/`<body>` contract and
-  version together; for **`apply-agent-research`** the prompt is instead
-  **parametrized by env** and serves both the host and every Consumer from one
-  source, so the rail preserves "one fix reaches every loop"
-  ([ADR 0015](../adr/0015-apply-agent-research-prompt-is-consumer-portable-via-env.md)).
+  version together.
   **`improve-codebase-architecture` is a hybrid:** the harness prompt is only the
   **scope-free skeleton**, and the reusable body concatenates it with a vendored
   local **Repo-context include** (`.github/arch-review-context.md`, hard-failed
@@ -158,11 +142,6 @@ rarely; when it does, it is a **manual rollout** to update the reusable bodies.
   body-drafting rules (Step 5) include a **Design-tension block** — competing-constraint
   analysis naming 2–3 candidate-specific tensions and a triage decision statement —
   for human review before implementation starts (ADR 0020, second amendment).
-  That prompt reads its wiring from the env the reusable body exports — `MIRROR_DIR`,
-  `SKILL_DIR`, `SKILLS_SRC`, `PRIVATE_MARKERS`, and `ISSUES_TOKEN` (the cross-repo
-  credential; mode is determined by the explicit `is-tracker-host` input, not token
-  presence — ADR 0032). The exact contract and what a Consumer's `with:` inputs
-  must cover is in [`consumer-setup.md`](./consumer-setup.md).
 - **`python3 harness/cli.py digest --jsonl F --result-out F --cost-out F`** —
   every loop. Reduces the `stream-json` JSONL to the last result event's `.result`
   (whole, multi-line preserved) and the `total_cost_usd=…  duration_ms=…
@@ -216,10 +195,9 @@ modifying a reusable body are responsible for these:
   (`on.schedule.cron`) lives in each caller stub (the one per-consumer
   customization); all gate logic (e.g. the first-Monday check) lives in the
   reusable body. Schedule off the top of the hour and pick a slot **after** any
-  upstream that produces this loop's input (a Consumer runs after the knowledge
-  mirror's synthesis push). To avoid hand-coordinating slots as more repos
+  upstream that produces this loop's input. To avoid hand-coordinating slots as more repos
   onboard, derive the minute/hour from the job's own identity — a **stateless hash
-  slot** (agent-research [ADR 0022](https://github.com/dividedby/agent-research/blob/main/docs/adr/0022-consumer-workflows-self-stagger-by-hash.md)):
+  slot**:
 
   ```python
   offset = int(sha1(f"{repo}/{workflow}".encode()).hexdigest()[:6], 16)
@@ -229,8 +207,8 @@ modifying a reusable body are responsible for these:
 
   The hash picks only the **minute and hour within the assigned day**; the
   day/frequency stays as the cadence dictates. The shared **Mon/Wed/Sat consumer
-  window** (where `apply` / `improve-codebase-architecture` across all repos consume
-  the same run's synthesis) is `WINDOW_START=0`, `WINDOW_HOURS=4` on
+  window** (where `improve-codebase-architecture` runs across all repos) is
+  `WINDOW_START=0`, `WINDOW_HOURS=4` on
   **Mon/Wed/Sat UTC** (`* * 1,3,6`) — the `* * 1,3,6` mask avoids the UTC-midnight
   day-of-week straddle a CT-evening window would hit. **First-Monday cadence**
   (e.g. staleness-review): POSIX cron can't express it, so the stub fires every
@@ -243,43 +221,37 @@ modifying a reusable body are responsible for these:
   (`echo '<json>' | python3 cli.py gate`), `Bash` must stay **unscoped** — a scoped
   `Bash(python3:*)` blocks a command that starts with `echo`. The no-commits
   invariant then rests on `contents: read` + the absence of `Edit`/`Write`, not on
-  Bash scoping. See agent-research#127. *For a loop that files through a guarded
-  shim* (`apply-agent-research`'s `cli.py file` / `cli.py comment`, which sanitize
-  then `gh`-write only on ALLOW), additionally set `--disallowedTools "Bash(gh issue
+  Bash scoping. *For a loop that files through a guarded shim* (one that sanitizes
+  then `gh`-writes only on ALLOW), additionally set `--disallowedTools "Bash(gh issue
   create:*) Bash(gh issue comment:*)"` so the agent cannot bypass the guard with a
   direct write. A publish-seam loop (arch-review) instead scopes `gh` to read-only
   subcommands so the agent cannot file at all — the harness `publish` step is the
   sole filing path.
-- **Emit the cost-ledger line.** `harness/cli.py digest` writes the single
-  `total_cost_usd=<…>  duration_ms=<…>  num_turns=<…>` line that a cross-repo
-  **cost hub** (`dividedby/agent-research`) scrapes from each participating repo's
-  run logs to project monthly spend. Every proposal loop must emit it — it is part
-  of the reusable body, not a per-loop add-on. Use `--output-format stream-json
-  --verbose` (not plain `json`, which buffers and goes dark on a hang) so the final
-  `result` event lands in the log before `claude` exits; cost is then captured even
-  on a failed run. The hub reads logs via a least-privilege `Actions: Read` PAT it
-  holds — see the onboarding doc's manual steps for the token the human must mint.
+- **Emit the cost line.** `harness/cli.py digest` writes the single
+  `total_cost_usd=<…>  duration_ms=<…>  num_turns=<…>` line into the run log, so
+  per-run spend is readable straight from the Actions log. Every proposal loop must
+  emit it — it is part of the reusable body, not a per-loop add-on. Use
+  `--output-format stream-json --verbose` (not plain `json`, which buffers and goes
+  dark on a hang) so the final `result` event lands in the log before `claude`
+  exits; cost is then captured even on a failed run.
 - **Pin `--model` — default `claude-sonnet-5`.** Always pass an explicit
   `--model`, using an exact model ID rather than a floating alias like `sonnet`;
   never rely on the `CLAUDE_CODE_OAUTH_TOKEN` default. An unpinned loop runs
   whatever the subscription default happens to be, which can silently flip (e.g.
-  to opus) and blow the budget without a code change, and makes the cost hub's
-  projection unreliable (its per-run repricing assumes a known model). A floating
+  to opus) and blow the budget without a code change, and makes per-run cost
+  unpredictable. A floating
   alias has the same staleness class in miniature: it silently inherits the next
   release of that tier, untested, in an unattended loop — bump the pin only after
   testing the prompts against the new model (#180). **Sonnet is the
   default choice** for these propose-only loops — the #161 cost/quality benchmark
   found model is the cost lever but barely moves output quality for synthesis/
-  apply/audit-shaped work; reserve `opus` for a loop that is *demonstrably*
-  quality-critical (in the corpus, only agent-research's downstream-read
-  `synthesize` keeps opus). This pairs with the cost-ledger line above: pinned model
-  + emitted cost is what keeps an onboarded loop inside the hub's $100/mo Agent SDK
-  credit budget (`dividedby/agent-research` `docs/cost-tracking.md`, ADR 0020 cost
-  amendment).
+  audit-shaped work; reserve `opus` for a loop that is *demonstrably*
+  quality-critical. This pairs with the cost line above: pinned model + emitted
+  cost + the `--max-budget-usd` backstop is what keeps an onboarded loop inside its
+  budget.
 
 ## Required secrets
 
 - **`CLAUDE_CODE_OAUTH_TOKEN`** — so the run can authenticate. A repo already
   running Claude in Actions has this; reuse it.
-- Any **loop-specific** token (e.g. a Consumer's `ISSUES_TOKEN` for
-  cross-repo writes) — see that loop's doc.
+- Any **loop-specific** token — see that loop's doc.

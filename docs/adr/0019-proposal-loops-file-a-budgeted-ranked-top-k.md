@@ -1,5 +1,7 @@
 # Proposal loops file a budgeted ranked top-k, not one issue per run/channel
 
+> **Superseded in part by [ADR 0038](./0038-retire-knowledge-application-after-agent-research-decommission.md)** — the `apply-agent-research` gate budget and cadence are retired; the budgeted top-k and per-run cap still govern `improve-codebase-architecture` and `staleness-review`.
+
 > **Amended 2026-06-30.** Per-run cap **2 → 1** for both `MAX_PROPOSALS`
 > (`harness/cli.py`, reaching arch-review estate-wide) and the
 > apply-agent-research gate `budget` (`proposal_gate.MAX_BUDGET`). Each

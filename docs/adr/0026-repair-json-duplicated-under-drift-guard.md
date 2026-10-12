@@ -1,5 +1,7 @@
 # `repair_json` is duplicated under a CI drift guard
 
+> **Superseded by [ADR 0038](./0038-retire-knowledge-application-after-agent-research-decommission.md)** — the skill-side `repair_json` copy and its drift guard are deleted; `harness/cli.py` keeps the only copy.
+
 ## Context
 
 [#369](https://github.com/dividedby/skills/pull/369) fixed the `gate`

@@ -1,5 +1,7 @@
 # Consumers fetch the skill fresh, they do not vendor it
 
+> **Superseded in part by [ADR 0038](./0038-retire-knowledge-application-after-agent-research-decommission.md)** — the `apply-agent-research` Consumer example is retired; fetch-fresh (not vendored) still holds for `improve-codebase-architecture` and `staleness-review`.
+
 A [Consumer](../../CONTEXT.md) with no plugin system (e.g.
 `dividedby/agent-research`) obtains
 [`apply-agent-research`](../../skills/meta/apply-agent-research/SKILL.md) by

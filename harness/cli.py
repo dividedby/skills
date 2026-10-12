@@ -5,7 +5,7 @@ reads some input and *proposes via labeled issues, never applies*. Historically
 the parts that are generic across loops — the ``stream-json`` cost scrape and the
 ``<output>``/``<body>`` publish seam — were hand-written in each repo's workflow
 ``.yml`` and drifted: the same invalid-JSON fix had to be applied twice, by hand,
-in dividedby/skills#119 and dividedby/agent-research#211. This module pulls that
+in dividedby/skills#119 and again in a second repo. This module pulls that
 logic onto the same fetch-fresh rail as the skill ([ADR 0008]/[ADR 0014]): repos
 commit only the thin **workflow envelope** (cron, permissions, tokens, tool
 scoping, a clone-and-invoke body) and call this CLI for the rest, so one fix here
@@ -298,14 +298,14 @@ def parse_digest(lines):
 
 
 def cost_line(digest):
-    """The single cost-ledger line the cross-repo cost hub scrapes from logs.
+    """The single cost line each loop writes to its run log.
 
     When ``digest["error"]`` is set, ``error=<class>`` is prepended (so a
     truncated tail can't drop it) — ``error=no-result`` (crashed/empty run) or
     ``error=is_error`` (a completed run the CLI itself flagged as failed).
     On a clean run the ``error`` key is still present but ``None`` — falsy, so
     the LINE carries no ``error=`` substring and is byte-identical to the
-    pre-#531 format; COST_SURFACE's parser is unaffected on the common path.
+    pre-#531 format; log scrapers are unaffected on the common path.
     """
     error = digest.get("error")
     prefix = f"error={error}  " if error else ""

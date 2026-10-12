@@ -78,16 +78,14 @@ def loop_label_install_plan(labels_md_text: str) -> list[dict]:
 
 CANONICAL_LOOP_LABELS = {
     "workflow-onboarding",
-    "source:agent-research",
     "source:architecture-review",
     "source:staleness-review",
-    "source:skill-audit",
     "source:changelog-health",
 }
 
 CORE_LABELS_SAMPLE = {"needs-triage", "bug", "size:M", "idea-inbox"}
 
-CHANNELS_LABELS = {"skill-request", "skill-promotion", "awaiting-corroboration"}
+CHANNELS_LABELS = {"awaiting-corroboration"}
 
 
 class TestLabelsFileExists(unittest.TestCase):

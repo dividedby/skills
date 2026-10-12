@@ -1,6 +1,6 @@
 # Wire skill-divergence-audit as a recurring, propose-only loop
 
-> **Status: Accepted** — maintainer-ratified WIRE decision on issue [#522](https://github.com/dividedby/skills/issues/522) (2026-07-04), which absorbed Epic B [#515](https://github.com/dividedby/skills/issues/515).
+> **Status: Superseded by [ADR 0038](./0038-retire-knowledge-application-after-agent-research-decommission.md)** — the loop and skill were retired. Originally accepted as a maintainer-ratified WIRE decision on issue [#522](https://github.com/dividedby/skills/issues/522) (2026-07-04), which absorbed Epic B [#515](https://github.com/dividedby/skills/issues/515).
 
 ## Context
 

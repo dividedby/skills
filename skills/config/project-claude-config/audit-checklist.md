@@ -43,7 +43,7 @@ A section is **situational** if it only matters when a specific, nameable condit
 
 A section is **preventative** if it is a safety or cost-prevention rule that must be in context *before* the triggering action — gating it would risk an agent skipping the guard entirely. Do **not** propose gating preventative sections. Examples:
 - Always-on security rules, data-loss-prevention checks, validation gates.
-- Cost-tracking / budget requirements for `claude -p` workflows (e.g. `--max-budget-usd`, COST_SURFACE, ADR 0019/0014) — must be loaded before any workflow is authored, not surfaced after.
+- Cost-tracking / budget requirements for `claude -p` workflows (e.g. `--max-budget-usd`, ADR 0019/0014) — must be loaded before any workflow is authored, not surfaced after.
 - Any rule whose violation can't be easily undone.
 
 ### Decision tree per section

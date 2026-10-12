@@ -1,5 +1,7 @@
 # apply-agent-research joins the reusable-body rail (ADR 0014 carve-out lifted)
 
+> **Superseded by [ADR 0038](./0038-retire-knowledge-application-after-agent-research-decommission.md)** — `apply-agent-research` and its reusable body are retired; the reusable-body rail itself stands for `improve-codebase-architecture` and `staleness-review`.
+
 [ADR 0014](0014-harness-is-fetched-fresh-only-the-workflow-envelope-is-vendored.md)
 moved the proposal-loop harness onto the fetch-fresh rail but **carved out**
 `apply-agent-research`: its body "forks on mode (host/consumer/producer), where no

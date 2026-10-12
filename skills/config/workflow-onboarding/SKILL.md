@@ -6,13 +6,13 @@ disable-model-invocation: true
 
 # Workflow onboarding
 
-A **composed** pass — run **after** `setup-dividedby-skills` — that installs the loop-specific surface a repo needs when it is being onboarded into a proposal loop (e.g. `apply-agent-research`, `improve-codebase-architecture`).
+A **composed** pass — run **after** `setup-dividedby-skills` — that installs the loop-specific surface a repo needs when it is being onboarded into a proposal loop (e.g. `improve-codebase-architecture`, `staleness-review`).
 
 **What setup-dividedby-skills gives you:** CORE labels, Idea Inbox, branching policy, the Conventions block, and label-convention doc.
 
-**What this skill adds:** the LOOP/NETWORK labels on the target repo and a seeded `docs/agents/installed-skills.md` so remote/CI loops can read the maintainer's global capability set.
+**What this skill adds:** the LOOP/NETWORK labels on the target repo and a seeded `docs/agents/installed-skills.md` so remote/CI runs can read the maintainer's global capability set.
 
-**Out of scope:** CHANNELS labels (`skill-request`, `skill-promotion`, `awaiting-corroboration`) — those are owned by `dividedby/skills` and live there only; this skill must not create them on the target.
+**Out of scope:** CHANNELS labels (`awaiting-corroboration`) — those are owned by `dividedby/skills` and live there only; this skill must not create them on the target.
 
 Every network mutation — label creates — is preceded by a plan you must explicitly confirm. Nothing is written or mutated until you approve.
 
@@ -38,15 +38,13 @@ gh label list --repo {owner}/{repo} --limit 100 --json name,color,description \
   --jq 'sort_by(.name)[] | "\(.name)\t\(.color)\t\(.description)"'
 ```
 
-Compare against the 6 canonical LOOP/NETWORK labels:
+Compare against the 4 canonical LOOP/NETWORK labels:
 
 | Label | Color | Description |
 | --- | --- | --- |
 | `workflow-onboarding` | `0052CC` | Onboarding this repo to a proposal-loop workflow |
-| `source:agent-research` | `5319E7` | Filed by the apply-agent-research loop |
 | `source:architecture-review` | `5319E7` | Filed by the improve-codebase-architecture loop |
 | `source:staleness-review` | `5319E7` | Filed by the staleness-review loop |
-| `source:skill-audit` | `5319E7` | Filed by the skill-divergence-audit loop |
 | `source:changelog-health` | `5319E7` | Filed by the changelog-health loop |
 
 For each: **create** if absent, **update** if color or description has drifted, **skip** if correct.
@@ -65,7 +63,7 @@ From the detect report, produce a per-concern action list.
 
 ### Concern A — LOOP/NETWORK labels
 
-One action per label: **create**, **update**, or **skip**. Do not plan any CHANNELS labels (`skill-request`, `skill-promotion`, `awaiting-corroboration`) — those are hub-only and must not appear on the target.
+One action per label: **create**, **update**, or **skip**. Do not plan any CHANNELS labels (`awaiting-corroboration`) — those are hub-only and must not appear on the target.
 
 ### Concern B — `docs/agents/installed-skills.md`
 
@@ -99,7 +97,7 @@ For each **create** or **update** (idempotent — creates or updates in one shot
 gh label create "<name>" --color "<hex>" --description "<desc>" --repo {owner}/{repo} --force
 ```
 
-Do not create CHANNELS labels. If the plan somehow includes `skill-request`, `skill-promotion`, or `awaiting-corroboration`, stop and surface it — those are out of scope.
+Do not create CHANNELS labels. If the plan somehow includes `awaiting-corroboration`, stop and surface it — those are out of scope.
 
 **B — `docs/agents/installed-skills.md`:**
 
@@ -121,7 +119,7 @@ Do not copy the `dividedby/skills` skill list verbatim — it reflects the sourc
 
 After execution:
 
-- Re-run the label list and confirm all 6 LOOP/NETWORK labels are present with correct color and description.
+- Re-run the label list and confirm all 4 LOOP/NETWORK labels are present with correct color and description.
 - Confirm CHANNELS labels are absent.
 - Confirm `docs/agents/installed-skills.md` exists in the target.
 

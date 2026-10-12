@@ -41,7 +41,6 @@ except ImportError:
 #   gh api repos/<r> -q .archived if more get archived.
 REPOS: dict[str, str] = {
     "dividedby/infra": "main",
-    "dividedby/agent-research": "main",
     "dividedby/claude-config": "main",
     "dividedby/dokdiv": "main",
     "dividedby/dokploy-maintenance": "main",

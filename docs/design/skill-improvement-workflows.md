@@ -1,19 +1,17 @@
 ---
 feature: skill-improvement-workflows
 status: superseded
-superseded-by: cross-repo-knowledge-application
+superseded-by: adr-0038-retire-knowledge-application
 parent: "#14"
 ---
 
-> **Superseded** by [`cross-repo-knowledge-application.md`](./cross-repo-knowledge-application.md)
-> (agent-research ADR 0019, decentralized pull). The central-push run-books below
-> were built but never wired; consumption is now a published `apply-agent-research`
-> skill each consumer runs on itself. The pure helpers (`proposal_gate`,
-> `sanitizer`) carry over; the rest is deprecated. Kept for history.
->
-> **`runbooks/` is now retired** — the surviving helpers + the `cli.py` seam moved
-> under the skill at `skills/meta/apply-agent-research/lib/` (ADR 0004 amendment).
-> Any `runbooks/lib/...` path below is historical; read it at the new location.
+> **Superseded and retired.** The central-push run-books below were built but
+> never wired; they were replaced by a published `apply-agent-research` skill,
+> and that whole knowledge-application subject (skill, loop, and its
+> `cross-repo-knowledge-application` design) was retired by
+> [ADR 0038](../adr/0038-retire-knowledge-application-after-agent-research-decommission.md)
+> once `agent-research` was archived. Kept for history only; every
+> `runbooks/lib/...` path below is historical and no longer exists.
 
 # Design Plan: skill-improvement AFK workflows (C & D)
 

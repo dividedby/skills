@@ -3,7 +3,7 @@
 This stands up `improve-codebase-architecture` as a scheduled
 [proposal loop](./proposal-loop-harness.md) in any repo with code worth
 reviewing. It is the **leanest** member of the family in terms of wiring — **no**
-knowledge-mirror input and **no** cross-repo channels — though it adds one
+extra input and **no** cross-repo channels — though it adds one
 refinement over the bare harness: a **deterministic publish seam** (below). It
 reads the codebase itself — informed by `CONTEXT.md` + `docs/adr/` if present —
 and files refactor proposals into the repo's own tracker. **Read the harness doc
@@ -24,8 +24,7 @@ first**; this doc is only the deltas.
 - **Split prompt: fetched-fresh skeleton + fetched depth rubric + local Repo-context include**
   ([ADR 0016](../adr/0016-arch-review-prompt-is-skeleton-plus-local-repo-context-include.md),
   [ADR 0020](../adr/0020-arch-review-fetches-depth-rubric-fresh-and-adds-simplification-legibility-lenses.md)).
-  Unlike `apply-agent-research`'s single env-parametrized prompt, this loop's
-  per-repo variation *is content* — what to review, which disciplines bind — which
+  This loop's per-repo variation *is content* — what to review, which disciplines bind — which
   has no env representation. So the prompt is three parts joined by the reusable body:
   - The **skeleton** (`harness/prompts/improve-codebase-architecture.md`, fetched
     fresh) carries everything shared: the unattended/publish-seam framing, the
@@ -164,5 +163,5 @@ proposals worth it.
    cron take over.
 
 A repo can run **both** this loop and the
-[Consumer loop](./consumer-setup.md) — they are independent jobs with separate
-provenance labels, sharing only the harness.
+[staleness-review loop](./staleness-setup.md) — they are independent jobs with
+separate provenance labels, sharing only the harness.

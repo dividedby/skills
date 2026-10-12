@@ -11,8 +11,7 @@ from unittest.mock import MagicMock, patch
 
 from tools.check_workflow_drift import (
     ANCHORS,
-    APPLY_PATH,
-    APPLY_BODY_PATH,
+    ARCH_BODY_PATH,
     ARCH_PATH,
     BODY_ANCHORS,
     REPO_SKIP_ANCHORS,
@@ -36,22 +35,22 @@ TAG_SHA = "559431b5ec587899b1c88b6ad31c5283df82bd7d"
 class TestCheckFile(unittest.TestCase):
     """check_file is pure: given content + anchors → list of missing anchors."""
 
-    def _apply_anchors(self):
-        return ANCHORS[APPLY_PATH]
+    def _arch_anchors(self):
+        return ANCHORS[ARCH_PATH]
 
     def _body_anchors(self):
-        return BODY_ANCHORS[APPLY_BODY_PATH]
+        return BODY_ANCHORS[ARCH_BODY_PATH]
 
     def _stub_anchors(self):
         return ANCHORS[ARCH_PATH]
 
     def test_all_anchors_present_returns_empty(self):
         # Build content that contains every anchor.
-        content = "\n".join(self._apply_anchors())
-        self.assertEqual(check_file(content, self._apply_anchors()), [])
+        content = "\n".join(self._arch_anchors())
+        self.assertEqual(check_file(content, self._arch_anchors()), [])
 
     def test_missing_issues_write_is_reported(self):
-        anchors = self._apply_anchors()
+        anchors = self._arch_anchors()
         content = "\n".join(a for a in anchors if a != "issues: write")
         missing = check_file(content, anchors)
         self.assertIn("issues: write", missing)
@@ -72,16 +71,16 @@ class TestCheckFile(unittest.TestCase):
         self.assertEqual(missing, [])
 
     def test_empty_content_returns_all_anchors_missing(self):
-        anchors = self._apply_anchors()
+        anchors = self._arch_anchors()
         missing = check_file("", anchors)
         self.assertEqual(missing, anchors)
 
-    def test_missing_prompt_fetch_is_reported(self):
-        # Prompt-fetch anchor lives on the reusable body, not the thin-caller stub.
+    def test_missing_harness_clone_is_reported(self):
+        # Harness-clone anchor lives on the reusable body, not the thin-caller stub.
         anchors = self._body_anchors()
-        content = "\n".join(a for a in anchors if a != "prompts/apply-agent-research.md")
+        content = "\n".join(a for a in anchors if a != "git clone --depth 1")
         missing = check_file(content, anchors)
-        self.assertIn("prompts/apply-agent-research.md", missing)
+        self.assertIn("git clone --depth 1", missing)
 
     def test_missing_model_pin_is_reported(self):
         # Model-pin anchor lives on the reusable body, not the thin-caller stub.
@@ -106,19 +105,10 @@ class TestCheckFile(unittest.TestCase):
 
 class TestRepoSkipAnchors(unittest.TestCase):
     """REPO_SKIP_ANCHORS is empty: every consumer carries the `@claude-loops-v1`
-    tag literal, so a missing literal is a finding everywhere. agent-research
-    used to be the lone exception (SHA-pinned by #470), but it floated its pin
-    back to the tag literal (goodreads-bot#668 follow-on), so it now enforces the
-    anchor like moodreader/goodreads-bot."""
-
-    def test_agent_research_no_longer_skips_claude_loops_v1_literal(self):
-        anchors = ANCHORS[APPLY_PATH]
-        content = "\n".join(a for a in anchors if a != "@claude-loops-v1")
-        skip = REPO_SKIP_ANCHORS.get("dividedby/agent-research", set())
-        self.assertIn("@claude-loops-v1", check_file(content, anchors, skip=skip))
+    tag literal, so a missing literal is a finding everywhere."""
 
     def test_moodreader_still_requires_claude_loops_v1_literal(self):
-        anchors = ANCHORS[APPLY_PATH]
+        anchors = ANCHORS[ARCH_PATH]
         content = "\n".join(a for a in anchors if a != "@claude-loops-v1")
         skip = REPO_SKIP_ANCHORS.get("dividedby/moodreader", set())
         self.assertIn("@claude-loops-v1", check_file(content, anchors, skip=skip))
@@ -139,7 +129,7 @@ class TestDedup(unittest.TestCase):
             filed.append(r)
 
         # Verify: if title already in open_titles, file_issue is never called.
-        drifted = {APPLY_PATH: ["issues: write"]}
+        drifted = {ARCH_PATH: ["issues: write"]}
         if title not in open_titles:
             fake_file_issue(repo, drifted, "tok", False)
 
@@ -169,33 +159,33 @@ class TestExtractPin(unittest.TestCase):
         return f"    {uses_line}\n"
 
     def test_extracts_tag_literal_pin(self):
-        filename = os.path.basename(APPLY_BODY_PATH)
+        filename = os.path.basename(ARCH_BODY_PATH)
         content = self._stub(
             f"uses: dividedby/skills/.github/workflows/{filename}@{TAG_NAME}"
         )
         self.assertEqual(extract_pin(content, filename), TAG_NAME)
 
     def test_extracts_sha_pin_ignoring_trailing_comment(self):
-        filename = os.path.basename(APPLY_BODY_PATH)
+        filename = os.path.basename(ARCH_BODY_PATH)
         content = self._stub(
             f"uses: dividedby/skills/.github/workflows/{filename}@{TAG_SHA} # {TAG_NAME}"
         )
         self.assertEqual(extract_pin(content, filename), TAG_SHA)
 
     def test_returns_none_when_unparsable(self):
-        filename = os.path.basename(APPLY_BODY_PATH)
+        filename = os.path.basename(ARCH_BODY_PATH)
         content = "no uses: line in here at all\n"
         self.assertIsNone(extract_pin(content, filename))
 
     def test_cross_match_guard_does_not_match_a_different_body_file(self):
         # Content only has a `uses:` line for the staleness body; asking for
-        # the apply body's pin must not falsely match it.
+        # the arch body's pin must not falsely match it.
         stale_filename = os.path.basename(STALE_BODY_PATH)
-        apply_filename = os.path.basename(APPLY_BODY_PATH)
+        arch_filename = os.path.basename(ARCH_BODY_PATH)
         content = self._stub(
             f"uses: dividedby/skills/.github/workflows/{stale_filename}@{TAG_NAME}"
         )
-        self.assertIsNone(extract_pin(content, apply_filename))
+        self.assertIsNone(extract_pin(content, arch_filename))
 
 
 class TestIsShaPin(unittest.TestCase):
@@ -251,21 +241,21 @@ class TestBodyDiff(unittest.TestCase):
     """body_diff is pure: unified diff of other vs main, "" if identical."""
 
     def test_identical_content_returns_empty_string(self):
-        self.assertEqual(body_diff("same\n", "same\n", APPLY_BODY_PATH), "")
+        self.assertEqual(body_diff("same\n", "same\n", ARCH_BODY_PATH), "")
 
     def test_differing_content_returns_unified_diff_with_labels(self):
-        diff = body_diff("line one\n", "line two\n", APPLY_BODY_PATH)
-        self.assertIn(f"main:{APPLY_BODY_PATH}", diff)
-        self.assertIn(f"{TAG_NAME}:{APPLY_BODY_PATH}", diff)
+        diff = body_diff("line one\n", "line two\n", ARCH_BODY_PATH)
+        self.assertIn(f"main:{ARCH_BODY_PATH}", diff)
+        self.assertIn(f"{TAG_NAME}:{ARCH_BODY_PATH}", diff)
         self.assertIn("-line one", diff)
         self.assertIn("+line two", diff)
 
     def test_other_label_overrides_default_tag_name_in_diff_header(self):
         # A pin-lane diff against a non-tag SHA shouldn't be mislabeled as
         # the tag in the diff header.
-        diff = body_diff("a\n", "b\n", APPLY_BODY_PATH, other_label="abc1234")
-        self.assertIn(f"abc1234:{APPLY_BODY_PATH}", diff)
-        self.assertNotIn(f"{TAG_NAME}:{APPLY_BODY_PATH}", diff)
+        diff = body_diff("a\n", "b\n", ARCH_BODY_PATH, other_label="abc1234")
+        self.assertIn(f"abc1234:{ARCH_BODY_PATH}", diff)
+        self.assertNotIn(f"{TAG_NAME}:{ARCH_BODY_PATH}", diff)
 
 
 class TestPinDriftPureChain(unittest.TestCase):
@@ -274,29 +264,29 @@ class TestPinDriftPureChain(unittest.TestCase):
     def test_sha_pin_matching_tag_no_drift(self):
         # No consumer SHA-pins now, but the resolver must still handle a stray
         # SHA pin: one equal to the tag's current SHA, body unchanged -> no drift.
-        filename = os.path.basename(APPLY_BODY_PATH)
+        filename = os.path.basename(ARCH_BODY_PATH)
         stub_content = (
             f"uses: dividedby/skills/.github/workflows/{filename}@{TAG_SHA} # {TAG_NAME}\n"
         )
         pin = extract_pin(stub_content, filename)
         effective_ref = resolve_effective_ref(pin, TAG_SHA)
         self.assertEqual(effective_ref, TAG_SHA)
-        self.assertEqual(body_diff("main body\n", "main body\n", APPLY_BODY_PATH), "")
+        self.assertEqual(body_diff("main body\n", "main body\n", ARCH_BODY_PATH), "")
 
     def test_tag_literal_pin_diff_detected(self):
         # moodreader-style: tag-literal pin resolves to tag_sha; body has drifted.
-        filename = os.path.basename(APPLY_BODY_PATH)
+        filename = os.path.basename(ARCH_BODY_PATH)
         stub_content = f"uses: dividedby/skills/.github/workflows/{filename}@{TAG_NAME}\n"
         pin = extract_pin(stub_content, filename)
         effective_ref = resolve_effective_ref(pin, TAG_SHA)
         self.assertEqual(effective_ref, TAG_SHA)
-        diff = body_diff("main body\n", "old tag body\n", APPLY_BODY_PATH)
+        diff = body_diff("main body\n", "old tag body\n", ARCH_BODY_PATH)
         self.assertNotEqual(diff, "")
 
     def test_stale_sha_pin_diff_detected(self):
         # A SHA pin that predates the current tag: effective_ref != tag_sha,
         # and its body content differs from main.
-        filename = os.path.basename(APPLY_BODY_PATH)
+        filename = os.path.basename(ARCH_BODY_PATH)
         stale_sha = "a" * 40
         stub_content = (
             f"uses: dividedby/skills/.github/workflows/{filename}@{stale_sha} # {TAG_NAME}\n"
@@ -304,7 +294,7 @@ class TestPinDriftPureChain(unittest.TestCase):
         pin = extract_pin(stub_content, filename)
         effective_ref = resolve_effective_ref(pin, TAG_SHA)
         self.assertEqual(effective_ref, stale_sha)
-        diff = body_diff("main body\n", "stale pinned body\n", APPLY_BODY_PATH)
+        diff = body_diff("main body\n", "stale pinned body\n", ARCH_BODY_PATH)
         self.assertNotEqual(diff, "")
 
 
@@ -327,8 +317,8 @@ class TestIssueTitle(unittest.TestCase):
         )
 
     def test_consistent_across_calls(self):
-        title1 = _issue_title("dividedby/agent-research")
-        title2 = _issue_title("dividedby/agent-research")
+        title1 = _issue_title("dividedby/goodreads-bot")
+        title2 = _issue_title("dividedby/goodreads-bot")
         self.assertEqual(title1, title2)
 
 
