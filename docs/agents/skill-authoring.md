@@ -18,14 +18,11 @@ sub-skills, and when that composition fires.
 
 **File:** `skills/engineering/software-design/SKILL.md`
 
-The canonical wrapper for multi-module design sessions. Composes:
+The canonical wrapper for multi-module design sessions. It states the
+deep-module/seam framework inline (step 4: depth, seams, adapters, deletion
+test) and checks candidate module/interface names against `CONTEXT.md`
+(step 5), flagging new terms for `/grill-with-docs` extraction. Composes:
 
-- **`/codebase-design`** (step 4) — deep-module/seam framework, deletion test,
-  decomposition heuristics, adapter strategy, testability principles. All
-  module-vocabulary doctrine lives here; `software-design` does not duplicate it.
-- **`/domain-modeling`** (step 5) — ubiquitous-language grounding. Confirms or
-  corrects candidate module/interface names against `CONTEXT.md`; flags new terms
-  for `/grill-with-docs` extraction.
 - **`/grill-with-docs`** (deferred surface) — owns `CONTEXT.md` and `docs/adr/`.
   When the design session surfaces a new domain term or an ADR-worthy trade-off,
   `software-design` surfaces it and defers the write to `/grill-with-docs`.
@@ -35,20 +32,17 @@ The canonical wrapper for multi-module design sessions. Composes:
 **Trigger for composition:** the backlog plausibly spans two or more modules and
 module/seam choices are still implicit.
 
-### `grill-with-docs` (thin wrapper)
+### `grill-with-docs` (upstream, soft-dependency)
 
 **File:** `~/.claude/skills/grill-with-docs/SKILL.md` (globally installed; see [`installed-skills.md`](./installed-skills.md))
 
-A two-line wrapper: runs `/grilling` with the `/domain-modeling` skill in scope.
-
-- **`/grilling`** — relentless interview loop, one question at a time, until
-  shared understanding is reached. The raw questioning discipline.
-- **`/domain-modeling`** — writes down what crystallises: pins terms into
-  `CONTEXT.md`, records hard decisions as ADRs in `docs/adr/`.
+A relentless interview loop, one question at a time, until shared understanding
+is reached — and it writes down what crystallises: pins terms into `CONTEXT.md`
+and records hard decisions as ADRs in `docs/adr/`.
 
 **Trigger for composition:** any time domain vocabulary needs to be established or
-an architectural decision needs to be recorded. `software-design` defers to this
-pair when new terms or trade-offs surface mid-session.
+an architectural decision needs to be recorded. `software-design` defers to it
+when new terms or trade-offs surface mid-session.
 
 ### `FIREWALL.md` (copy-in pattern)
 

@@ -38,9 +38,9 @@ alongside it, not as a replacement.
 
 Before declaring any cross-reference broken, **read Matt's repo** (use
 `WebFetch` on the GitHub URL or `gh api repos/mattpocock/skills/...`).
-Skills you will find there include `grill-with-docs`, `to-prd`,
-`to-issues`, `tdd`, `diagnose`, `triage`, `prototype`, `handoff`,
-`write-a-skill`, `caveman`, `grill-me`, `improve-codebase-architecture`.
+Skills you will find there include `grill-with-docs`, `to-spec`,
+`to-tickets`, `tdd`, `triage`, `handoff`, `code-review`,
+`improve-codebase-architecture`.
 
 A link or reference like `../grill-with-docs/ADR-FORMAT.md` from inside
 `skills/engineering/frontend-design/` is **not broken** — it points to

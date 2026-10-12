@@ -14,7 +14,7 @@ the discipline that makes running unattended safe. See `CONTEXT.md` for the
 **Autonomous loop** / **Proposal loop** / **Run-book** vocabulary, and
 [RUNNING-AFK.md](RUNNING-AFK.md) for the HITL→AFK hardening detail.
 
-Deferrals: spec/backlog authoring → `/to-issues` and `/triage`; durable
+Deferrals: spec/backlog authoring → `/to-tickets` and `/triage`; durable
 TDD-ready issue bodies → `/software-design`; loop runtime mechanics → `/loop`
 or `/schedule`/CI-cron. This skill checks input durability (element 5) and owns
 the five elements below — it never authors the backlog or builds a new runtime.

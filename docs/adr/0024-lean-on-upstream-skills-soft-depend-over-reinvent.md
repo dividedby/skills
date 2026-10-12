@@ -9,6 +9,27 @@
 > only its scope, from one upstream to two. `CONTEXT.md` "Upstream soft-dependencies" and
 > `README.md` "Upstream" name both.
 
+> **Amendment (2026-10-12) — soft-dependency set trimmed to the installed set.** The
+> maintainer uninstalled these upstream items from the global environment:
+> `mattpocock/skills` — `implement`, `grill-me`, `grilling`, `diagnosing-bugs`, `research`,
+> `setup-matt-pocock-skills`, `codebase-design`, `domain-modeling`, `prototype`, `ask-matt`,
+> `teach`, `wayfinder`; `find-skills` and `playwright-cli`; and the official `commit-commands`
+> plugin (`/commit`, `/commit-push-pr`, `/clean_gone`). The contract (delete + soft-depend
+> first) is unchanged, but its surface now names only what is installed: `grill-with-docs`,
+> `to-spec` / `to-tickets` / `tdd`, `improve-codebase-architecture`, `code-review`
+> (Matt's) and `typescript-lsp` / `pyright-lsp` (official). Consequences reversed or
+> superseded: the Consequences bullet keeping `setup-matt-pocock-skills` as a soft-dependency
+> is **reversed** — `setup-dividedby-skills` is now standalone and treats a Matt scaffold as
+> optional; the **Authoring standard** no longer points at `writing-great-skills` (not
+> installed) and is instead `CODING_STANDARDS.md` +
+> [ADR 0002](./0002-design-skills-prescribe-at-principle-level.md); `to-prd` / `to-issues`
+> in the body below are historical names for `to-spec` / `to-tickets`, and `implement` is
+> dropped from the chain (terminal step is `/tdd`). `software-design` inlines the
+> module/seam and ubiquitous-language steps it formerly delegated to `codebase-design` /
+> `domain-modeling`, and `flow-pr` carries its own commit-message rule instead of
+> deferring to `/commit`.
+> The body below is left as written. See `CONTEXT.md` "Upstream soft-dependencies".
+
 ## Context
 
 This repo (`dividedby/skills`) was conceived to **extend** `mattpocock/skills` and fill genuine gaps —

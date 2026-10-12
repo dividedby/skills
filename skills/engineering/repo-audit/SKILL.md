@@ -77,7 +77,7 @@ else.
 |---|---|---|
 | **Deletionist** | Dead code, orphaned workflows, unused deps, pass-through abstractions — the deletion test applied everywhere | Delete / lean |
 | **Performance Analyst** | Hot paths, N+1 queries, unnecessary work, scaling risks visible from architecture | Performance |
-| **Architect** | Explore walk (from `improve-codebase-architecture`): friction, shallow modules, untestable seams, interface/implementation symmetry; `codebase-design` vocabulary throughout | Architectural deepening |
+| **Architect** | Explore walk (from `improve-codebase-architecture`): friction, shallow modules, untestable seams, interface/implementation symmetry; module/interface/depth/seam vocabulary throughout | Architectural deepening |
 | **Capability Scout** | Gaps between what the repo does and what it clearly should do — missing journeys, absent error handling, undocumented failure modes | Missing features / capabilities |
 | **Convention & Backlog Keeper** | Convention drift (ADRs, labels, changelog, config), naming/structural inconsistencies, and which open issues the other lenses would touch or supersede — grounded against the Stage 1 open-issue set | Cross-cutting; convention and reconciliation signal for Stage 3 |
 
@@ -231,7 +231,7 @@ Untouched issues on a large backlog get a single bulk "reviewed, no action" ackn
 
 ### 3b. Group into epics + ordered roadmap
 
-Group surviving findings (file-rated, plus the one optional batch) into named epics. Then produce a roadmap ordering the epics by impact, dependencies, and sequencing constraints. Use `to-prd` to produce per-epic PRDs.
+Group surviving findings (file-rated, plus the one optional batch) into named epics. Then produce a roadmap ordering the epics by impact, dependencies, and sequencing constraints. Use `to-spec` to produce per-epic specs.
 
 **Roadmap template** (inline — the one artifact `repo-audit` uniquely owns):
 
@@ -272,7 +272,7 @@ A run that produced only standalone bug tickets — no epics, no roadmap, no rec
 
 ## Stage 4 — Decompose epics into issues
 
-Use `to-issues` to decompose each surviving epic into `ready-for-agent` issues with explicit dependency chains. Each issue gets: user story or task description, links to relevant files/PRDs, constraints, and HITL tasks where human judgment is required.
+Use `to-tickets` to decompose each surviving epic into `ready-for-agent` issues with explicit dependency chains. Each issue gets: user story or task description, links to relevant files/PRDs, constraints, and HITL tasks where human judgment is required.
 
 **Completion criterion:** every epic has at least one decomposed `ready-for-agent` issue; no issue is an orphan (each links to its parent epic).
 

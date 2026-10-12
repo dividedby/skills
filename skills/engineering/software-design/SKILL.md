@@ -3,23 +3,22 @@ name: software-design
 disable-model-invocation: true
 description: >
   Orchestrates a multi-module design session — prereq self-check, frontend
-  routing stamp, issue clustering, module/seam design via codebase-design,
+  routing stamp, issue clustering, module/seam design (deep modules, located seams),
   TDD-ready issue rewrite, and batch tracker mutation — for a PRD + published
   backlog that spans two or more modules. Use when module and seam choices are
-  still implicit after /to-issues has run.
+  still implicit after /to-tickets has run.
 ---
 
 # Software Design
 
 This skill turns a PRD and a published backlog into a clear design: named
 modules, located seams, an explicit testing strategy, and TDD-ready issue
-bodies that `/tdd` or `/implement` can carry one behavior at a time.
+bodies that `/tdd` can carry one behavior at a time.
 
-It is an **orchestration wrapper**: the deep-module/seam vocabulary and
-testability doctrine live in `/codebase-design`; the ubiquitous-language
-grounding lives in `/domain-modeling`. This skill calls both and contributes
-the glue they lack — the prereq gate, the frontend routing stamp, the
-confirmation loop, and the batch tracker mutation.
+It is an **orchestration wrapper**: it applies the deep-module/seam
+framework and grounds names in the project's ubiquitous language (`CONTEXT.md`),
+and contributes the glue around them — the prereq gate, the frontend routing
+stamp, the confirmation loop, and the batch tracker mutation.
 
 Backend services and code with real I/O boundaries are the sharpest use
 case. UI component trees route to `/frontend-design` — this skill stamps the
@@ -32,7 +31,7 @@ routing block and hands off; it does not design components.
 Run after:
 
 - A PRD or epic exists (in conversation, in a file, or as a parent issue).
-- `/to-issues` has published a backlog of issues for that epic.
+- `/to-tickets` has published a backlog of issues for that epic.
 - `CONTEXT.md` exists with the domain vocabulary the issues will use.
 
 It is at its sharpest when the backlog plausibly spans **two or more
@@ -55,11 +54,10 @@ The skill exits early if any of these is true:
 Early-exit behavior has two paths:
 
 - **Backend single-module** — post `design-skipped: single-module change`
-  on each affected issue and tell the user to run `/tdd` or `/implement`
+  on each affected issue and tell the user to run `/tdd`
   directly.
 - **UI-only** — post `routed-to: /frontend-design` on each affected
-  issue and tell the user to run `/frontend-design` next, then `/tdd` or
-  `/implement`.
+  issue and tell the user to run `/frontend-design` next, then `/tdd`.
 
 Even on early-exit, the stamping pass (step 2) still runs for every
 frontend-flavored issue.
@@ -72,12 +70,12 @@ Before doing anything else, verify the prerequisites:
 
 1. **PRD or epic context** — is there a PRD file, a parent issue, or a
    conversation context that names the feature? If not, stop and tell the
-   user to establish the PRD first (e.g. via `/to-prd`).
+   user to establish the PRD first (e.g. via `/to-spec`).
 2. **`CONTEXT.md` exists** — if absent, stop and tell the user to run
    `/grill-with-docs` first to establish domain vocabulary.
 3. **Issues to design against** — fetch open issues for the epic via the
    tracker (per `docs/agents/issue-tracker.md`). If none, stop and tell the
-   user to run `/to-issues` first.
+   user to run `/to-tickets` first.
 4. **Likely multi-module** — read the issue set. If it plausibly spans 2+
    modules, proceed. Otherwise apply the early-exit rule above.
 
@@ -145,12 +143,13 @@ One signal for the cuts: which issues cross a communication boundary
 (sync/async, external system)? That's a seam, not a module cut — it tells
 you where an adapter goes.
 
-### 4. Invoke `/codebase-design` for module/seam vocabulary and design
+### 4. Design modules and seams
 
-Invoke `/codebase-design` to apply the deep-module/seam framework to the
-clustered issue set. The module/seam vocabulary, the deletion test, the
-decomposition heuristics, the adapter strategy, and the testability
-principles all live there — not here.
+Apply the deep-module/seam framework to the clustered issue set: a module
+hides a lot behind a small interface (depth); a seam is where behavior can be
+swapped without editing in place, and an adapter is what sits at it. Use the
+deletion test (would deleting this module concentrate complexity or scatter
+it to callers?) and keep every module testable through its interface.
 
 For each module, surface:
 
@@ -161,15 +160,14 @@ For each module, surface:
 - **Depends on** — other modules or seams
 - **Must not depend on** — e.g., transport layer, persistence
 
-### 5. Invoke `/domain-modeling` for ubiquitous-language grounding
+### 5. Ground names in the ubiquitous language
 
-Hand `/domain-modeling`:
+Check against the current `CONTEXT.md` glossary:
 
 - The candidate module names from step 4
 - All interface operation names and event names the design session surfaced
-- The current `CONTEXT.md` glossary as reference
 
-Expect back:
+Produce:
 
 - Confirmation or correction of each term against the project's ubiquitous
   language (e.g. "OrderPlaced not OrderCreated — see CONTEXT.md §Events")
@@ -290,8 +288,8 @@ After the last issue ships, mark the Design Plan `status: shipped`.
 [ ] Self-check passed (PRD, CONTEXT.md, issues, multi-module signal)
 [ ] Domain vocabulary read from CONTEXT.md before naming anything
 [ ] Frontend-flavored issues stamped (step 2) regardless of backlog size
-[ ] /codebase-design invoked for module/seam framework (step 4)
-[ ] /domain-modeling invoked before user confirmation; canonical terms incorporated (step 5)
+[ ] Modules and seams designed with the deep-module/seam framework (step 4)
+[ ] Terms checked against CONTEXT.md before user confirmation; canonical terms incorporated (step 5)
 [ ] Each module has exactly one reason to change
 [ ] No issue mixes responsibilities from two modules
 [ ] Issues ordered: tracer bullet → core behavior → edge cases → integration
