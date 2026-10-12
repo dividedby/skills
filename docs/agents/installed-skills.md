@@ -33,26 +33,26 @@ list and re-check after a `claude` upgrade.
 
 ## Globally installed skills
 
-Matt Pocock's skill suite (`mattpocock/skills`, upstream of this repo's
-`dividedby/skills`) and this repo's own published skills are installed globally
-in `~/.claude/skills/`:
+A subset of Matt Pocock's skill suite (`mattpocock/skills`, upstream of this
+repo's `dividedby/skills`), this repo's own published skills, and one local skill
+are installed globally in `~/.claude/skills/`:
 
-`ask-matt`, `autonomous-loop`, `cba-searching`,
-`codebase-design`, `council`, `decision-mapping`, `diagnosing-bugs`,
-`doc-it`, `domain-modeling`, `find-skills`, `flow-pr`, `frontend-design`,
-`grill-with-docs`, `grilling`, `handoff`, `implement`,
-`improve-codebase-architecture`, `playwright-cli`, `project-claude-config`,
-`prototype`, `repo-audit`, `review`, `setup-dividedby-skills`,
-`setup-matt-pocock-skills`, `software-design`,
-`staleness-audit`, `tdd`, `teach`, `to-issues`, `to-prd`, `triage`,
-`workflow-onboarding`, `write-well`, `writing-great-skills`.
+`autonomous-loop`, `cba-searching`, `code-review`, `council`, `doc-it`,
+`flow-pr`, `frontend-design`, `grill-with-docs`, `handoff`,
+`improve-codebase-architecture`, `project-claude-config`, `repo-audit`,
+`setup-dividedby-skills`, `software-design`, `staleness-audit`, `tdd`,
+`to-spec`, `to-tickets`, `triage`, `workflow-onboarding`, `write-well`.
 
-`setup-dividedby-skills` and `triage` are this repo's own skills (config bucket,
-issues #292 / #293) installed globally; `setup-matt-pocock-skills` remains
-installed alongside them — the uninstall planned in #294 was superseded by the
-lean-on-Matt posture ([ADR 0024](../adr/0024-lean-on-upstream-skills-soft-depend-over-reinvent.md)),
-which keeps Matt's suite as a soft-dependency. The dividedby `triage` is the
-version that resolves for the `triage` name in this repo's workflow.
+Of these, Matt's are `code-review`, `grill-with-docs`, `handoff`,
+`improve-codebase-architecture`, `tdd`, `to-spec`, and `to-tickets`;
+`cba-searching` is a local skill; the rest are this repo's own skills.
+`setup-dividedby-skills` and `triage` (config bucket, issues #292 / #293) are
+installed globally; the dividedby `triage` is the version that resolves for the
+`triage` name in this repo's workflow.
+
+The set was trimmed on 2026-10-12 (see the
+[ADR 0024](../adr/0024-lean-on-upstream-skills-soft-depend-over-reinvent.md)
+amendment); anything not listed here is not installed.
 
 ## Installed plugins
 
@@ -61,16 +61,16 @@ installed project-scoped to `~/repos/infra` only, not available in this
 repo's own sessions.
 
 From `claude-plugins-official` (`anthropics/claude-plugins-official`):
-`code-review`, `commit-commands`, `typescript-lsp`.
+`typescript-lsp`, `pyright-lsp`.
 
 ## Built-in CLI skills
 
 Shipped with the Claude Code binary itself (not `~/.claude/` files), available in
 every session: `claude-api`, `code-review`, `fewer-permission-prompts`, `init`,
 `keybindings-help`, `loop`, `review`, `run`, `schedule`, `security-review`,
-`simplify`, `update-config`, `verify`. (`review` and `code-review` also exist as
-installed `~/.claude/skills/` entries above — the binary-shipped versions are
-distinct skills of the same name.) These cover capabilities a remote run would
+`simplify`, `update-config`, `verify`. (`code-review` also exists as an
+installed `~/.claude/skills/` entry above — the binary-shipped version is a
+distinct skill of the same name.) These cover capabilities a remote run would
 not otherwise see — notably `verify` (run-the-app verification of a change) and
 `run` (launch/drive the app), the nearest neighbors to any release-QA or
 verification skill.

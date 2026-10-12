@@ -54,8 +54,8 @@ The single per-repo GitHub issue that is the canonical intake for **freeform,
 unstructured** ideas — raw, unscoped thoughts. Items enter
 **enriched** — the idea plus the ambient context/links available at file time, but
 not yet grilled or scoped — and leave by **draining**: an adaptive promotion that
-picks only the pipeline steps a given idea needs (`/grill-with-docs`, `/to-prd`,
-`/to-issues`, `/software-design`) and strives to emit a `ready-for-agent` issue
+picks only the pipeline steps a given idea needs (`/grill-with-docs`, `/to-spec`,
+`/to-tickets`, `/software-design`) and strives to emit a `ready-for-agent` issue
 (strong agent brief, HITL steps folded in where needed), moving the item to a
 `✅ Actioned` section with `→ #num`. **Structured, contract-bearing**
 filings (e.g. a fully-scoped bug) **bypass the Inbox**
@@ -195,17 +195,16 @@ this plugin; nothing from either catalog is vendored here.
 
 **From `mattpocock/skills`:**
 
-**Foundation:** `codebase-design`, `domain-modeling`, `writing-great-skills`
+**Workflow:** `grill-with-docs`, `to-spec` / `to-tickets` / `tdd`,
+`improve-codebase-architecture`, `code-review`
 
-**Workflow:** `diagnosing-bugs`, `prototype`, `to-prd` / `to-issues` / `tdd` /
-`implement`, `grilling` / `grill-with-docs`
+Upstream skills that are not installed in the maintainer environment are
+intentionally **not** listed, so we declare no contract on them until they are
+(trimmed 2026-10-12; see the amendment in ADR 0024).
 
-`resolving-merge-conflicts` is intentionally **not** listed — it is not currently
-installed in the maintainer environment, so we declare no contract on it until it is.
+**From `anthropics/claude-plugins-official`:** `typescript-lsp`, `pyright-lsp` —
+already installed in the maintainer's baseline ([`docs/agents/installed-skills.md`](./docs/agents/installed-skills.md)).
 
-**From `anthropics/claude-plugins-official`:** `code-review`, `commit-commands`,
-`typescript-lsp` — already installed in the maintainer's baseline
-([`docs/agents/installed-skills.md`](./docs/agents/installed-skills.md)).
-
-**Authoring standard.** Every kept or reworked skill in this repo is (re)written to
-the `writing-great-skills` standard.
+**Authoring standard.** Every kept or reworked skill in this repo prescribes at the
+principle level and stays lean, per [`CODING_STANDARDS.md`](./CODING_STANDARDS.md) and
+[ADR 0002](./docs/adr/0002-design-skills-prescribe-at-principle-level.md).

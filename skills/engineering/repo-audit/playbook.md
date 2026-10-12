@@ -53,7 +53,7 @@ Move through the codebase organically, noting where you experience friction:
 
 Apply the **deletion test** to anything suspect: would deleting it concentrate complexity in one place, or just scatter it to callers? "Scatters to callers" means it was a pass-through — prime deletion candidate. "Concentrates" means it was earning its keep.
 
-**Vocabulary to use (`codebase-design`):** module, interface, depth, seam, adapter, leverage, locality. Every finding names the module(s) and describes the deepening opportunity in these terms.
+**Vocabulary to use:** module, interface, depth, seam, adapter, leverage, locality. Every finding names the module(s) and describes the deepening opportunity in these terms.
 
 **Security as an optional input.** For repos handling auth, user data, or external APIs, layer a security scan over the architecture walk: data-flow boundaries, auth surfaces, token/secret handling, CI workflow permissions. High-severity findings (auth bypass, secret exposure, privilege escalation) are high-priority leverage findings — mark them top-priority and expedite them through the Stage 3 synthesis + integration gate like all other findings; they elevate the epic that owns that surface but are not filed standalone before Stage 3.
 

@@ -29,7 +29,7 @@ Pick the skills you want when prompted. Re-run to update.
 Setting up and auditing a project's Claude config — instruction files and the settings/hooks harness. See the [bucket README](./skills/config/README.md) for the internal seams.
 
 - **[project-claude-config](./skills/config/project-claude-config/SKILL.md)** — One state-routed pass over a project's Claude config: scaffold what's missing and critique what's present across both the harness (`.claude/settings.json`) and the instruction files (`CLAUDE.md` / `AGENTS.md`), interviewing only for facts the repo can't reveal.
-- **[setup-dividedby-skills](./skills/config/setup-dividedby-skills/SKILL.md)** — Install the dividedby conventions on top of setup-matt-pocock-skills — size labels, intake/idea-inbox, branching policy, the Conventions block, and HITL verification gates. Every network mutation is gated behind an explicit confirm step. Manual/slash invocation only.
+- **[setup-dividedby-skills](./skills/config/setup-dividedby-skills/SKILL.md)** — Install the dividedby conventions — size labels, intake/idea-inbox, branching policy, the Conventions block, and HITL verification gates. Every network mutation is gated behind an explicit confirm step. Manual/slash invocation only.
 - **[triage](./skills/config/triage/SKILL.md)** — Move issues through a state machine on our label vocabulary: show what needs attention, triage a specific issue with the appropriate outcome comment, and apply the outcome.
 - **[workflow-onboarding](./skills/config/workflow-onboarding/SKILL.md)** — Install the loop-specific surface (LOOP/NETWORK labels + installed-skills snapshot) on a repo being onboarded into a proposal loop; runs after setup-dividedby-skills, every mutation gated behind explicit confirmation.
 
@@ -54,12 +54,9 @@ alongside this plugin: `mattpocock/skills` and the
 
 **From `mattpocock/skills`:**
 
-**Foundation:** `codebase-design`, `domain-modeling`, `writing-great-skills`
+**Workflow:** `grill-with-docs`, `to-spec` / `to-tickets` / `tdd`,
+`improve-codebase-architecture`, `code-review`
 
-**Workflow:** `diagnosing-bugs`, `prototype`, `to-prd` / `to-issues` / `tdd` /
-`implement`, `grilling` / `grill-with-docs`
-
-**From `anthropics/claude-plugins-official`:** `code-review`, `commit-commands`,
-`typescript-lsp`
+**From `anthropics/claude-plugins-official`:** `typescript-lsp`, `pyright-lsp`
 
 See [`CONTEXT.md`](./CONTEXT.md) and [ADR 0024](./docs/adr/0024-lean-on-upstream-skills-soft-depend-over-reinvent.md) for the authoritative contract (delete-and-soft-depend posture, thin-wrapper conditions, authoring standard).

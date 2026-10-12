@@ -3,23 +3,22 @@
 The canonical definition of a fully-onboarded `dividedby` repo, used by the
 cross-repo divergence scan (epic #325) to classify every repo and drive
 remediation. Every item traces to an actual output of the composed onboarding
-skill set (`setup-dividedby-skills` plus the skills it composes on:
-`setup-matt-pocock-skills` and `project-claude-config`), or to ADR 0024
+skill set (`setup-dividedby-skills` plus `project-claude-config`; a prior
+`setup-matt-pocock-skills` scaffold is optional), or to ADR 0024
 (lean-on-upstream / soft-depend posture).
 
 ---
 
 ## Prerequisites
 
-Supply these before running either setup skill on a greenfield repo. Neither
-`setup-matt-pocock-skills` nor `setup-dividedby-skills` creates them — both
-skills detect and record the layout they find.
+Supply these before running the setup skill on a greenfield repo.
+`setup-dividedby-skills` does not create them — it detects and records the
+layout it finds.
 
 - **`CONTEXT.md`** at the repo root — vocabulary glossary for the domain.
 - **`docs/adr/`** directory — can be initially empty; the skills read from it.
 
-Source: `setup-matt-pocock-skills` Step 1 (Explore) and Section C detect both
-artifacts as pre-existing; `setup-dividedby-skills` Step 1 also detects them.
+Source: `setup-dividedby-skills` Step 1 detects both artifacts as pre-existing.
 
 ---
 
@@ -80,9 +79,9 @@ requires it.
 
 - The file exists in the **onboarded repo** and contains the dividedby
   CORE/LOOP-NETWORK/CHANNELS tiering structure (not Matt's version).
-- Background: `setup-matt-pocock-skills` creates `docs/agents/triage-labels.md`
-  from its own template. `setup-dividedby-skills` Concern D then overwrites it
-  with content seeded from `dividedby/skills docs/agents/labels.md`, adapted to
+- Background: a prior `setup-matt-pocock-skills` run (optional) creates
+  `docs/agents/triage-labels.md` from its own template. `setup-dividedby-skills`
+  Concern D overwrites it (or creates it when absent) with content seeded from `dividedby/skills docs/agents/labels.md`, adapted to
   the target repo. The filename `triage-labels.md` is Matt's convention; the
   content is dividedby's. The Conventions block pointer in the target must
   reference `docs/agents/triage-labels.md` — **not** `docs/agents/labels.md`
@@ -91,7 +90,7 @@ requires it.
 - Any `docs/agents/*.md` files that previously referenced `needs-info` or
   Matt-specific role→label wording have been reconciled to the dividedby
   convention.
-  Source: `setup-dividedby-skills` SKILL.md Concern D; `setup-matt-pocock-skills` Step 4.
+  Source: `setup-dividedby-skills` SKILL.md Concern D.
 
 ### Idea Inbox doc (`docs/agents/idea-inbox.md`)
 

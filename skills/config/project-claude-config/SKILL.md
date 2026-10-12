@@ -82,4 +82,4 @@ Before showing the proposal, **WebFetch the catalog's canonical doc anchors for 
 
 Then show everything as **one batch** — proposed `settings.json` changes, proposed/trimmed instruction files, each with a one-line why — and await approval. If the user rejects a hook that had justified omitting or cutting an instruction line, restore that line before writing. **Route settings writes through the `update-config` skill** (never hand-edit JSON, never write `settings.local.json`); write instruction files directly after approval.
 
-If any item is a genuine judgment call (a hook's value vs. annoyance, a contradiction to resolve), offer `/grill-me`. For domain glossary (`CONTEXT.md`) and ADRs, point at `/grill-with-docs` — this skill does not scaffold those.
+If any item is a genuine judgment call (a hook's value vs. annoyance, a contradiction to resolve), offer `/grill-with-docs`, which also covers the domain glossary (`CONTEXT.md`) and ADRs — this skill does not scaffold those.

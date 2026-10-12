@@ -96,7 +96,7 @@ single interactive session (`/loop` self-paced) rather than a scheduled
 fresh-process-per-issue runtime. Because it's **one accumulating context**, the
 firewall is what keeps the last issue as sharp as the first.
 
-1. **Input** — the triaged backlog (authored by `/triage` / `/to-issues`, not
+1. **Input** — the triaged backlog (authored by `/triage` / `/to-tickets`, not
    here). Each issue is one **work item**.
 2. **Runtime** — `/loop` self-paced. One session, you're around for the first
    passes. The iteration boundary is *not* a context boundary here — the

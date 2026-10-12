@@ -1,20 +1,20 @@
 ---
 name: setup-dividedby-skills
-description: Install the dividedby conventions on top of setup-matt-pocock-skills — size labels, intake/idea-inbox, branching policy, the Conventions block, and HITL verification gates. Every network mutation is gated behind an explicit confirm step. Manual/slash invocation only.
+description: Install the dividedby conventions — size labels, intake/idea-inbox, branching policy, the Conventions block, and HITL verification gates. Every network mutation is gated behind an explicit confirm step. Manual/slash invocation only.
 disable-model-invocation: true
 ---
 
 # Setup dividedby/skills conventions
 
-A **composed** pass — run **after** `setup-matt-pocock-skills` — that layers the dividedby-specific conventions onto the shared scaffold Matt's skill already installed.
+A **standalone** pass that installs the dividedby-specific conventions. If the repo was already scaffolded by Matt Pocock's `setup-matt-pocock-skills` (optional; no longer a soft-dependency), this layers on top of that scaffold and reconciles it; if not, it creates the `docs/agents/*.md` files it needs from the canonical `dividedby/skills` copies.
 
-**What Matt's skill gives you:** issue tracker, triage labels (incl. `needs-info`), domain doc layout, and the `## Agent skills` instruction block.
+**What a prior Matt scaffold would have given you:** issue tracker doc, triage labels (incl. `needs-info`), domain doc layout, and the `## Agent skills` instruction block. When absent, this skill seeds the first three itself (Concerns A and D); the `## Agent skills` block is not required.
 
 **What this skill adds:** `size:*` labels, intake/idea-inbox, branching/merge policy, the `## Conventions` block, and reconciliation of the label set and label-convention doc to the dividedby CORE posture.
 
 Every network mutation — label create/edit/delete, merge-setting PATCH, Inbox issue creation, default-branch change — is preceded by a plan you must explicitly confirm. Nothing is written or mutated until you approve.
 
-**Seam with `project-claude-config`:** that skill owns the Claude harness (`.claude/settings.json`, hooks) and the instruction files (`CLAUDE.md`/`AGENTS.md`). This skill owns the issue-tracker/labels/idea-inbox conventions and GitHub repo-level settings. Run `project-claude-config` first on a greenfield repo, then `setup-matt-pocock-skills`, then this skill. See [ADR 0023](../../docs/adr/0023-setup-dividedby-skills-vs-project-claude-config-seam.md).
+**Seam with `project-claude-config`:** that skill owns the Claude harness (`.claude/settings.json`, hooks) and the instruction files (`CLAUDE.md`/`AGENTS.md`). This skill owns the issue-tracker/labels/idea-inbox conventions and GitHub repo-level settings. Run `project-claude-config` first on a greenfield repo, then this skill. See [ADR 0023](../../docs/adr/0023-setup-dividedby-skills-vs-project-claude-config-seam.md).
 
 ---
 
@@ -26,6 +26,7 @@ Identify the target repo:
 - Read the canonical convention docs from **`dividedby/skills`** (not cached copies):
   - `docs/agents/labels.md`
   - `docs/agents/idea-inbox.md`
+  - `docs/agents/issue-tracker.md` and `docs/agents/domain.md` (seeds, used only when the target lacks them)
   - `docs/agents/changelog-guideline.md` (the fleet changelog rubric — Concern G)
   - `harness/changelog-health/enrolled-repos.txt` (the evaluator's enrollment list — Concern G)
   - `CLAUDE.md` lines 11–52 (the `## Conventions` block)
@@ -105,7 +106,7 @@ From the detect report, build a per-concern action list with a four-state postur
 ### Concern A — CLAUDE.md / AGENTS.md Conventions block
 
 Locate the `## Conventions` heading in the target's instruction file.
-- **create** if absent: insert the block (ported from `dividedby/skills CLAUDE.md:11–52`) with adapted references — correct repo name in the Inbox link, `docs/agents/*.md` paths relative to the target.
+- **create** if absent: insert the block (ported from `dividedby/skills CLAUDE.md:11–52`) with adapted references — correct repo name in the Inbox link, `docs/agents/*.md` paths relative to the target. If a pointer's target (`docs/agents/issue-tracker.md`, `docs/agents/domain.md`) does not exist in the target repo, seed it from the `dividedby/skills` copy, adapted, and surface it in the HITL plan.
 - **update** if the block exists but is missing sections or has stale links.
 - **skip** if complete and current.
 
@@ -135,7 +136,7 @@ Note: `bug` and `enhancement` likely exist as GitHub defaults with wrong colors 
 
 ### Concern D — `docs/agents/triage-labels.md` (dividedby content)
 
-Matt's skill creates this file with content from his template (which includes `needs-info` and uses his role→label map). Overwrite it with the dividedby label convention, seeded from `dividedby/skills docs/agents/labels.md`, adapting repo-specific references (replace `dividedby/skills` with the target repo name in the CHANNELS note).
+Create this file if absent, or overwrite it if a prior Matt scaffold left his template (which includes `needs-info` and uses his role→label map). Write the dividedby label convention, seeded from `dividedby/skills docs/agents/labels.md`, adapting repo-specific references (replace `dividedby/skills` with the target repo name in the CHANNELS note).
 
 Note: the seeded doc is the **full convention reference** — it describes all tiers (CORE, LOOP-NETWORK, CHANNELS). Only CORE labels are actually created on GitHub (Concern C). A reader should not infer that LOOP/CHANNELS labels were installed.
 
@@ -152,6 +153,7 @@ The following forms are *known* non-canonical. They cannot resolve to skip — e
 For each must-fix item, the plan step must state: the exact file(s) being deleted or overwritten, the reason (which drift shape), and the proposed replacement content summary. The user must confirm before any write or delete executes.
 
 **Routine states:**
+- **create** if absent and no `labels.md` exists (no prior scaffold) — write the adapted dividedby content.
 - **update** if the file exists but does not contain the dividedby CORE/LOOP-NETWORK/CHANNELS tiering structure (i.e. it's Matt's version) — this is a must-fix unless covered by a drift shape above; treat as must-fix with overwrite diff surfaced.
 - **skip** if the file already carries the dividedby content (idempotent re-run). skip means already canonical — never a tolerated deviation.
 
