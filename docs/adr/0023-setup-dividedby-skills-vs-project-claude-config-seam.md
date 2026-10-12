@@ -1,5 +1,7 @@
 # setup-dividedby-skills and project-claude-config have non-overlapping scopes
 
+> **Superseded in part by [ADR 0039](./0039-retire-remaining-proposal-loops-and-loop-serving-skills.md)** — `setup-dividedby-skills` is retired, so the seam has only one side and the hand-off to it is gone; the All-clear scope rule (2026-06-22 amendment) stands, and `project-claude-config` still flags label-doc drift (Lens 4), now leaving the fix to a by-hand reconciliation against `docs/agents/labels.md`.
+
 Two skills in the `config/` bucket both operate on a target repo's configuration.
 Without an explicit seam, a maintainer could invoke either for the wrong concern,
 or a future edit could drag one into the other's territory.

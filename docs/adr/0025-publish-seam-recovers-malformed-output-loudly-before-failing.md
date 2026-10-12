@@ -1,5 +1,7 @@
 # The publish seam recovers a malformed `<output>` loudly before failing the run
 
+> **Superseded by [ADR 0039](./0039-retire-remaining-proposal-loops-and-loop-serving-skills.md)** — `harness/cli.py` and its publish seam are deleted.
+
 ## Context
 
 `harness/cli.py publish` is a **post-hoc parse seam**: it runs in a CI step

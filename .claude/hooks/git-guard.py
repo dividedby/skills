@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 """PreToolUse Bash guard: hard-block destructive git during unattended runs.
 
-The proposal loops (improve-codebase-architecture, staleness-review)
-carry a prose "no destructive git" invariant. In CI / unattended `claude -p`
-the maintainer's global ~/.claude guards are absent, so that invariant rests
-only on prompt discipline. This checked-in hook makes the block deterministic:
+Unattended agent runs carry a prose "no destructive git" invariant. In CI /
+unattended `claude -p` the maintainer's global ~/.claude guards are absent, so
+that invariant rests only on prompt discipline. This checked-in hook makes the block deterministic:
 it inspects the candidate Bash command and exits 2 (with a stderr reason) for
 destructive git, exits 0 for everything else. It stays git-scoped on purpose —
 broader command guards (rm -rf, etc.) are a separate concern.
@@ -62,7 +61,7 @@ def is_unattended() -> bool:
 
     GitHub Actions always sets CI=true and GITHUB_ACTIONS=true; neither is
     present in a local interactive shell. These are the repo's unattended
-    contexts (the two proposal-loop workflows).
+    contexts.
     """
     return bool(os.environ.get('CI') or os.environ.get('GITHUB_ACTIONS'))
 

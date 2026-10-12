@@ -1,5 +1,7 @@
 # Proposal loops file a budgeted ranked top-k, not one issue per run/channel
 
+> **Superseded by [ADR 0039](./0039-retire-remaining-proposal-loops-and-loop-serving-skills.md)** — the proposal loops whose budget and top-k cap this set are retired.
+
 > **Superseded in part by [ADR 0038](./0038-retire-knowledge-application-after-agent-research-decommission.md)** — the `apply-agent-research` gate budget and cadence are retired; the budgeted top-k and per-run cap still govern `improve-codebase-architecture` and `staleness-review`.
 
 > **Amended 2026-06-30.** Per-run cap **2 → 1** for both `MAX_PROPOSALS`

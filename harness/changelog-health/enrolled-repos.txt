@@ -1,9 +1,0 @@
-# One owner/repo per line. Blank lines and # comments are ignored.
-# Add a repo here to enroll it in the weekly changelog-health evaluator.
-dividedby/claude-config
-dividedby/draftslayer
-dividedby/General-URL-Cleaner-Revived
-dividedby/goodreads-bot
-dividedby/infra
-dividedby/moodreader
-dividedby/skills

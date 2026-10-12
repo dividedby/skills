@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 """Source-registry guard for docs/agents/labels.md.
 
-Asserts the canonical label set and tier boundaries for the SOURCE registry
-(docs/agents/labels.md).  This is distinct from the scaffolded-copy test in
-setup-dividedby-skills/labels.test.py, which guards the CORE/LOOP split logic
-used when scaffolding a consumer repo.
+Asserts the canonical CORE label set for the SOURCE registry
+(docs/agents/labels.md).
 
 Run: python3 -B skills/config/labels.test.py
 """
@@ -16,7 +14,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 LABELS_MD = REPO_ROOT / "docs" / "agents" / "labels.md"
 
 # ---------------------------------------------------------------------------
-# Parse helpers (identical pattern to setup-dividedby-skills/labels.test.py)
+# Parse helpers
 # ---------------------------------------------------------------------------
 
 def _extract_section(text: str, heading: str) -> str:
@@ -135,99 +133,6 @@ class TestCoreSizeLabels(unittest.TestCase):
 
     def test_size_xl(self):
         self.assertIn("size:XL", self._names())
-
-
-class TestLoopNetworkLabels(unittest.TestCase):
-    """LOOP/NETWORK section carries the right labels and does not leak into CORE tiers."""
-
-    @classmethod
-    def setUpClass(cls):
-        cls.text = LABELS_MD.read_text(encoding="utf-8")
-        cls.loop = _extract_section(cls.text, "LOOP/NETWORK (full-tier repos)")
-
-    def _names(self):
-        return _label_names(self.loop)
-
-    def test_section_present(self):
-        self.assertTrue(self.loop.strip(), "LOOP/NETWORK (full-tier repos) section missing or empty")
-
-    def test_workflow_onboarding(self):
-        self.assertIn("workflow-onboarding", self._names())
-
-    def test_source_architecture_review(self):
-        self.assertIn("source:architecture-review", self._names())
-
-    def test_source_staleness_review(self):
-        self.assertIn("source:staleness-review", self._names())
-
-    def _assert_no_leak(self, core_heading: str, tier_label: str):
-        core = _extract_section(self.text, core_heading)
-        self.assertTrue(core.strip(), f"{core_heading} section missing or empty")
-        overlap = self._names() & _label_names(core)
-        self.assertEqual(overlap, set(), f"LOOP/NETWORK labels leaked into {tier_label}: {overlap}")
-
-    def test_no_leak_into_core_state(self):
-        self._assert_no_leak("CORE — State (all repos)", "CORE State")
-
-    def test_no_leak_into_core_category(self):
-        self._assert_no_leak("CORE — Category (all repos)", "CORE Category")
-
-    def test_no_leak_into_core_size(self):
-        self._assert_no_leak("CORE — Size (all repos)", "CORE Size")
-
-
-class TestChannelsLabels(unittest.TestCase):
-    """CHANNELS section carries the right labels and does not leak into CORE tiers."""
-
-    _SECTION_HEADING = "CHANNELS (owned by `dividedby/skills`, applied by consumers)"
-
-    @classmethod
-    def setUpClass(cls):
-        cls.text = LABELS_MD.read_text(encoding="utf-8")
-        cls.channels = _extract_section(cls.text, cls._SECTION_HEADING)
-
-    def _names(self):
-        return _label_names(self.channels)
-
-    def test_section_present(self):
-        self.assertTrue(self.channels.strip(), "CHANNELS section missing or empty")
-
-    def test_awaiting_corroboration(self):
-        self.assertIn("awaiting-corroboration", self._names())
-
-    def _assert_no_leak(self, core_heading: str, tier_label: str):
-        core = _extract_section(self.text, core_heading)
-        self.assertTrue(core.strip(), f"{core_heading} section missing or empty")
-        overlap = self._names() & _label_names(core)
-        self.assertEqual(overlap, set(), f"CHANNELS labels leaked into {tier_label}: {overlap}")
-
-    def test_no_leak_into_core_state(self):
-        self._assert_no_leak("CORE — State (all repos)", "CORE State")
-
-    def test_no_leak_into_core_category(self):
-        self._assert_no_leak("CORE — Category (all repos)", "CORE Category")
-
-    def test_no_leak_into_core_size(self):
-        self._assert_no_leak("CORE — Size (all repos)", "CORE Size")
-
-
-class TestCrossLoopChannelLeak(unittest.TestCase):
-    """LOOP/NETWORK and CHANNELS labels must not overlap each other."""
-
-    @classmethod
-    def setUpClass(cls):
-        cls.text = LABELS_MD.read_text(encoding="utf-8")
-
-    def test_loop_and_channels_disjoint(self):
-        loop = _label_names(_extract_section(self.text, "LOOP/NETWORK (full-tier repos)"))
-        channels = _label_names(
-            _extract_section(
-                self.text,
-                "CHANNELS (owned by `dividedby/skills`, applied by consumers)",
-            )
-        )
-        overlap = loop & channels
-        self.assertEqual(overlap, set(), f"LOOP/NETWORK and CHANNELS share labels: {overlap}")
 
 
 if __name__ == "__main__":

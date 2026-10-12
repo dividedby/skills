@@ -3,14 +3,11 @@
 The canonical source of truth for issue-label **names, colors, and descriptions**
 across all of `dividedby`'s repos.
 
-Labels fall into four tiers plus a remove-stock rule.
+Labels fall into two tiers plus a remove-stock rule.
 
 ## Tiering rule
 
 - **CORE** — every repo carries these.
-- **LOOP/NETWORK** — only repos that run the proposal loops (full-tier repos).
-- **CHANNELS** — owned by `dividedby/skills`; consumer repos *apply* them but never
-  create them.
 - **LOCAL** — domain one-off labels; private to a repo, untouched by the convention.
 
 The convention governs the shared vocabulary, not a repo's private labels.
@@ -54,21 +51,6 @@ Best-effort effort estimate. Applied when filing or triaging an issue.
 | `size:M` | `C8C8C8` | Medium: 1–2 days     |
 | `size:L` | `AAAAAA` | Large: 3–5 days      |
 | `size:XL`| `888888` | Extra large: > 1 week |
-
-## LOOP/NETWORK (full-tier repos)
-
-| Label                          | Color    | Description                                                       |
-| ------------------------------ | -------- | ----------------------------------------------------------------- |
-| `workflow-onboarding`          | `0052CC` | Onboarding this repo to a proposal-loop workflow                 |
-| `source:architecture-review`   | `5319E7` | Filed by the improve-codebase-architecture loop                  |
-| `source:staleness-review`      | `5319E7` | Filed by the staleness-review loop                               |
-| `source:changelog-health`      | `5319E7` | Filed by the changelog-health loop                               |
-
-## CHANNELS (owned by `dividedby/skills`, applied by consumers)
-
-| Label                    | Color    | Description                                                |
-| ------------------------ | -------- | --------------------------------------------------------- |
-| `awaiting-corroboration` | `BFD4F2` | Triaged but parked pending cross-repo corroboration       |
 
 ## Issue title convention
 

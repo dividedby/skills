@@ -1,5 +1,7 @@
 # Run-book decision helpers are Python stdlib, under `runbooks/`
 
+> **Superseded by [ADR 0039](./0039-retire-remaining-proposal-loops-and-loop-serving-skills.md)** — the run-book helpers it placed (already relocated into the retired `apply-agent-research` skill) and the loop machinery around them are gone.
+
 > **Amendment (2026-06-01) — helpers relocated; `runbooks/` retired.** The
 > decentralized-pull redesign (agent-research ADR 0019,
 > [`cross-repo-knowledge-application`](../design/cross-repo-knowledge-application.md))

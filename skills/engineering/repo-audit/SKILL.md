@@ -17,7 +17,7 @@ A **leverage hunt**, not a coverage exercise. This skill hunts the improvements 
 
 ## When not to use
 
-- You need just one domain: reach for `staleness-audit`, `tdd`, `improve-codebase-architecture`, etc. directly.
+- You need just one domain: reach for `tdd`, `improve-codebase-architecture`, etc. directly.
 - The project is too early-stage to audit (no code yet, prototype only).
 - You only need a quick PR review or a single-file fix.
 
@@ -58,8 +58,8 @@ Illustrative lineup log:
 ```
 Panel lineup for: "dividedby/skills"
   ✓ Deletionist            — large, long-lived repo; deletion is highest-leverage first move
-  ✓ Performance Analyst    — harness/ Python + Actions matrix; hot-path and N+1 risks to check
-  ✓ Architect              — ~12 skills, shared harness; seam and depth findings likely
+  ✓ Performance Analyst    — hook Python + Actions gate; hot-path and N+1 risks to check
+  ✓ Architect              — ~10 skills, shared hooks; seam and depth findings likely
   ✓ Capability Scout       — mission-driven repo (skills catalog); gap between stated goals and wiring
   ✓ Convention & Backlog   — strong conventions (ADRs, labels, changelog); open-issue set loaded in Stage 1
 ```

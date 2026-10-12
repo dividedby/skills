@@ -1,8 +1,7 @@
 # Skill Authoring
 
-Committed, loop-readable lore for authoring skills in this repo. This is the
-internal craft doc — not invokable as a skill, not a code index. Remote loops
-that clone the repo can read it directly from `docs/agents/`.
+Committed lore for authoring skills in this repo. This is the internal craft
+doc — not invokable as a skill, not a code index.
 
 Scope decided in [ADR 0028](../adr/0028-skill-authoring-lore-lives-in-docs-agents-not-a-code-indexer.md).
 
@@ -34,7 +33,7 @@ module/seam choices are still implicit.
 
 ### `grill-with-docs` (upstream, soft-dependency)
 
-**File:** `~/.claude/skills/grill-with-docs/SKILL.md` (globally installed; see [`installed-skills.md`](./installed-skills.md))
+**File:** `~/.claude/skills/grill-with-docs/SKILL.md` (globally installed)
 
 A relentless interview loop, one question at a time, until shared understanding
 is reached — and it writes down what crystallises: pins terms into `CONTEXT.md`
@@ -69,32 +68,6 @@ HITL hardening, input durability) rather than re-deriving them inline.
 **Trigger for composition:** a skill's design session produces a loop that will
 run unattended. Point to `/autonomous-loop` for the discipline; do not author
 a new runtime.
-
-### Deterministic groundwork (bundled CLI helper)
-
-**File:** `skills/engineering/staleness-audit/lib/` — the canonical example in
-this repo.
-
-When a skill's workflow opens by discovering system state — what mode the run is
-in, which issues are already open, what the catalog currently holds, whether a
-label exists — the naive design hands that discovery to the agent, which runs
-exploratory commands. Exploration is non-deterministic (the agent may miss items
-or misread output), burns tokens on every run, and breaks when the sandbox denies
-a command. Encode the state as deterministic functions in a bundled helper the
-agent calls with a single Bash invocation, returning structured output it can gate
-on. `staleness-audit`'s `lib/` does this for the decisions the agent would
-otherwise eyeball: `eol.is_past_eol` compares an EOL date to today,
-`version_gap.classify` computes the major/minor/patch gap, and `rank` orders
-findings by urgency — each a reliable result every run, not a fresh judgment.
-
-**Use it for** state computable from external inputs — run mode, open-issue
-existence, catalog membership, label existence. **Not for** discovery that
-genuinely requires reading live code or recent git history; that stays with agent
-exploration.
-
-**Trigger for composition:** a skill's workflow begins by establishing system
-state before the agent does its real work. Bundle the discovery as a CLI
-subcommand rather than prescribing exploratory commands inline.
 
 ---
 

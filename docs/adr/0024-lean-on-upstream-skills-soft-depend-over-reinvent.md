@@ -1,5 +1,7 @@
 # Lean on Matt Pocock's upstream skills; default to delete-and-soft-depend over reinvention
 
+> **Superseded in part by [ADR 0039](./0039-retire-remaining-proposal-loops-and-loop-serving-skills.md)** — the delete-and-soft-depend decision stands; the rationale and consequences that cite `setup-dividedby-skills`, the installed-skills snapshot and remote loops are retired with them.
+
 > **Amendment (2026-07-02) — second upstream: `anthropics/claude-plugins-official`.** This
 > ADR's contract — delete + soft-depend first, thin wrapper only when justified, compose by
 > reference — was written against `mattpocock/skills` alone. The official catalog is now a

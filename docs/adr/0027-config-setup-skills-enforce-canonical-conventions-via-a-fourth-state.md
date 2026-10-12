@@ -1,5 +1,7 @@
 # Config-setup skills enforce canonical conventions via a fourth state
 
+> **Superseded by [ADR 0039](./0039-retire-remaining-proposal-loops-and-loop-serving-skills.md)** — `setup-dividedby-skills`, the skill whose `must-fix` / `force-canonical` states this ADR added, is retired.
+
 `setup-dividedby-skills` (and the config-setup skills generally) resolved every
 convention check into one of three outcomes: **create**, **update**, or **skip**.
 A *known* non-canonical form could resolve to `skip` and silently persist.

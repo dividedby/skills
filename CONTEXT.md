@@ -28,8 +28,9 @@ The rule that a skill reports "all clear" **only for the surfaces it owns**. Whe
 it observes drift in a surface another skill owns, it does not absorb the fix and
 does not imply a whole-repo clearance — it **flags the drift and names the owning
 skill** to hand off. Born from `project-claude-config` reporting "config is fine"
-while a `setup-dividedby-skills`-owned label doc was drifted
-([ADR 0023](./docs/adr/0023-setup-dividedby-skills-vs-project-claude-config-seam.md)).
+while a label doc owned by a different skill had drifted
+([ADR 0023](./docs/adr/0023-setup-dividedby-skills-vs-project-claude-config-seam.md);
+that skill has since been retired).
 _Avoid_: false all-clear, clean report, whole-repo green.
 
 **Guard hook**:
@@ -105,83 +106,23 @@ avoids drawing on the Agent SDK credit (see #58) — but that cost is secondary;
 the routing is environment-fit first.
 _Avoid_: headless runtime, batch agent, claude -p (generically), detached runtime.
 
-**Consumer**:
-A repo other than `dividedby/skills` that runs a **Proposal loop** on *itself* —
-vendoring only a thin caller stub and proposing into its own tracker. A Consumer
-depends on `dividedby/skills` one-way and fetches the skill fresh at run time
-rather than committing a copy (see
-[ADR 0008](./docs/adr/0008-consumers-fetch-the-skill-fresh-not-vendored.md)).
-_Avoid_: subscriber, client, downstream repo.
-
 **Proposal loop**:
-The propose-only instance of an **Autonomous loop**: a scheduled, skill-driven
-workflow that reads an input, then **proposes via labeled issues and never
-applies** — no commits, edits, or PRs (the producer/decider split,
+The propose-only instance of an **Autonomous loop**: an unattended,
+skill-driven run that reads an input, then **proposes via labeled issues and
+never applies** — no commits, edits, or PRs (the producer/decider split,
 [ADR 0003](./docs/adr/0003-skill-improvement-workflows-propose-via-issues.md)).
-It fetches its skill fresh each run rather than vendoring it
-([ADR 0008](./docs/adr/0008-consumers-fetch-the-skill-fresh-not-vendored.md)).
-`improve-codebase-architecture` (codebase → refactors) and `staleness-audit`
-(toolchain pins → a ranked staleness report) are members of this family, sharing one harness; the
-shared shape is documented in
-[`docs/onboarding/proposal-loop-harness.md`](./docs/onboarding/proposal-loop-harness.md).
+This repo no longer runs any scheduled proposal loops
+([ADR 0039](./docs/adr/0039-retire-remaining-proposal-loops-and-loop-serving-skills.md));
+the term survives as the strictest point on the `autonomous-loop` gate spectrum.
 _Avoid_: bot, pipeline, automation.
-
-**Proposal-loop harness**:
-The shared, drift-prone logic every **Proposal loop** runs — the publish seam
-(parse the agent's `<output>`/`<body>`, file the one capped issue), the
-cost-line `digest`, and the loop prompts. Lives in `dividedby/skills` `harness/`
-and is **fetched fresh each run**, on the same rail as the skill
-([ADR 0014](./docs/adr/0014-harness-is-fetched-fresh-only-the-workflow-envelope-is-vendored.md)),
-so one fix reaches every loop. For `improve-codebase-architecture` the harness
-holds only the scope-free **skeleton**, paired with a per-repo **Repo-context include**
-([ADR 0016](./docs/adr/0016-arch-review-prompt-is-skeleton-plus-local-repo-context-include.md)).
-Not the cron schedule or permissions — those are the **Workflow envelope**.
-_Avoid_: wiring, glue, scaffolding.
-
-**Repo-context include**:
-The local, vendored half of a **split** proposal-loop prompt: a per-repo file
-(conventionally `.github/arch-review-context.md`) carrying the irreducibly
-repo-specific substance — primary/fallback/out-of-scope review scope and the
-binding disciplines/ADRs — that has no env representation. The **Workflow
-envelope** concatenates it onto the fetched-fresh scope-free **skeleton** to form
-the system prompt. Used where a loop's per-repo variation *is content* (what to
-review, which disciplines), not env-expressible wiring
-([ADR 0016](./docs/adr/0016-arch-review-prompt-is-skeleton-plus-local-repo-context-include.md)).
-_Avoid_: prompt fragment, local prompt, scope file.
-
-**Lens**:
-One rubric applied during an arch-review pass. The loop runs three, in order:
-simplification (local — asks "does this need to exist?" before anything else),
-depth (fetched fresh from mattpocock/skills — deepens what survives), and
-legibility (local — improves physical agent navigability of what remains). A
-finding belongs to exactly one lens; precedence resolves contradictions.
-_Avoid_: check, dimension, mode.
-
-**Legibility**:
-How easily an agent can locate, grep, and safely change code by physical structure
-— file size, naming conventions, greppability of key symbols, and CLI-surface
-visibility. Distinct from **depth** (module leverage: how much behavior a module's
-interface hides) and **simplification** (whether the code needs to exist at all).
-A legibility proposal addresses code that may be minimal and well-structured but
-is physically hard for an agent to navigate.
-_Avoid_: navigability, readability.
-
-**Workflow envelope** (a.k.a. stub):
-The thin, committed `.github/workflows/*.yml` that GitHub Actions must read from
-the default branch: `on:` cron, `permissions:`, secret/token names, tool
-scoping, and a clone-and-invoke body that fetches the **Proposal-loop harness**
-and calls it. It carries no loop logic — only the intentional per-repo
-customization a reconciler should never touch
-([ADR 0014](./docs/adr/0014-harness-is-fetched-fresh-only-the-workflow-envelope-is-vendored.md)).
-_Avoid_: workflow, wiring, config.
 
 **Rejection record**:
 One structured file under `.out-of-scope/` per **explicitly-refused** capability,
 stating why it was declined and the **bar to revisit** — the demonstrated gap that
 would reopen the decision. The *already-refused* counterpart to an **ADR**: an ADR
-records a decision made, a rejection record a decision made *not* to act. It is a
-baseline input to a **Proposal loop** (read directly, never re-propose a capability
-whose bar-to-revisit is unmet) and the durable home for a `wontfix` rationale that
+records a decision made, a rejection record a decision made *not* to act. Agents read it
+directly and never re-propose a capability whose bar-to-revisit is unmet; it is
+the durable home for a `wontfix` rationale that
 issue bodies only cross-reference.
 _Avoid_: wontfix doc, rejected-skill note, out-of-scope file.
 
@@ -203,7 +144,7 @@ intentionally **not** listed, so we declare no contract on them until they are
 (trimmed 2026-10-12; see the amendment in ADR 0024).
 
 **From `anthropics/claude-plugins-official`:** `typescript-lsp`, `pyright-lsp` —
-already installed in the maintainer's baseline ([`docs/agents/installed-skills.md`](./docs/agents/installed-skills.md)).
+already installed in the maintainer's baseline.
 
 **Authoring standard.** Every kept or reworked skill in this repo prescribes at the
 principle level and stays lean, per [`CODING_STANDARDS.md`](./CODING_STANDARDS.md) and

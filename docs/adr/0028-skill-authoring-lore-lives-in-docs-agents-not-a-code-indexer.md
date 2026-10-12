@@ -1,5 +1,7 @@
 # Skill-authoring lore lives in docs/agents/, not a code indexer
 
+> **Superseded in part by [ADR 0039](./0039-retire-remaining-proposal-loops-and-loop-serving-skills.md)** — the decision to keep skill-authoring lore in `docs/agents/` stands; its retired rationale (loop-readable lore, folding into `installed-skills.md` / `setup-dividedby-skills`, the `harness/` revisit trigger) no longer applies.
+
 The *craft* of authoring a skill here is scattered and re-derived each loop:
 the "prescribe principles, not literal code" edge cases ([ADR 0002](./0002-design-skills-prescribe-at-principle-level.md), #12)
 are re-argued per skill; cross-skill composition decisions (which wrapper calls

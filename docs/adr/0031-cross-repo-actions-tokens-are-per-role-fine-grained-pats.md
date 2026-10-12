@@ -1,5 +1,7 @@
 # Cross-repo Actions tokens are per-role least-privilege fine-grained PATs
 
+> **Superseded by [ADR 0039](./0039-retire-remaining-proposal-loops-and-loop-serving-skills.md)** — the fleet-drift workflow and the cross-repo PATs it used are retired; the `ISSUES_TOKEN` secret is removed by hand after merge.
+
 > **Superseded in part by [ADR 0038](./0038-retire-knowledge-application-after-agent-research-decommission.md)** — the tracker-write and cost-scrape roles are retired (`agent-research` archived, cost ledger discontinued); the drift-read role stands.
 
 > **Superseded in part by [ADR 0032](0032-issues-token-consolidation-and-explicit-mode-flag.md):** the three write tokens (`SKILLS_TRACKER_TOKEN`, `DRIFT_CHECK_TOKEN`, and an unused agent-research write PAT) consolidate into one `ISSUES_TOKEN` (all repos, Issues:RW + Contents:read), overriding the "keep write tokens scoped" stance; `DRIFT_CHECK_TOKEN` is retained as Option-B fallback only.
