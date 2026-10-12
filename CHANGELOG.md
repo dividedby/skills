@@ -12,7 +12,7 @@ Retires eight more skills and shrinks the catalog to `council` and `repo-audit`;
 
 ### Added
 
-- ADR 0040: retires `doc-it`, `autonomous-loop`, `software-design`, `frontend-design`, `write-well`, `project-claude-config`, `triage` and `flow-pr`; marks ADRs 0005, 0018, 0022, 0023, 0033 and 0035 as superseded
+- ADR 0040: retires `doc-it`, `autonomous-loop`, `software-design`, `frontend-design`, `write-well`, `project-claude-config`, `triage` and `flow-pr`; marks ADRs 0005, 0018, 0022, 0023, 0033 and 0035 as superseded, and 0013 as superseded in part
 - `docs/agents/labels.test.py`: the label-doc guard, relocated from `skills/config/labels.test.py` next to the doc it tests; the CI gate now runs `docs/agents/*.test.py`
 
 ### Changed
