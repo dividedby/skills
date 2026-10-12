@@ -21,11 +21,13 @@
 > superseded: the Consequences bullet keeping `setup-matt-pocock-skills` as a soft-dependency
 > is **reversed** — `setup-dividedby-skills` is now standalone and treats a Matt scaffold as
 > optional; the **Authoring standard** no longer points at `writing-great-skills` (not
-> installed) and is instead `CODING_STANDARDS.md` + [ADR 0002](./0002-design-skills-prescribe-at-principle-level.md);
-> `to-prd` / `to-issues` in the body below are historical names for `to-spec` /
-> `to-tickets`, and `implement` is dropped from the chain (terminal step is `/tdd`). `software-design` inlines the module/seam and
-> ubiquitous-language steps it formerly delegated to `codebase-design` / `domain-modeling`,
-> and `flow-pr` carries its own commit-message rule instead of deferring to `/commit`.
+> installed) and is instead `CODING_STANDARDS.md` +
+> [ADR 0002](./0002-design-skills-prescribe-at-principle-level.md); `to-prd` / `to-issues`
+> in the body below are historical names for `to-spec` / `to-tickets`, and `implement` is
+> dropped from the chain (terminal step is `/tdd`). `software-design` inlines the
+> module/seam and ubiquitous-language steps it formerly delegated to `codebase-design` /
+> `domain-modeling`, and `flow-pr` carries its own commit-message rule instead of
+> deferring to `/commit`.
 > The body below is left as written. See `CONTEXT.md` "Upstream soft-dependencies".
 
 ## Context

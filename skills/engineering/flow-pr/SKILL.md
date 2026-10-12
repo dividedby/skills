@@ -47,7 +47,7 @@ Runs when the user signals done/ship, or when all autonomy triggers below are sa
 
 1. **Branch check.** If already on a `feature/*` branch, stay on it. If on the default branch, cut a `feature/<slug>` branch from it first. Never commit directly onto the default branch.
 
-2. **Commit → push.** Write the message in the repo's existing commit style (recent `git log`, `CODING_STANDARDS.md`). Stage and commit in separate Bash calls, passing the body via `git commit -F <file>`. Push the feature branch to origin.
+2. **Commit → push.** Write the message in the repo's existing commit style (recent `git log`, `CODING_STANDARDS.md`). Push the feature branch to origin.
 
 3. **Open PR.** `gh pr create --base <default-branch>`. The base is always the dynamic default branch — never hardcode `main` if the default is `staging`.
 
