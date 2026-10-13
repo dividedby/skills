@@ -80,13 +80,6 @@ The main session picks the lineup by rule; no agent is spawned.
    the user before the Workflow call, then proceed without pausing; pass it in
    via `args`.
 
-```
-Lineup for "introduce JWT auth middleware":
-  ✓ Falsifier, Minimalist, Pragmatist (core) · Security (auth keyword, force-floor)
-  ✓ Convention Keeper — strong middleware conventions at risk
-  ✗ Operator, Performance, Frontend-UX-a11y — no matching signal
-```
-
 ## Rounds
 
 **Round 1 — Blind parallel evaluation.** Each active seat runs in one
@@ -132,8 +125,8 @@ unanimous — "no dissent" must be earned, not assumed.>
 <high / medium / low, with one sentence on what would change the rating.>
 ```
 
-The dissent block is **non-optional**. A synthesis with no dissent block is an
-incomplete run.
+The dissent block is **non-optional**. The chair's `CouncilOutputSchema` enforces
+all four blocks, so a partial response is a Workflow error (ADR 0036 rule 3).
 
 ## Invocation
 
@@ -144,37 +137,29 @@ incomplete run.
          for the product catalog?"
 ```
 
-`--seats` swaps in up to 2 conditional seats; core seats stay, Security is never removable.
-
 ## Illustrative Workflow Sketch
 
 ```
 // illustrative only — not a runnable script (ADR 0002)
-// args = { task, seats: [{ persona, lens }] }  — the Step 0 lineup
+// args = { task, seed, seats: [{ persona, lens }] }  — the Step 0 lineup
 const seats = await parallel(args.seats.map(s => () =>
   agent(seatPrompt(s, args.task),
     { label: s.persona, phase: "evaluate", schema: SeatSchema, model: "sonnet" })
 ));
-log(`council: ${seats.length} seats`);
-return agent(chairPrompt(shuffle(seats)),   // shuffle: plain script code
+log(`council: ${seats.filter(Boolean).length} seats returned`);
+// Math.random() throws in Workflow scripts: order by a seed passed in args
+return agent(chairPrompt(shuffle(seats.filter(Boolean), args.seed)),
   { label: "chair", phase: "synthesize", schema: CouncilOutputSchema,
     model: "opus", effort: "high" });
 ```
 
-- Seats are blind with identical input; outputs are schema-validated objects.
-  The Chair is a dedicated agent reading shuffled but labelled outputs.
-- `CouncilOutputSchema` enforces the four output blocks, so a partial response
-  is a Workflow error (ADR 0036 rule 3).
-
 ## Availability and fallback
 
-`disable-model-invocation: true` means no other skill or model turn can invoke
-council, and Workflow is unavailable inside subagents, so run it from the main
-session. Without the Workflow tool, run the same briefs as parallel Agent-tool
-calls in one message (seats on sonnet), then the chair as one more Agent call
-(opus); with no schema enforcement there, check for the four output headings
-and re-ask the chair once if any is missing. With neither tool, stop and say
-so; do not simulate the panel in one pass.
+Run from the main session: `disable-model-invocation: true` blocks invocation by
+other skills, and Workflow is unavailable inside subagents. Without Workflow, run
+the same briefs as parallel Agent-tool calls (seats on sonnet), then the chair as
+one more (opus); check for the four output headings and re-ask the chair once if
+any is missing. With neither tool, stop and say so; never simulate the panel.
 
 ## Checklist Per Council Run
 
