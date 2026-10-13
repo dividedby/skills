@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- ADR 0041: `/council` drops its peer-rank round, runs the lineup selector in the main session, and seats every panelist at one model tier; amends ADR 0036.
+
+### Changed
+
+- `council`: now runs a blind parallel panel and a single chair synthesis (about 4-6 agents per run instead of about 12). The chair reads every seat's output in shuffled order and still attributes the Rationale and Panel Dissent blocks to personas.
+- `council`: the lineup is chosen in the main session by rule, with Security still force-seated on auth, payments, secrets, migrations and trust-boundary signals, and shown before any agents run; panels are 3-5 seats (0-2 conditional).
+- `council`: seats run on sonnet and the chair on opus at high effort; the per-seat model tier is gone.
+- `council`: scoped to design-level decisions; line-level defects belong to `/code-review`. Falls back to parallel Agent-tool calls when the Workflow tool is unavailable, and stops if neither is.
+
+### Removed
+
+- `council`: the "As a sub-skill" invocation (other skills cannot invoke a `disable-model-invocation` skill) and the peer-rank round.
+
 ## [3.0.0] - 2026-10-12
 
 Retires eight more skills and shrinks the catalog to `council` and `repo-audit`; see the **Breaking** entries under Removed.
