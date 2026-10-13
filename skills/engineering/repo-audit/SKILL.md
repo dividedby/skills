@@ -70,22 +70,22 @@ Seat output schema (fields): `lens`; `findings[]` of `category` (delete-lean | p
 
 ### Synthesis
 
-A separate agent reads all seat outputs, presented in randomized order. It:
+A separate read-only agent (it never mutates GitHub or files) reads all seat outputs, presented in a seeded shuffled order with the seed passed in `args`. It:
 
 1. Reads each finding's cited path and confirms the claim. It drops what it cannot confirm and lists each drop in `dropped[]` with a reason — no silent drops.
 2. Merges duplicates by root cause, keeping the strongest evidence and recording the `lenses[]` that surfaced it.
 3. Confirms altitude, annotates touched issues, and flags supersession or already-implemented candidates.
 4. Adds no new findings.
 
-Output schema: `findings[]` (seat fields plus `lenses[]`, `verified: true`), `dropped[{finding, reason}]`, `touched_issues[]`. This is the only input Stage 3 sees.
+Output schema: `findings[]` (seat fields plus `lenses[]`, `verified: true`), `dropped[{finding, reason}]`, `touched_issues[]`. Stage 3 reconciles this against the full Stage 1 backlog index, which is how untouched issues get their bulk "reviewed, no action" line.
 
 ### Degradation
 
-Log which tier ran. Evidence verification at the cited path applies in every tier; only blind isolation is lost.
+Log which tier ran. Every tier keeps the synthesis contract — verify each finding at its cited path, show `dropped[]` to the user, add no new findings; only blind isolation is lost.
 
 1. **Workflow available** — as above.
 2. **Workflow unavailable** (it is stripped from subagents) — one Agent-tool call per lens in parallel, same schema stated in prose; the main session does the synthesis.
-3. **No Agent tool either** — a sequential single-pass hunt over the five categories using the playbook.
+3. **No Agent tool either** — a sequential single-pass hunt over the five categories using the playbook and the Stage 1 evidence pack.
 
 ### Altitude bar
 
@@ -166,7 +166,7 @@ A run that produced only standalone bug tickets — no epics, no roadmap, no rec
 
 ### Approval gate
 
-Present (i) the reconciliation table, with the exact mutation each row implies (rewrite, close, merge — with proposed text or rationale), and (ii) the roadmap. State the label vocabulary Stage 4 will use, and any missing tracker docs. Then **STOP**.
+Present (i) the reconciliation table, with the exact mutation each row implies (rewrite, close, merge — with proposed text or rationale), and (ii) the roadmap with each epic's body as it would be published: findings, evidence paths and audited ref. State the label vocabulary Stage 4 will use, and any missing tracker docs. Then **STOP**.
 
 Proceed only on an explicit go-ahead in a later user message. Partial approval means apply only the approved rows. No `gh` write happens before it: issue rewrite, close, merge, create, label edits, `to-spec` and `to-tickets`.
 
