@@ -59,7 +59,7 @@ here.
 
 ## Amendments
 
-### 2026-10-12 — `repo-audit`: Round 2 cross-review removed ([this PR](#))
+### 2026-10-12 — `repo-audit`: Round 2 cross-review removed ([#600](https://github.com/dividedby/skills/pull/600))
 
 **Context.** `repo-audit` Stage 2 mirrored `/council`: a blind Round 1 sweep (5
 seats), a Round 2 anonymized cross-review and dedup (5 agents), then a synthesis.
