@@ -9,231 +9,140 @@ disable-model-invocation: true
 
 A **leverage hunt**, not a coverage exercise. This skill hunts the improvements that matter — deletions, leanness/performance wins, architectural deepening, missing capabilities — and synthesises them into an ordered roadmap of epics, fully reconciled against the repo's existing backlog.
 
+Defers:
+- `to-spec`, `to-tickets`, `improve-codebase-architecture` (explore walk, git-log hot-spot idea) — `mattpocock/skills` @ `49dd158d1076134a641b33efb035946536778336`; soft-deps per ADR 0024, expected installed, nothing vendored.
+- `tdd` (pointer only) and `/setup-matt-pocock-skills` (when a target repo lacks tracker/label docs).
+- [`playbook.md`](./playbook.md) — this skill's per-lens signal catalog and the Stage 1 evidence pack.
+- Built-in `Workflow` tool — ADR 0036; ADR 0041 (amendment) for dropping the peer round.
+
 ## When to use
 
 - You want to know what the highest-leverage improvements in a repo are.
-- The backlog has drifted from the codebase and needs a ground-truth reset.
-- You're about to plan a significant quarter and want an ordered roadmap, not a flat pile of tickets.
+- The backlog has drifted from the codebase and needs a ground-truth reset, or you're planning a quarter and want an ordered roadmap, not a flat pile of tickets.
 
 ## When not to use
 
-- You need just one domain: reach for `tdd`, `improve-codebase-architecture`, etc. directly.
-- The project is too early-stage to audit (no code yet, prototype only).
-- You only need a quick PR review or a single-file fix.
+- You need just one domain (reach for `tdd`, `improve-codebase-architecture`, etc. directly), the project is too early-stage to audit, or you only need a PR review or a single-file fix.
 
----
+## Stage 1 — Context, backlog, evidence pack
 
-## Stage 1 — Context + backlog load
+Runs inline in the main session; no agents.
 
-Read the repo's Claude config (`.claude/`, `CLAUDE.md` / `AGENTS.md`, hooks) and map its layout: tech stack, CI, test footprint, main modules. Pull every open GitHub issue and epic into context now — not later. The audit is framed as "what is missing or wrong relative to what is already tracked," and that framing requires the backlog to be present from the first finding.
+- **Layout.** Read the repo's Claude config (`.claude/`, `CLAUDE.md` / `AGENTS.md`, hooks) and map its layout: tech stack, CI, test footprint, main modules. Record `git rev-parse --short HEAD` as the audited ref.
+- **Backlog.** Pull every open GitHub issue and epic into context now — not later. Keep a compact index (number, title, labels, one-line gist); seats may `gh issue view` for detail. The audit is framed as "what is missing or wrong relative to what is already tracked," which requires the backlog present from the first finding.
+- **Standing automation.** Enumerate existing CI and scheduled workflows. Where one already covers ground the hunt would cover, note it so the hunt focuses on what's missing.
+- **Evidence pack.** Run the deterministic detectors and the churn hotspot ranking (see `Stage 1 evidence pack` in the playbook). Keep digests, not raw output; log any skipped runner. If `git log` is unavailable (not a git repo, shallow clone), skip the hotspot ranking and log it; never block. Every seat receives the pack.
+- **Tracker check.** Does the target repo document its tracker and labels (this repo: `docs/agents/issue-tracker.md`, `docs/agents/labels.md`)? Record the vocabulary Stage 4 will use. If missing, note it: the Stage 3 gate must say so, and Stage 4 does not start until the user chooses (run `/setup-matt-pocock-skills`, or accept the CORE labels).
 
-**Standing-automation inventory.** Enumerate existing CI and scheduled workflows. Where a workflow already covers ground the leverage hunt would cover, note it so the hunt focuses on what's missing.
+**Completion criterion:** layout understood, backlog indexed, CI inventory complete, evidence pack built, tracker vocabulary recorded, audited ref recorded.
 
-**Completion criterion:** repo layout understood, open issues loaded, CI inventory complete.
+## Stage 2 — Leverage hunt (blind seats, one synthesis)
 
----
+Blind seats run through the built-in Workflow tool's `parallel()`; one synthesis agent merges and verifies. At most **6 agents** (up to 5 seats + 1 synthesis). Seats do not see each other's findings. Each seat notes the open issue a finding touches, or that none does — Stage 3 needs it.
 
-## Stage 2 — Leverage hunt (blind panel fan-out)
+### Seat selection
 
-Stage 2 is structured as a blind multi-persona panel that runs via the built-in
-Workflow tool's `parallel()` primitive — the same mechanism `/council` uses for
-adversarial diversity. Five personas, each with a distinct evaluative lens, hunt
-the codebase independently and cannot see each other's findings during their
-sweep. A cross-review round deduplicates and ranks before synthesis. The
-synthesised panel output feeds Stage 3 unchanged — the reconcile-against-backlog
-hard gate and altitude bar remain exactly as before.
+Default is all five. Skip a lens only for a stated reason, and log every skip. Never add seats beyond five.
 
-For each finding, the persona responsible notes which open issue it touches (or
-that none does). Stage 3 will need this annotation.
-
-### Pre-flight — log the panel lineup
-
-Before any persona runs, log the five-seat lineup and a one-line rationale for
-each seat (why this lens, calibrated against the Stage 1 context — what the repo
-is, how large it is, what its CI/test footprint looks like). No silent selection.
-This mirrors the Step 0 selector log in `/council`.
-
-Illustrative lineup log:
-
-```
-Panel lineup for: "dividedby/skills"
-  ✓ Deletionist            — large, long-lived repo; deletion is highest-leverage first move
-  ✓ Performance Analyst    — hook Python + Actions gate; hot-path and N+1 risks to check
-  ✓ Architect              — ~10 skills, shared hooks; seam and depth findings likely
-  ✓ Capability Scout       — mission-driven repo (skills catalog); gap between stated goals and wiring
-  ✓ Convention & Backlog   — strong conventions (ADRs, labels, changelog); open-issue set loaded in Stage 1
-```
-
-### Round 1 — Blind parallel sweep
-
-Each persona runs independently via `parallel()`. Personas do **not** see each
-other's output during Round 1. Every seat receives the same Stage-1 context
-(repo layout, tech stack, CI inventory, open issues) and its own lens; nothing
-else.
-
-**Five-seat roster:**
-
-| Persona | Lens | Maps to |
+| Lens | Hunts | Skip when |
 |---|---|---|
-| **Deletionist** | Dead code, orphaned workflows, unused deps, pass-through abstractions — the deletion test applied everywhere | Delete / lean |
-| **Performance Analyst** | Hot paths, N+1 queries, unnecessary work, scaling risks visible from architecture | Performance |
-| **Architect** | Explore walk (from `improve-codebase-architecture`): friction, shallow modules, untestable seams, interface/implementation symmetry; module/interface/depth/seam vocabulary throughout | Architectural deepening |
-| **Capability Scout** | Gaps between what the repo does and what it clearly should do — missing journeys, absent error handling, undocumented failure modes | Missing features / capabilities |
-| **Convention & Backlog Keeper** | Convention drift (ADRs, labels, changelog, config), naming/structural inconsistencies, and which open issues the other lenses would touch or supersede — grounded against the Stage 1 open-issue set | Cross-cutting; convention and reconciliation signal for Stage 3 |
+| **Deletionist** | Dead code, unused deps, orphaned workflows, pass-through abstractions | Repo has no code or config |
+| **Performance Analyst** | Hot paths, N+1 work, unnecessary work, scaling risks | No runtime or hot path (e.g. docs-only repo) |
+| **Architect** | Explore walk: friction, shallow modules, untestable seams | No module structure to deepen |
+| **Capability Scout** | Gaps between what the repo does and what it should do | No stated goals or docs to compare against |
+| **Convention & Backlog Keeper** | Convention drift, duplicate or already-done issues | Zero open issues and no documented conventions |
 
-Each seat returns a structured response:
+Illustrative lineup log (fictional repo):
 
 ```
-persona: <name>
-findings:
-  - category: <delete-lean | performance | arch-deepening | missing-capability | convention>
-    finding: <one concrete finding>
-    evidence: <specific — file, pattern, or signal observed>
-    open-issue: <issue number or "none">
-    altitude: <file | batch | drop>
+Panel lineup for: "acme/web-api"
+  ✓ Deletionist           — 14 knip hits and top-5 hotspots in src/billing
+  ✓ Capability Scout      — README promises webhooks; no handler in the evidence pack
+  ✓ Convention & Backlog  — 62 open issues; ADRs and label docs present
+  ✗ Performance Analyst   — skipped: no hot path in the evidence pack
 ```
 
-Optional inputs that personas may draw on (same as the prior sequential hunt):
-- Deletionist: staleness scan, prior-art check, deterministic detectors (see playbook)
-- Architect: security check (auth/user-data/external-API repos), test coverage scan
-- Capability Scout: frontend/UX review, docs review
+### Seat brief
 
-### Round 2 — Anonymized cross-review / dedup
+Each seat gets: one lens (its playbook section), the evidence pack and backlog index in `args`, read-only tools, and these boundaries — no GitHub mutation, no commentary on other lenses, at most 8 findings, each with a concrete path and observed signal.
 
-Seat responses are anonymized (persona labels stripped) — and the reasoning
-trace stripped too, not just the label. Each persona's redistributed peer set
-carries **only** the structured `findings` list (category / finding /
-evidence / open-issue / altitude), never the deliberation that produced it.
-Label-stripping removes authorship bias; trace-stripping removes agreement
-bias — a visible chain of reasoning reads as supporting evidence even when
-the conclusion is wrong (the same isolation math-olympiad's verifier step
-uses: strip the trace before a second pass ever sees the work). Each
-persona's Round 2 prompt states explicitly: review every peer argument as
-unvetted — as if no reviewer had confirmed it before you — so surviving into
-this round is never mistaken for agreement from an earlier pass. This
-governs how a persona *weighs* the findings it ranks and dedupes (no finding
-gets credit for having "already convinced someone"), not whether it sees
-them — ranking and dedup still require seeing the full peer set.
+Seat output schema (fields): `lens`; `findings[]` of `category` (delete-lean | performance | arch-deepening | missing-capability | convention), `finding`, `evidence{path, signal}`, `open_issue` (number or none), `altitude` (file | batch | drop).
 
-Each persona reads the full (label- and trace-stripped) set and:
+### Synthesis
 
-1. Flags duplicates — two or more findings describing the same root cause; names
-   the one to keep and why.
-2. Ranks the three strongest findings across all seats (not its own).
-3. Surfaces any gap the first round missed.
+A separate agent reads all seat outputs, presented in randomized order. It:
 
-This round produces a **deduplicated ranked finding map** — not a new set of
-verdicts. Duplicates are collapsed; surviving findings are annotated with their
-cross-seat rank.
+1. Reads each finding's cited path and confirms the claim. It drops what it cannot confirm and lists each drop in `dropped[]` with a reason — no silent drops.
+2. Merges duplicates by root cause, keeping the strongest evidence and recording the `lenses[]` that surfaced it.
+3. Confirms altitude, annotates touched issues, and flags supersession or already-implemented candidates.
+4. Adds no new findings.
 
-### Synthesis — merge into Stage 3 input
+Output schema: `findings[]` (seat fields plus `lenses[]`, `verified: true`), `dropped[{finding, reason}]`, `touched_issues[]`. This is the only input Stage 3 sees.
 
-A synthesis pass (sonnet, higher effort — reads all Round 1 responses de-anonymized
-plus the Round 2 dedup map) produces the Stage 3 input:
+### Degradation
 
-- One unified finding list, duplicates resolved, altitude ratings confirmed.
-- Per-finding annotation: category, altitude (file / batch / drop), and which
-  open issue it touches.
-- A brief panel-diversity note — what the multi-lens sweep surfaced that a
-  single sequential pass would likely have missed.
+Log which tier ran. Evidence verification at the cited path applies in every tier; only blind isolation is lost.
 
-This is the only output Stage 3 sees. The Stage 3 contract (reconcile against
-backlog, group into epics, ordered roadmap, altitude check, failure condition) is
-unchanged.
-
-### Graceful degradation — Workflow tool unavailable
-
-If the Workflow tool is unavailable or invocation fails, fall back to the prior
-sequential hunt: hunt across the four categories (Delete/lean, Performance,
-Architectural deepening, Missing features/capabilities) in a single pass, using
-the playbook for each. Note the degradation and proceed. The audit still
-completes; the blind-isolation and cross-review discipline is skipped, not the
-findings.
+1. **Workflow available** — as above.
+2. **Workflow unavailable** (it is stripped from subagents) — one Agent-tool call per lens in parallel, same schema stated in prose; the main session does the synthesis.
+3. **No Agent tool either** — a sequential single-pass hunt over the five categories using the playbook.
 
 ### Altitude bar
 
-Every finding passes through the three-way filter (applied per persona in Round
-1, confirmed in synthesis) before it reaches Stage 3:
+Every finding passes a three-way filter (per seat, confirmed in synthesis) before Stage 3:
 
 - **File** — meaningful impact, justifies its own issue or epic.
 - **Batch** — low individual impact; collect into a single "minor cleanups" issue.
 - **Drop** — trivial or not worth the cost of tracking.
 
-Nothing below this bar ships as a standalone issue. Trivia gets one "minor
-cleanups" batch at most, or is dropped.
+Nothing below this bar ships as a standalone issue. Err toward Drop over Batch, and Batch over standalone trivia.
 
-**Completion criterion:** panel lineup logged; all five personas ran blind in
-Round 1; Round 2 dedup map produced; synthesis merged findings into the Stage 3
-input; each finding annotated with category, altitude, and open-issue reference.
-
-### Illustrative Workflow sketch
-
-The sketch below shows the orchestration shape, not a literal script (ADR 0002).
-This skill drives the same `/council` Workflow primitive — see ADR 0036.
+### Illustrative sketch
 
 ```
-// shortcut: illustrative only — not a runnable literal script (ADR 0002)
-
-const ctx    = stage1Context;   // repo layout, open issues, CI inventory
-const lineup = logLineup(ctx);  // pre-flight: log five seats + rationale
-
-// Round 1: each persona hunts blind in parallel
-const round1 = await parallel(
-  lineup.seats.map(seat =>
-    agent(seat.persona, { model: "sonnet", input: { ctx, lens: seat.lens } })
-  )
-);
-
-// Round 2: anonymized cross-review / dedup — labels AND reasoning traces
-// stripped, leaving only each persona's structured findings list
-const anonymized = stripPersonaLabelsAndTrace(round1);
-const round2 = await parallel(
-  lineup.seats.map(seat =>
-    agent(seat.persona + "-review", { model: "sonnet", input: anonymized })
-  )
-);
-
-// Synthesis: merge into Stage 3 input
-const stage3Input = await agent("synthesis", {
-  model:  "sonnet",
-  effort: "high",
-  input:  { round1, dedupMap: round2 },
+// illustrative only — not a runnable script (ADR 0002)
+// No Math.random(), Date.now() or argless new Date(): Workflow scripts throw on them.
+const { seats, pack, backlog } = args;          // lineup chosen by seat selection
+log("lineup: " + seats.map(s => s.name).join(", "));
+const results = (await parallel(
+  seats.map(s => () =>
+    agent(seatPrompt(s, pack, backlog), {
+      label: s.name, phase: "hunt", schema: SEAT_SCHEMA, model: "sonnet",
+    }))
+)).filter(Boolean);                             // a failed seat returns null
+return await agent(synthPrompt(results), {      // seats shuffled with a seeded order
+  label: "synthesis", phase: "synthesize", schema: MERGED_SCHEMA,
+  model: "sonnet", effort: "high",
 });
-
-return stage3Input;   // feeds Stage 3 unchanged
 ```
 
-Key orchestration properties (same guarantees as `/council` Round 1–3):
-- Round 1 isolation is strict: no persona sees another's output during the sweep.
-- Round 2 is dedup/rank, not re-hunting.
-- Round 2 isolation is dual: label-stripped (no authorship signal) and
-  trace-stripped (no derivation, only the structured findings list) — each
-  persona weighs peer findings as unvetted, never as pre-confirmed by an
-  earlier pass.
-- Synthesis is a dedicated pass that reads all prior output with a merge
-  responsibility explicit in its prompt — not the last persona to finish.
+Two properties matter: seats are blind to each other, and synthesis is a dedicated agent with an explicit merge-and-verify duty — not the last seat to finish. **Completion criterion:** lineup and skips logged, tier logged, synthesis output schema-valid, `dropped[]` shown to the user.
 
----
+## Stage 3 — Reconcile, epics, approval gate
 
-## Stage 3 — Synthesis + integration (hard gate)
+Four pass criteria must hold:
+- Every touched issue is dispositioned.
+- Output is epics plus an ordered roadmap.
+- Nothing below the altitude bar ships as a standalone issue.
+- No flat-ticket failure.
 
-This stage has four falsifiable pass criteria. The skill does not complete until all four hold.
+3a and 3b are read-only proposals in the conversation; nothing is mutated until the approval gate.
 
-### 3a. Reconcile against existing issues
+### 3a. Reconciliation proposal
 
-For every open issue the findings touch:
-- **Keep** — the existing issue is correct; link the finding to it.
-- **Rewrite** — the existing issue needs a better problem statement, scope, or priority; update it.
-- **Dedup/merge** — the finding and an existing issue describe the same root cause; fold them.
-- **Supersede** — a finding makes an existing issue obsolete or wrongly scoped; close it with a rationale.
+For every open issue the findings touch, propose one disposition:
+- **Keep** — the issue is correct; link the finding to it.
+- **Rewrite** — the issue needs a better problem statement, scope, or priority.
+- **Dedup/merge** — the finding and an issue describe the same root cause; fold them.
+- **Supersede** — a finding makes the issue obsolete or wrongly scoped; close with a rationale.
 
-Untouched issues on a large backlog get a single bulk "reviewed, no action" acknowledgement — nothing is silently ignored.
+Untouched issues on a large backlog get a single bulk "reviewed, no action" line — nothing is silently ignored.
 
-### 3b. Group into epics + ordered roadmap
+### 3b. Epics + ordered roadmap
 
-Group surviving findings (file-rated, plus the one optional batch) into named epics. Then produce a roadmap ordering the epics by impact, dependencies, and sequencing constraints. Use `to-spec` to produce per-epic specs.
+Group surviving findings (file-rated, plus the one optional batch) into named epics. Each epic lists its findings, their evidence paths, and the audited ref. Order epics by impact, dependencies, and sequencing constraints.
 
-**Roadmap template** (inline — the one artifact `repo-audit` uniquely owns):
+**Roadmap template:**
 
 ```markdown
 ## Roadmap
@@ -243,54 +152,48 @@ Group surviving findings (file-rated, plus the one optional batch) into named ep
 Depends on: —
 Unlocks: Epic 2, Epic 3
 
-### Epic 2 — [Name]
-[One-sentence problem statement]
-Depends on: Epic 1
-Unlocks: Epic 4
-
-### Epic 3 — [Name]
-[One-sentence problem statement]
-Depends on: Epic 1
-Unlocks: —
-
-...
-
+### Epic 2 — [Name]   (same fields; repeat per epic)
 **Sequencing rationale:** [One paragraph explaining why this order — risk, unblocking, dependencies.]
 ```
 
 ### 3c. Altitude check
 
-Confirm nothing below the altitude bar survived as a standalone issue. If it did, batch it or drop it now.
+Confirm nothing below the altitude bar survived as a standalone issue; batch or drop it now.
 
 ### 3d. Failure condition
 
-A run that produced only standalone bug tickets — no epics, no roadmap, no reconciliation against existing issues — has **failed the audit**. This is not "done with warnings." If you reach the end of Stage 3 and the output is a flat pile of tickets, go back to Stage 2.
+A run that produced only standalone bug tickets — no epics, no roadmap, no reconciliation — has **failed the audit**: go back to Stage 2.
 
-**Completion criterion:** all four gate criteria satisfied — every touched issue dispositioned, output is epics + ordered roadmap, nothing below altitude bar ships standalone, no flat-ticket failure.
+### Approval gate
 
----
+Present (i) the reconciliation table, with the exact mutation each row implies (rewrite, close, merge — with proposed text or rationale), and (ii) the roadmap. State the label vocabulary Stage 4 will use, and any missing tracker docs. Then **STOP**.
 
-## Stage 4 — Decompose epics into issues
+Proceed only on an explicit go-ahead in a later user message. Partial approval means apply only the approved rows. No `gh` write happens before it: issue rewrite, close, merge, create, label edits, `to-spec` and `to-tickets`.
 
-Use `to-tickets` to decompose each surviving epic into `ready-for-agent` issues with explicit dependency chains. Each issue gets: user story or task description, links to relevant files/PRDs, constraints, and HITL tasks where human judgment is required.
+### 3e. Apply
 
-**Completion criterion:** every epic has at least one decomposed `ready-for-agent` issue; no issue is an orphan (each links to its parent epic).
+Apply the approved reconciliation, then publish each approved epic with `to-spec`. Epics carry `epic` plus a best-effort `size:*` label and **not** `ready-for-agent` (it grants autonomous implement-and-merge, which is wrong for an aggregate); pass this to `to-spec` explicitly, since it defaults to `ready-for-agent`.
 
----
+**Completion criterion:** the four pass criteria hold, the approval gate was passed, and only approved mutations were applied.
 
-## Stage 5 — Self-check
+## Stage 4 — Decompose
 
-Verify the hard gate held. This is not a five-role review — it is a gate verification:
+Runs only after the approval gate. Invoke `to-tickets` once per published epic with:
 
-1. Every existing open issue the audit touched is explicitly dispositioned in the Stage 3 output.
-2. The output contains at least one epic and a roadmap. If it does not, the audit has failed — revisit Stage 3.
-3. No issue below the altitude bar shipped as a standalone ticket.
-4. Every decomposed issue carries the correct state label (`ready-for-agent`, `blocked`, or `ready-for-human`).
+- **Source** — the epic issue (number/URL), so every ticket becomes its native sub-issue.
+- **Context and tracker** — the epic's findings plus domain vocabulary from `CONTEXT.md` and ADRs; GitHub per the target repo's `docs/agents/issue-tracker.md`.
+- **Labels** — the vocabulary from the target repo's `docs/agents/labels.md`, else this repo's CORE set. Children get `ready-for-agent`, or `ready-for-human` where a human judgment gates the work; a ticket blocked only by sibling tickets stays `ready-for-agent` with a native blocking edge (`blocked` is for external dependencies or decisions). Add a category (`enhancement` / `chore` / `bug`) and best-effort `size:S|M|L|XL`.
 
-**Completion criterion:** all four checks pass, or failing ones are fixed and re-verified before declaring done.
+`to-tickets` runs its own granularity and dependency quiz; roadmap approval does not waive it. Tickets carry no file paths or code snippets (upstream rule) — paths and the audited ref live in the epic body. Epic-to-epic order stays in the roadmap text. If `to-tickets` is not installed, stop and tell the user to install `mattpocock/skills`; do not reimplement it.
 
----
+## Done checklist
+
+- [ ] Lineup, skips and tier logged; synthesis schema-valid; `dropped[]` shown
+- [ ] Every touched issue dispositioned; epics and roadmap present (no flat-ticket failure); nothing below the altitude bar shipped standalone
+- [ ] Approval received before the first GitHub write (message referenced)
+- [ ] Every epic has at least one child ticket, a native sub-issue carrying correct labels
+- [ ] Blocking edges are native links; audited ref recorded on each epic
 
 ## Leverage-hunt catalog
 
-See [`playbook.md`](./playbook.md) for what to look for under each leverage category — specific signals, patterns, and optional-input protocols.
+See [`playbook.md`](./playbook.md) for the Stage 1 evidence pack and, per lens, what to look for — signals, patterns, and optional-input protocols.
