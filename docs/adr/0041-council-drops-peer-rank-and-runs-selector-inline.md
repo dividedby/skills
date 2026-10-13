@@ -55,12 +55,34 @@ here.
 
 ## Out of scope
 
-`repo-audit` keeps its own Round 2 until its separate change.
+`repo-audit` keeps its own Round 2 until its separate change (since done; see Amendments).
 
 ## Amendments
 
-None yet. `repo-audit`'s removal of its own Round 2 will be recorded here as a
-dated amendment, with its PR link, rather than as a new ADR.
+### 2026-10-12 — `repo-audit`: Round 2 cross-review removed ([#600](https://github.com/dividedby/skills/pull/600))
+
+**Context.** `repo-audit` Stage 2 mirrored `/council`: a blind Round 1 sweep (5
+seats), a Round 2 anonymized cross-review and dedup (5 agents), then a synthesis.
+ADR 0036's #531 amendment extended dual (label and trace) isolation to that round.
+A run cost 11 agents.
+
+**Decision.** Round 2 is removed from `repo-audit` for the reason it was dropped
+from `/council`: peer rationales induce conformity and debate does not beat voting
+at equal compute. The single synthesis agent now (a) verifies each finding at its
+cited path and drops those it cannot confirm, listing each drop with a reason; (b)
+merges duplicates by root cause; (c) confirms altitude; and (d) adds no new
+findings. Seats run on one tier with schema-validated output, and a run uses at
+most 6 agents.
+
+**Why verification beats cross-review here.** Audit findings are checkable claims
+about files, so grounding them against the repo is a stronger filter than peer
+agreement, and it avoids conformity bias.
+
+**Consequences.** The trace-stripping prose in `repo-audit` is deleted, because
+schema output carries no trace. The `repo-audit` sentence in ADR 0036's #531
+amendment is superseded for `repo-audit`. Round 1 blind isolation is retained. ADR
+0036's authoring rules still apply, with rule 3 (schema at the output boundary)
+now covering seats as well as synthesis.
 
 ## Consequences
 

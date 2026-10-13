@@ -2,7 +2,7 @@
 
 > **Superseded in part by [ADR 0039](./0039-retire-remaining-proposal-loops-and-loop-serving-skills.md)** — the decision stands; the two "not this sense of workflow" references below (`docs/agents/workflow-authoring.md` and the `workflow-onboarding` skill) point at files that are deleted.
 
-> **Superseded in part by [ADR 0041](./0041-council-drops-peer-rank-and-runs-selector-inline.md)** — the decision stands (skills may drive the Workflow tool; authoring rules 1-4); `/council`'s three-round structure, inline-vs-agent selector and per-seat model tiers, and the #531 Round-2 dual-isolation amendment are replaced.
+> **Superseded in part by [ADR 0041](./0041-council-drops-peer-rank-and-runs-selector-inline.md)** — the decision stands (skills may drive the Workflow tool; authoring rules 1-4); `/council`'s three-round structure, inline-vs-agent selector and per-seat model tiers, the #531 Round-2 dual-isolation amendment, and the same sentence about `repo-audit`'s Round 2 (removed by an amendment in ADR 0041) are replaced.
 
 > **Status: Accepted** — ratified via PR [#492](https://github.com/dividedby/skills/pull/492) opening. Records the `/council` skill design (issue [#492](https://github.com/dividedby/skills/issues/492)).
 

@@ -16,10 +16,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 - `council`: the lineup is chosen in the main session by rule, with Security still force-seated on auth, payments, secrets, migrations and trust-boundary signals, and shown before any agents run; panels are 3-5 seats (0-2 conditional).
 - `council`: seats run on sonnet and the chair on opus at high effort; the per-seat model tier is gone.
 - `council`: scoped to design-level decisions; line-level defects belong to `/code-review`. Falls back to parallel Agent-tool calls when the Workflow tool is unavailable, and stops if neither is.
+- `repo-audit`: the leverage hunt now runs at most six agents instead of eleven — the cross-review round is gone and a single synthesis agent drops any finding whose evidence it cannot confirm at the cited path, listing each drop; seats run on one model tier with schema-validated output.
+- `repo-audit`: Stage 1 now builds an evidence pack for every seat — deterministic-detector digests and a git-history churn hotspot ranking — and seat selection skips lenses that do not apply and logs each skip.
+- `repo-audit`: asks for your go-ahead, with the reconciliation and roadmap in front of you, before any issue is rewritten, closed, merged or created. The epic bodies it would publish are shown first.
+- `repo-audit`: Stage 4 hands each epic to upstream `to-tickets` as a parent issue so tickets arrive as native sub-issues with native blocking links, and the audit ends with a copyable done-checklist.
+- `repo-audit`: the Convention & Backlog lens no longer claims to see other lenses' findings; the synthesis agent detects supersession instead.
 
 ### Removed
 
 - `council`: the "As a sub-skill" invocation (other skills cannot invoke a `disable-model-invocation` skill) and the peer-rank round.
+- `repo-audit`: the anonymized cross-review round and its trace-stripping prose (recorded in an amendment to ADR 0041).
 
 ## [3.0.0] - 2026-10-12
 
