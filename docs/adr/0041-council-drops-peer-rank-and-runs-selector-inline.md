@@ -30,14 +30,18 @@ main session before a fan-out.
    match. The lineup is shown to the user before any agent runs, then passed into
    the Workflow via `args`.
 3. **Conditional seats are 0-2** (3-5 seats total). `--seats` still swaps and never
-   adds, extra names beyond 2 are dropped and logged, and Security remains
-   non-removable.
+   adds, extra names beyond 2 are dropped and reported to the user, and Security remains
+   non-removable: when the floor fires and `--seats` does not name it, Security
+   displaces the last named seat.
 4. **One tier for seats, a stronger chair.** All seats run on sonnet; the chair
    runs opus at high effort. The per-seat model-tier column is dropped. This is a
    maintainer choice and departs from the Workflow guidance to omit `model`.
 5. **Remove the sub-skill invocation section.** It could not work:
    `disable-model-invocation: true` stops other skills and model turns invoking
    council, and the Workflow tool is unavailable inside subagents.
+6. **Fallback when the Workflow tool is unavailable.** Run the same seat briefs as
+   parallel Agent-tool calls and the chair as one more; if neither tool is
+   available, stop and say so rather than simulating the panel in one context.
 
 ## Amends ADR 0036
 

@@ -92,8 +92,13 @@ Lineup for "introduce JWT auth middleware":
 **Round 1 — Blind parallel evaluation.** Each active seat runs in one
 `parallel()`. Seats do **not** see each other's output; each receives the same
 task text and its own persona prompt, nothing else. The seat `schema` is five
-fields: `seat`, `verdict` (approve / approve-with-changes / reject), `core
-finding`, `evidence` (specific, not general principles), `recommendation`.
+fields:
+
+- `seat`
+- `verdict` — approve / approve-with-changes / reject
+- `core finding` — the single most important thing this lens sees
+- `evidence` — specific, not general principles
+- `recommendation` — what to do, not just what's wrong
 
 **Final round — Chair synthesis.** A dedicated Chair (opus, effort high) reads
 every seat's validated output in shuffled order (position-bias mitigation),
