@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
 ## [Unreleased]
 
+## [3.1.0] - 2026-10-12
+
+Slims both remaining skills: `council` drops its peer-rank round and `repo-audit` its cross-review round, roughly halving agents per run; `repo-audit` now asks before any GitHub change.
+
 ### Added
 
 - ADR 0041: `/council` drops its peer-rank round, runs the lineup selector in the main session, and seats every panelist at one model tier; amends ADR 0036.
