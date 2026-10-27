@@ -1,8 +1,9 @@
 # Repo Audit — Lens Briefs
 
-One brief per lens. Stage 3 adapts each to the project: fill the bracketed
-parts from the Stage 1 profile, drop bullets that do not apply to the stack,
-and add the user's focus. Every brief also carries the shared header below.
+One brief per lens. Stage 3 adapts each to the project: name the stack's own
+tools, files and comparables from the Stage 1 profile, drop bullets that do
+not apply, and add the user's focus. Every brief also carries the shared
+header below.
 
 ## Shared header (every lens)
 
@@ -16,7 +17,8 @@ and add the user's focus. Every brief also carries the shared header below.
   summary reply (top findings, under 500 words).
 - Finding shape: severity (High / Med / Low), evidence (`file:line`, command
   and result, or URL), why it matters, fix plan (no edits), effort (S / M / L).
-  Rank by impact.
+  Rank by impact. Measured numbers say how they were measured; projections
+  are labelled as projections.
 
 ## Code and performance
 
@@ -51,11 +53,12 @@ tooling exist) rather than trusting them. Then assess:
    test-only or demo code shipped in production targets, whether parts should
    be separate modules.
 2. **Security and privacy.** Credential and token storage, auth flow, scopes or
-   permissions requested versus used, sandboxing and entitlements (or the
-   stack's equivalent), where personal data lands on disk and with what
+   permissions requested versus used, sandboxing, entitlements and runtime
+   hardening (or the stack's equivalents), where personal data lands on disk and with what
    permissions. Search history for secrets; report presence only, never values.
 3. **Build and release.** Signing, notarization or store path, update channel,
-   versioning, reproducibility.
+   versioning, reproducibility, and whether the build setup itself (project
+   files, build configs) would help or is fine as it is.
 4. **CI.** A concrete workflow plan for the stack (test, build, lint, caching),
    and any runner availability problem for the platform version targeted.
 5. **Documentation.** Outlines for what is missing (README, architecture,
@@ -89,15 +92,17 @@ software. Name three to six apps in the same category to compare against.
   redesign and the platform APIs to use; app-level recommendations. (2) A
   mockup spec for four or five key screens — layout regions, components, exact
   copy, states, light and dark colour notes — precise enough to render as HTML
-  without guessing.
+  without guessing. The spec goes to its own named scratchpad path, beside the
+  report.
 
 ## Market and research
 
 The repo is context only. Use web search (standard first, extended when thin)
 and page fetches.
 
-1. **Competitors and prior art.** Commercial and open source; for each, the
-   approach, features, price and common complaints.
+1. **Competitors and prior art.** Commercial tools, and open source found by
+   searching GitHub; for each, the approach, features, price and common
+   complaints.
 2. **What users say.** Forums and Reddit communities for the platform and
    problem space. One short quote per source (under 15 words) with its URL.
 3. **Technical gotchas.** Quotas, token or cursor expiry, platform permissions

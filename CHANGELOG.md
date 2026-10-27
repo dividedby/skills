@@ -12,12 +12,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
 ### Changed
 
-- `repo-audit`: **Breaking:** now a read-only audit that changes nothing in the repo and files no issues. Four lenses run in parallel: code and performance (with measured benchmarks), architecture, repo and docs, design (with screenshots and a mockup spec), and market research. Every high finding is re-checked at its source before the result is published as one private report page with verdicts, a Now/Next/Later plan, screenshots, mockups, and what was and was not verified. Run `/to-tickets` on the plan if you want issues.
+- `repo-audit`: **Breaking:** now a read-only audit that changes nothing in the repo and files no issues. Four lenses run in parallel: code and performance (with measured benchmarks); architecture, repo and docs; design (with screenshots and a mockup spec); and market research. Every high finding is re-checked at its source before the result is published as one private report page with verdicts, a Now/Next/Later plan, screenshots, mockups, and what was and was not verified. Run `/to-tickets` on the plan if you want issues.
 
 ### Removed
 
 - `repo-audit`: **Breaking:** backlog reconciliation, epics, the ordered roadmap, the go-ahead step before GitHub changes, and the hand-off to `to-tickets`. The old skill is at the 3.1.0 release commit, `d95ab6f`.
-- `repo-audit`: `playbook.md`, replaced by `briefs.md` (one brief per lens) and `template.html` (the report page).
 
 ## [3.1.0] - 2026-10-12
 

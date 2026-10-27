@@ -54,7 +54,9 @@ commit and every agent confirms which one it read.
 
 Profile the project: languages, size (lines per area, largest files), test
 suite and its run time, build and release path, CI, docs present, licence,
-public or private. Decide which lenses apply and say so in one line each:
+public or private. These are the profile's **known facts**; the lenses verify
+them rather than trust them. Decide which lenses apply and say so in one line
+each:
 
 - **Design** runs only when there is a user-facing UI (app, site, or CLI output
   when the output is the product). A library skips it.
@@ -72,10 +74,14 @@ lineup is stated with reasons.
 Gather the evidence the lenses cannot gather blind:
 
 - **Screenshots** of every main screen and state (empty, loading, error,
-  populated), from a demo or sample-data build. Native apps: build and launch a
-  separate copy (own bundle id) so the user's real install and data are
-  untouched. Web apps: the built-in browser against a local dev server.
-  Capture light and dark where the product supports both.
+  populated), from the project's own demo, sample-data or dev mode. Native
+  apps: build and run a separate copy from a scratchpad clone or build folder,
+  with its own identity (bundle id or equivalent), so the user's real install
+  and data are untouched; any change needed for that happens in the clone,
+  never in the repo. Web apps: the built-in browser against a local dev
+  server. Capture light and dark where the product supports both.
+- **No safe way to run it** (no demo mode, real accounts required): skip
+  screenshots, say so, and let the design lens work from source.
 - **Baseline numbers** the code lens will need: test run time, build time,
   sizes of state or output files, anything cheap to measure now.
 
@@ -88,8 +94,9 @@ the captures sit in the scratchpad.
 
 Launch the applicable lens agents in one message so they run concurrently. Each
 gets the pinned commit, the profile, the read-only rule, the relevant captures,
-and its brief from [`briefs.md`](./briefs.md). Each writes a full report to the
-scratchpad and returns a short summary.
+and its brief from [`briefs.md`](./briefs.md), which also sets the shape of a
+finding. Each writes its report (and the design lens its mockup spec) to a
+named scratchpad path and returns a short summary.
 
 | Lens | Model | Finds |
 |---|---|---|
@@ -97,10 +104,6 @@ scratchpad and returns a short summary.
 | Architecture, repo, docs | sonnet | Module shape, security and privacy, build and release, CI, docs, repo settings |
 | Design | opus | Per-screen and app-level issues against the platform's guidelines; a mockup spec |
 | Market and research | sonnet | Competitors, real user complaints, technical gotchas, projects worth copying |
-
-Every finding carries severity (High / Med / Low), evidence (`file:line`, a
-command and its output, or a URL), why it matters, a fix plan, and an effort
-(S / M / L). Measured numbers say how they were measured; projections say so.
 
 **Done when:** every launched lens has returned and its report file exists.
 
@@ -113,8 +116,8 @@ The lens reports are claims. Before anything reaches the page:
 2. Correct what does not hold: lower the severity, fix the evidence, or drop the
    finding. Keep a list of every correction with the reason.
 3. Where lenses disagree with each other or with the code (a research claim
-   versus what the code does), show both readings and say which the evidence
-   favours.
+   versus what the code does), list it as disputed: both readings, and which
+   the evidence favours.
 4. Context a lens lacked can change a rating (sandboxing, single-user scope,
    data size). Apply it and note it.
 
@@ -134,12 +137,15 @@ minute; the tables hold the detail.
 
 Render the design lens's mockup spec as HTML inside the page, in the template's
 mockup frame, following the theme toggle. Mockups are hand-written HTML and CSS
-that match the platform's look; they are not screenshots of code.
+that match the platform's look (swap the sample's desktop-window chrome for a
+browser, phone or terminal frame as needed); they are not screenshots of code.
 
 ## Stage 6 — Publish
 
-Fill [`template.html`](./template.html): replace each `{{PLACEHOLDER}}`, clone
-each `<!-- repeat: … -->` block per item, and embed screenshots as `data:` URIs
+Fill [`template.html`](./template.html) as its header comment directs: one
+section per lens, each `<!-- repeat: … -->` block cloned per item, every
+`{{PLACEHOLDER}}` replaced, unused sections removed with their nav links, and
+screenshots embedded as `data:` URIs
 (downscale first; keep the page under the Artifact size limit). Preview it
 locally in the browser pane, light and dark, desktop and phone width, before
 publishing.
