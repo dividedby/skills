@@ -1,0 +1,362 @@
+<!--
+REPO-AUDIT REPORT TEMPLATE. The filler clones each repeat block, replaces the double-brace tokens, and deletes the comments.
+Optional sections (Measurements, Screens, Mockups, Research, Checked, any area): delete the whole h2 block AND its nav link.
+Image sources are IMG_ tokens (rename per image, e.g. IMG_SETUP) that become data: URIs. Class values are fixed (see below).
+
+PLACEHOLDERS
+  Header:     PROJECT, SCOPE_REPO, SCOPE_BRANCH, SCOPE_COMMIT, SCOPE_DATE, SUMMARY_LEDE, METHOD_NOTE
+  Nav:        NAV_ID, NAV_LABEL
+  Verdicts:   AREA_ID, AREA_NAME, STATUS_CLASS (good|mixed|weak), STATUS_LABEL, VERDICT_HEADLINE, VERDICT_TEXT
+  Plan:       PLAN_INTRO, NOW_WHEN, NEXT_WHEN, LATER_WHEN, ITEM_TEXT, EFFORT (S|M|L), FINDING_ID
+  Areas:      AREA_ID, AREA_TITLE, AREA_INTRO, FINDING_ID, SEV_CLASS (hi|med|low), SEVERITY (HIGH|MED|LOW),
+              FINDING, EVIDENCE (file:line), FIX, EFFORT
+  Measures:   MEASUREMENTS_INTRO, METRIC, VALUE, HOW_MEASURED
+  Screens:    SCREENS_INTRO, IMG_NAME, IMG_ALT, IMG_CAPTION
+  Mockups:    MOCKUPS_INTRO, MOCKUP_TITLE, MOCKUP_CONTEXT, MOCKUP_WIDTH, MOCKUP_HTML, MOCKUP_NOTE
+  Research:   RESEARCH_INTRO, SOURCE_TOPIC, SOURCE_SUMMARY, SOURCE_URL, SOURCE_TITLE, RESEARCH_GAPS
+  Checked:    VERIFIED_ITEM, CORRECTED_ITEM, UNVERIFIED_ITEM
+
+REPEAT BLOCKS (each is wrapped in a repeat comment pair named as below; clone everything between the markers)
+  nav-link, verdict-card, plan-item (once inside each of Now/Next/Later), area-section (contains finding-row),
+  finding-row, measurement-row, screenshot, mockup (contains mockup-note), mockup-note, research-source,
+  verified-item, corrected-item, unverified-item
+  FINDING_ID on a plan-item must equal the FINDING_ID of a finding-row (id="..." on the <tr>).
+-->
+<title>{{PROJECT}} Audit</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a single reading column (~72ch) with full-width tables and mockup stages. */
+:root {
+  --bg: #F6F8F8; --surface: #FFFFFF; --ink: #15201F; --ink-2: #4A5856; --ink-3: #7D8B89;
+  --rule: #DCE4E3; --accent: #0C6B73; --accent-soft: #E1F2F1;
+  --hi: #B42318; --hi-bg: #FDECEA; --med: #9A5B00; --med-bg: #FFF3DC; --low: #3B5B7A; --low-bg: #E7EEF6;
+  --good: #1B6E3A; --good-bg: #E3F4E8;
+  --display: "Schibsted Grotesk", -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --body: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  /* mockup tokens */
+  --mk-desk: #D8DCE2; --mk-win: #FFFFFF; --mk-side: #F0F0F3; --mk-card: #FFFFFF;
+  --mk-label: rgba(0,0,0,.85); --mk-2: rgba(0,0,0,.55); --mk-3: rgba(0,0,0,.30); --mk-sep: rgba(0,0,0,.10);
+  --mk-ft: rgba(0,0,0,.07); --mk-accent: #007AFF; --mk-wash: rgba(0,122,255,.08);
+  --mk-green: #28CD41; --mk-orange: #FF9500; --mk-red: #FF3B30;
+  --mk-av1: #A5A9B2; --mk-av2: #868A93; --mk-shadow: 0 20px 60px rgba(0,0,0,.22);
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0F1514; --surface: #172020; --ink: #E7EEED; --ink-2: #A9B7B5; --ink-3: #74827F;
+  --rule: #26322F; --accent: #5ECFC0; --accent-soft: #143331;
+  --hi: #FF8A80; --hi-bg: #3A1714; --med: #F5B649; --med-bg: #33260C; --low: #9DBBDA; --low-bg: #182634;
+  --good: #7BD99A; --good-bg: #12301E;
+  --mk-desk: #0E0F12; --mk-win: #1E1E1E; --mk-side: #28282B; --mk-card: #2C2C2E;
+  --mk-label: rgba(255,255,255,.88); --mk-2: rgba(255,255,255,.58); --mk-3: rgba(255,255,255,.30); --mk-sep: rgba(255,255,255,.10);
+  --mk-ft: rgba(255,255,255,.10); --mk-accent: #0A84FF; --mk-wash: rgba(10,132,255,.18);
+  --mk-green: #32D74B; --mk-orange: #FF9F0A; --mk-red: #FF453A;
+  --mk-av1: #6E7179; --mk-av2: #55585F; --mk-shadow: 0 20px 60px rgba(0,0,0,.6);
+  color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0F1514; --surface: #172020; --ink: #E7EEED; --ink-2: #A9B7B5; --ink-3: #74827F;
+  --rule: #26322F; --accent: #5ECFC0; --accent-soft: #143331;
+  --hi: #FF8A80; --hi-bg: #3A1714; --med: #F5B649; --med-bg: #33260C; --low: #9DBBDA; --low-bg: #182634;
+  --good: #7BD99A; --good-bg: #12301E;
+  --mk-desk: #0E0F12; --mk-win: #1E1E1E; --mk-side: #28282B; --mk-card: #2C2C2E;
+  --mk-label: rgba(255,255,255,.88); --mk-2: rgba(255,255,255,.58); --mk-3: rgba(255,255,255,.30); --mk-sep: rgba(255,255,255,.10);
+  --mk-ft: rgba(255,255,255,.10); --mk-accent: #0A84FF; --mk-wash: rgba(10,132,255,.18);
+  --mk-green: #32D74B; --mk-orange: #FF9F0A; --mk-red: #FF453A;
+  --mk-av1: #6E7179; --mk-av2: #55585F; --mk-shadow: 0 20px 60px rgba(0,0,0,.6);
+  color-scheme: dark; }
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.6 var(--body); margin: 0; }
+.wrap { max-width: 1080px; margin: 0 auto; padding-block: 40px 80px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.col { max-width: 72ch; overflow-wrap: break-word; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; line-height: 1.2; margin: 0; }
+h1 { font-size: clamp(30px, 5vw, 44px); font-weight: 700; letter-spacing: -.01em; overflow-wrap: break-word; }
+h2 { font-size: 26px; font-weight: 700; margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--rule); scroll-margin-top: 64px; }
+h3 { font-size: 18px; font-weight: 600; margin-top: 32px; }
+p { margin: 12px 0; }
+a { color: var(--accent); }
+code, .mono { font-family: var(--mono); font-size: .86em; }
+td code { overflow-wrap: anywhere; }
+.eyebrow { font: 600 12px/1 var(--display); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+.lede { font-size: 18px; color: var(--ink-2); max-width: 64ch; }
+.meta { color: var(--ink-3); font-size: 13px; }
+.topbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 28px; }
+.toggle { display: inline-flex; border: 1px solid var(--rule); border-radius: 999px; overflow: hidden; background: var(--surface); }
+.toggle button { font: 500 13px var(--body); color: var(--ink-2); background: none; border: 0; padding: 6px 14px; cursor: pointer; }
+.toggle button[aria-pressed="true"] { background: var(--accent); color: var(--bg); }
+.toggle button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+.nav { position: sticky; top: 0; z-index: 10; display: flex; gap: 4px; overflow-x: auto; white-space: nowrap; margin-top: 24px;
+  padding: 8px 0; background: var(--bg); border-bottom: 1px solid var(--rule); scrollbar-width: none; }
+.nav::-webkit-scrollbar { display: none; }
+.nav a { font: 500 13px var(--display); color: var(--ink-2); text-decoration: none; padding: 6px 12px; border-radius: 999px; flex: none; }
+.nav a:hover, .nav a:focus-visible { background: var(--accent-soft); color: var(--accent); outline: 0; }
+
+.verdicts { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; margin-top: 28px; }
+.verdict { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 16px 18px; min-width: 0; }
+.verdict-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.verdict h3 { margin: 0 0 6px; font-size: 16px; }
+.verdict h3 a { color: inherit; text-decoration: none; }
+.verdict .grade { font: 600 13px var(--display); color: var(--accent); }
+.verdict p { margin: 6px 0 0; font-size: 14px; color: var(--ink-2); }
+.pill, .sev { display: inline-block; font: 600 11px/1 var(--display); letter-spacing: .04em; padding: 4px 7px; border-radius: 4px; white-space: nowrap; }
+.pill { text-transform: uppercase; border-radius: 999px; padding: 4px 9px; margin-bottom: 6px; }
+.pill.good { color: var(--good); background: var(--good-bg); } .pill.mixed { color: var(--med); background: var(--med-bg); } .pill.weak { color: var(--hi); background: var(--hi-bg); }
+.sev.hi { color: var(--hi); background: var(--hi-bg); } .sev.med { color: var(--med); background: var(--med-bg); } .sev.low { color: var(--low); background: var(--low-bg); }
+
+.tablewrap { overflow-x: auto; margin: 16px 0; border: 1px solid var(--rule); border-radius: 10px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+table.wide { min-width: 720px; }
+th, td { text-align: left; padding: 10px 12px; vertical-align: top; border-bottom: 1px solid var(--rule); }
+tr:last-child td { border-bottom: 0; }
+tr:target td { background: var(--accent-soft); }
+tr[id] { scroll-margin-top: 64px; }
+th { font: 600 12px var(--display); letter-spacing: .04em; text-transform: uppercase; color: var(--ink-3); background: var(--bg); }
+td.n { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.eff { font: 500 12px var(--mono); color: var(--ink-2); }
+
+.phases { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr)); gap: 16px; margin-top: 16px; }
+.phase { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 18px; min-width: 0; }
+.phase h3 { margin: 0 0 4px; }
+.phase .when { font-size: 13px; color: var(--ink-3); }
+.phase ol { margin: 12px 0 0; padding-left: 20px; display: grid; gap: 8px; font-size: 14px; }
+.phase li { overflow-wrap: break-word; min-width: 0; }
+.phase li span.eff { margin-left: 4px; }
+.phase li a.go { font: 500 12px var(--mono); margin-left: 4px; white-space: nowrap; }
+
+.shots { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr)); gap: 12px; margin-top: 16px; }
+.shots figure { margin: 0; min-width: 0; }
+.shots img { width: 100%; border-radius: 8px; border: 1px solid var(--rule); display: block; }
+.shots figcaption { font-size: 12px; color: var(--ink-3); margin-top: 4px; }
+ul.tight { padding-left: 20px; } ul.tight li { margin: 6px 0; }
+
+/* ---------- mockup frame ---------- */
+.mock { margin: 20px 0 8px; }
+.mock-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.mock-head h3 { margin: 0; }
+.stage { width: 100%; overflow: hidden; border-radius: 12px; background: var(--mk-desk); }
+.scaler { transform-origin: top left; padding: 28px; }
+.mock-notes { font-size: 14px; color: var(--ink-2); }
+.mock-notes ul { padding-left: 20px; margin: 8px 0; }
+
+/* Window chrome: size with style="--w:880px;--h:480px"; set the .scaler data-w to --w + 56. */
+.mk { font: 13px/1.3 -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif; color: var(--mk-label); -webkit-font-smoothing: antialiased; }
+.win { position: relative; width: var(--w, 880px); height: var(--h, 480px); background: var(--mk-win); border-radius: 14px; box-shadow: var(--mk-shadow); overflow: hidden; display: flex; }
+.lights { position: absolute; left: 16px; top: 14px; display: flex; gap: 8px; z-index: 1; }
+.lights i { width: 12px; height: 12px; border-radius: 50%; display: block; }
+.lights i:nth-child(1) { background: #FF5F57 } .lights i:nth-child(2) { background: #FEBC2E } .lights i:nth-child(3) { background: #28C840 }
+.side { width: 200px; flex: none; background: var(--mk-side); border-right: 1px solid var(--mk-sep); padding: 48px 10px 10px; }
+.shead { font-size: 11px; font-weight: 600; color: var(--mk-2); padding: 14px 10px 6px; }
+.srow { display: flex; align-items: center; gap: 8px; height: 28px; padding: 0 10px; border-radius: 7px; }
+.srow.sel { background: var(--mk-ft); }
+.badge { margin-left: auto; font-size: 11px; font-weight: 600; color: var(--mk-2); background: var(--mk-ft); border-radius: 9px; padding: 1px 7px; }
+.listcol { width: 270px; flex: none; border-right: 1px solid var(--mk-sep); padding: 48px 8px 8px; overflow: hidden; }
+.lrow { display: flex; gap: 10px; align-items: center; height: 48px; padding: 0 8px; border-radius: 8px; }
+.lrow .t { min-width: 0; } .lrow .t div:first-child { font-weight: 600; }
+.lrow .t div:last-child { font-size: 11px; color: var(--mk-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lrow.sel { background: var(--mk-accent); color: #fff; } .lrow.sel .t div:last-child { color: rgba(255,255,255,.8); }
+.detail { flex: 1; min-width: 0; padding: 48px 28px 28px; }
+.detail .ttl { font-size: 20px; font-weight: 600; }
+.detail .sub { color: var(--mk-2); margin-top: 4px; }
+.av { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(var(--mk-av1), var(--mk-av2)); color: #fff; font: 600 12px -apple-system, sans-serif; display: grid; place-items: center; flex: none; }
+.av.l { width: 56px; height: 56px; font-size: 22px; }
+.card { background: var(--mk-card); border: 1px solid var(--mk-sep); border-radius: 12px; margin-top: 16px; }
+.lc { display: flex; justify-content: space-between; height: 36px; align-items: center; padding: 0 14px; border-bottom: 1px solid var(--mk-sep); }
+.lc:last-child { border-bottom: 0; }
+.lc b { font-weight: 400; color: var(--mk-2); }
+.btn { height: 28px; padding: 0 14px; border-radius: 7px; display: inline-flex; align-items: center; background: var(--mk-ft); color: var(--mk-label); font-weight: 500; }
+.btn.p { background: var(--mk-accent); color: #fff; font-weight: 600; }
+
+@media (max-width: 600px) { body { font-size: 14.5px; } h2 { font-size: 22px; } .lede { font-size: 16px; } }
+</style>
+
+<div class="wrap">
+  <div class="topbar">
+    <span class="eyebrow">{{SCOPE_REPO}} · {{SCOPE_BRANCH}} @ {{SCOPE_COMMIT}} · {{SCOPE_DATE}}</span>
+    <div class="toggle" role="group" aria-label="Theme">
+      <button type="button" id="th-auto" aria-pressed="true">Auto</button>
+      <button type="button" id="th-light" aria-pressed="false">Light</button>
+      <button type="button" id="th-dark" aria-pressed="false">Dark</button>
+    </div>
+  </div>
+
+  <h1>{{PROJECT}} Audit</h1>
+  <p class="lede">{{SUMMARY_LEDE}}</p>
+  <p class="meta">{{METHOD_NOTE}}</p>
+
+  <nav class="nav" aria-label="Sections">
+    <a href="#plan">Plan</a>
+    <!-- repeat: nav-link -->
+    <a href="#{{NAV_ID}}">{{NAV_LABEL}}</a>
+    <!-- /repeat -->
+    <a href="#measurements">Measurements</a>
+    <a href="#screens">Screens</a>
+    <a href="#mockups">Mockups</a>
+    <a href="#research">Research</a>
+    <a href="#checked">What was checked</a>
+  </nav>
+
+  <div class="verdicts">
+    <!-- repeat: verdict-card -->
+    <div class="verdict">
+      <h3><a href="#{{AREA_ID}}">{{AREA_NAME}}</a></h3>
+      <span class="pill {{STATUS_CLASS}}">{{STATUS_LABEL}}</span>
+      <div class="grade">{{VERDICT_HEADLINE}}</div>
+      <p>{{VERDICT_TEXT}}</p>
+    </div>
+    <!-- /repeat -->
+  </div>
+
+  <h2 id="plan">Plan</h2>
+  <div class="col"><p>{{PLAN_INTRO}}</p></div>
+  <div class="phases">
+    <div class="phase"><h3>Now</h3><div class="when">{{NOW_WHEN}}</div><ol>
+      <!-- repeat: plan-item -->
+      <li>{{ITEM_TEXT}} <span class="eff">{{EFFORT}}</span> <a class="go" href="#{{FINDING_ID}}">finding</a></li>
+      <!-- /repeat -->
+    </ol></div>
+    <div class="phase"><h3>Next</h3><div class="when">{{NEXT_WHEN}}</div><ol>
+      <!-- repeat: plan-item -->
+      <li>{{ITEM_TEXT}} <span class="eff">{{EFFORT}}</span> <a class="go" href="#{{FINDING_ID}}">finding</a></li>
+      <!-- /repeat -->
+    </ol></div>
+    <div class="phase"><h3>Later</h3><div class="when">{{LATER_WHEN}}</div><ol>
+      <!-- repeat: plan-item -->
+      <li>{{ITEM_TEXT}} <span class="eff">{{EFFORT}}</span> <a class="go" href="#{{FINDING_ID}}">finding</a></li>
+      <!-- /repeat -->
+    </ol></div>
+  </div>
+
+  <!-- repeat: area-section -->
+  <h2 id="{{AREA_ID}}">{{AREA_TITLE}}</h2>
+  <div class="col"><p>{{AREA_INTRO}}</p></div>
+  <div class="tablewrap"><table class="wide">
+    <thead><tr><th>Severity</th><th>Finding</th><th>Evidence</th><th>Fix</th><th>Effort</th></tr></thead>
+    <tbody>
+      <!-- repeat: finding-row -->
+      <tr id="{{FINDING_ID}}"><td><span class="sev {{SEV_CLASS}}">{{SEVERITY}}</span></td><td>{{FINDING}}</td><td><code>{{EVIDENCE}}</code></td><td>{{FIX}}</td><td class="eff">{{EFFORT}}</td></tr>
+      <!-- /repeat -->
+    </tbody>
+  </table></div>
+  <!-- /repeat -->
+
+  <h2 id="measurements">Measurements</h2>
+  <div class="col"><p>{{MEASUREMENTS_INTRO}}</p></div>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Metric</th><th>Value</th><th>How measured</th></tr></thead>
+    <tbody>
+      <!-- repeat: measurement-row -->
+      <tr><td>{{METRIC}}</td><td class="n">{{VALUE}}</td><td>{{HOW_MEASURED}}</td></tr>
+      <!-- /repeat -->
+    </tbody>
+  </table></div>
+
+  <h2 id="screens">Screens</h2>
+  <div class="col"><p>{{SCREENS_INTRO}}</p></div>
+  <div class="shots">
+    <!-- repeat: screenshot -->
+    <figure><img alt="{{IMG_ALT}}" src="{{IMG_NAME}}"><figcaption>{{IMG_CAPTION}}</figcaption></figure>
+    <!-- /repeat -->
+  </div>
+
+  <h2 id="mockups">Mockups</h2>
+  <div class="col"><p>{{MOCKUPS_INTRO}}</p></div>
+  <!-- repeat: mockup -->
+  <div class="mock">
+    <div class="mock-head"><h3>{{MOCKUP_TITLE}}</h3><span class="meta">{{MOCKUP_CONTEXT}}</span></div>
+    <div class="stage"><div class="scaler" data-w="{{MOCKUP_WIDTH}}"><div class="mk">
+      <!-- {{MOCKUP_HTML}}: replace everything inside .mk. The block below is the pattern to copy:
+           a window with sidebar, list and detail. Use only the mk-prefixed colour tokens so it follows the theme. -->
+      <div class="win" style="--w:880px;--h:480px">
+        <div class="lights"><i></i><i></i><i></i></div>
+        <div class="side">
+          <div class="srow sel">Inbox<span class="badge">3</span></div>
+          <div class="srow">Drafts</div>
+          <div class="srow">Archive</div>
+          <div class="shead">Tags</div>
+          <div class="srow">Work</div>
+          <div class="srow">Personal</div>
+        </div>
+        <div class="listcol">
+          <div class="lrow sel"><div class="av">AB</div><div class="t"><div>First item</div><div>Selected row, subtitle text</div></div></div>
+          <div class="lrow"><div class="av">CD</div><div class="t"><div>Second item</div><div>Another subtitle</div></div></div>
+          <div class="lrow"><div class="av">EF</div><div class="t"><div>Third item</div><div>One more subtitle</div></div></div>
+        </div>
+        <div class="detail">
+          <div style="display:flex;align-items:center;gap:14px"><div class="av l">AB</div><div><div class="ttl">First item</div><div class="sub">Detail subtitle</div></div></div>
+          <div class="card"><div class="lc">Label<b>Value</b></div><div class="lc">Label<b>Value</b></div><div class="lc">Status<b style="color:var(--mk-green)">Ready</b></div></div>
+          <div style="margin-top:16px;display:flex;gap:8px"><span class="btn">Secondary</span><span class="btn p">Primary</span></div>
+        </div>
+      </div>
+    </div></div></div>
+    <div class="mock-notes"><ul>
+      <!-- repeat: mockup-note -->
+      <li>{{MOCKUP_NOTE}}</li>
+      <!-- /repeat -->
+    </ul></div>
+  </div>
+  <!-- /repeat -->
+
+  <h2 id="research">Research</h2>
+  <div class="col">
+    <p>{{RESEARCH_INTRO}}</p>
+    <ul class="tight">
+      <!-- repeat: research-source -->
+      <li><b>{{SOURCE_TOPIC}}:</b> {{SOURCE_SUMMARY}} <a href="{{SOURCE_URL}}">{{SOURCE_TITLE}}</a></li>
+      <!-- /repeat -->
+    </ul>
+    <p class="meta">{{RESEARCH_GAPS}}</p>
+  </div>
+
+  <h2 id="checked">What was checked</h2>
+  <div class="col">
+    <h3>Verified</h3>
+    <ul class="tight">
+      <!-- repeat: verified-item -->
+      <li>{{VERIFIED_ITEM}}</li>
+      <!-- /repeat -->
+    </ul>
+    <h3>Corrected</h3>
+    <ul class="tight">
+      <!-- repeat: corrected-item -->
+      <li>{{CORRECTED_ITEM}}</li>
+      <!-- /repeat -->
+    </ul>
+    <h3>Unverified</h3>
+    <ul class="tight">
+      <!-- repeat: unverified-item -->
+      <li>{{UNVERIFIED_ITEM}}</li>
+      <!-- /repeat -->
+    </ul>
+  </div>
+</div>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  var btns = { auto: document.getElementById('th-auto'), light: document.getElementById('th-light'), dark: document.getElementById('th-dark') };
+  function setTheme(t) {
+    if (t === 'auto') root.removeAttribute('data-theme'); else root.setAttribute('data-theme', t);
+    Object.keys(btns).forEach(function (k) { btns[k].setAttribute('aria-pressed', String(k === t)); });
+    try { localStorage.setItem('audit-theme', t); } catch (e) {}
+  }
+  Object.keys(btns).forEach(function (k) { btns[k].addEventListener('click', function () { setTheme(k); }); });
+  try { var saved = localStorage.getItem('audit-theme'); if (saved && btns[saved]) setTheme(saved); } catch (e) {}
+
+  var stages = Array.prototype.slice.call(document.querySelectorAll('.stage'));
+  function fit() {
+    stages.forEach(function (st) {
+      var sc = st.querySelector('.scaler'); var w = +sc.dataset.w || 936;
+      sc.style.width = w + 'px'; sc.style.transform = 'none';
+      var natural = sc.scrollHeight; var s = Math.min(1, st.clientWidth / w);
+      sc.style.transform = 'scale(' + s + ')';
+      st.style.height = Math.ceil(natural * s) + 'px';
+    });
+  }
+  fit();
+  if ('ResizeObserver' in window) { var ro = new ResizeObserver(fit); stages.forEach(function (s) { ro.observe(s); }); }
+  else window.addEventListener('resize', fit);
+})();
+</script>

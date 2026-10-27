@@ -15,7 +15,7 @@ Pick the skills you want when prompted. Re-run to update.
 ### Engineering
 
 - **[council](./skills/engineering/council/SKILL.md)** — Convene a blind, diverse multi-persona panel (Falsifier, Minimalist, Pragmatist + conditional seats) that returns a synthesized second opinion plus the dissent the chair did not adopt; one blind parallel round plus a chair synthesis on the built-in Workflow tool.
-- **[repo-audit](./skills/engineering/repo-audit/SKILL.md)** — User-invoked audit that hunts high-leverage improvements in a repo (delete/lean, performance, architectural deepening, missing features) and produces a small set of epics with an ordered roadmap — reconciled against the existing backlog, not filed beside it.
+- **[repo-audit](./skills/engineering/repo-audit/SKILL.md)** — Read-only audit of a repo's code, design, repo hygiene and docs, and market: parallel lens agents, every high finding verified at its source, published as one private report page with screenshots, mockups and a Now/Next/Later plan.
 
 ## Docs
 
