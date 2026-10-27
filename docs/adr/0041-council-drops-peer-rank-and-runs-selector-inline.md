@@ -2,6 +2,8 @@
 
 > **Status: Accepted** — maintainer decision (2026-10-12). **Amends [ADR 0036](./0036-council-skill-drives-workflow-tool.md).**
 
+> **Superseded in part by [ADR 0042](./0042-repo-audit-becomes-a-read-only-report.md)** — the `/council` decision stands; the 2026-10-12 `repo-audit` amendment is replaced (repo-audit no longer runs a leverage hunt or a synthesis agent).
+
 ## Context
 
 `/council` ran about 12 agents per invocation: a selector, five blind seats, five

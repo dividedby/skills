@@ -1,199 +1,171 @@
 ---
 name: repo-audit
 description: >
-  User-invoked audit that hunts high-leverage improvements in a repo and produces a small set of epics with an ordered roadmap — reconciled against the existing backlog, not filed beside it.
+  User-invoked, read-only audit of a repo's code, design, repo hygiene and docs, and market — parallel lens agents, every high finding verified at its source, published as one private report page with screenshots, mockups and a Now/Next/Later plan.
 disable-model-invocation: true
 ---
 
 # Repo Audit
 
-A **leverage hunt**, not a coverage exercise. This skill hunts the improvements that matter — deletions, leanness/performance wins, architectural deepening, missing capabilities — and synthesises them into an ordered roadmap of epics, fully reconciled against the repo's existing backlog.
+A **read-only** review a maintainer can start and walk away from (overnight is
+the intended use). It looks at a repo through four lenses — code and
+performance, design, architecture/repo/docs, and the outside world — checks
+every claim that matters against the source, and ends in **one report page**:
+verdicts, a phased plan, evidenced findings, screenshots, mockups, and an honest
+list of what was and was not verified.
 
 Defers:
-- `to-spec`, `to-tickets`, `improve-codebase-architecture` (explore walk, git-log hot-spot idea) — `mattpocock/skills` @ `49dd158d1076134a641b33efb035946536778336`; soft-deps per ADR 0024, expected installed, nothing vendored.
-- `tdd` (pointer only) and `/setup-matt-pocock-skills` (when a target repo lacks tracker/label docs).
-- [`playbook.md`](./playbook.md) — this skill's per-lens signal catalog and the Stage 1 evidence pack.
-- Built-in `Workflow` tool — ADR 0036; ADR 0041 (amendment) for dropping the peer round.
+- Agent tool (lens agents run in parallel); the Artifact tool to publish the page.
+- The built-in browser or the project's own run tooling, for screenshots.
+- `/to-tickets` — only if the user later asks for the plan as issues.
 
 ## When to use
 
-- You want to know what the highest-leverage improvements in a repo are.
-- The backlog has drifted from the codebase and needs a ground-truth reset, or you're planning a quarter and want an ordered roadmap, not a flat pile of tickets.
+- You want a full, evidenced picture of a repo: what is slow, what is fragile,
+  what looks unfinished, what the docs lack, and where it stands against others.
+- You want a design bar check ("does this look first-class?") with concrete
+  mockups, not adjectives.
+- You want a plan to pick from, not tickets filed for you.
 
 ## When not to use
 
-- You need just one domain (reach for `tdd`, `improve-codebase-architecture`, etc. directly), the project is too early-stage to audit, or you only need a PR review or a single-file fix.
+- Reviewing one branch or PR: use `/code-review`.
+- One design decision: use `/council`.
+- You want issues filed now: run this, then `/to-tickets` on the plan.
 
-## Stage 1 — Context, backlog, evidence pack
+## The read-only rule
 
-Runs inline in the main session; no agents.
+The audited repo is never changed: no edits, commits, branches, pushes, issue or
+PR writes, or settings changes. Builds and tests may run when they write only to
+ignored build output. Benchmarks, scratch packages, captured screenshots and the
+page itself live in the session's scratchpad. If a check would need a change to
+the repo, record it as unverified instead. The run ends with `git status`
+showing nothing new.
 
-- **Layout.** Read the repo's Claude config (`.claude/`, `CLAUDE.md` / `AGENTS.md`, hooks) and map its layout: tech stack, CI, test footprint, main modules. Record `git rev-parse --short HEAD` as the audited ref.
-- **Backlog.** Pull every open GitHub issue and epic into context now — not later. Keep a compact index (number, title, labels, one-line gist); seats may `gh issue view` for detail. The audit is framed as "what is missing or wrong relative to what is already tracked," which requires the backlog present from the first finding.
-- **Standing automation.** Enumerate existing CI and scheduled workflows. Where one already covers ground the hunt would cover, note it so the hunt focuses on what's missing.
-- **Evidence pack.** Run the deterministic detectors and the churn hotspot ranking (see `Stage 1 evidence pack` in the playbook). Keep digests, not raw output; log any skipped runner. If `git log` is unavailable (not a git repo, shallow clone), skip the hotspot ranking and log it; never block. Every seat receives the pack.
-- **Tracker check.** Does the target repo document its tracker and labels (this repo: `docs/agents/issue-tracker.md`, `docs/agents/labels.md`)? Record the vocabulary Stage 4 will use. If missing, note it: the Stage 3 gate must say so, and Stage 4 does not start until the user chooses (run `/setup-matt-pocock-skills`, or accept the CORE labels).
+Real user data never enters the report: screenshots come from a demo, sample or
+dev build, and secrets found in history are reported as present, never printed.
 
-**Completion criterion:** layout understood, backlog indexed, CI inventory complete, evidence pack built, tracker vocabulary recorded, audited ref recorded.
+---
 
-## Stage 2 — Leverage hunt (blind seats, one synthesis)
+## Stage 1 — Scope
 
-Blind seats run through the built-in Workflow tool's `parallel()`; one synthesis agent merges and verifies. At most **6 agents** (up to 5 seats + 1 synthesis). Seats do not see each other's findings. Each seat notes the open issue a finding touches, or that none does — Stage 3 needs it.
+Pin the subject: repo path, branch, commit, remote. Every agent brief names that
+commit and every agent confirms which one it read.
 
-### Seat selection
+Profile the project: languages, size (lines per area, largest files), test
+suite and its run time, build and release path, CI, docs present, licence,
+public or private. These are the profile's **known facts**; the lenses verify
+them rather than trust them. Decide which lenses apply and say so in one line
+each:
 
-Default is all five. Skip a lens only for a stated reason, and log every skip. Never add seats beyond five.
+- **Design** runs only when there is a user-facing UI (app, site, or CLI output
+  when the output is the product). A library skips it.
+- **Market** runs when the project has users or competitors to compare against;
+  internal tooling may skip it.
 
-| Lens | Hunts | Skip when |
+Read the user's prompt for a focus ("design only", "perf first") and weight the
+briefs toward it.
+
+**Done when:** the commit is pinned, the profile is written down, and the lens
+lineup is stated with reasons.
+
+## Stage 2 — Capture
+
+Gather the evidence the lenses cannot gather blind:
+
+- **Screenshots** of every main screen and state (empty, loading, error,
+  populated), from the project's own demo, sample-data or dev mode. Native
+  apps: build and run a separate copy from a clone in the scratchpad,
+  with its own identity (bundle id or equivalent), so the user's real install
+  and data are untouched; any change needed for that happens in the clone,
+  never in the repo. Web apps: the built-in browser against a local dev
+  server. Capture light and dark where the product supports both.
+- **No safe way to run it** (no demo mode, real accounts required): skip
+  screenshots, say so, and let the design lens work from source.
+- **Baseline numbers** the code lens will need: test run time, build time,
+  sizes of state or output files, anything cheap to measure now.
+
+Stop any server or app this stage started before Stage 3 ends.
+
+**Done when:** each main screen has a capture (or the reason it has none), and
+the captures sit in the scratchpad.
+
+## Stage 3 — Lenses (parallel)
+
+Launch the applicable lens agents in one message so they run concurrently. Each
+gets the pinned commit, the profile, the read-only rule, the relevant captures,
+and its brief from [`briefs.md`](./briefs.md), which also sets the shape of a
+finding. Each writes its report (and the design lens its mockup spec) to a
+named scratchpad path and returns a short summary.
+
+| Lens | Model | Finds |
 |---|---|---|
-| **Deletionist** | Dead code, unused deps, orphaned workflows, pass-through abstractions | Repo has no code or config |
-| **Performance Analyst** | Hot paths, N+1 work, unnecessary work, scaling risks | No runtime or hot path (e.g. docs-only repo) |
-| **Architect** | Explore walk: friction, shallow modules, untestable seams | No module structure to deepen |
-| **Capability Scout** | Gaps between what the repo does and what it should do | No stated goals or docs to compare against |
-| **Convention & Backlog Keeper** | Convention drift, duplicate or already-done issues | Zero open issues and no documented conventions |
+| Code and performance | sonnet | Cost at scale, measured; correctness and concurrency risk; I/O and API use; test health |
+| Architecture, repo, docs | sonnet | Module shape, security and privacy, build and release, CI, docs, repo settings |
+| Design | opus | Per-screen and app-level issues against the platform's guidelines; a mockup spec |
+| Market and research | sonnet | Competitors, real user complaints, technical gotchas, projects worth copying |
 
-Illustrative lineup log (fictional repo):
+**Done when:** every launched lens has returned and its report file exists.
 
-```
-Panel lineup for: "acme/web-api"
-  ✓ Deletionist           — 14 knip hits and top-5 hotspots in src/billing
-  ✓ Capability Scout      — README promises webhooks; no handler in the evidence pack
-  ✓ Convention & Backlog  — 62 open issues; ADRs and label docs present
-  ✗ Performance Analyst   — skipped: no hot path in the evidence pack
-```
+## Stage 4 — Verify (main session)
 
-### Seat brief
+The lens reports are claims. Before anything reaches the page:
 
-Each seat gets: one lens (its playbook section), the evidence pack and backlog index in `args`, read-only tools, and these boundaries — no GitHub mutation, no commentary on other lenses, at most 8 findings, each with a concrete path and observed signal.
+1. Re-check every **High** finding, and any finding the plan's "Now" column
+   rests on, at its cited source. Read the line; rerun the command.
+2. Correct what does not hold: lower the severity, fix the evidence, or drop the
+   finding. Keep a list of every correction with the reason.
+3. Where lenses disagree with each other or with the code (a research claim
+   versus what the code does), list it as disputed: both readings, and which
+   the evidence favours.
+4. Context a lens lacked can change a rating (sandboxing, single-user scope,
+   data size). Apply it and note it.
 
-Seat output schema (fields): `lens`; `findings[]` of `category` (delete-lean | performance | arch-deepening | missing-capability | convention), `finding`, `evidence{path, signal}`, `open_issue` (number or none), `altitude` (file | batch | drop).
+**Done when:** every High is confirmed or corrected, and the correction list is
+written.
 
-### Synthesis
+## Stage 5 — Plan and mockups
 
-A separate read-only agent (it never mutates GitHub or files) reads all seat outputs, presented in a seeded shuffled order with the seed passed in `args`. It:
+Turn verified findings into a **Now / Next / Later** plan:
 
-1. Reads each finding's cited path and confirms the claim. It drops what it cannot confirm and lists each drop in `dropped[]` with a reason — no silent drops.
-2. Merges duplicates by root cause, keeping the strongest evidence and recording the `lenses[]` that surfaced it.
-3. Confirms altitude, annotates touched issues, and flags supersession or already-implemented candidates.
-4. Adds no new findings.
+- **Now** — high value, small effort, low risk; can start tomorrow.
+- **Next** — the redesigns and refactors that need a go-ahead.
+- **Later** — strategic work (release path, new capabilities).
 
-Output schema: `findings[]` (seat fields plus `lenses[]`, `verified: true`), `dropped[{finding, reason}]`, `touched_issues[]`. Stage 3 reconciles this against the full Stage 1 backlog index, which is how untouched issues get their bulk "reviewed, no action" line.
+Each plan item links to its finding. Keep the plan short enough to read in a
+minute; the tables hold the detail.
 
-### Degradation
+Render the design lens's mockup spec as HTML inside the page, in the template's
+mockup frame, following the theme toggle. Mockups are hand-written HTML and CSS
+that match the platform's look (swap the sample's desktop-window chrome for a
+browser, phone or terminal frame as needed); they are not screenshots of code.
 
-Log which tier ran. Every tier keeps the synthesis contract — verify each finding at its cited path, show `dropped[]` to the user, add no new findings; only blind isolation is lost.
+## Stage 6 — Publish
 
-1. **Workflow available** — as above.
-2. **Workflow unavailable** (it is stripped from subagents) — one Agent-tool call per lens in parallel, same schema stated in prose; the main session does the synthesis.
-3. **No Agent tool either** — a sequential single-pass hunt over the five categories using the playbook and the Stage 1 evidence pack.
+Fill [`template.html`](./template.html) as its header comment directs: one
+section per lens, each `<!-- repeat: … -->` block cloned per item, every
+`{{PLACEHOLDER}}` replaced, unused sections removed with their nav links, and
+screenshots embedded as `data:` URIs
+(downscale first; keep the page under the Artifact size limit). Preview it
+locally in the browser pane, light and dark, desktop and phone width, before
+publishing.
 
-### Altitude bar
+Publish as a **private** Artifact. Where the Artifact tool is unavailable, save
+the page in the scratchpad and send it to the user as a file.
 
-Every finding passes a three-way filter (per seat, confirmed in synthesis) before Stage 3:
+Close with a short message: the link, one verdict line per area, the top
+findings, what was verified and what was not, confirmation that the repo is
+unchanged, and **one question** — which part of the plan to start on. Offer
+`/to-tickets` for the plan in one line.
 
-- **File** — meaningful impact, justifies its own issue or epic.
-- **Batch** — low individual impact; collect into a single "minor cleanups" issue.
-- **Drop** — trivial or not worth the cost of tracking.
+**Done when:** the page is published (or sent), the repo shows no changes, and
+the closing message names what is unverified.
 
-Nothing below this bar ships as a standalone issue. Err toward Drop over Batch, and Batch over standalone trivia.
+---
 
-### Illustrative sketch
+## Failure conditions
 
-```
-// illustrative only — not a runnable script (ADR 0002)
-// No Math.random(), Date.now() or argless new Date(): Workflow scripts throw on them.
-const { seats, pack, backlog } = args;          // lineup chosen by seat selection
-log("lineup: " + seats.map(s => s.name).join(", "));
-const results = (await parallel(
-  seats.map(s => () =>
-    agent(seatPrompt(s, pack, backlog), {
-      label: s.name, phase: "hunt", schema: SEAT_SCHEMA, model: "sonnet",
-    }))
-)).filter(Boolean);                             // a failed seat returns null
-return await agent(synthPrompt(results), {      // seats shuffled with a seeded order
-  label: "synthesis", phase: "synthesize", schema: MERGED_SCHEMA,
-  model: "sonnet", effort: "high",
-});
-```
-
-Two properties matter: seats are blind to each other, and synthesis is a dedicated agent with an explicit merge-and-verify duty — not the last seat to finish. **Completion criterion:** lineup and skips logged, tier logged, synthesis output schema-valid, `dropped[]` shown to the user.
-
-## Stage 3 — Reconcile, epics, approval gate
-
-Four pass criteria must hold:
-- Every touched issue is dispositioned.
-- Output is epics plus an ordered roadmap.
-- Nothing below the altitude bar ships as a standalone issue.
-- No flat-ticket failure.
-
-3a and 3b are read-only proposals in the conversation; nothing is mutated until the approval gate.
-
-### 3a. Reconciliation proposal
-
-For every open issue the findings touch, propose one disposition:
-- **Keep** — the issue is correct; link the finding to it.
-- **Rewrite** — the issue needs a better problem statement, scope, or priority.
-- **Dedup/merge** — the finding and an issue describe the same root cause; fold them.
-- **Supersede** — a finding makes the issue obsolete or wrongly scoped; close with a rationale.
-
-Untouched issues on a large backlog get a single bulk "reviewed, no action" line — nothing is silently ignored.
-
-### 3b. Epics + ordered roadmap
-
-Group surviving findings (file-rated, plus the one optional batch) into named epics. Each epic lists its findings, their evidence paths, and the audited ref. Order epics by impact, dependencies, and sequencing constraints.
-
-**Roadmap template:**
-
-```markdown
-## Roadmap
-
-### Epic 1 — [Name]
-[One-sentence problem statement]
-Depends on: —
-Unlocks: Epic 2, Epic 3
-
-### Epic 2 — [Name]   (same fields; repeat per epic)
-**Sequencing rationale:** [One paragraph explaining why this order — risk, unblocking, dependencies.]
-```
-
-### 3c. Altitude check
-
-Confirm nothing below the altitude bar survived as a standalone issue; batch or drop it now.
-
-### 3d. Failure condition
-
-A run that produced only standalone bug tickets — no epics, no roadmap, no reconciliation — has **failed the audit**: go back to Stage 2.
-
-### Approval gate
-
-Present (i) the reconciliation table, with the exact mutation each row implies (rewrite, close, merge — with proposed text or rationale), and (ii) the roadmap with each epic's body as it would be published: findings, evidence paths and audited ref. State the label vocabulary Stage 4 will use, and any missing tracker docs. Then **STOP**.
-
-Proceed only on an explicit go-ahead in a later user message. Partial approval means apply only the approved rows. No `gh` write happens before it: issue rewrite, close, merge, create, label edits, `to-spec` and `to-tickets`.
-
-### 3e. Apply
-
-Apply the approved reconciliation, then publish each approved epic with `to-spec`. Epics carry `epic` plus a best-effort `size:*` label and **not** `ready-for-agent` (it grants autonomous implement-and-merge, which is wrong for an aggregate); pass this to `to-spec` explicitly, since it defaults to `ready-for-agent`.
-
-**Completion criterion:** the four pass criteria hold, the approval gate was passed, and only approved mutations were applied.
-
-## Stage 4 — Decompose
-
-Runs only after the approval gate. Invoke `to-tickets` once per published epic with:
-
-- **Source** — the epic issue (number/URL), so every ticket becomes its native sub-issue.
-- **Context and tracker** — the epic's findings plus domain vocabulary from `CONTEXT.md` and ADRs; GitHub per the target repo's `docs/agents/issue-tracker.md`.
-- **Labels** — the vocabulary from the target repo's `docs/agents/labels.md`, else this repo's CORE set. Children get `ready-for-agent`, or `ready-for-human` where a human judgment gates the work; a ticket blocked only by sibling tickets stays `ready-for-agent` with a native blocking edge (`blocked` is for external dependencies or decisions). Add a category (`enhancement` / `chore` / `bug`) and best-effort `size:S|M|L|XL`.
-
-`to-tickets` runs its own granularity and dependency quiz; roadmap approval does not waive it. Tickets carry no file paths or code snippets (upstream rule) — paths and the audited ref live in the epic body. Epic-to-epic order stays in the roadmap text. If `to-tickets` is not installed, stop and tell the user to install `mattpocock/skills`; do not reimplement it.
-
-## Done checklist
-
-- [ ] Lineup, skips and tier logged; synthesis schema-valid; `dropped[]` shown
-- [ ] Every touched issue dispositioned; epics and roadmap present (no flat-ticket failure); nothing below the altitude bar shipped standalone
-- [ ] Approval received before the first GitHub write (message referenced)
-- [ ] Every epic has at least one child ticket, a native sub-issue carrying correct labels
-- [ ] Blocking edges are native links; audited ref recorded on each epic
-
-## Leverage-hunt catalog
-
-See [`playbook.md`](./playbook.md) for the Stage 1 evidence pack and, per lens, what to look for — signals, patterns, and optional-input protocols.
+- Any change to the audited repo. The audit has failed even if the report is good.
+- A High finding on the page that was not re-checked in Stage 4.
+- A projection presented as a measurement.
+- Real personal data or a secret value in a screenshot or on the page.

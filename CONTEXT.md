@@ -47,8 +47,9 @@ Output convention: silent on pass (no output, exit 0); on a block, emit to stder
 _Avoid_: safety hook, blocker, validator.
 
 **Supporting file**:
-A markdown file inside a skill folder that the `SKILL.md` links to for
-detail (e.g. repo-audit's `playbook.md`).
+A file inside a skill folder that the `SKILL.md` links to: usually markdown
+for detail (e.g. repo-audit's `briefs.md`), occasionally an asset the skill
+fills in (e.g. repo-audit's `template.html`).
 _Avoid_: doc, reference, attachment.
 
 **Idea Inbox**:
