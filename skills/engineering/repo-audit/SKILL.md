@@ -75,7 +75,7 @@ Gather the evidence the lenses cannot gather blind:
 
 - **Screenshots** of every main screen and state (empty, loading, error,
   populated), from the project's own demo, sample-data or dev mode. Native
-  apps: build and run a separate copy from a scratchpad clone or build folder,
+  apps: build and run a separate copy from a clone in the scratchpad,
   with its own identity (bundle id or equivalent), so the user's real install
   and data are untouched; any change needed for that happens in the clone,
   never in the repo. Web apps: the built-in browser against a local dev
