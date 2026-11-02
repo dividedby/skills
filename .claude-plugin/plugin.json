@@ -2,6 +2,7 @@
   "name": "dividedby-skills",
   "skills": [
     "./skills/engineering/council",
+    "./skills/engineering/mac-activity",
     "./skills/engineering/repo-audit"
   ]
 }

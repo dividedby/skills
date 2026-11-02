@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
 ### Added
 
+- `mac-activity`: a new user-invoked skill for when a Mac is slow or short of memory. It measures memory by app and by Claude session, asks the running sessions what can stop, looks for leaks and labels the evidence, and ends with a ranked list you approve item by item. It stops nothing on its own, and its reports stay private. macOS only.
+- ADR 0043: `mac-activity` reports and asks, and bundles a tested stdlib sampler.
 - ADR 0042: `repo-audit` becomes a read-only audit that publishes one report page; supersedes the `repo-audit` amendment in ADR 0041.
 
 ### Changed

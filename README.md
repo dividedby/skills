@@ -15,6 +15,7 @@ Pick the skills you want when prompted. Re-run to update.
 ### Engineering
 
 - **[council](./skills/engineering/council/SKILL.md)** — Convene a blind, diverse multi-persona panel (Falsifier, Minimalist, Pragmatist + conditional seats) that returns a synthesized second opinion plus the dissent the chair did not adopt; one blind parallel round plus a chair synthesis on the built-in Workflow tool.
+- **[mac-activity](./skills/engineering/mac-activity/SKILL.md)** — Find what's slowing a Mac or eating its memory: read-only inventory by app and Claude session, questions to the running sessions, a leak check that separates evidence from size, and a ranked list the owner approves item by item.
 - **[repo-audit](./skills/engineering/repo-audit/SKILL.md)** — Read-only audit of a repo's code, design, repo hygiene and docs, and market: parallel lens agents, every high finding verified at its source, published as one private report page with screenshots, mockups and a Now/Next/Later plan.
 
 ## Docs
