@@ -51,3 +51,10 @@ Authoring and code style for markdown skills. See [`CODING_STANDARDS.md`](./CODI
 Capture/drain protocol: [`docs/agents/idea-inbox.md`](./docs/agents/idea-inbox.md).
 
 </important>
+
+## Code style
+
+Formatting uses each tool's standard defaults, the same across all `dividedby` repos. Don't add style options or format by hand. Files format on edit through the post-edit hook.
+
+- **JS, TS, HTML, CSS, JSON, Markdown, YAML:** Prettier defaults. Run `pnpm format`, or `pnpm format:check` to check.
+- **Python:** `ruff format` defaults. Run `ruff format .`.
