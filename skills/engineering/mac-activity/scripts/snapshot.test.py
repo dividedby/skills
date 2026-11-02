@@ -9,6 +9,7 @@ import json
 import os
 import sys
 import tempfile
+import time
 import unittest
 from pathlib import Path
 
@@ -93,6 +94,7 @@ TOTAL                            392.6G   349.5M   127.9M    96.4M       0K     
 class FakeCommands:
     def __init__(self, swap=SWAP):
         self.swap = swap
+        self.state = "S"
         self.calls = []
         self.overrides = {}
 
@@ -111,7 +113,7 @@ class FakeCommands:
         if cmd == "ps" and "-axww" in args:
             return 0, ARGS, ""
         if cmd == "ps":
-            return 0, f"{ME} S\n" if "uid=,state=" in args else "S\n", ""
+            return 0, f"{ME} {self.state} 00:10\n" if "uid=,state=,etime=" in args else f"{self.state}\n", ""
         if cmd == "lsof":
             return 0, LSOF, ""
         if cmd == "launchctl":
@@ -173,10 +175,30 @@ class Parsing(unittest.TestCase):
             (node, f"{node} --max-old-space-size=9 /x/app.js", "app", "other"),
             ("/usr/bin/clang", "/usr/bin/clang -c a.c", "clang", "build"),
             ("/bin/bash", "/bin/bash repro.sh", "bash", "shell"),
+            (node, f"{node} /x/node_modules/.bin/tsc --watch", "tsc", "server"),
+            (node, f"{node} /x/node_modules/.bin/jest --watchAll", "jest", "server"),
+            (f"{HOME}/.local/share/claude/versions/2.1.309", f"{HOME}/.local/share/claude/versions/2.1.309 -p hi", "claude", "claude"),
             (CLAUDE, f"{CLAUDE} --resume=1", "claude", "claude"),
         ]
         for comm, args, name, kind in cases:
             self.assertEqual(snapshot.name_and_kind(comm, args), (name, kind), args)
+
+    def test_a_flag_value_is_never_taken_for_a_name(self):
+        node = "/opt/homebrew/bin/node"
+        python = "/usr/bin/python3"
+        npx = "/opt/homebrew/bin/npx"
+        cases = [
+            (node, f"{node} --token abc app.js", "app"),
+            (node, f"{node} --token abc", "node"),
+            (npx, f"{npx} --registry abc pkg", "npx"),
+            (npx, f"{npx} -y pkg@1.2", "pkg"),
+            (python, f"{python} -c print('/a/b')", "python3"),
+            (python, f"{python} -m http.server", "http.server"),
+            ("npm exec --token abc", "npm exec --token abc", "npm"),
+        ]
+        for comm, args, name in cases:
+            self.assertEqual(snapshot.name_and_kind(comm, args)[0], name, args)
+        self.assertEqual(snapshot.app_of("npm exec --token abc"), "npm")
 
     def test_apps(self):
         self.assertEqual(snapshot.app_of("/Applications/Xcode.app/Contents/Developer/usr/bin/clang"), "Xcode")
@@ -282,6 +304,10 @@ class Sample(Base):
         self.assertNotIn("orphaned", orphans[201]["flags"])
         self.assertEqual([p["pid"] for p in result["launch_agents"]], [600])
         self.assertEqual(result["launch_agents"][0]["launch_label"], "com.example.agent")
+        self.assertNotIn("launch_agent", snapshot.process_flags(
+            {"pid": 9, "ppid": 1, "mine": True, "kind": "other", "cwd": None, "age_s": 0, "mem": 1},
+            "/Applications/Foo.app/Contents/MacOS/Foo", "", {9: "application.foo"},
+        ))
         self.assertEqual([p["pid"] for p in result["top_cpu"]], [203, 700, 200])
 
     def test_command_lines_are_never_printed_or_saved(self):
@@ -325,6 +351,14 @@ class Sample(Base):
         self.assertNotIn("du", [c for c, _ in self.fake.calls])
         self.assertEqual(result["extras"]["disk_free_gb"], 30)
 
+    def test_folder_sizes_keep_the_total_after_a_permission_error(self):
+        self.fake.overrides["du"] = (1, "2048\t/x\n", "du: /x/y: Permission denied")
+        self.assertEqual(snapshot.folder_size_mb("/x"), 2)
+        self.fake.overrides["du"] = (124, "", "du timed out")
+        self.assertEqual(snapshot.folder_size_mb("/x"), "timed out")
+        self.fake.overrides["du"] = (1, "", "no such folder")
+        self.assertEqual(snapshot.folder_size_mb("/x"), "unreadable")
+
     def test_commands_are_only_the_read_only_ones(self):
         self.invoke("sample", "--extras")
         used = {cmd for cmd, _ in self.fake.calls}
@@ -360,8 +394,23 @@ class Inspect(Base):
             self.assertIn("owner", result["error"])
             self.assertNotIn(tool, [c for c, _ in self.fake.calls])
 
-    def test_approved_leaks_counts_exit_one_as_a_result(self):
+    def approved(self, tool="leaks"):
+        return self.invoke("inspect", "--tool", tool, "--pid", "5", "--approved", "--start", str(int(time.time()) - 10))
+
+    def test_approved_tools_need_the_start_time(self):
         code, result, _ = self.invoke("inspect", "--tool", "leaks", "--pid", "5", "--approved")
+        self.assertEqual(code, 1)
+        self.assertIn("--start", result["error"])
+        self.assertNotIn("leaks", [c for c, _ in self.fake.calls])
+
+    def test_a_reused_pid_is_refused(self):
+        code, result, _ = self.invoke("inspect", "--tool", "leaks", "--pid", "5", "--approved", "--start", "1000")
+        self.assertEqual(code, 1)
+        self.assertIn("different process", result["error"])
+        self.assertNotIn("leaks", [c for c, _ in self.fake.calls])
+
+    def test_approved_leaks_counts_exit_one_as_a_result(self):
+        code, result, _ = self.approved()
         self.assertEqual(code, 0)
         self.assertEqual(result["leaks"], 3)
         self.assertEqual(result["leaked_mb"], 2.0)
@@ -372,6 +421,30 @@ class Inspect(Base):
         self.assertIn("swap", result["error"])
         self.assertNotIn("vmmap", [c for c, _ in self.fake.calls])
 
+    def test_vmmap_is_refused_when_swap_is_unreadable(self):
+        self.fake.overrides["sysctl"] = (1, "", "")
+        code, result, _ = self.invoke("inspect", "--tool", "vmmap", "--pid", "5")
+        self.assertEqual(code, 1)
+        self.assertIn("unreadable", result["error"])
+
+    def test_vmmap_runs_on_a_mac_that_has_not_swapped_yet(self):
+        self.fake.swap = "total = 0.00M  used = 0.00M  free = 0.00M"
+        code, _, _ = self.invoke("inspect", "--tool", "vmmap", "--pid", "5")
+        self.assertEqual(code, 0)
+
+    def test_a_paused_process_is_reported_even_when_the_tool_failed(self):
+        self.fake.overrides["leaks"] = (124, "", "leaks timed out after 60s")
+        self.fake.state = "T"
+        code, result, _ = self.approved()
+        self.assertEqual(code, 1)
+        self.assertIn("still paused", result["error"])
+
+    def test_a_paused_process_is_reported_after_a_good_result(self):
+        self.fake.state = "T"
+        code, result, _ = self.approved()
+        self.assertEqual(code, 0)
+        self.assertIn("still paused", result["warning"])
+
     def test_vmmap_runs_when_swap_has_room(self):
         self.fake.swap = "total = 4096.00M  used = 100.00M  free = 3996.00M"
         code, result, _ = self.invoke("inspect", "--tool", "vmmap", "--pid", "5")
@@ -379,7 +452,7 @@ class Inspect(Base):
         self.assertEqual(result["footprint_mb"], 224)
 
     def test_another_users_process_is_refused(self):
-        self.fake.overrides["ps"] = (0, f"{ME + 1} S\n", "")
+        self.fake.overrides["ps"] = (0, f"{ME + 1} S 00:10\n", "")
         code, result, _ = self.invoke("inspect", "--tool", "footprint", "--pid", "5")
         self.assertEqual(code, 1)
         self.assertIn("root", result["error"])
@@ -394,7 +467,7 @@ class Inspect(Base):
 
     def test_a_tool_that_cannot_read_is_unknown_not_clean(self):
         self.fake.overrides["leaks"] = (1, "", "cannot examine process: not permitted")
-        code, result, _ = self.invoke("inspect", "--tool", "leaks", "--pid", "5", "--approved")
+        code, result, _ = self.approved()
         self.assertEqual(code, 1)
         self.assertIn("unknown rather than clean", result["error"])
 

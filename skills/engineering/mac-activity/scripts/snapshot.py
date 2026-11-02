@@ -2,7 +2,7 @@
 """Light, read-only memory and CPU sampler for a Mac. Stdlib only, no root.
 
   snapshot.py sample [--samples N] [--interval SECONDS] [--extras]
-  snapshot.py inspect --tool footprint|vmmap|leaks|heap --pid N [--approved]
+  snapshot.py inspect --tool footprint|vmmap|leaks|heap --pid N [--start EPOCH] [--approved]
 
 Every command prints one JSON object with `ok` true or false. It stops nothing.
 
@@ -41,6 +41,7 @@ GROW_MIN_FRACTION = 0.10
 GROW_MIN_SPAN_S = 240
 GROW_MIN_POINTS = 3
 GROW_RISING_STEPS = 0.7
+GROW_ALLOWED_DIP = 0.98
 IDLE_CPU_PCT = 5
 START_JITTER_S = 5
 
@@ -48,6 +49,12 @@ INTERPRETERS = {"node", "python", "python3", "bun", "deno", "ruby", "perl"}
 SHELLS = {"bash", "zsh", "sh", "dash", "fish"}
 PACKAGE_RUNNERS = {"npm", "npx", "pnpm", "pnpx", "uvx"}
 GENERIC_SCRIPTS = {"index", "cli", "main", "server", "bin", "start", "run"}
+VALUELESS_FLAGS = {"-y", "--yes", "-q", "--quiet"}
+INLINE_CODE_FLAGS = {"-c", "-e", "-p", "--eval", "--print"}
+WATCH_FLAGS = {"--watch", "--watchAll"}
+PACKAGE_RE = re.compile(r"@?[\w.-]+(/[\w.-]+)?(@[\w.-]+)?")
+SAMPLE_FILE_RE = re.compile(r"\d+\.json")
+SCRIPT_RE = re.compile(r"/|\.(js|mjs|cjs|ts|py|rb|pl)$")
 SERVER_RE = re.compile(
     r"(language-server|langserver|tsserver|^gopls$|^rust-analyzer$|pyright|^vite$|^vitest$|"
     r"^next-server$|^nodemon$|^webpack|^eslint_d$|^typingsInstaller$)"
@@ -69,7 +76,7 @@ DU_PATHS = (
     "~/Library/pnpm/store",
     "~/.cache",
 )
-INSPECT_TIMEOUTS = {"footprint": 15, "vmmap": 20, "heap": 60, "leaks": 60}
+TOOLS_NEEDING_APPROVAL = ("leaks", "heap")
 
 
 class Refused(Exception):
@@ -210,39 +217,64 @@ def arguments_after(comm, args):
     return tail.split()
 
 
+def is_claude(comm):
+    return os.path.basename(comm) == "claude" or bool(re.search(r"/claude/versions/[^/]+$", comm))
+
+
 def name_and_kind(comm, args):
-    base = os.path.basename(comm)
+    # Only a name is kept, so nothing here may pick up a flag's value: it could be a secret.
+    base = os.path.basename(comm) if "/" in comm else comm.split()[0]
     words = arguments_after(comm, args)
     name = base
     # npm rewrites its process title, so comm itself can read "npm exec pkg@1.2.3 mcp"
-    retitled = re.match(r"^(?:npm|npx|pnpm) exec (\S+)(.*)$", base)
+    retitled = re.match(r"^(?:npm|npx|pnpm) exec (.*)$", comm)
     if retitled:
-        name = re.sub(r"(?<=.)@[^/]*$", "", retitled.group(1))
-        words = words + retitled.group(2).split()
+        words = retitled.group(1).split() + words
+        name = package_name(words) or base
     elif base in PACKAGE_RUNNERS:
-        package = next((w for w in words if not w.startswith("-") and w != "exec"), None)
-        if package:
-            name = re.sub(r"(?<=.)@[^/]*$", "", package)
+        name = package_name([w for w in words if w != "exec"]) or base
     elif base in INTERPRETERS:
-        script = next((w for w in words if not w.startswith("-")), None)
-        if script:
-            name = script_name(script)
+        name = script_name(words) or base
+    elif is_claude(comm):
+        name = "claude"
     if "mcp" in words or "mcp" in name.lower():
         kind = "mcp"
-    elif SERVER_RE.search(name):
+    elif SERVER_RE.search(name) or WATCH_FLAGS & set(words):
         kind = "server"
     elif name in BUILD_NAMES or base in BUILD_NAMES:
         kind = "build"
     elif base in SHELLS:
         kind = "shell"
-    elif base == "claude":
+    elif name == "claude":
         kind = "claude"
     else:
         kind = "other"
     return name, kind
 
 
-def script_name(script):
+def package_name(words):
+    for word in words:
+        if word in VALUELESS_FLAGS or (word.startswith("-") and "=" in word):
+            continue
+        if word.startswith("-") or not PACKAGE_RE.fullmatch(word):
+            return None
+        return re.sub(r"(?<=.)@[^/]*$", "", word)
+    return None
+
+
+def script_name(words):
+    for index, word in enumerate(words):
+        if word in INLINE_CODE_FLAGS:
+            return None
+        if word == "-m":
+            following = words[index + 1] if index + 1 < len(words) else ""
+            return following if re.fullmatch(r"[\w.]+", following) else None
+        if not word.startswith("-") and SCRIPT_RE.search(word):
+            return script_stem(word)
+    return None
+
+
+def script_stem(script):
     if "/.bin/" in script:
         return os.path.basename(script)
     stem = os.path.splitext(os.path.basename(script))[0]
@@ -262,7 +294,7 @@ def app_of(comm):
         return bundle.group(1)
     if comm.startswith(SYSTEM_PREFIXES):
         return "macOS"
-    return os.path.basename(comm)
+    return os.path.basename(comm) if "/" in comm else comm.split()[0]
 
 
 def session_of(pid, table):
@@ -271,7 +303,7 @@ def session_of(pid, table):
     seen = set()
     while pid in table and pid not in seen:
         seen.add(pid)
-        if os.path.basename(table[pid]["comm"]) == "claude":
+        if is_claude(table[pid]["comm"]):
             found = pid
         pid = table[pid]["ppid"]
     return found
@@ -316,9 +348,15 @@ def take_machine():
 
 
 def swap_pct(machine):
-    if machine.get("swap_total_mb"):
-        return round(100 * machine.get("swap_used_mb", 0) / machine["swap_total_mb"])
-    return 0
+    """None when swap couldn't be read. A Mac that hasn't swapped yet has a total of 0."""
+    total = machine.get("swap_total_mb")
+    if total is None:
+        return None
+    return round(100 * machine.get("swap_used_mb", 0) / total) if total else 0
+
+
+def swap_too_full(pct):
+    return pct is None or pct > HIGH_SWAP_PCT
 
 
 def take_sample(cwd_cache):
@@ -363,9 +401,8 @@ def take_sample(cwd_cache):
         comm = table[proc["pid"]]["comm"]
         args = args_table.get(proc["pid"], "")
         proc["flags"] = process_flags(proc, comm, args, launch)
-        label = launch.get(proc["pid"])
         if "launch_agent" in proc["flags"]:
-            proc["launch_label"] = label
+            proc["launch_label"] = launch[proc["pid"]]
     return {"at": now, "machine": machine, "procs": procs}
 
 
@@ -385,15 +422,15 @@ def fill_cwds(procs, cache):
 
 def process_flags(proc, comm, args, launch):
     flags = []
-    loose = proc["mine"] and not comm.startswith(SYSTEM_PREFIXES + ("/Library/",)) and ".app/" not in comm
-    if proc["ppid"] == 1 and loose and proc["pid"] not in launch:
+    user_program = proc["mine"] and not comm.startswith(SYSTEM_PREFIXES + ("/Library/",)) and ".app/" not in comm
+    if proc["ppid"] == 1 and user_program and proc["pid"] not in launch:
         flags.append("orphaned")
     # `application.*` entries are ordinary open apps, which `apps` already counts
     if proc["pid"] in launch and not launch[proc["pid"]].startswith(("com.apple.", "application.")):
         flags.append("launch_agent")
     if proc["mine"] and worktree_gone(args, proc["cwd"], proc["kind"]):
         flags.append("worktree_gone")
-    if proc["age_s"] >= LONG_RUNNING_S and loose:
+    if proc["age_s"] >= LONG_RUNNING_S and user_program:
         flags.append("long_running")
     if proc["mem"] >= LARGE_MB:
         flags.append("large")
@@ -479,7 +516,7 @@ def history(directory):
     folder = os.path.join(directory, "samples")
     samples = []
     try:
-        names = sorted(n for n in os.listdir(folder) if n.endswith(".json"))
+        names = sorted(n for n in os.listdir(folder) if SAMPLE_FILE_RE.fullmatch(n))
     except OSError:
         return samples
     for name in names[-KEEP_SAMPLES:]:
@@ -511,7 +548,7 @@ def save_sample(sample, directory):
 
 
 def prune(folder, now):
-    names = sorted(n for n in os.listdir(folder) if re.fullmatch(r"\d+\.json", n))
+    names = sorted(n for n in os.listdir(folder) if SAMPLE_FILE_RE.fullmatch(n))
     cutoff = now - KEEP_DAYS * 86400
     for index, name in enumerate(names):
         if index < len(names) - KEEP_SAMPLES or int(name.split(".")[0]) < cutoff:
@@ -541,10 +578,11 @@ def growth(samples):
         first, last = points[0][1], points[-1][1]
         span = points[-1][0] - points[0][0]
         steps = list(zip(points, points[1:]))
-        rising = sum(1 for a, b in steps if b[1] >= a[1] * 0.98) / len(steps)
+        rising = sum(1 for a, b in steps if b[1] >= a[1] * GROW_ALLOWED_DIP) / len(steps)
         cpu = sum(p[2] for p in points) / len(points)
         row = {
             "pid": entry["pid"],
+            "start": entry["start"],
             "name": entry["name"],
             "app": entry["app"],
             "session": entry["session"],
@@ -563,7 +601,7 @@ def growth(samples):
             row["class"] = "large_not_growing"
             steady.append(row)
     return {
-        "growing": sorted(growing, key=lambda r: r["first_mb"] - r["last_mb"])[:12],
+        "growing": sorted(growing, key=lambda r: r["last_mb"] - r["first_mb"], reverse=True)[:12],
         "large_not_growing": sorted(steady, key=lambda r: -r["last_mb"])[:12],
     }
 
@@ -576,15 +614,14 @@ def extras(machine):
         fields = rows[-1].split()
         out["disk_free_gb"] = round(int(fields[3]) / (1024 * 1024)) if len(fields) > 3 and fields[3].isdigit() else None
 
-    if swap_pct(machine) >= HIGH_SWAP_PCT:
-        out["sizes_note"] = f"swap is at least {HIGH_SWAP_PCT}% full, so folder sizes were skipped to avoid adding load"
+    if swap_too_full(swap_pct(machine)):
+        out["sizes_note"] = f"swap is over {HIGH_SWAP_PCT}% full or unreadable, so folder sizes were skipped to avoid adding load"
     else:
         sizes = {}
         for path in DU_PATHS:
             full = os.path.expanduser(path)
             if os.path.isdir(full):
-                code, text, _ = run("du", ["-sk", full], timeout=8)
-                sizes[path] = round(int(text.split()[0]) / 1024) if code == 0 and text.split() else "timed out"
+                sizes[path] = folder_size_mb(full)
         out["folder_sizes_mb"] = sizes
 
     out["worktrees"] = count_worktrees()
@@ -603,6 +640,15 @@ def extras(machine):
     except OSError:
         out["reap_log"] = None
     return out
+
+
+def folder_size_mb(path):
+    # du exits 1 after a permission-denied subfolder but still prints the total it could read
+    code, text, _ = run("du", ["-sk", path], timeout=8)
+    fields = text.split()
+    if fields and fields[0].isdigit():
+        return round(int(fields[0]) / 1024)
+    return "timed out" if code == 124 else "unreadable"
 
 
 def count_worktrees():
@@ -739,35 +785,48 @@ def parse_heap(text):
     return {"tool": "heap", "nodes": int(row.group(1)), "allocated_mb": round(int(row.group(2)) / MB, 1)}
 
 
+INSPECT_TOOLS = {
+    "footprint": {"flags": ["-p"], "timeout": 15, "parse": parse_footprint, "figure": "footprint_mb"},
+    "vmmap": {"flags": ["--summary"], "timeout": 20, "parse": parse_vmmap, "figure": "footprint_mb"},
+    "heap": {"flags": ["--quiet"], "timeout": 60, "parse": parse_heap, "figure": "nodes"},
+    "leaks": {"flags": ["--quiet"], "timeout": 60, "parse": parse_leaks, "figure": "leaks"},
+}
+
+
 def cmd_inspect(options):
-    tool, pid = options.tool, options.pid
+    name, pid = options.tool, options.pid
+    tool = INSPECT_TOOLS[name]
     if pid <= 1:
         raise Refused("--pid must be a process number above 1")
-    if tool in ("leaks", "heap") and not options.approved:
-        raise Refused(f"{tool} pauses the process and can pull swapped memory back in, so it needs the owner's OK for this process, then --approved")
-    code, out, _ = run("ps", ["-o", "uid=,state=", "-p", str(pid)])
+    if name in TOOLS_NEEDING_APPROVAL and not options.approved:
+        raise Refused(f"{name} pauses the process and can pull swapped memory back in, so it needs the owner's OK for this process, then --approved")
+    if name in TOOLS_NEEDING_APPROVAL and options.start is None:
+        raise Refused(f"{name} needs --start, the start time from the sample, to be sure this is the process the owner approved")
+    code, out, _ = run("ps", ["-o", "uid=,state=,etime=", "-p", str(pid)])
     fields = out.split()
-    if code != 0 or len(fields) < 2:
+    if code != 0 or len(fields) < 3:
         raise Refused(f"process {pid} isn't running")
     if int(fields[0]) != os.getuid():
         raise Refused(f"process {pid} belongs to another user, and inspecting it would need root")
-    if tool == "vmmap":
+    if options.start is not None and abs(time.time() - parse_etime(fields[2]) - options.start) > START_JITTER_S:
+        raise Refused(f"process {pid} started at a different time, so it's a different process using the same number")
+    if name == "vmmap":
         pct = swap_pct(take_machine())
-        if pct >= HIGH_SWAP_PCT:
-            raise Refused(f"swap is {pct}% full; vmmap could add to the problem, so try again when swap is below {HIGH_SWAP_PCT}%")
-    args = {"footprint": ["-p", str(pid)], "vmmap": ["--summary", str(pid)], "heap": ["--quiet", str(pid)], "leaks": ["--quiet", str(pid)]}[tool]
-    code, text, err = run(tool, args, timeout=INSPECT_TIMEOUTS[tool])
-    parser = {"footprint": parse_footprint, "vmmap": parse_vmmap, "leaks": parse_leaks, "heap": parse_heap}[tool]
-    result = parser(text)
+        if swap_too_full(pct):
+            raise Refused(f"swap is {'unreadable' if pct is None else f'{pct}% full'}; vmmap could add to the problem, so try again when swap is at or below {HIGH_SWAP_PCT}%")
+    code, text, err = run(name, tool["flags"] + [str(pid)], timeout=tool["timeout"])
+    result = tool["parse"](text)
     result["pid"] = pid
-    # `leaks` exits 1 when it finds leaks, so only a missing figure counts as failure
-    missing = {"footprint": "footprint_mb", "vmmap": "footprint_mb", "leaks": "leaks", "heap": "nodes"}[tool]
-    if result.get(missing) is None:
-        message = (err.strip().splitlines() or [f"exit code {code}"])[0]
-        raise Refused(f"{tool} couldn't read process {pid}, so this is unknown rather than clean: {tilde(message)[:200]}")
+    # Checked before any failure too: a tool that timed out is the likeliest to leave a process paused
     _, state, _ = run("ps", ["-o", "state=", "-p", str(pid)])
-    if state.strip().startswith("T"):
-        result["warning"] = f"process {pid} is still paused after {tool}; tell the owner"
+    paused = f"process {pid} is still paused after {name}; tell the owner" if state.strip().startswith("T") else None
+    # `leaks` exits 1 when it finds leaks, so only a missing figure counts as failure
+    if result.get(tool["figure"]) is None:
+        message = (err.strip().splitlines() or [f"exit code {code}"])[0]
+        failure = f"{name} couldn't read process {pid}, so this is unknown rather than clean: {tilde(message)[:200]}"
+        raise Refused(f"{failure}. {paused}" if paused else failure)
+    if paused:
+        result["warning"] = paused
     result["ok"] = True
     return result
 
@@ -780,8 +839,9 @@ def main(argv=None):
     sample.add_argument("--interval", type=int, default=60)
     sample.add_argument("--extras", action="store_true")
     inspect = commands.add_parser("inspect")
-    inspect.add_argument("--tool", choices=sorted(INSPECT_TIMEOUTS), required=True)
+    inspect.add_argument("--tool", choices=sorted(INSPECT_TOOLS), required=True)
     inspect.add_argument("--pid", type=int, required=True)
+    inspect.add_argument("--start", type=int)
     inspect.add_argument("--approved", action="store_true")
     options = parser.parse_args(argv)
     try:

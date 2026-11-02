@@ -85,7 +85,9 @@ python3 -B <skill dir>/scripts/snapshot.py inspect --tool footprint --pid <pid>
 Use `--tool vmmap` on at most three of them, to see which memory is growing. The
 script refuses it when swap is over 90% full. `leaks` and `heap` pause the process and
 can pull swapped memory back in, so run them only after the owner approves that
-process, with `--approved`.
+process, with `--approved` and `--start <start>` from the sample, which refuses a
+different process that reused the number. If the result carries a "still paused"
+message, tell the owner straight away.
 
 Label each candidate with the one that fits, and say why:
 
@@ -111,9 +113,10 @@ Work from the summary, looking for:
 - `extras`:
   - `worktrees` and `folder_sizes_mb`, and low `disk_free_gb` (swap needs disk).
   - `xcode_parallel_caps` against `cpus`: an unset cap lets a build use every core.
-  - `reap_log`: if the `reap-stale-servers` hook is installed, it already stops this
-    session's stale servers. Report only what it can't reach: other live sessions'
-    servers and processes whose session has gone. Don't stop those here on its behalf.
+  - `reap_log`: if the `reap-stale-servers` hook is installed, it already stops a
+    session's own stale servers, so anything still running is something it didn't
+    reach. Say which: other live sessions' servers, or processes whose session has
+    gone. Don't stop those here on its behalf.
 
 Don't look inside apps. Report a browser's total, and ask the owner about its tabs
 rather than reading them.

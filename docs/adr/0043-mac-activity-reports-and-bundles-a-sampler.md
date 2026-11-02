@@ -4,8 +4,7 @@
 
 ## Context
 
-An 8 GB Mac running several Claude Code sessions kept running out of memory. The
-worst incident reached a load average of about 417 with most of its swap in use. A
+A small Mac running several Claude Code sessions kept running out of memory. A
 diagnosis by hand found the causes, and asking the sessions directly got one to stop
 a heavy script.
 
@@ -13,8 +12,8 @@ That diagnosis taught four things:
 
 - A session's "nothing else is planned" went stale within minutes.
 - A successful cross-session send doesn't mean the session has read the message.
-- `ps` RSS leaves out compressed and swapped memory. In one sample it showed about
-  175 MB for a process whose footprint in `top` was 909 MB.
+- `ps` RSS leaves out compressed and swapped memory, and can read several times below
+  the footprint `top` shows.
 - Composing the sampling commands by hand is easy to get wrong.
 
 ## Decision
@@ -29,7 +28,8 @@ with code since the Python harness left the published surface. Joining `top`, `p
 work. Done by the model each time, it would cost more tokens and more mistakes, and it
 is the wrong place to add load on a Mac already short of memory. The script also keeps
 the safety bounds in one tested place: sample limits, timeouts, command lines that are
-never stored, and refusing `vmmap` at high swap and `leaks` or `heap` without approval.
+never stored, and refusing `vmmap` at high swap and `leaks` or `heap` without approval
+and a matching start time.
 
 ## Consequences
 
