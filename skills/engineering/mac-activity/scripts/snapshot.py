@@ -50,11 +50,11 @@ SHELLS = {"bash", "zsh", "sh", "dash", "fish"}
 PACKAGE_RUNNERS = {"npm", "npx", "pnpm", "pnpx", "uvx"}
 GENERIC_SCRIPTS = {"index", "cli", "main", "server", "bin", "start", "run"}
 VALUELESS_FLAGS = {"-y", "--yes", "-q", "--quiet"}
-INLINE_CODE_FLAGS = {"-c", "-e", "-p", "--eval", "--print"}
+INTERPRETER_SWITCHES = {"--inspect", "--trace-warnings", "--expose-gc", "-u", "-B", "-E", "-I", "-s", "-S", "-O", "-OO"}
 WATCH_FLAGS = {"--watch", "--watchAll"}
 PACKAGE_RE = re.compile(r"@?[\w.-]+(/[\w.-]+)?(@[\w.-]+)?")
 SAMPLE_FILE_RE = re.compile(r"\d+\.json")
-SCRIPT_RE = re.compile(r"/|\.(js|mjs|cjs|ts|py|rb|pl)$")
+SCRIPT_RE = re.compile(r"[\w@.+~/-]*(/[\w@.+~-]+|\.(js|mjs|cjs|ts|py|rb|pl))")
 SERVER_RE = re.compile(
     r"(language-server|langserver|tsserver|^gopls$|^rust-analyzer$|pyright|^vite$|^vitest$|"
     r"^next-server$|^nodemon$|^webpack|^eslint_d$|^typingsInstaller$)"
@@ -221,9 +221,16 @@ def is_claude(comm):
     return os.path.basename(comm) == "claude" or bool(re.search(r"/claude/versions/[^/]+$", comm))
 
 
+def program_of(comm):
+    """The program's own name. comm can be a rewritten process title, so words after the
+    program never count: only an absolute path can hold spaces, and a flag ends even that."""
+    path = comm.split(" -")[0] if comm.startswith("/") else comm.split()[0]
+    return os.path.basename(path)
+
+
 def name_and_kind(comm, args):
     # Only a name is kept, so nothing here may pick up a flag's value: it could be a secret.
-    base = os.path.basename(comm) if "/" in comm else comm.split()[0]
+    base = program_of(comm)
     words = arguments_after(comm, args)
     name = base
     # npm rewrites its process title, so comm itself can read "npm exec pkg@1.2.3 mcp"
@@ -263,14 +270,16 @@ def package_name(words):
 
 
 def script_name(words):
+    """Stops at any flag that might take a value, since the next word could be that value."""
     for index, word in enumerate(words):
-        if word in INLINE_CODE_FLAGS:
-            return None
         if word == "-m":
             following = words[index + 1] if index + 1 < len(words) else ""
             return following if re.fullmatch(r"[\w.]+", following) else None
-        if not word.startswith("-") and SCRIPT_RE.search(word):
-            return script_stem(word)
+        if word.startswith("-"):
+            if "=" in word or word in INTERPRETER_SWITCHES or word.startswith("--no-"):
+                continue
+            return None
+        return script_stem(word) if SCRIPT_RE.fullmatch(word) else None
     return None
 
 
@@ -294,7 +303,7 @@ def app_of(comm):
         return bundle.group(1)
     if comm.startswith(SYSTEM_PREFIXES):
         return "macOS"
-    return os.path.basename(comm) if "/" in comm else comm.split()[0]
+    return program_of(comm)
 
 
 def session_of(pid, table):

@@ -188,17 +188,27 @@ class Parsing(unittest.TestCase):
         python = "/usr/bin/python3"
         npx = "/opt/homebrew/bin/npx"
         cases = [
-            (node, f"{node} --token abc app.js", "app"),
+            (node, f"{node} --token abc app.js", "node"),
             (node, f"{node} --token abc", "node"),
+            (node, f"{node} --token abc/def", "node"),
+            (node, f"{node} -pe process.env.T='a/b'", "node"),
+            (node, f"{node} --require ./hook.js server.js", "node"),
+            (node, f"{node} https://h/x?token=abc", "node"),
+            (node, f"{node} --no-warnings --inspect /x/app.js", "app"),
+            (python, f"{python} -u /x/tool.py", "tool"),
             (npx, f"{npx} --registry abc pkg", "npx"),
             (npx, f"{npx} -y pkg@1.2", "pkg"),
             (python, f"{python} -c print('/a/b')", "python3"),
             (python, f"{python} -m http.server", "http.server"),
             ("npm exec --token abc", "npm exec --token abc", "npm"),
+            ("npm exec --token a/b", "npm exec --token a/b", "npm"),
+            ("npm exec --registry https://h/x?token=abc", "npm exec --registry https://h/x?token=abc", "npm"),
+            ("/opt/homebrew/bin/node --token a/b", "/opt/homebrew/bin/node --token a/b", "node"),
         ]
         for comm, args, name in cases:
             self.assertEqual(snapshot.name_and_kind(comm, args)[0], name, args)
-        self.assertEqual(snapshot.app_of("npm exec --token abc"), "npm")
+        self.assertEqual(snapshot.app_of("npm exec --token a/b"), "npm")
+        self.assertEqual(snapshot.app_of("/opt/homebrew/bin/node --token a/b"), "node")
 
     def test_apps(self):
         self.assertEqual(snapshot.app_of("/Applications/Xcode.app/Contents/Developer/usr/bin/clang"), "Xcode")
