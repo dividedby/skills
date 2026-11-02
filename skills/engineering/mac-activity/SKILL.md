@@ -145,8 +145,14 @@ you have it. Include what only they can judge: apps, browsers and background age
 
 Each item needs its own OK.
 
-- **A session's process:** message that session with the owner's words and the exact
-  item. It stops its own work and reports back.
+- **A session's process:** tell the owner they may need to confirm in that session, name
+  it (with a link if you can) and give the exact item. Then message the session with the
+  owner's words and that item. A session that accepts stops its own work and reports
+  back. One may decline, because another session's message isn't the owner's approval.
+  Declining is correct, so don't press the session or look for another way to stop the
+  process; the session waits for the owner's word there.
+- **A whole session:** ask it to save its work, then the owner closes it in the app. A
+  session may not be able to end itself, and interrupting its turn leaves it open.
 - **An app:** the owner quits it. Saved state and open work are theirs to judge.
 - **A process with no session:** first re-check with `ps -o lstart=,command= -p <pid>`
   that it's the same process, then send one `kill -TERM <pid>`. Going further needs
