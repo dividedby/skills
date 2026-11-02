@@ -33,7 +33,7 @@ without the live tracker.
 
 - **Proposal gate** — pure. One reason to change: how a run selects/dedups its
   single proposal. Interface: `decide(candidates, openIssues) → {file: candidate
-  | none}`. Invariants: never returns more than one; dedup is exact-key, not
+| none}`. Invariants: never returns more than one; dedup is exact-key, not
   fuzzy; deterministic tie-break. Must not depend on the tracker. Shared by both
   run-books.
 - **Sanitizer guard** — pure. One reason to change: what counts as leaked
@@ -57,11 +57,11 @@ without the live tracker.
   directories.
 - **KB-source** (self-improvement) — the acquisition contract C reads: a curated
   `kb-source.json` (KB slug + explicit `knowledge/` subpaths; no auto-discovery)
-  + a reader over only those subpaths, feeding the injected `kb_reader`. The
-  reader carries each note's `subject`/`category` axes — the two the integration
-  map is built on (`skill ↔ practice/artifact`) — so consumers never re-parse the
-  path. The C parallel to Repo-scan (#29). Fake: a `knowledge/`-shaped fixture
-  tree. The KB root (clone transport) stays injected/out-of-scope (ADR 0003).
+  - a reader over only those subpaths, feeding the injected `kb_reader`. The
+    reader carries each note's `subject`/`category` axes — the two the integration
+    map is built on (`skill ↔ practice/artifact`) — so consumers never re-parse the
+    path. The C parallel to Repo-scan (#29). Fake: a `knowledge/`-shaped fixture
+    tree. The KB root (clone transport) stays injected/out-of-scope (ADR 0003).
 - **Map store** (self-improvement) — read/write + commit the integration map.
   Fake: a scratch path.
 
@@ -83,7 +83,7 @@ without the live tracker.
   inputs. Entry = the decision function. No fakes. Assert only the decision,
   never how inputs were gathered.
 - **Run-books (#16, #17, #19, #20):** integration dry-runs against a faked
-  tracker + fixture repos, wiring the *real* gate and sanitizer. Assert ≤1
+  tracker + fixture repos, wiring the _real_ gate and sanitizer. Assert ≤1
   filed, dedup respected, map committed, working area empty after scan, filed
   body passes the real sanitizer. Prompt internals are not unit-tested.
 
@@ -96,7 +96,7 @@ without the live tracker.
 - #19 — Self-improvement run-book: file a real refinement (≤1/run)
 - #20 — Gap-scanner run-book: file a real proposal (≤1/run, sanitized)
 - #29 — Self-improvement run-book: pin the KB ingest contract (`kb-source.json`
-  + reader), the C parallel to D's repo allow-list
+  - reader), the C parallel to D's repo allow-list
 
 All indexed issues are merged: both run-books, the shared pure helpers (gate,
 sanitizer), and both acquisition contracts are built and tested. What remains is
@@ -131,7 +131,7 @@ remains an ops concern, out of scope for the issues.
 
 **Sanitizer stays strict, structural-first.** The maintainer's private repos are
 "personal, not for the world" rather than confidential — so the
-`private_markers` list is *secondary*. The real risk is a stray secret
+`private_markers` list is _secondary_. The real risk is a stray secret
 (`.env`, key, customer record) in a personal repo, so the load-bearing guard is
 the **structural** one: never let raw repo content (fenced code, file paths,
 import lines) into a public issue. Keep `check()` strict on pasted content even

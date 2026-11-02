@@ -12,7 +12,7 @@ combined "autonomous-**loop**" skill would never reach. We now **retire
 context-firewall as a standalone skill** and re-home its discipline as a
 supporting doc, `skills/engineering/autonomous-loop/FIREWALL.md`, that
 autonomous-loop reads for per-item context hygiene. The firewall **knowledge is
-kept in full**; only its standalone *trigger* is dropped.
+kept in full**; only its standalone _trigger_ is dropped.
 
 **ADR 0012's load-bearing premise didn't hold.** Its case for two skills rested
 on a predicted standalone loopless invoker. That prediction never materialized:
@@ -30,13 +30,13 @@ argument in #446 — "the global harness already mandates per-item sub-agent
 dispatch, so the standalone firewall is redundant" — is half right. The
 delegation baseline supplies only the firewall's **step 2** (a fresh sub-agent
 per item); context-firewall's own text concedes this ("a builder/architect
-delegation already *is* a do-and-report firewall — the remaining job is the
+delegation already _is_ a do-and-report firewall — the remaining job is the
 orchestrator-side half"). It does **not** teach step 1 (identify the repeatable
 per-item unit), step 3 (the proactive between-item budget checkpoint before the
 harness force-compacts), or step 4 (intentional flush-to-durable-artifact +
 drop). Those three are real, non-obvious orchestrator discipline no delegation
-table carries. So the argument correctly retires the standalone *skill* but does
-**not** justify deleting the *knowledge* — which is exactly why it becomes a doc,
+table carries. So the argument correctly retires the standalone _skill_ but does
+**not** justify deleting the _knowledge_ — which is exactly why it becomes a doc,
 not nothing.
 
 **agent-teams is not evidence here.** Per the [#445](https://github.com/dividedby/skills/issues/445)
@@ -52,7 +52,7 @@ requires that whatever wins leaves the loopless monolithic-run user a documented
 home for per-item context hygiene. `FIREWALL.md` is that home: a cross-linked,
 independently-readable discipline doc, reached from autonomous-loop's per-item
 step, from `docs/agents/skill-authoring.md` (where it is a copy-in pattern for
-*any* multi-item skill, loop or not), and from the `CONTEXT.md` vocabulary entry.
+_any_ multi-item skill, loop or not), and from the `CONTEXT.md` vocabulary entry.
 A genuinely loopless run — scheduled or programmatic — bakes the technique in and
 references the doc; it never needed a discoverable trigger, which only matters
 for interactive invocation. The thing ADR 0012 feared losing (discoverable
@@ -68,7 +68,7 @@ path is removed.
   - **`RUNNING-AFK.md`** — unattended-safety axis (guardrails, gate spectrum,
     monitor/stop/resume) **plus the worked backlog example, which keeps the
     per-item brief↔issue reconciliation block**. Reconciliation reconciles a
-    *brief against an issue* — a briefed-backlog concern, not a generic firewall
+    _brief against an issue_ — a briefed-backlog concern, not a generic firewall
     one — so it stays loop-side rather than polluting the generic doc.
   - **`FIREWALL.md`** — generic, shape-agnostic context-hygiene axis (per-item
     sub-agent, budget checkpoint, compaction). Pointable by any multi-item skill.
@@ -81,14 +81,14 @@ path is removed.
 
 **Rejected alternatives.**
 
-- *Affirm ADR 0012 as-is (two standalone skills).* Keeps a trigger for a
+- _Affirm ADR 0012 as-is (two standalone skills)._ Keeps a trigger for a
   loopless invoker the evidence says doesn't exist, and retains the
   adjacent-trigger collision surface — paying for insurance never claimed.
-- *Retire context-firewall in favor of the harness baseline (#446 option c).*
+- _Retire context-firewall in favor of the harness baseline (#446 option c)._
   Deletes steps 1/3/4 (the orchestrator-side discipline the baseline doesn't
   teach) **and** leaves the loopless user with no documented home — fails a #446
   acceptance criterion.
-- *Inline-merge the firewall prose into autonomous-loop's `SKILL.md`.* Bloats the
+- _Inline-merge the firewall prose into autonomous-loop's `SKILL.md`._ Bloats the
   skill body and destroys the cleanly-pointable generic discipline that
   skill-authoring and non-loop callers depend on. A coordinate supporting doc
   keeps it pointable without a standalone trigger.

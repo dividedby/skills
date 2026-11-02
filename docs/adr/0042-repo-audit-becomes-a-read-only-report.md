@@ -57,7 +57,7 @@ What the hand run did that the leverage hunt did not:
 - A skill folder now holds a non-markdown supporting file. `CONTEXT.md`'s
   **Supporting file** definition widens to cover it.
 - The skill no longer drives the Workflow tool. ADR 0036's decision that skills
-  *may* do so stands; `/council` still does.
+  _may_ do so stands; `/council` still does.
 - A run costs four lens agents at most plus main-session verification, against
   six agents before; the design lens runs on opus.
 - Screenshots need a demo or sample-data build. Projects without one get a

@@ -33,11 +33,11 @@ PAT scoped to **all repositories** (current and future) with **Issues:RW +
 Contents:read** permissions. This overrides ADR 0031's "keep write tokens scoped"
 stance for the tracker-write and drift-read roles.
 
-| Old token | New token | Where held | Disposition |
-|---|---|---|---|
-| `SKILLS_TRACKER_TOKEN` | `ISSUES_TOKEN` | each consumer repo | migrate; old name accepted as Option-B fallback |
-| `DRIFT_CHECK_TOKEN` | `ISSUES_TOKEN` | `dividedby/skills` | migrate; old name accepted as Option-B fallback |
-| agent-research write PAT | — | — | revoke without migration (never wired) |
+| Old token                | New token      | Where held         | Disposition                                     |
+| ------------------------ | -------------- | ------------------ | ----------------------------------------------- |
+| `SKILLS_TRACKER_TOKEN`   | `ISSUES_TOKEN` | each consumer repo | migrate; old name accepted as Option-B fallback |
+| `DRIFT_CHECK_TOKEN`      | `ISSUES_TOKEN` | `dividedby/skills` | migrate; old name accepted as Option-B fallback |
+| agent-research write PAT | —              | —                  | revoke without migration (never wired)          |
 
 **Option-B fallback (non-breaking transition):** workflow env lines use
 `${{ secrets.ISSUES_TOKEN || secrets.DRIFT_CHECK_TOKEN }}` and
@@ -62,7 +62,7 @@ Consumer callers omit the input (default `false`).
 ### (c) The `repo == dividedby/skills` swap guard is retained
 
 `_gh_env` in `cli.py` injects `ISSUES_TOKEN` as `GH_TOKEN` **only** when
-`--repo == "dividedby/skills"`. This guard (ADR 0030) becomes *more* important now:
+`--repo == "dividedby/skills"`. This guard (ADR 0030) becomes _more_ important now:
 `ISSUES_TOKEN` is scoped to all repositories, so a prompt-injection that substitutes
 a different `--repo` would otherwise redirect the PAT to an arbitrary repo. The guard
 bounds the blast radius to `dividedby/skills` regardless of the wider token scope.
@@ -85,7 +85,7 @@ bounds the blast radius to `dividedby/skills` regardless of the wider token scop
 - **Wider blast radius accepted.** A leaked `ISSUES_TOKEN` can file issues on any
   repo and read contents of any repo (vs. `dividedby/skills`-only for tracker-write,
   consumer-repos-only for drift-read). The `repo == dividedby/skills` guard in
-  cli.py bounds the token's *effective* use in the automated loop to that one repo.
+  cli.py bounds the token's _effective_ use in the automated loop to that one repo.
   The maintainer accepts this trade for operational simplicity.
 - **No unattended run is broken.** The Option-B fallback keeps existing secrets
   functional until the maintainer installs `ISSUES_TOKEN`. Consumer stubs with

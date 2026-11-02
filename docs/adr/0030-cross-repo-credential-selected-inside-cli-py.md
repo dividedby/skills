@@ -18,7 +18,7 @@ no-opped consumer `skill-request` and `skill-promotion` filing (#418).
 Three shapes of the regression were present in the prompt:
 
 1. The open-issues **list** (dedup read): bare `GH_TOKEN="$…" gh issue list --repo
-   dividedby/skills`.
+dividedby/skills`.
 2. The **file** write: `cli.py file` was already routed through the shim, but the
    prompt instructed the agent to prepend `GH_TOKEN="$SKILLS_TRACKER_TOKEN"` before
    calling it — which the allowlist blocks.
@@ -65,7 +65,7 @@ specifying a different `--repo`: the swap simply does not occur.
 - All three `dividedby/skills` operations (`find-open`, `file`, `comment`) are now
   allowlist-safe: they all resolve to `python3 "$SKILL_DIR/lib/cli.py" …`.
 - `find-open` is the authoritative cross-repo dedup read; direct `gh issue list
-  --repo dividedby/skills` is no longer needed in the prompt or skill guidance.
+--repo dividedby/skills` is no longer needed in the prompt or skill guidance.
 - The design docs (`docs/design/skill-request-flow.md`,
   `docs/design/skill-promotion-flow.md`) are updated to document the new invariant.
 

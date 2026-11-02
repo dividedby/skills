@@ -2,7 +2,7 @@
 
 > **Superseded in part by [ADR 0039](./0039-retire-remaining-proposal-loops-and-loop-serving-skills.md)** — the decision to keep skill-authoring lore in `docs/agents/` stands; its retired rationale (loop-readable lore, folding into `installed-skills.md` / `setup-dividedby-skills`, the `harness/` revisit trigger) no longer applies.
 
-The *craft* of authoring a skill here is scattered and re-derived each loop:
+The _craft_ of authoring a skill here is scattered and re-derived each loop:
 the "prescribe principles, not literal code" edge cases ([ADR 0002](./0002-design-skills-prescribe-at-principle-level.md), #12)
 are re-argued per skill; cross-skill composition decisions (which wrapper calls
 which sub-skill) live implicitly in the wrappers; `.out-of-scope/` rejection
@@ -32,7 +32,7 @@ in-repo doc, not agent memories and not a code index.
   `docs/agents/installed-skills.md`: the lore must be readable by **headless /
   remote loops that clone the repo**. Global agent memories live in no repo;
   even repo memories are not the human-/loop-browsable convention surface.
-  Authoring lore being cross-repo *argues for global* — exactly what a remote
+  Authoring lore being cross-repo _argues for global_ — exactly what a remote
   single-repo clone cannot see. `docs/agents/` is in-repo, git-versioned,
   GitHub-browsable, loop-readable, and matches the established convention-doc
   pattern.
@@ -55,14 +55,14 @@ it earns it.
   not literal code"), the most-cited recurring re-argument; source = ADR 0002, #12.
 - **Deferred:** a rejection runbook and an antipattern collection — both overlap
   `.out-of-scope/`, which already partially serves that role. Revisit when
-  rejection rationales get re-argued *despite* `.out-of-scope/`.
+  rejection rationales get re-argued _despite_ `.out-of-scope/`.
 
 **No-code-indexer verdict (recorded so it is not re-proposed):** a code indexer /
 code-graph is overkill here. **Revisit trigger:** the `harness/` Python grows to
 where symbol-nav pain is real.
 
-**No overlap with `skill-divergence-audit`:** that audit watches *external* drift
-(this repo's skills vs. mattpocock's). Skill-authoring lore is *internal*
+**No overlap with `skill-divergence-audit`:** that audit watches _external_ drift
+(this repo's skills vs. mattpocock's). Skill-authoring lore is _internal_
 authoring craft. Different concerns; no consolidation.
 
 ## Consequences

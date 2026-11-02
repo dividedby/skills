@@ -25,7 +25,7 @@ A skill restating the loop would be re-documenting well-trodden ground.
 genuinely useful bits the request names — criteria design for non-binary/subjective
 quality, evaluator calibration via few-shot examples, generator↔evaluator "sprint
 contracts," and the "when does the ~20× harness earn its cost vs. a solo loop"
-heuristic — are *discipline*, not a new capability. `autonomous-loop`
+heuristic — are _discipline_, not a new capability. `autonomous-loop`
 (`skills/engineering/autonomous-loop/`) already owns loop mechanics, feedback
 gates, stop conditions, and HITL→AFK graduation; its feedback gate is currently
 binary (tests pass or halt). The non-binary-quality evaluator split is the natural

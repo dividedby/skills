@@ -45,28 +45,28 @@ narrows the skill's reach or misleads readers on other stacks.
 _Note: the `software-design` skill this example cites has been retired ([ADR 0040](../adr/0040-retire-unused-catalog-skills-and-fold-flow-pr-into-branching-flow.md)); the example is kept as editorial history._
 
 **The proposed change:** the original text for the temporal-coupling anti-pattern
-read: *"Each operation should be callable independently, or the required order
-should be enforced by the type system."* Issue #12 proposed replacing this with a
+read: _"Each operation should be callable independently, or the required order
+should be enforced by the type system."_ Issue #12 proposed replacing this with a
 full TypeScript before/after pair (a `class Fulfillment` / `function reserve()`
 typestate pattern) to make the remedy concrete.
 
 **The judgment call:** the fix was rejected in its proposed form. The resolution
-sharpened the *prose* to name the shape — "`reserve()` returns a token
+sharpened the _prose_ to name the shape — "`reserve()` returns a token
 `dispatch()` requires as input, so the wrong order won't compile" — without
 adding a language-specific code block.
 
 **Why:** the anti-patterns section is deliberately terse (short diagnosis +
 one-line remedy per item). Every other anti-pattern in that section has a
-self-evident plain-English remedy. Adding a full TS pair to *this* item would:
+self-evident plain-English remedy. Adding a full TS pair to _this_ item would:
 
 1. Inflate one anti-pattern out of proportion to the other three.
-2. Prescribe TypeScript's typestate idiom as *the* remedy, when the principle
+2. Prescribe TypeScript's typestate idiom as _the_ remedy, when the principle
    is stack-agnostic ("encode order structurally, not at runtime").
 
 The repair: name the mechanism in prose, not code.
 
 **Decision heuristic derived:** before adding a code example to a skill, ask
-*"does prose fail here?"* If the remedy is a technique reference (not a
+_"does prose fail here?"_ If the remedy is a technique reference (not a
 self-evident instruction), sharpen the prose to name the shape. Resort to code
 only when prose genuinely cannot convey the shape — and then note in the ADR why
 prose failed.
@@ -82,16 +82,16 @@ it named levels (`--shadow-sm`, `--shadow-md`, …) but gave no CSS values. Issu
 
 **The judgment call:** the change was accepted. The surrounding section already
 shipped example values for all sibling taxonomies; the shadow scale was a gap
-in *section density*, not an overshoot.
+in _section density_, not an overshoot.
 
 **Why this differs from #12:** adding values here restored symmetry to an
-*established pattern within the same section* — it did not elevate one item
+_established pattern within the same section_ — it did not elevate one item
 above its siblings. When the surrounding section already contains code (or
 concrete values), adding a missing peer example is correct; it is not prescribing
 a new literal rule.
 
-**Decision heuristic derived (ADR 0002 consequence):** *match local section
-density.* If sibling items already ship code, adding one to a missing sibling
+**Decision heuristic derived (ADR 0002 consequence):** _match local section
+density._ If sibling items already ship code, adding one to a missing sibling
 restores symmetry. If the section is deliberately terse, adding code to one
 item signals that the snippet IS the rule, when it isn't.
 

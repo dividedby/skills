@@ -5,7 +5,7 @@
 > **Superseded in part by [ADR 0038](./0038-retire-knowledge-application-after-agent-research-decommission.md)** — the `agent-research`-side examples, the cost-ledger scrape, and the `apply-agent-research` carve-out are retired; the fetched-fresh harness / vendored-envelope rail stands for the surviving loops.
 
 [ADR 0008](0008-consumers-fetch-the-skill-fresh-not-vendored.md) de-vendored the
-*skill*, but the proposal-loop **publish seam** — the shell that parses the
+_skill_, but the proposal-loop **publish seam** — the shell that parses the
 agent's `<output>`/`<body>` blocks, files the one capped issue, and scrapes the
 `total_cost_usd=…` ledger line — stayed committed in each repo's workflow `.yml`.
 That copy drifts: the same invalid-JSON fix had to be hand-applied twice,
@@ -30,7 +30,7 @@ Each repo commits only the **workflow envelope** (the "stub"): `on:` cron,
 `permissions:`, secret/token names, `--allowedTools`/`--disallowedTools` scoping,
 and a thin clone-and-invoke body (`git clone dividedby/skills` → `python3
 <clone>/harness/cli.py publish`, prompt `cat` from the clone). The envelope is
-the part that *must* be committed — GitHub Actions reads it from the default
+the part that _must_ be committed — GitHub Actions reads it from the default
 branch — and is also exactly the intentional per-repo customization a reconciler
 should never touch.
 
@@ -79,7 +79,7 @@ and versioned conservatively.
   **anchor-presence, not full normalization**: it verifies that structurally
   required substrings exist (e.g. `permissions: / issues: write`, `@claude-loops-v1`
   tag pin, `harness/prompts/apply-agent-research.md` fetch, `--model
-  claude-sonnet-4-6`, `--max-budget-usd`). This targets the #384 startup-fail class
+claude-sonnet-4-6`, `--max-budget-usd`). This targets the #384 startup-fail class
   (missing `issues: write` grant on caller stub) and the OLD-gen/NEW-gen
   silent-degradation class (missing harness-prompt-fetch step). Drift opens a
   labeled `workflow-drift` issue in dividedby/skills; nothing auto-applies.
@@ -88,7 +88,7 @@ and versioned conservatively.
 
 Keep the wiring vendored and build an update/reconcile mode that diffs installed
 workflow + prompt against a canonical template and PRs the delta (the original
-#120 framing). Rejected: it builds a cross-repo diff/PR machine to *manage* drift
-that this ADR *deletes at the source*, and it would still have to special-case the
+#120 framing). Rejected: it builds a cross-repo diff/PR machine to _manage_ drift
+that this ADR _deletes at the source_, and it would still have to special-case the
 intentional per-repo envelope to avoid clobbering it — the same over-engineering
 0008 rejected for its pinned-SHA variant.

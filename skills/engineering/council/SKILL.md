@@ -13,6 +13,7 @@ lives in seat prompts; this skill contributes the selector, roster, round
 structure, and dissent contract.
 
 Defers:
+
 - `Workflow` tool (built-in) — blind seat isolation and schema enforcement.
 - ADR 0036 and ADR 0041 (`docs/adr/`) — design rationale.
 - `/code-review` (upstream) — line-level defects.
@@ -31,21 +32,21 @@ Eight personas; all seats run on sonnet, the chair on opus at high effort.
 
 ### Core seats (always active, 3)
 
-| Persona | Lens |
-|---|---|
-| **Falsifier** | Find the claim that breaks the proposal. One focused objection — no filler. |
+| Persona        | Lens                                                                                           |
+| -------------- | ---------------------------------------------------------------------------------------------- |
+| **Falsifier**  | Find the claim that breaks the proposal. One focused objection — no filler.                    |
 | **Minimalist** | What can be deleted, deferred, or simplified without losing the value? Shorter is the default. |
-| **Pragmatist** | Given the real constraints (team, timeline, debt), what actually ships and holds? |
+| **Pragmatist** | Given the real constraints (team, timeline, debt), what actually ships and holds?              |
 
 ### Conditional seats (5 available, 0-2 active)
 
-| Persona | Activate when… |
-|---|---|
-| **Operator** | The proposal runs in production — ops burden, failure modes, observability |
-| **Convention Keeper** | The codebase has strong conventions and the proposal may violate them |
-| **Security** | **Hard-floor:** any signal of auth, payments, secrets, migrations, or trust boundary. Force-seated by the selector regardless of `--seats`. |
-| **Performance** | The hot path, query plan, or payload size is on the table |
-| **Frontend-UX-a11y** | The output is a visible surface, interaction, or accessibility-affecting change |
+| Persona               | Activate when…                                                                                                                              |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Operator**          | The proposal runs in production — ops burden, failure modes, observability                                                                  |
+| **Convention Keeper** | The codebase has strong conventions and the proposal may violate them                                                                       |
+| **Security**          | **Hard-floor:** any signal of auth, payments, secrets, migrations, or trust boundary. Force-seated by the selector regardless of `--seats`. |
+| **Performance**       | The hot path, query plan, or payload size is on the table                                                                                   |
+| **Frontend-UX-a11y**  | The output is a visible surface, interaction, or accessibility-affecting change                                                             |
 
 **Panel size:** 3 core + 0-2 conditional = 3-5 seats; a conditional is seated
 only on a real signal, and Security counts against the 2.
@@ -67,6 +68,7 @@ This list is canonical for the published plugin. A mirror lives in the maintaine
 ## Step 0 — Selector (inline, before the Workflow)
 
 The main session picks the lineup by rule; no agent is spawned.
+
 1. Read the task text and signals (paths, diff headers, labels, keywords).
 2. **Security force-floor:** seat Security on any signal of auth, payments,
    secrets, migrations, or trust boundary — a keyword or path match, not a

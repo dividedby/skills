@@ -28,14 +28,14 @@ from it") is appealing but collapses on two facts:
 
 So the only place `software-design` can deposit design-derived guidance that
 `/tdd` will actually see is **inside the issue body**, and the only way to get
-it there is to rewrite the issue *after* `to-issues` creates it. A design-first
+it there is to rewrite the issue _after_ `to-issues` creates it. A design-first
 ordering would write the TDD strategy into a Design Plan that nothing downstream
-opens, and would *still* require a post-`to-issues` enrichment pass to reach
+opens, and would _still_ require a post-`to-issues` enrichment pass to reach
 `/tdd` — designing twice for no net saving.
 
-**The issue rewrite is enrichment, not waste.** `to-issues` produces *what to
-build + acceptance criteria*; `software-design` upgrades that to
-*module-assigned, TDD-ready behavior*. That pass is the skill's core value, not
+**The issue rewrite is enrichment, not waste.** `to-issues` produces _what to
+build + acceptance criteria_; `software-design` upgrades that to
+_module-assigned, TDD-ready behavior_. That pass is the skill's core value, not
 redundant churn — the surface objection ("we're overwriting `to-issues`' work")
 misreads a deliberate refinement as rework.
 

@@ -42,7 +42,7 @@ on #522.
   harness and the skill are read directly from the checkout — [ADR
   0014](./0014-harness-is-fetched-fresh-only-the-workflow-envelope-is-vendored.md)'s
   fetch-fresh intent (never let a vendored copy drift from its source) is
-  satisfied trivially, since the source *is* this checkout.
+  satisfied trivially, since the source _is_ this checkout.
 - Filing follows the same producer/decider split as every proposal loop in
   this repo ([ADR 0003](./0003-skill-improvement-workflows-propose-via-issues.md)):
   the agent never commits or edits, and its only mutation is filing through

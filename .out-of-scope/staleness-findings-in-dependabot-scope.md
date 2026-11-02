@@ -12,13 +12,13 @@ generates recurring noise, since the loop re-reports the same finding each run
 until Dependabot lands it.
 
 These findings are closed as `wontfix`, not actioned. The staleness audit's value
-is the complement: pins Dependabot does *not* cover (language runtimes, container
+is the complement: pins Dependabot does _not_ cover (language runtimes, container
 base images, CI matrix versions, EOL jumps). Those remain in scope.
 
 **Bar to revisit:** A finding inside Dependabot's scope becomes actionable only if
 the corresponding Dependabot PR is demonstrably held open / stuck (config broken,
 PR failing CI for an unrelated reason, or auto-merge disabled and the PR ignored).
-In that case file a tracked issue about the *Dependabot pipeline*, not the bump.
+In that case file a tracked issue about the _Dependabot pipeline_, not the bump.
 
 ## Prior requests
 

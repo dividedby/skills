@@ -15,6 +15,7 @@ verdicts, a phased plan, evidenced findings, screenshots, mockups, and an honest
 list of what was and was not verified.
 
 Defers:
+
 - Agent tool (lens agents run in parallel); the Artifact tool to publish the page.
 - The built-in browser or the project's own run tooling, for screenshots.
 - `/to-tickets` — only if the user later asks for the plan as issues.
@@ -98,12 +99,12 @@ and its brief from [`briefs.md`](./briefs.md), which also sets the shape of a
 finding. Each writes its report (and the design lens its mockup spec) to a
 named scratchpad path and returns a short summary.
 
-| Lens | Model | Finds |
-|---|---|---|
-| Code and performance | sonnet | Cost at scale, measured; correctness and concurrency risk; I/O and API use; test health |
-| Architecture, repo, docs | sonnet | Module shape, security and privacy, build and release, CI, docs, repo settings |
-| Design | opus | Per-screen and app-level issues against the platform's guidelines; a mockup spec |
-| Market and research | sonnet | Competitors, real user complaints, technical gotchas, projects worth copying |
+| Lens                     | Model  | Finds                                                                                   |
+| ------------------------ | ------ | --------------------------------------------------------------------------------------- |
+| Code and performance     | sonnet | Cost at scale, measured; correctness and concurrency risk; I/O and API use; test health |
+| Architecture, repo, docs | sonnet | Module shape, security and privacy, build and release, CI, docs, repo settings          |
+| Design                   | opus   | Per-screen and app-level issues against the platform's guidelines; a mockup spec        |
+| Market and research      | sonnet | Competitors, real user complaints, technical gotchas, projects worth copying            |
 
 **Done when:** every launched lens has returned and its report file exists.
 

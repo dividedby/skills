@@ -26,7 +26,7 @@ Every recovery path must announce itself; silent degradation is forbidden.
 Two deterministic recovery levers are added before the run fails:
 
 **(a) Conservative one-shot JSON repair (`_repair_json`).** A single
-quote-state-aware character walk (NOT regex — a naive ``,(\s*[}\]])`` regex
+quote-state-aware character walk (NOT regex — a naive `,(\s*[}\]])` regex
 silently corrupts valid strings like `{"reason":"foo, }"}`) repairs the common
 corruption before the second `json.loads` attempt:
 
@@ -55,8 +55,8 @@ blocks at all — does the run fail (exit 1) without writing a summary. The
 workflow's `if: failure()` step then surfaces the raw log. This preserves the
 distinction between:
 
-- *missing* (no `<output>`, no `<body-N>` → nothing salvageable → loud failure)
-- *recovered-with-degradation* (warned loudly, proposals filed, run exits 0)
+- _missing_ (no `<output>`, no `<body-N>` → nothing salvageable → loud failure)
+- _recovered-with-degradation_ (warned loudly, proposals filed, run exits 0)
 
 One file on the fetch-fresh harness rail reaches both publish-seam loops
 (`improve-codebase-architecture` and `staleness-review`) on their next run — no
@@ -64,7 +64,7 @@ envelope change is required. The third loop, `apply-agent-research`, files
 through the skill's own guarded `cli.py` (not the harness `publish` seam), so it
 is unaffected by this change; whether that path shares the same brittleness is a
 separate audit.
-*Update: that separate audit ran (#369); the gate path now shares this recovery via a byte-identical copy of `_repair_json` under a CI drift guard — see [ADR 0026](0026-repair-json-duplicated-under-drift-guard.md).*
+_Update: that separate audit ran (#369); the gate path now shares this recovery via a byte-identical copy of `_repair_json` under a CI drift guard — see [ADR 0026](0026-repair-json-duplicated-under-drift-guard.md)._
 
 ## Consequences
 

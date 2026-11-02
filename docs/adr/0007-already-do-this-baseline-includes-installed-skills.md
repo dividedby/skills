@@ -17,7 +17,7 @@ miss: the skill is installed globally, just not a file here.
 **Decision.** The already-do-this baseline includes an **inventory of the host's
 installed external skills/plugins** when the host commits one (this repo:
 [`docs/agents/installed-skills.md`](../agents/installed-skills.md)). An installed
-capability is treated as *present, not absent*: the loop never proposes rebuilding
+capability is treated as _present, not absent_: the loop never proposes rebuilding
 it. Where there is a gap, the proposal is an **integration or novel use** with the
 repo's own skills. The skill stays host-agnostic — it reads whatever inventory the
 host provides and hardcodes no specific upstream.

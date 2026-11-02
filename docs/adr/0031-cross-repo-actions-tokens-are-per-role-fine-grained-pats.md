@@ -19,11 +19,11 @@ secret, or a GitHub App).
 Two facts constrain the answer:
 
 1. **`dividedby` is a User account, not an Organization** (`gh api users/dividedby
-   -q .type` → `User`). Organization-level Actions secrets do not exist on a User
+-q .type` → `User`). Organization-level Actions secrets do not exist on a User
    account. "Share one stored secret across N repos" is therefore unavailable by
    any mechanism: on a User account a credential is always pasted into each repo
-   individually. "Consolidation" here can only mean *fewer distinct token
-   identities*, never *one secret reachable by many repos*.
+   individually. "Consolidation" here can only mean _fewer distinct token
+   identities_, never _one secret reachable by many repos_.
 2. **The estate already runs fine-grained, least-privilege, per-channel PATs** and
    documents that intent (`docs/onboarding/consumer-setup.md`,
    `dividedby/agent-research docs/cost-tracking.md`), but no ADR had recorded it as
@@ -42,11 +42,11 @@ Tracker-write and drift-read stay scoped to exactly the repos they touch; the
 cost-scrape role uses a **single token scoped to all repositories, current and
 future** (a maintainer decision — see below).
 
-| Role | Token | Scope | Stored in |
-| --- | --- | --- | --- |
-| Tracker-write | `SKILLS_TRACKER_TOKEN` | Issues: read/write on `dividedby/skills` only | each active consumer repo (one copy each) |
-| Cost-scrape | a single `ACTIONS_TOKEN` | Actions: read on **all repositories (current and future)** | hub: `dividedby/agent-research` only |
-| Drift-read | `DRIFT_CHECK_TOKEN` | Contents: read on the active consumer repos | `dividedby/skills` only |
+| Role          | Token                    | Scope                                                      | Stored in                                 |
+| ------------- | ------------------------ | ---------------------------------------------------------- | ----------------------------------------- |
+| Tracker-write | `SKILLS_TRACKER_TOKEN`   | Issues: read/write on `dividedby/skills` only              | each active consumer repo (one copy each) |
+| Cost-scrape   | a single `ACTIONS_TOKEN` | Actions: read on **all repositories (current and future)** | hub: `dividedby/agent-research` only      |
+| Drift-read    | `DRIFT_CHECK_TOKEN`      | Contents: read on the active consumer repos                | `dividedby/skills` only                   |
 
 Rejected alternatives:
 

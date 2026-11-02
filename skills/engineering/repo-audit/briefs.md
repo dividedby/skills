@@ -9,7 +9,7 @@ header below.
 
 - What the project is in one sentence, its stack and platform target.
 - Repo path, branch and pinned commit; "confirm the commit you read".
-- The read-only rule from `SKILL.md`, restated in full. Name what *is*
+- The read-only rule from `SKILL.md`, restated in full. Name what _is_
   allowed (build and test into ignored output, read-only `gh` calls, scratch
   packages outside the repo).
 - The size facts: lines per area, the largest files, test count and run time.

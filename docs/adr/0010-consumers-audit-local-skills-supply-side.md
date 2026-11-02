@@ -22,13 +22,13 @@ covering upstream `mattpocock/skills`). This is **one scan with three verdicts**
   no-op.
 
 This is the **deliberate mirror of [ADR 0009](0009-skill-request-checks-existing-and-installed-skills.md)**.
-0009 is the *demand-side* already-do-this filter: it stops a Consumer
-*requesting* (skill-request) a capability that already exists. The supply-side
+0009 is the _demand-side_ already-do-this filter: it stops a Consumer
+_requesting_ (skill-request) a capability that already exists. The supply-side
 audit reuses **the same matcher** (capability vs. `{published catalog, installed
-snapshot}`) but points it at what the Consumer has *already built* rather than
-what it *wishes for*, and inverts the action: a match *flags a redundant local
-skill to retire*, a non-match *(plus general merit)* offers a promotion — where
-0009 a match *suppresses* and a non-match *files demand*. Same matcher, opposite
+snapshot}`) but points it at what the Consumer has _already built_ rather than
+what it _wishes for_, and inverts the action: a match _flags a redundant local
+skill to retire_, a non-match _(plus general merit)_ offers a promotion — where
+0009 a match _suppresses_ and a non-match _files demand_. Same matcher, opposite
 ends of the supply/demand axis.
 
 **Why.** Without it, a Consumer silently accumulates local skills that drifted
@@ -39,7 +39,7 @@ surfaces a genuinely reusable local skill for promotion — the one signal the
 [ADR 0001](0001-buckets-cluster-by-user-intent.md) general-merit path needs from
 the field.
 
-**Scope.** The audit only fires when the Consumer *has* local skills; a Consumer
+**Scope.** The audit only fires when the Consumer _has_ local skills; a Consumer
 with none skips it. The skills repo itself has no local-non-published skills (all
 its skills are published), so its own loop's audit channel is inert — but it is
 the **draining/owning end** of the resulting skill-promotion offers.

@@ -6,7 +6,7 @@ Skill-request triage runs a GitHub-wide prior-art scan via the installed
 `cba-searching` skill before the maintainer accepts, parks, or rejects a request.
 This is the **external** counterpart to
 [ADR 0009](0009-skill-request-checks-existing-and-installed-skills.md): ADR 0009
-checks the candidate capability against skills that already exist *inside* this
+checks the candidate capability against skills that already exist _inside_ this
 ecosystem (the published catalog plus the installed-skill snapshot) at Consumer
 **filing** time; this scan asks whether the wider open-source world already ships
 the capability well, at maintainer **triage** time. `cba-searching` is referenced
@@ -16,8 +16,8 @@ not vendored here.
 ## Context
 
 ADR 0009 stops a Consumer from re-requesting a capability that this ecosystem
-already provides. It does not ask the orthogonal question: *does a good
-off-the-shelf tool already exist outside this ecosystem?* A request can clear the
+already provides. It does not ask the orthogonal question: _does a good
+off-the-shelf tool already exist outside this ecosystem?_ A request can clear the
 ADR-0009 internal filter — genuinely net-new to `dividedby/skills` and the
 installed set — and still be redundant with a mature public project that the
 maintainer should adopt or reference instead of writing a new skill. Catching
