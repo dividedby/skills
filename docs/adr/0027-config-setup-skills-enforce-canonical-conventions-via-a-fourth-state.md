@@ -4,7 +4,7 @@
 
 `setup-dividedby-skills` (and the config-setup skills generally) resolved every
 convention check into one of three outcomes: **create**, **update**, or **skip**.
-A *known* non-canonical form could resolve to `skip` and silently persist.
+A _known_ non-canonical form could resolve to `skip` and silently persist.
 
 ## Context
 
@@ -16,10 +16,10 @@ tolerated the deviation; a human had to notice and request consolidation, then i
 was propagated by hand across ~9 repos.
 
 The skills were **detect-and-offer** with a skip bias rather than **enforcing**
-the canonical form. For a surface that is *pure convention with no judgment call*
+the canonical form. For a surface that is _pure convention with no judgment call_
 (file name, single-vs-split, full-vs-pointer), tolerating a known deviation is a
 bug, not flexibility. This does not conflict with [ADR 0002](./0002-design-skills-prescribe-at-principle-level.md):
-that governs how a skill *phrases its guidance*, not whether a skill enforces a
+that governs how a skill _phrases its guidance_, not whether a skill enforces a
 mechanical file-layout convention.
 
 The fix must not weaken the propose-only safety posture: bringing a repo to
@@ -31,7 +31,7 @@ convention), and those must not happen silently by default.
 
 Add a fourth outcome and an opt-in mode:
 
-- **`must-fix` state.** A *known* non-canonical convention form can no longer
+- **`must-fix` state.** A _known_ non-canonical convention form can no longer
   resolve to `skip`. It resolves to `must-fix`: the skill surfaces the exact
   destructive diff (what it will delete/rewrite and why) and **requires
   confirmation** before applying it. The propose-only default is preserved —
@@ -51,8 +51,8 @@ is destructive and therefore gated on confirm (or `force-canonical`).
   `skip` now means "already canonical," never "non-canonical but left alone."
 - Maintainers get a one-shot fleet path (`force-canonical`) for convention-only
   drift, without re-introducing silent destructive edits as the default.
-- Skills must classify each convention as *convention-only* (eligible for
-  `force-canonical`) or *judgment-bearing* (always prompts). New conventions
+- Skills must classify each convention as _convention-only_ (eligible for
+  `force-canonical`) or _judgment-bearing_ (always prompts). New conventions
   declare which they are.
 - Pairs with the drift-detection rule in [ADR 0023](./0023-setup-dividedby-skills-vs-project-claude-config-seam.md):
   `project-claude-config` flags label-doc drift and hands off; `setup-dividedby-skills`

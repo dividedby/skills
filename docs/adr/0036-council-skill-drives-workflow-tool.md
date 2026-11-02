@@ -82,9 +82,9 @@ the same tightening.
 
 Authoring rules for skills that drive the Workflow tool:
 
-1. **Principle-level only.** The SKILL.md contains an *illustrative sketch*,
+1. **Principle-level only.** The SKILL.md contains an _illustrative sketch_,
    not a literal runnable script ([ADR 0002](./0002-design-skills-prescribe-at-principle-level.md)).
-   The sketch shows the orchestration *shape*; actual prompts and schemas are
+   The sketch shows the orchestration _shape_; actual prompts and schemas are
    seat-specific and tuned at invocation time.
 2. **Workflow tool, not reimplementation.** Do not reimplement parallel
    execution or schema enforcement in skill prose. That is the Workflow tool's

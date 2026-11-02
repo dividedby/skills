@@ -19,7 +19,7 @@ Fetching fresh keeps the guard current and removes any re-sync chore.
 
 Trade-off: each scheduled run auto-executes whatever is at `dividedby/skills`
 HEAD with the Consumer's tokens (`SKILLS_TRACKER_TOKEN`, the Claude token). We
-accept this because the source is the *same maintainer's* repo, not a third
+accept this because the source is the _same maintainer's_ repo, not a third
 party, and Actions never passes secrets to fork-PR runs — the same trust
 arch-review already extends to `mattpocock/skills`. A pinned-SHA variant
 (deliberate, reviewed bumps) was rejected as over-engineering for a

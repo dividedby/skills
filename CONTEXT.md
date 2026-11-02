@@ -66,12 +66,11 @@ and file labeled issues directly. The unifying invariant is that every filing
 becomes a tracked GitHub issue — not that every filing funnels through the Inbox.
 _Avoid_: backlog, triage queue, scratchpad, inbox issue.
 
-
 **Rejection record**:
 One structured file under `.out-of-scope/` per **explicitly-refused** capability,
 stating why it was declined and the **bar to revisit** — the demonstrated gap that
-would reopen the decision. The *already-refused* counterpart to an **ADR**: an ADR
-records a decision made, a rejection record a decision made *not* to act. Agents read it
+would reopen the decision. The _already-refused_ counterpart to an **ADR**: an ADR
+records a decision made, a rejection record a decision made _not_ to act. Agents read it
 directly and never re-propose a capability whose bar-to-revisit is unmet; it is
 the durable home for a `wontfix` rationale that
 issue bodies only cross-reference.

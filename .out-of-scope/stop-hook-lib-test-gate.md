@@ -27,12 +27,12 @@ maintained and kept in sync with the CI path-filters.
 
 The knowledge note (mariozechner/commit-hook-checks-over-lsp-diagnostics) argues
 binary gates over advisory LSP-style signals. CI **is** the binary gate here: it
-is non-advisory and blocks the merge. The note's failure mode — *no* enforcing
+is non-advisory and blocks the merge. The note's failure mode — _no_ enforcing
 gate, only advisory diagnostics — does not apply; the enforcing gate exists.
 
 ## If this is ever reconsidered
 
-The bar to revisit is a demonstrated gap CI does *not* close — e.g. an agent
+The bar to revisit is a demonstrated gap CI does _not_ close — e.g. an agent
 loop that commits and **merges** lib/ breakage without a PR gate (a true
 turn-end-only workflow with no CI between commit and effect), where the only place
 to catch it is before the turn clears. That would argue for a turn-end gate; the

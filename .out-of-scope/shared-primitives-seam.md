@@ -12,7 +12,7 @@ have at scale. Matt Pocock's Sandcastle gets one-copy because it's an npm packag
 both halves `import`; we deliberately run a no-package-manager fetch-fresh-Python
 model so the leak guard travels whole, and Sandcastle's framework weight
 (sandbox/providers/session-resume) solves problems we don't have. The real
-cross-repo divergence surface is the vendored workflow *envelope* (#325 epic, #359
+cross-repo divergence surface is the vendored workflow _envelope_ (#325 epic, #359
 rollup) — irreducible by a shared library; that's #366's reusable-workflows lever,
 not this one.
 

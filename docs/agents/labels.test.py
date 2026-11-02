@@ -6,6 +6,7 @@ Asserts the canonical CORE label set for the SOURCE registry
 
 Run: python3 -B docs/agents/labels.test.py
 """
+
 import re
 import unittest
 from pathlib import Path
@@ -16,6 +17,7 @@ LABELS_MD = REPO_ROOT / "docs" / "agents" / "labels.md"
 # ---------------------------------------------------------------------------
 # Parse helpers
 # ---------------------------------------------------------------------------
+
 
 def _extract_section(text: str, heading: str) -> str:
     """Return the body of the ## section under `heading` (up to the next ##)."""
@@ -40,6 +42,7 @@ def _label_names(section_text: str) -> set:
 # Tests
 # ---------------------------------------------------------------------------
 
+
 class TestSourceRegistryExists(unittest.TestCase):
     def test_labels_md_present(self):
         self.assertTrue(
@@ -60,7 +63,9 @@ class TestCoreStateLabels(unittest.TestCase):
         return _label_names(self.state)
 
     def test_section_present(self):
-        self.assertTrue(self.state.strip(), "CORE — State (all repos) section missing or empty")
+        self.assertTrue(
+            self.state.strip(), "CORE — State (all repos) section missing or empty"
+        )
 
     def test_needs_triage(self):
         self.assertIn("needs-triage", self._names())
@@ -93,7 +98,9 @@ class TestCoreCategoryLabels(unittest.TestCase):
         return _label_names(self.cat)
 
     def test_section_present(self):
-        self.assertTrue(self.cat.strip(), "CORE — Category (all repos) section missing or empty")
+        self.assertTrue(
+            self.cat.strip(), "CORE — Category (all repos) section missing or empty"
+        )
 
     def test_bug(self):
         self.assertIn("bug", self._names())
@@ -120,7 +127,9 @@ class TestCoreSizeLabels(unittest.TestCase):
         return _label_names(self.size)
 
     def test_section_present(self):
-        self.assertTrue(self.size.strip(), "CORE — Size (all repos) section missing or empty")
+        self.assertTrue(
+            self.size.strip(), "CORE — Size (all repos) section missing or empty"
+        )
 
     def test_size_s(self):
         self.assertIn("size:S", self._names())

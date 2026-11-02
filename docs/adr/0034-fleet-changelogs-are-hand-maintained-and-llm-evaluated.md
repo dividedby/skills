@@ -36,7 +36,7 @@ evaluator that reads ordinary `git log`. The commit-message tax does not pay off
 at this scale.
 
 **Generation fights the quality bar; hand-maintenance protects it.** The rubric's
-core rule is audience-first: one line per *notable* change, phrased for a
+core rule is audience-first: one line per _notable_ change, phrased for a
 downstream consumer, not a commit replay. Commit-driven generation produces
 exactly the git-log dump the standard warns against — KaC 2.0.0 itself moved its
 tagline to "Clearly document the evolution of your projects," away from 1.x's
@@ -46,7 +46,7 @@ The evaluator preserves this by judging quality and flagging — it does not aut
 or rewrite, so the audience-first voice is never delegated to a transcriber.
 
 **Reconciliation with [#397](https://github.com/dividedby/skills/issues/397).**
-#397 settled *hand-maintained, no automation, Keep-a-Changelog format* for the
+#397 settled _hand-maintained, no automation, Keep-a-Changelog format_ for the
 skills repo and explicitly deferred the cross-repo concern ("fleet concern, not
 this repo"). This ADR is that deferred follow-up. It **extends** #397's choice to
 every fleet repo and layers on a non-blocking quality nudge; it does **not**
@@ -56,16 +56,16 @@ against to 2.0.0. Hand-maintenance — the load-bearing choice — is unchanged.
 
 **Rejected alternatives.**
 
-- *semantic-release / commit-convention generation.* A release-pipeline gate
+- _semantic-release / commit-convention generation._ A release-pipeline gate
   (violates the anti-gate constraint), not cleanly modular (changelog is welded
   to versioning + publish), and demands fleet-wide conventional-commits for a
   payoff a weekly evaluator delivers from plain `git log`. It also automates
   precisely the commit-replay the rubric forbids.
-- *A blocking "changelog entry required" CI check.* Cheaper than semantic-release
+- _A blocking "changelog entry required" CI check._ Cheaper than semantic-release
   but still a gate the maintainer ruled out — and presence-only: it can confirm
   an entry exists, never that it is notable, consumer-voiced, or correctly
   categorized. The evaluator judges quality; a presence gate cannot.
-- *Status quo (per-repo hand-maintenance, no fleet bar).* Leaves the two gaps
+- _Status quo (per-repo hand-maintenance, no fleet bar)._ Leaves the two gaps
   #454 named: no upkeep mechanism (changelogs drift as work ships) and no shared
   quality standard (every repo invents its own bar).
 

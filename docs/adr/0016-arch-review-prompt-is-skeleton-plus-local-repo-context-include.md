@@ -20,13 +20,13 @@ host and every Consumer — because that loop's per-repo differences are all
 `SKILLS_TRACKER_TOKEN`).
 
 `improve-codebase-architecture` does **not** have that property. Its per-repo
-differences *are the substance of the prompt* — **what to review** and **which
+differences _are the substance of the prompt_ — **what to review** and **which
 disciplines to respect** — not incidental wiring:
 
-| | `dividedby/skills` instance | `dividedby/agent-research` instance |
-|---|---|---|
-| Primary scope | `skills/<bucket>/<name>/` SKILL.md + markdown | `kb_afk/` modules + seams |
-| Disciplines | mattpocock cross-plugin links, `plugin.json` | test-first (red→green), one-test-per-module, ADRs binding, `tools/` untested, `sources/` append-only |
+|               | `dividedby/skills` instance                   | `dividedby/agent-research` instance                                                                  |
+| ------------- | --------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Primary scope | `skills/<bucket>/<name>/` SKILL.md + markdown | `kb_afk/` modules + seams                                                                            |
+| Disciplines   | mattpocock cross-plugin links, `plugin.json`  | test-first (red→green), one-test-per-module, ADRs binding, `tools/` untested, `sources/` append-only |
 
 You cannot express "review `kb_afk/`, respect red→green, `sources/` is
 append-only" in env vars. So the in-tree prompt is the **skills-repo's own
@@ -102,7 +102,7 @@ elsewhere since the path is purely stub-local.
 - **Missing include hard-fails.** Scope is load-bearing: a skeleton with no scope
   reviews blindly — the "reaching for something to file" failure the prompt
   warns against. The stub `test -f`s the include and fails the run if absent,
-  like the existing `test -f …/SKILL.md` gate. Adopting the loop *requires*
+  like the existing `test -f …/SKILL.md` gate. Adopting the loop _requires_
   shipping the include. (This removes today's graceful degradation when a repo
   lacks `CONTEXT.md`; the trade is intentional.)
 - **The self-edit affordance points at the local include only.** The agent may

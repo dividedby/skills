@@ -24,13 +24,13 @@ The single `harness/prompts/apply-agent-research.md` is **parametrized by the
 environment the stub exports**, and serves both the skills-repo (tracker host)
 and every downstream Consumer from one source:
 
-| Env var | Host (skills-repo) | Consumer | Prompt use |
-|---|---|---|---|
-| `MIRROR_DIR` | set by stub | mirror clone or native `knowledge/` | KB read |
-| `SKILL_DIR` | `skills/meta/apply-agent-research` | `~/.claude/skills/apply-agent-research` | `python3 $SKILL_DIR/lib/cli.py {gate,file,comment}` |
-| `SKILLS_SRC` | checkout root | fresh `dividedby/skills` clone root | published-skill catalog (already-do-this + audit) |
-| `PRIVATE_MARKERS` | empty | the repo's private markers | expanded to `--marker …` on every guarded `file`/`comment` |
-| `SKILLS_TRACKER_TOKEN` | unset | set | **role discriminator** + cross-repo GH auth |
+| Env var                | Host (skills-repo)                 | Consumer                                | Prompt use                                                 |
+| ---------------------- | ---------------------------------- | --------------------------------------- | ---------------------------------------------------------- |
+| `MIRROR_DIR`           | set by stub                        | mirror clone or native `knowledge/`     | KB read                                                    |
+| `SKILL_DIR`            | `skills/meta/apply-agent-research` | `~/.claude/skills/apply-agent-research` | `python3 $SKILL_DIR/lib/cli.py {gate,file,comment}`        |
+| `SKILLS_SRC`           | checkout root                      | fresh `dividedby/skills` clone root     | published-skill catalog (already-do-this + audit)          |
+| `PRIVATE_MARKERS`      | empty                              | the repo's private markers              | expanded to `--marker …` on every guarded `file`/`comment` |
+| `SKILLS_TRACKER_TOKEN` | unset                              | set                                     | **role discriminator** + cross-repo GH auth                |
 
 **Role is derived from `$SKILLS_TRACKER_TOKEN` presence, not a separate flag.**
 Unset → **host mode**: drain `skill-request` issues locally, propose

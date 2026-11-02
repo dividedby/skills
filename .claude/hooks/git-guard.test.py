@@ -6,6 +6,7 @@ asserts exit 2 (blocked) for destructive git and exit 0 (allowed) for benign
 commands and non-git commands. This test is the feedback gate for the guard:
 run it directly (`./git-guard.test.py`) — no test framework required.
 """
+
 import json
 import os
 import subprocess
@@ -43,7 +44,6 @@ CASES = [
     ("git restore file.txt", BLOCK),
     ("git restore .", BLOCK),
     ("git restore --worktree --staged file.txt", BLOCK),
-
     # benign git — the loop's own normal operations must pass
     ("git commit -m 'msg'", ALLOW),
     ("git push", ALLOW),
@@ -58,9 +58,9 @@ CASES = [
     ("git log --oneline", ALLOW),
     ("git diff", ALLOW),
     ("git fetch origin", ALLOW),
-    ("git reset HEAD~1", ALLOW),          # soft/mixed reset keeps the worktree
+    ("git reset HEAD~1", ALLOW),  # soft/mixed reset keeps the worktree
     ("git restore --staged file.txt", ALLOW),  # only unstages
-    ("git clean -n", ALLOW),              # dry run
+    ("git clean -n", ALLOW),  # dry run
     # non-git commands always pass
     ("npm test", ALLOW),
     ("ls -la", ALLOW),
@@ -86,7 +86,10 @@ def run(cmd: str, unattended: bool) -> int:
         env.update(UNATTENDED_ENV)
     proc = subprocess.run(
         [sys.executable, str(HOOK)],
-        input=payload, capture_output=True, text=True, env=env,
+        input=payload,
+        capture_output=True,
+        text=True,
+        env=env,
     )
     return proc.returncode
 

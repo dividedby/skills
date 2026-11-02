@@ -6,7 +6,7 @@
 > decentralized-pull redesign (agent-research ADR 0019,
 > [`cross-repo-knowledge-application`](../design/cross-repo-knowledge-application.md))
 > moved consumption into the published `apply-agent-research` skill that each
-> Consumer runs on *itself*. The skill enforces the leak guard and budgeted-proposal
+> Consumer runs on _itself_. The skill enforces the leak guard and budgeted-proposal
 > cap mechanically, so it must invoke the gate/sanitizer CLI **wherever it is
 > installed** — a path `runbooks/` (present only in this repo) cannot satisfy. The
 > two surviving helpers + the `cli.py` seam therefore now live **under the skill**
@@ -17,22 +17,22 @@
 > This reverses the "Not skills" / "bundling … is ceremony" stance below, because
 > the force that justified it is gone: the helpers were "internal machinery on the
 > maintainer's runner," but they are now **runtime dependencies of a published
-> skill that ships to other repos**. The rejected alternative was *a skill per
-> helper* (ceremony, and it would publish machinery as a capability); co-locating
+> skill that ships to other repos**. The rejected alternative was _a skill per
+> helper_ (ceremony, and it would publish machinery as a capability); co-locating
 > two support files under the one skill that needs them is neither. Everything
 > else holds unchanged: still stdlib-only, still pure (inputs in, decision out),
 > still never registered in `plugin.json`. The original record stands below.
 
 > **Amendment (#108) — the `cli.py` seam now performs the guarded write.** The
-> "purity boundary" below says *all* tracker I/O lives in the run-book/prompt and is
+> "purity boundary" below says _all_ tracker I/O lives in the run-book/prompt and is
 > injected, keeping the helpers unit-testable without a live tracker. That still
 > holds for the two **decisions** — `sanitizer.check` and `proposal_gate.decide`
-> remain pure, injected, and tested. What changed: the `cli.py` *seam* gained
+> remain pure, injected, and tested. What changed: the `cli.py` _seam_ gained
 > `file` / `comment` subcommands that compose a pure decision (`check`) with the
 > `gh` write so the leak guard **wraps** the transport — the wired loop cannot file
 > without passing the guard (see [ADR 0003](./0003-skill-improvement-workflows-propose-via-issues.md)'s
 > #108 amendment). The transport is a thin, logic-free pass-through to `gh`; the
-> safety-critical *logic* stays in the pure helpers, so the test boundary is
+> safety-critical _logic_ stays in the pure helpers, so the test boundary is
 > unmoved — `test_cli` mocks `gh` and asserts a blocked body never reaches it.
 
 ---
@@ -42,7 +42,7 @@ lean on two **pure decision helpers**: a proposal gate (the ≤1-issue-per-run c
 plus dedup) and a sanitizer guard (blocks private-repo content from this public
 tracker). The issues that specify them ([#15](https://github.com/dividedby/skills/issues/15),
 [#18](https://github.com/dividedby/skills/issues/18)) require the cap and the
-no-private-code rule to be enforced *mechanically, not by prompt discipline* —
+no-private-code rule to be enforced _mechanically, not by prompt discipline_ —
 the decision must not depend on model judgment. That makes them executable code,
 not prose the agent re-derives each run. This is the repo's first application
 code.
@@ -68,7 +68,7 @@ result — prose orchestration around a code-enforced gate.
 
 **Not skills.** These helpers live under `runbooks/`, never in `skills/` or
 `plugin.json`. [ADR 0002](./0002-design-skills-prescribe-at-principle-level.md)
-("code in a skill is illustrative, not literal") governs *published skills* and
+("code in a skill is illustrative, not literal") governs _published skills_ and
 does not bar this: a run-book helper is internal machinery, not a principle
 taught to installers.
 

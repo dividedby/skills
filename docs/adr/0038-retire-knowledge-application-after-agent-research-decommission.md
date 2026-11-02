@@ -22,7 +22,7 @@ returns 404). Every input that machinery depended on is gone:
   [ADR 0010](./0010-consumers-audit-local-skills-supply-side.md),
   [ADR 0021](./0021-skill-request-triage-runs-external-prior-art-scan.md)).
 - **`skill-divergence-audit`** ([ADR 0037](./0037-wire-skill-divergence-audit-as-a-recurring-loop.md))
-  compared this repo's skills against `mattpocock/skills` *and* the agent-research
+  compared this repo's skills against `mattpocock/skills` _and_ the agent-research
   KB, and reused the apply skill's `sanitizer` and `proposal_gate`.
 - **`tools/export_scaffolding.py`** bundled the loops' agent-meta surfaces for
   external deep research; its manifest covered the apply and architecture loops.

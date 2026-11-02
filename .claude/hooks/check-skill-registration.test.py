@@ -7,6 +7,7 @@ skill), points the hook at it via CLAUDE_PROJECT_DIR, and asserts exit 2
 otherwise. This is the feedback gate for the hook: run it directly
 (`./check-skill-registration.test.py`) — no test framework required.
 """
+
 import json
 import os
 import subprocess
@@ -28,26 +29,66 @@ CASES = [
     (GOOD_FRONTMATTER, False, True, BLOCK),
     (GOOD_FRONTMATTER, True, False, BLOCK),
     # frontmatter gaps (new behavior)
-    ("---\ndescription: no name here.\n---\n", True, True, BLOCK),       # missing name
-    ("---\nname: demo\n---\n", True, True, BLOCK),                        # missing description
-    ("---\nname:\ndescription:\n---\n", True, True, BLOCK),               # empty both
-    ("---\nname: demo\ndescription:   \n---\n", True, True, BLOCK),       # whitespace-only desc
-    ("# Demo\n\nNo frontmatter at all.\n", True, True, BLOCK),            # no frontmatter block
+    ("---\ndescription: no name here.\n---\n", True, True, BLOCK),  # missing name
+    ("---\nname: demo\n---\n", True, True, BLOCK),  # missing description
+    ("---\nname:\ndescription:\n---\n", True, True, BLOCK),  # empty both
+    (
+        "---\nname: demo\ndescription:   \n---\n",
+        True,
+        True,
+        BLOCK,
+    ),  # whitespace-only desc
+    ("# Demo\n\nNo frontmatter at all.\n", True, True, BLOCK),  # no frontmatter block
     ("---\nname: demo\ndescription: unterminated\n", True, True, BLOCK),  # never closed
     # spec-limit gaps (new behavior)
-    ("---\nname: Demo\ndescription: ok.\n---\n", True, True, BLOCK),       # not kebab-case
-    ("---\nname: -demo\ndescription: ok.\n---\n", True, True, BLOCK),      # leading hyphen
-    ("---\nname: de--mo\ndescription: ok.\n---\n", True, True, BLOCK),     # consecutive hyphens
-    (f"---\nname: {'a' * 65}\ndescription: ok.\n---\n", True, True, BLOCK),  # name over 64 chars
-    ("---\nname: demo\ndescription: uses <tag> syntax.\n---\n", True, True, BLOCK),  # angle bracket
-    (f"---\nname: demo\ndescription: {'a' * 1025}\n---\n", True, True, BLOCK),  # description over 1024 chars
+    ("---\nname: Demo\ndescription: ok.\n---\n", True, True, BLOCK),  # not kebab-case
+    ("---\nname: -demo\ndescription: ok.\n---\n", True, True, BLOCK),  # leading hyphen
+    (
+        "---\nname: de--mo\ndescription: ok.\n---\n",
+        True,
+        True,
+        BLOCK,
+    ),  # consecutive hyphens
+    (
+        f"---\nname: {'a' * 65}\ndescription: ok.\n---\n",
+        True,
+        True,
+        BLOCK,
+    ),  # name over 64 chars
+    (
+        "---\nname: demo\ndescription: uses <tag> syntax.\n---\n",
+        True,
+        True,
+        BLOCK,
+    ),  # angle bracket
+    (
+        f"---\nname: demo\ndescription: {'a' * 1025}\n---\n",
+        True,
+        True,
+        BLOCK,
+    ),  # description over 1024 chars
     # folded block-scalar description over the limit must still be caught
-    ("---\nname: demo\ndescription: >\n  " + ("a " * 600) + "\n---\n", True, True, BLOCK),
+    (
+        "---\nname: demo\ndescription: >\n  " + ("a " * 600) + "\n---\n",
+        True,
+        True,
+        BLOCK,
+    ),
     # right at the limits -> passes
     (f"---\nname: {'a' * 64}\ndescription: {'a' * 1024}\n---\n", True, True, ALLOW),
     # quoted scalars dequote before checks (new behavior)
-    ('---\nname: "demo"\ndescription: ok.\n---\n', True, True, ALLOW),  # quoted name still kebab-case after dequote
-    (f'---\nname: demo\ndescription: "{"a" * 1024}"\n---\n', True, True, ALLOW),  # quoted description: quotes don't count toward the 1024 limit
+    (
+        '---\nname: "demo"\ndescription: ok.\n---\n',
+        True,
+        True,
+        ALLOW,
+    ),  # quoted name still kebab-case after dequote
+    (
+        f'---\nname: demo\ndescription: "{"a" * 1024}"\n---\n',
+        True,
+        True,
+        ALLOW,
+    ),  # quoted description: quotes don't count toward the 1024 limit
 ]
 
 # (skill_md_body, registered_in_plugin, linked_in_readme, should_be_blocked, warning_substring_or_none)
@@ -56,11 +97,21 @@ WARNING_CASES = [
     # known key -> no warning
     (GOOD_FRONTMATTER, True, True, ALLOW, None),
     # known optional key -> no warning
-    ("---\nname: demo\ndescription: A demo skill.\ndisable-model-invocation: true\n---\n",
-     True, True, ALLOW, None),
+    (
+        "---\nname: demo\ndescription: A demo skill.\ndisable-model-invocation: true\n---\n",
+        True,
+        True,
+        ALLOW,
+        None,
+    ),
     # unknown key -> warning emitted, still not blocked
-    ("---\nname: demo\ndescription: A demo skill.\ntypo-key: true\n---\n",
-     True, True, ALLOW, "unrecognised frontmatter key `typo-key`"),
+    (
+        "---\nname: demo\ndescription: A demo skill.\ntypo-key: true\n---\n",
+        True,
+        True,
+        ALLOW,
+        "unrecognised frontmatter key `typo-key`",
+    ),
 ]
 
 
@@ -84,7 +135,10 @@ def run(body: str, registered: bool, linked: bool):
         env = {**os.environ, "CLAUDE_PROJECT_DIR": str(root)}
         proc = subprocess.run(
             [sys.executable, str(HOOK)],
-            input="{}", capture_output=True, text=True, env=env,
+            input="{}",
+            capture_output=True,
+            text=True,
+            env=env,
         )
         return proc.returncode, proc.stderr
 
@@ -97,7 +151,9 @@ def main() -> int:
         if blocked != should_block:
             want = "BLOCK" if should_block else "ALLOW"
             got = "BLOCK" if blocked else f"ALLOW(exit {code})"
-            failures.append(f"  body={body!r} reg={registered} link={linked}: want {want}, got {got}")
+            failures.append(
+                f"  body={body!r} reg={registered} link={linked}: want {want}, got {got}"
+            )
 
     for body, registered, linked, should_block, warn_substr in WARNING_CASES:
         code, stderr = run(body, registered, linked)

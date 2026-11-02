@@ -2,6 +2,7 @@
 """Stop hook: every skill dir must be registered in plugin.json and README.md,
 and its SKILL.md must carry valid frontmatter (non-empty name + description,
 each within the skill spec's limits)."""
+
 import json, os, re, sys
 from pathlib import Path
 
@@ -51,7 +52,9 @@ def frontmatter_fields(text):
             if value in _BLOCK_SCALAR_INDICATORS:
                 block_lines = []
                 i += 1
-                while i < len(lines) and (lines[i].startswith((" ", "\t")) or not lines[i].strip()):
+                while i < len(lines) and (
+                    lines[i].startswith((" ", "\t")) or not lines[i].strip()
+                ):
                     block_lines.append(lines[i].strip())
                     i += 1
                 fields[key] = " ".join(bl for bl in block_lines if bl)
@@ -59,6 +62,7 @@ def frontmatter_fields(text):
             fields[key] = _dequote(value)
         i += 1
     return None  # opened with `---` but never closed -> malformed
+
 
 # Defensive loop-guard: bail if this Stop was itself triggered by a hook block.
 try:
@@ -74,8 +78,7 @@ readme_path = root / "README.md"
 
 # Skill dirs = any dir under skills/ holding a SKILL.md -> "./skills/<bucket>/<name>"
 skill_dirs = sorted(
-    "./" + str(p.parent.relative_to(root))
-    for p in root.glob("skills/*/*/SKILL.md")
+    "./" + str(p.parent.relative_to(root)) for p in root.glob("skills/*/*/SKILL.md")
 )
 
 try:
@@ -89,7 +92,9 @@ readme = readme_path.read_text() if readme_path.exists() else ""
 problems = []
 for s in skill_dirs:
     if s not in registered:
-        problems.append(f"  - {s} is missing from .claude-plugin/plugin.json `skills[]`")
+        problems.append(
+            f"  - {s} is missing from .claude-plugin/plugin.json `skills[]`"
+        )
     if f"({s}/SKILL.md)" not in readme:
         problems.append(f"  - {s} has no link in README.md (expected `({s}/SKILL.md)`)")
     fields = frontmatter_fields((root / s / "SKILL.md").read_text())
@@ -98,26 +103,43 @@ for s in skill_dirs:
     else:
         for key in REQUIRED_FRONTMATTER:
             if not fields.get(key):
-                problems.append(f"  - {s}/SKILL.md frontmatter is missing or has an empty `{key}:` field")
+                problems.append(
+                    f"  - {s}/SKILL.md frontmatter is missing or has an empty `{key}:` field"
+                )
         name = fields.get("name", "")
         if name:
-            if not KEBAB_RE.match(name) or name.startswith("-") or name.endswith("-") or "--" in name:
-                problems.append(f"  - {s}/SKILL.md `name: {name}` is not kebab-case (lowercase letters, digits, "
-                                 "hyphens only; no leading/trailing/double hyphens)")
+            if (
+                not KEBAB_RE.match(name)
+                or name.startswith("-")
+                or name.endswith("-")
+                or "--" in name
+            ):
+                problems.append(
+                    f"  - {s}/SKILL.md `name: {name}` is not kebab-case (lowercase letters, digits, "
+                    "hyphens only; no leading/trailing/double hyphens)"
+                )
             if len(name) > NAME_MAX_LEN:
-                problems.append(f"  - {s}/SKILL.md `name:` is {len(name)} chars, over the {NAME_MAX_LEN}-char limit")
+                problems.append(
+                    f"  - {s}/SKILL.md `name:` is {len(name)} chars, over the {NAME_MAX_LEN}-char limit"
+                )
         description = fields.get("description", "")
         if description:
             if "<" in description or ">" in description:
-                problems.append(f"  - {s}/SKILL.md `description:` contains an angle bracket (`<` or `>`), which is disallowed")
+                problems.append(
+                    f"  - {s}/SKILL.md `description:` contains an angle bracket (`<` or `>`), which is disallowed"
+                )
             if len(description) > DESCRIPTION_MAX_LEN:
-                problems.append(f"  - {s}/SKILL.md `description:` is {len(description)} chars, over the "
-                                 f"{DESCRIPTION_MAX_LEN}-char limit (over-limit descriptions are silently truncated "
-                                 "in available_skills, degrading skill-triggering accuracy)")
+                problems.append(
+                    f"  - {s}/SKILL.md `description:` is {len(description)} chars, over the "
+                    f"{DESCRIPTION_MAX_LEN}-char limit (over-limit descriptions are silently truncated "
+                    "in available_skills, degrading skill-triggering accuracy)"
+                )
         unknown = sorted(k for k in fields if k not in ALLOWED_FRONTMATTER_KEYS)
         for key in unknown:
-            print(f"skill-registration WARNING: {s}/SKILL.md has unrecognised frontmatter key `{key}`",
-                  file=sys.stderr)
+            print(
+                f"skill-registration WARNING: {s}/SKILL.md has unrecognised frontmatter key `{key}`",
+                file=sys.stderr,
+            )
 
 # Reverse: registered entries with no SKILL.md on disk
 on_disk = set(skill_dirs)
@@ -126,9 +148,11 @@ for r in registered:
         problems.append(f"  - plugin.json registers {r} but no {r}/SKILL.md exists")
 
 if problems:
-    print("Skill-registration check failed - fix before finishing:\n"
-          + "\n".join(problems)
-          + "\n(CLAUDE.md: every skill must be registered in plugin.json AND README.md, "
-            "with non-empty name + description frontmatter in SKILL.md)",
-          file=sys.stderr)
+    print(
+        "Skill-registration check failed - fix before finishing:\n"
+        + "\n".join(problems)
+        + "\n(CLAUDE.md: every skill must be registered in plugin.json AND README.md, "
+        "with non-empty name + description frontmatter in SKILL.md)",
+        file=sys.stderr,
+    )
     sys.exit(2)  # block the stop, feed message back to Claude

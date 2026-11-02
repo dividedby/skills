@@ -49,7 +49,7 @@ for that step.
 - `grill-with-docs` does not patch reference docs or audit prose; its output
   is always a new decision artifact.
 - The two skills are independently invokable and non-overlapping. A maintainer
-  who wants both (e.g. patch the README *and* decide a new term) runs them in
+  who wants both (e.g. patch the README _and_ decide a new term) runs them in
   sequence, not as alternatives.
 - Future skills that touch docs should self-locate relative to this axis
   (auditing/improvement vs. authoring/new decisions) and not straddle it.

@@ -53,14 +53,14 @@ adjacency. Ownership is by insertion origin:
 
 ### Drift-detection across the seam (amended 2026-06-22)
 
-Owning the *fix* for a surface does not relieve the other skill of *noticing*
+Owning the _fix_ for a surface does not relieve the other skill of _noticing_
 drift in it. `project-claude-config` once reported "config is fine" while the
 label-doc convention (a `setup-dividedby-skills`-owned surface) was drifted, and
 a maintainer trusted that false all-clear. The seam therefore carries a reporting
 rule, not just an editing rule:
 
 - A skill **reports all-clear only for surfaces it owns.** When it observes drift
-  in a surface the *other* skill owns, it must not absorb the fix and must not
+  in a surface the _other_ skill owns, it must not absorb the fix and must not
   report a global "all clear" — it **flags the drift and names the owning skill**
   to hand off. `project-claude-config` gains a lightweight detector for label-doc
   drift (a stray `labels.md`, a short-form/pointer `triage-labels.md`) that flags

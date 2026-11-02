@@ -16,6 +16,7 @@ Infer the repo from `git remote -v` — `gh` does this automatically when run in
 ## Label conventions
 
 When filing or triaging a new issue, apply:
+
 - A **state** label (`needs-triage` if unclear, or `ready-for-agent`/`ready-for-human` if the scope is known)
 - A **category** label (`bug`, `enhancement`, `chore`, or `epic`)
 - A **size** label (`size:S`, `size:M`, `size:L`, or `size:XL`) as a best-effort estimate

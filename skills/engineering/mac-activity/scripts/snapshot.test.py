@@ -3,6 +3,7 @@
 
 Run: python3 -B skills/engineering/mac-activity/scripts/snapshot.test.py
 """
+
 import contextlib
 import io
 import json
@@ -113,7 +114,13 @@ class FakeCommands:
         if cmd == "ps" and "-axww" in args:
             return 0, ARGS, ""
         if cmd == "ps":
-            return 0, f"{ME} {self.state} 00:10\n" if "uid=,state=,etime=" in args else f"{self.state}\n", ""
+            return (
+                0,
+                f"{ME} {self.state} 00:10\n"
+                if "uid=,state=,etime=" in args
+                else f"{self.state}\n",
+                "",
+            )
         if cmd == "lsof":
             return 0, LSOF, ""
         if cmd == "launchctl":
@@ -168,16 +175,41 @@ class Parsing(unittest.TestCase):
         node = "/opt/homebrew/bin/node"
         cases = [
             (node, f"{node} /x/node_modules/.bin/rea mcp", "rea", "mcp"),
-            ("/opt/homebrew/bin/npm", "/opt/homebrew/bin/npm exec rea-agents@6.7.0 mcp", "rea-agents", "mcp"),
-            ("npm exec rea-agents@6.7.0 mcp", "npm exec rea-agents@6.7.0 mcp", "rea-agents", "mcp"),
-            (node, f"{node} /opt/lib/node_modules/typescript/lib/tsserver.js --x", "tsserver", "server"),
-            (node, f"{node} /x/node_modules/@scope/pkg/index.js", "@scope/pkg", "other"),
+            (
+                "/opt/homebrew/bin/npm",
+                "/opt/homebrew/bin/npm exec rea-agents@6.7.0 mcp",
+                "rea-agents",
+                "mcp",
+            ),
+            (
+                "npm exec rea-agents@6.7.0 mcp",
+                "npm exec rea-agents@6.7.0 mcp",
+                "rea-agents",
+                "mcp",
+            ),
+            (
+                node,
+                f"{node} /opt/lib/node_modules/typescript/lib/tsserver.js --x",
+                "tsserver",
+                "server",
+            ),
+            (
+                node,
+                f"{node} /x/node_modules/@scope/pkg/index.js",
+                "@scope/pkg",
+                "other",
+            ),
             (node, f"{node} --max-old-space-size=9 /x/app.js", "app", "other"),
             ("/usr/bin/clang", "/usr/bin/clang -c a.c", "clang", "build"),
             ("/bin/bash", "/bin/bash repro.sh", "bash", "shell"),
             (node, f"{node} /x/node_modules/.bin/tsc --watch", "tsc", "server"),
             (node, f"{node} /x/node_modules/.bin/jest --watchAll", "jest", "server"),
-            (f"{HOME}/.local/share/claude/versions/2.1.309", f"{HOME}/.local/share/claude/versions/2.1.309 -p hi", "claude", "claude"),
+            (
+                f"{HOME}/.local/share/claude/versions/2.1.309",
+                f"{HOME}/.local/share/claude/versions/2.1.309 -p hi",
+                "claude",
+                "claude",
+            ),
             (CLAUDE, f"{CLAUDE} --resume=1", "claude", "claude"),
         ]
         for comm, args, name, kind in cases:
@@ -202,8 +234,16 @@ class Parsing(unittest.TestCase):
             (python, f"{python} -m http.server", "http.server"),
             ("npm exec --token abc", "npm exec --token abc", "npm"),
             ("npm exec --token a/b", "npm exec --token a/b", "npm"),
-            ("npm exec --registry https://h/x?token=abc", "npm exec --registry https://h/x?token=abc", "npm"),
-            ("/opt/homebrew/bin/node --token a/b", "/opt/homebrew/bin/node --token a/b", "node"),
+            (
+                "npm exec --registry https://h/x?token=abc",
+                "npm exec --registry https://h/x?token=abc",
+                "npm",
+            ),
+            (
+                "/opt/homebrew/bin/node --token a/b",
+                "/opt/homebrew/bin/node --token a/b",
+                "node",
+            ),
         ]
         for comm, args, name in cases:
             self.assertEqual(snapshot.name_and_kind(comm, args)[0], name, args)
@@ -211,14 +251,25 @@ class Parsing(unittest.TestCase):
         self.assertEqual(snapshot.app_of("/opt/homebrew/bin/node --token a/b"), "node")
 
     def test_apps(self):
-        self.assertEqual(snapshot.app_of("/Applications/Xcode.app/Contents/Developer/usr/bin/clang"), "Xcode")
+        self.assertEqual(
+            snapshot.app_of("/Applications/Xcode.app/Contents/Developer/usr/bin/clang"),
+            "Xcode",
+        )
         self.assertEqual(snapshot.app_of(CLAUDE), "Claude Code sessions")
-        self.assertEqual(snapshot.app_of("/private/var/run/x/com.apple.SimulatorRuntime/SpringBoard.app/SpringBoard"), "iOS Simulator")
+        self.assertEqual(
+            snapshot.app_of(
+                "/private/var/run/x/com.apple.SimulatorRuntime/SpringBoard.app/SpringBoard"
+            ),
+            "iOS Simulator",
+        )
         self.assertEqual(snapshot.app_of("/usr/libexec/trustd"), "macOS")
 
     def test_folders(self):
         self.assertEqual(snapshot.folder_of(f"{HOME}/repos/a/src"), "~/repos/a")
-        self.assertEqual(snapshot.folder_of(f"{HOME}/repos/a/.claude/worktrees/w/src"), "~/repos/a [worktree w]")
+        self.assertEqual(
+            snapshot.folder_of(f"{HOME}/repos/a/.claude/worktrees/w/src"),
+            "~/repos/a [worktree w]",
+        )
         self.assertIsNone(snapshot.folder_of(HOME))
         self.assertIsNone(snapshot.folder_of("/"))
 
@@ -226,20 +277,50 @@ class Parsing(unittest.TestCase):
         self.assertTrue(snapshot.worktree_gone(f"node {GONE}/x.js", None, "other"))
         self.assertTrue(snapshot.worktree_gone("node", GONE, "other"))
         self.assertFalse(snapshot.worktree_gone(f"zsh -c cd {GONE}", None, "shell"))
-        self.assertFalse(snapshot.worktree_gone("node ~/repos/a/.claude/worktrees/b/x.js", None, "other"))
+        self.assertFalse(
+            snapshot.worktree_gone(
+                "node ~/repos/a/.claude/worktrees/b/x.js", None, "other"
+            )
+        )
         self.assertFalse(snapshot.worktree_gone("node", None, "other"))
 
     def test_system_wide_services_started_by_launchd_are_not_orphans(self):
-        proc = {"pid": 9, "ppid": 1, "mine": True, "kind": "other", "cwd": None, "age_s": 0, "mem": 1}
-        self.assertEqual(snapshot.process_flags(proc, "/Library/Developer/PrivateFrameworks/Sim", "", {}), [])
-        self.assertEqual(snapshot.process_flags(proc, "/opt/homebrew/bin/node", "", {}), ["orphaned"])
-        self.assertEqual(snapshot.process_flags(proc, "/Applications/Foo.app/Contents/MacOS/Foo", "", {9: "application.foo"}), [])
+        proc = {
+            "pid": 9,
+            "ppid": 1,
+            "mine": True,
+            "kind": "other",
+            "cwd": None,
+            "age_s": 0,
+            "mem": 1,
+        }
+        self.assertEqual(
+            snapshot.process_flags(
+                proc, "/Library/Developer/PrivateFrameworks/Sim", "", {}
+            ),
+            [],
+        )
+        self.assertEqual(
+            snapshot.process_flags(proc, "/opt/homebrew/bin/node", "", {}), ["orphaned"]
+        )
+        self.assertEqual(
+            snapshot.process_flags(
+                proc,
+                "/Applications/Foo.app/Contents/MacOS/Foo",
+                "",
+                {9: "application.foo"},
+            ),
+            [],
+        )
 
     def test_inspect_parsers(self):
         footprint = snapshot.parse_footprint(FOOTPRINT)
         self.assertEqual(footprint["footprint_mb"], 224)
         self.assertEqual(footprint["peak_mb"], 245)
-        self.assertEqual([c["category"] for c in footprint["categories"]], ["App-Specific Tag 1", "Malloc Small"])
+        self.assertEqual(
+            [c["category"] for c in footprint["categories"]],
+            ["App-Specific Tag 1", "Malloc Small"],
+        )
         vmmap = snapshot.parse_vmmap(VMMAP)
         self.assertEqual(vmmap["peak_mb"], 246)
         self.assertEqual(vmmap["regions"][0]["region"], "App-Specific Tag 1")
@@ -248,7 +329,19 @@ class Parsing(unittest.TestCase):
 
 class Growth(unittest.TestCase):
     def sample(self, at, mem, cpu=0.0, pid=1, start=1000):
-        return {"at": at, "procs": [{"pid": pid, "start": start, "name": "x", "app": "x", "mem": mem, "cpu": cpu}]}
+        return {
+            "at": at,
+            "procs": [
+                {
+                    "pid": pid,
+                    "start": start,
+                    "name": "x",
+                    "app": "x",
+                    "mem": mem,
+                    "cpu": cpu,
+                }
+            ],
+        }
 
     def test_steady_rise_while_idle(self):
         samples = [self.sample(1000 + i * 600, 400 + i * 40) for i in range(4)]
@@ -258,7 +351,9 @@ class Growth(unittest.TestCase):
 
     def test_busy_process_is_not_called_idle(self):
         samples = [self.sample(1000 + i * 600, 400 + i * 40, cpu=50) for i in range(4)]
-        self.assertEqual(snapshot.growth(samples)["growing"][0]["class"], "growing_busy")
+        self.assertEqual(
+            snapshot.growth(samples)["growing"][0]["class"], "growing_busy"
+        )
 
     def test_large_and_flat_is_not_growth(self):
         result = snapshot.growth([self.sample(1000 + i * 600, 900) for i in range(4)])
@@ -267,19 +362,38 @@ class Growth(unittest.TestCase):
 
     def test_a_sawtooth_is_not_growth(self):
         memory = [400, 900, 450, 950, 500]
-        result = snapshot.growth([self.sample(1000 + i * 600, m) for i, m in enumerate(memory)])
+        result = snapshot.growth(
+            [self.sample(1000 + i * 600, m) for i, m in enumerate(memory)]
+        )
         self.assertEqual(result["growing"], [])
 
     def test_too_few_points_or_too_short_says_nothing(self):
-        self.assertEqual(snapshot.growth([self.sample(1000, 100), self.sample(1600, 900)])["growing"], [])
-        self.assertEqual(snapshot.growth([self.sample(1000 + i * 30, 100 + i * 300) for i in range(4)])["growing"], [])
+        self.assertEqual(
+            snapshot.growth([self.sample(1000, 100), self.sample(1600, 900)])[
+                "growing"
+            ],
+            [],
+        )
+        self.assertEqual(
+            snapshot.growth(
+                [self.sample(1000 + i * 30, 100 + i * 300) for i in range(4)]
+            )["growing"],
+            [],
+        )
 
     def test_start_time_jitter_is_still_the_same_process(self):
-        samples = [self.sample(1000 + i * 600, 400 + i * 40, start=1004 + i) for i in range(4)]
+        samples = [
+            self.sample(1000 + i * 600, 400 + i * 40, start=1004 + i) for i in range(4)
+        ]
         self.assertEqual(len(snapshot.growth(samples)["growing"]), 1)
 
     def test_a_reused_pid_is_a_different_process(self):
-        samples = [self.sample(1000, 100), self.sample(1600, 200), self.sample(2200, 300, start=2100), self.sample(2800, 400, start=2100)]
+        samples = [
+            self.sample(1000, 100),
+            self.sample(1600, 200),
+            self.sample(2200, 300, start=2100),
+            self.sample(2800, 400, start=2100),
+        ]
         self.assertEqual(snapshot.growth(samples)["growing"], [])
 
 
@@ -310,14 +424,31 @@ class Sample(Base):
 
         orphans = {p["pid"]: p for p in result["orphans"]}
         self.assertEqual(set(orphans), {201, 400})
-        self.assertEqual(sorted(orphans[400]["flags"]), ["long_running", "orphaned", "worktree_gone"])
+        self.assertEqual(
+            sorted(orphans[400]["flags"]), ["long_running", "orphaned", "worktree_gone"]
+        )
         self.assertNotIn("orphaned", orphans[201]["flags"])
         self.assertEqual([p["pid"] for p in result["launch_agents"]], [600])
-        self.assertEqual(result["launch_agents"][0]["launch_label"], "com.example.agent")
-        self.assertNotIn("launch_agent", snapshot.process_flags(
-            {"pid": 9, "ppid": 1, "mine": True, "kind": "other", "cwd": None, "age_s": 0, "mem": 1},
-            "/Applications/Foo.app/Contents/MacOS/Foo", "", {9: "application.foo"},
-        ))
+        self.assertEqual(
+            result["launch_agents"][0]["launch_label"], "com.example.agent"
+        )
+        self.assertNotIn(
+            "launch_agent",
+            snapshot.process_flags(
+                {
+                    "pid": 9,
+                    "ppid": 1,
+                    "mine": True,
+                    "kind": "other",
+                    "cwd": None,
+                    "age_s": 0,
+                    "mem": 1,
+                },
+                "/Applications/Foo.app/Contents/MacOS/Foo",
+                "",
+                {9: "application.foo"},
+            ),
+        )
         self.assertEqual([p["pid"] for p in result["top_cpu"]], [203, 700, 200])
 
     def test_command_lines_are_never_printed_or_saved(self):
@@ -372,13 +503,21 @@ class Sample(Base):
     def test_commands_are_only_the_read_only_ones(self):
         self.invoke("sample", "--extras")
         used = {cmd for cmd, _ in self.fake.calls}
-        self.assertLessEqual(used, {"sysctl", "top", "ps", "lsof", "launchctl", "df", "du", "defaults"})
+        self.assertLessEqual(
+            used, {"sysctl", "top", "ps", "lsof", "launchctl", "df", "du", "defaults"}
+        )
         for cmd, args in self.fake.calls:
             if cmd == "defaults":
                 self.assertEqual(args[0], "read")
 
     def test_bounds_are_refused(self):
-        for argv in (["--samples", "0"], ["--samples", "11"], ["--interval", "5"], ["--interval", "301"], ["--samples", "10", "--interval", "100"]):
+        for argv in (
+            ["--samples", "0"],
+            ["--samples", "11"],
+            ["--interval", "5"],
+            ["--interval", "301"],
+            ["--samples", "10", "--interval", "100"],
+        ):
             code, result, _ = self.invoke("sample", *argv)
             self.assertEqual(code, 1, argv)
             self.assertFalse(result["ok"])
@@ -405,16 +544,29 @@ class Inspect(Base):
             self.assertNotIn(tool, [c for c, _ in self.fake.calls])
 
     def approved(self, tool="leaks"):
-        return self.invoke("inspect", "--tool", tool, "--pid", "5", "--approved", "--start", str(int(time.time()) - 10))
+        return self.invoke(
+            "inspect",
+            "--tool",
+            tool,
+            "--pid",
+            "5",
+            "--approved",
+            "--start",
+            str(int(time.time()) - 10),
+        )
 
     def test_approved_tools_need_the_start_time(self):
-        code, result, _ = self.invoke("inspect", "--tool", "leaks", "--pid", "5", "--approved")
+        code, result, _ = self.invoke(
+            "inspect", "--tool", "leaks", "--pid", "5", "--approved"
+        )
         self.assertEqual(code, 1)
         self.assertIn("--start", result["error"])
         self.assertNotIn("leaks", [c for c, _ in self.fake.calls])
 
     def test_a_reused_pid_is_refused(self):
-        code, result, _ = self.invoke("inspect", "--tool", "leaks", "--pid", "5", "--approved", "--start", "1000")
+        code, result, _ = self.invoke(
+            "inspect", "--tool", "leaks", "--pid", "5", "--approved", "--start", "1000"
+        )
         self.assertEqual(code, 1)
         self.assertIn("different process", result["error"])
         self.assertNotIn("leaks", [c for c, _ in self.fake.calls])

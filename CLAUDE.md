@@ -46,8 +46,15 @@ Authoring and code style for markdown skills. See [`CODING_STANDARDS.md`](./CODI
 ### Intake convention
 
 - **"file an idea"** / unqualified **"file an issue"** → append an enriched row (the raw idea **plus the ambient context/links available now**) to the top of the [Idea Inbox](https://github.com/dividedby/skills/issues/91) (`idea-inbox`, one per repo); don't scope it yet.
-- **"file a *tracked* issue"** or a plainly-scoped bug → skip the Inbox, file a `needs-triage` issue directly via `gh`.
+- **"file a _tracked_ issue"** or a plainly-scoped bug → skip the Inbox, file a `needs-triage` issue directly via `gh`.
 
 Capture/drain protocol: [`docs/agents/idea-inbox.md`](./docs/agents/idea-inbox.md).
 
 </important>
+
+## Code style
+
+Formatting uses each tool's standard defaults, the same across all `dividedby` repos. Don't add style options or format by hand. Files format on edit through the post-edit hook.
+
+- **JS, TS, HTML, CSS, JSON, Markdown, YAML:** Prettier defaults. Run `pnpm format`, or `pnpm format:check` to check.
+- **Python:** `ruff format` defaults. Run `ruff format .`.

@@ -17,13 +17,13 @@ a global guard when the run context does not carry the global config — i.e. an
 AFK/CI run of `claude -p` where `~/.claude/` is absent.
 
 **Why.** The no-re-declare rule rests on an unstated assumption: that the global
-harness *travels with every run*. It doesn't. A Consumer running
+harness _travels with every run_. It doesn't. A Consumer running
 `apply-agent-research` under `claude -p` in CI (the motivating case, #74, for
 [goodreads-bot#54]) has no `~/.claude/` — the maintainer's `bash-guard.py` git
 protections simply aren't there. In that context a prose rule ("never
 `push --force`") only lowers the odds of harm; only a project-registered
 PreToolUse hook (exit 2) makes the destructive command impossible. Re-declaring
-at project scope is therefore not duplication — it is the *only* copy that runs.
+at project scope is therefore not duplication — it is the _only_ copy that runs.
 This is the deterministic guard named as guardrail (1) of the HITL→AFK graduation
 in [ADR 0012](./0012-autonomous-loop-and-context-firewall-are-two-composing-skills.md),
 where "the #64 git-guard" is the worked example for hardening an unattended loop.
@@ -47,13 +47,13 @@ bias ([ADR 0001](./0001-buckets-cluster-by-user-intent.md) discourages
 single-purpose proliferation), so it is recorded here only as context, not as the
 decision under trade-off.
 
-**Rejected alternatives.** *Keep the absolute no-re-declare rule* — leaves CI/AFK
+**Rejected alternatives.** _Keep the absolute no-re-declare rule_ — leaves CI/AFK
 runs with zero git protection, defeating the guardrail that makes unattended
-applying loops safe. *Detect global-absence at hook runtime instead of proposing
-unconditionally* — the hook can't reliably introspect whether a global twin will
+applying loops safe. _Detect global-absence at hook runtime instead of proposing
+unconditionally_ — the hook can't reliably introspect whether a global twin will
 also fire, and a doubly-firing exit-2 guard is harmless (same block, one extra
-log line), so gating on a cheap repo-side proxy is simpler and safe. *Narrow the
-carve-out to the git-guard catalog entry's "why" note only* — loses the reusable
+log line), so gating on a cheap repo-side proxy is simpler and safe. _Narrow the
+carve-out to the git-guard catalog entry's "why" note only_ — loses the reusable
 principle; the same logic applies to any guard that must run where global config
 is absent, so it belongs in both skills' Step 1.
 

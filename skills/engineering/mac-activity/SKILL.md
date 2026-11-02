@@ -11,6 +11,7 @@ For when the Mac is slow or short of memory. This skill measures, asks and
 reports. It changes nothing unless the owner approves that one item.
 
 Defers:
+
 - `ListAgents` and `SendMessage` (load with `ToolSearch` if deferred), to ask sessions.
 - `scripts/snapshot.py`, for all sampling. Its self-test is `snapshot.test.py`.
 
@@ -91,11 +92,11 @@ message, tell the owner straight away.
 
 Label each candidate with the one that fits, and say why:
 
-| Label | Meaning |
-|-------|---------|
-| **Large, not growing** | Costs memory but isn't a leak. Never call this a leak. |
-| **Growing, unexplained** | Rose across samples with no cause shown. `growing_busy` may just be working; `growing_idle` is more suspicious. |
-| **Leak evidence** | Kept growing while its workload stayed steady, and `leaks` found leaks or `vmmap` shows the growth in heap regions. |
+| Label                    | Meaning                                                                                                             |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------- |
+| **Large, not growing**   | Costs memory but isn't a leak. Never call this a leak.                                                              |
+| **Growing, unexplained** | Rose across samples with no cause shown. `growing_busy` may just be working; `growing_idle` is more suspicious.     |
+| **Leak evidence**        | Kept growing while its workload stayed steady, and `leaks` found leaks or `vmmap` shows the growth in heap regions. |
 
 `leaks` only sees native allocations, so for Node, Electron and other JavaScript
 processes a clean result is inconclusive. A trend from a few minutes is weak, so say

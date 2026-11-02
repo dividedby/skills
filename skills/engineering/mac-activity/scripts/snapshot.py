@@ -15,6 +15,7 @@ secrets, so nothing here stores or prints them. Samples go in a private folder
 (mode 0700, MAC_ACTIVITY_DIR or ~/.claude/mac-activity). Later runs compare against
 them, which gives an hours-long growth trend without any extra sampling.
 """
+
 import argparse
 import json
 import os
@@ -50,7 +51,19 @@ SHELLS = {"bash", "zsh", "sh", "dash", "fish"}
 PACKAGE_RUNNERS = {"npm", "npx", "pnpm", "pnpx", "uvx"}
 GENERIC_SCRIPTS = {"index", "cli", "main", "server", "bin", "start", "run"}
 VALUELESS_FLAGS = {"-y", "--yes", "-q", "--quiet"}
-INTERPRETER_SWITCHES = {"--inspect", "--trace-warnings", "--expose-gc", "-u", "-B", "-E", "-I", "-s", "-S", "-O", "-OO"}
+INTERPRETER_SWITCHES = {
+    "--inspect",
+    "--trace-warnings",
+    "--expose-gc",
+    "-u",
+    "-B",
+    "-E",
+    "-I",
+    "-s",
+    "-S",
+    "-O",
+    "-OO",
+}
 WATCH_FLAGS = {"--watch", "--watchAll"}
 PACKAGE_RE = re.compile(r"@?[\w.-]+(/[\w.-]+)?(@[\w.-]+)?")
 SAMPLE_FILE_RE = re.compile(r"\d+\.json")
@@ -60,10 +73,30 @@ SERVER_RE = re.compile(
     r"^next-server$|^nodemon$|^webpack|^eslint_d$|^typingsInstaller$)"
 )
 BUILD_NAMES = {
-    "swift-frontend", "swiftc", "swift-build", "xcodebuild", "clang", "clang++", "ld",
-    "cc1", "cc1plus", "rustc", "cargo", "make", "ninja", "ibtool", "actool",
+    "swift-frontend",
+    "swiftc",
+    "swift-build",
+    "xcodebuild",
+    "clang",
+    "clang++",
+    "ld",
+    "cc1",
+    "cc1plus",
+    "rustc",
+    "cargo",
+    "make",
+    "ninja",
+    "ibtool",
+    "actool",
 }
-SYSTEM_PREFIXES = ("/System/", "/usr/", "/sbin/", "/bin/", "/Library/Apple/", "/private/var/")
+SYSTEM_PREFIXES = (
+    "/System/",
+    "/usr/",
+    "/sbin/",
+    "/bin/",
+    "/Library/Apple/",
+    "/private/var/",
+)
 WORKTREE_RE = re.compile(r"(?:^|[\s=\"'])(/[^\s]*?/\.claude/worktrees/[^/\s\"']+)")
 TOP_ROW_RE = re.compile(
     r"^\s*(\d+)\*?\s+(\d+)\s+(.+?)\s+(\d[\d.]*[BKMGT]?)[+-]?\s+(\d[\d.]*[BKMGT]?)[+-]?\s+([\d.]+)\s*$"
@@ -90,7 +123,13 @@ def run(cmd, args, timeout=10):
     the process they paused.
     """
     try:
-        proc = subprocess.Popen([cmd] + args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, errors="replace")
+        proc = subprocess.Popen(
+            [cmd] + args,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            errors="replace",
+        )
     except OSError as err:
         return 127, "", str(err)
     try:
@@ -107,19 +146,28 @@ def run(cmd, args, timeout=10):
 
 
 def data_dir():
-    return os.environ.get("MAC_ACTIVITY_DIR") or os.path.expanduser("~/.claude/mac-activity")
+    return os.environ.get("MAC_ACTIVITY_DIR") or os.path.expanduser(
+        "~/.claude/mac-activity"
+    )
 
 
 def tilde(path):
     home = os.path.expanduser("~")
-    return "~" + path[len(home):] if path and path.startswith(home) else path
+    return "~" + path[len(home) :] if path and path.startswith(home) else path
 
 
 def size_mb(text):
     match = re.fullmatch(r"([\d.]+)\s*([BKMGT]?)B?", text.strip())
     if not match:
         return 0.0
-    scale = {"": 1 / MB, "B": 1 / MB, "K": 1 / 1024, "M": 1, "G": 1024, "T": 1024 * 1024}[match.group(2)]
+    scale = {
+        "": 1 / MB,
+        "B": 1 / MB,
+        "K": 1 / 1024,
+        "M": 1,
+        "G": 1024,
+        "T": 1024 * 1024,
+    }[match.group(2)]
     return float(match.group(1)) * scale
 
 
@@ -128,12 +176,14 @@ def parse_etime(text):
     parts = [int(p) for p in rest.split(":")]
     while len(parts) < 3:
         parts.insert(0, 0)
-    return (int(days) if days else 0) * 86400 + parts[0] * 3600 + parts[1] * 60 + parts[2]
+    return (
+        (int(days) if days else 0) * 86400 + parts[0] * 3600 + parts[1] * 60 + parts[2]
+    )
 
 
 def parse_top(text):
     """Use the last block: top's first block has no CPU figures yet."""
-    block = text[text.rfind("Processes:"):] if "Processes:" in text else text
+    block = text[text.rfind("Processes:") :] if "Processes:" in text else text
     header = {}
     procs = {}
     for line in block.splitlines():
@@ -144,7 +194,9 @@ def parse_top(text):
             compressor = re.search(r"([\d.]+[BKMGT]) compressor", line)
             unused = re.search(r"([\d.]+[BKMGT]) unused", line)
             header["used_mb"] = round(size_mb(used.group(1))) if used else None
-            header["compressor_mb"] = round(size_mb(compressor.group(1))) if compressor else None
+            header["compressor_mb"] = (
+                round(size_mb(compressor.group(1))) if compressor else None
+            )
             header["unused_mb"] = round(size_mb(unused.group(1))) if unused else None
         elif line.startswith("VM:"):
             swapouts = re.search(r"(\d+)\(\d+\) swapouts", line)
@@ -213,12 +265,14 @@ def parse_lsof_cwd(text):
 
 def arguments_after(comm, args):
     """The words after the executable. A path with spaces is why this starts from comm."""
-    tail = args[len(comm):] if args.startswith(comm) else " ".join(args.split()[1:])
+    tail = args[len(comm) :] if args.startswith(comm) else " ".join(args.split()[1:])
     return tail.split()
 
 
 def is_claude(comm):
-    return os.path.basename(comm) == "claude" or bool(re.search(r"/claude/versions/[^/]+$", comm))
+    return os.path.basename(comm) == "claude" or bool(
+        re.search(r"/claude/versions/[^/]+$", comm)
+    )
 
 
 def program_of(comm):
@@ -294,7 +348,11 @@ def script_stem(script):
 
 
 def app_of(comm):
-    if "CoreSimulator" in comm or "SimulatorRuntime" in comm or os.path.basename(comm) == "launchd_sim":
+    if (
+        "CoreSimulator" in comm
+        or "SimulatorRuntime" in comm
+        or os.path.basename(comm) == "launchd_sim"
+    ):
         return "iOS Simulator"
     if "/Application Support/Claude/claude-code/" in comm:
         return "Claude Code sessions"
@@ -344,7 +402,9 @@ def worktree_gone(args, cwd, kind):
 
 def take_machine():
     machine = {}
-    code, out, _ = run("sysctl", ["-n", "vm.swapusage", "vm.loadavg", "hw.memsize", "hw.ncpu"])
+    code, out, _ = run(
+        "sysctl", ["-n", "vm.swapusage", "vm.loadavg", "hw.memsize", "hw.ncpu"]
+    )
     lines = out.splitlines() if code == 0 else []
     if len(lines) >= 4:
         machine["swap_total_mb"], machine["swap_used_mb"] = parse_swap(lines[0])
@@ -352,7 +412,9 @@ def take_machine():
         machine["cpus"] = int(lines[3])
     code, out, _ = run("sysctl", ["-n", "kern.memorystatus_vm_pressure_level"])
     if code == 0 and out.strip().isdigit():
-        machine["pressure"] = {1: "normal", 2: "warning", 4: "critical"}.get(int(out.strip()), out.strip())
+        machine["pressure"] = {1: "normal", 2: "warning", 4: "critical"}.get(
+            int(out.strip()), out.strip()
+        )
     return machine
 
 
@@ -371,7 +433,11 @@ def swap_too_full(pct):
 def take_sample(cwd_cache):
     now = int(time.time())
     machine = take_machine()
-    code, top_text, err = run("top", ["-l", "2", "-s", "1", "-stats", "pid,ppid,command,mem,cmprs,cpu"], timeout=20)
+    code, top_text, err = run(
+        "top",
+        ["-l", "2", "-s", "1", "-stats", "pid,ppid,command,mem,cmprs,cpu"],
+        timeout=20,
+    )
     if code != 0:
         raise Refused(f"top failed, so there is no sample: {err.strip()[:200]}")
     header, top = parse_top(top_text)
@@ -390,20 +456,22 @@ def take_sample(cwd_cache):
     for pid, info in table.items():
         figures = top.get(pid, {"mem": 0, "cmprs": 0, "cpu": 0.0})
         name, kind = name_and_kind(info["comm"], args_table.get(pid, info["comm"]))
-        procs.append({
-            "pid": pid,
-            "ppid": info["ppid"],
-            "start": now - info["age"],
-            "age_s": info["age"],
-            "name": name,
-            "kind": kind,
-            "app": app_of(info["comm"]),
-            "mem": figures["mem"],
-            "cmprs": figures["cmprs"],
-            "cpu": figures["cpu"],
-            "mine": info["uid"] == me,
-            "session": session_of(pid, table),
-        })
+        procs.append(
+            {
+                "pid": pid,
+                "ppid": info["ppid"],
+                "start": now - info["age"],
+                "age_s": info["age"],
+                "name": name,
+                "kind": kind,
+                "app": app_of(info["comm"]),
+                "mem": figures["mem"],
+                "cmprs": figures["cmprs"],
+                "cpu": figures["cpu"],
+                "mine": info["uid"] == me,
+                "session": session_of(pid, table),
+            }
+        )
 
     fill_cwds(procs, cwd_cache)
     for proc in procs:
@@ -431,11 +499,17 @@ def fill_cwds(procs, cache):
 
 def process_flags(proc, comm, args, launch):
     flags = []
-    user_program = proc["mine"] and not comm.startswith(SYSTEM_PREFIXES + ("/Library/",)) and ".app/" not in comm
+    user_program = (
+        proc["mine"]
+        and not comm.startswith(SYSTEM_PREFIXES + ("/Library/",))
+        and ".app/" not in comm
+    )
     if proc["ppid"] == 1 and user_program and proc["pid"] not in launch:
         flags.append("orphaned")
     # `application.*` entries are ordinary open apps, which `apps` already counts
-    if proc["pid"] in launch and not launch[proc["pid"]].startswith(("com.apple.", "application.")):
+    if proc["pid"] in launch and not launch[proc["pid"]].startswith(
+        ("com.apple.", "application.")
+    ):
         flags.append("launch_agent")
     if proc["mine"] and worktree_gone(args, proc["cwd"], proc["kind"]):
         flags.append("worktree_gone")
@@ -448,7 +522,20 @@ def process_flags(proc, comm, args, launch):
 
 def public(proc):
     """What a report or a saved sample may hold about one process."""
-    fields = ("pid", "ppid", "start", "age_s", "name", "kind", "app", "mem", "cmprs", "cpu", "session", "flags")
+    fields = (
+        "pid",
+        "ppid",
+        "start",
+        "age_s",
+        "name",
+        "kind",
+        "app",
+        "mem",
+        "cmprs",
+        "cpu",
+        "session",
+        "flags",
+    )
     out = {k: proc[k] for k in fields if k in proc}
     if proc.get("cwd"):
         out["cwd"] = tilde(proc["cwd"])
@@ -463,7 +550,9 @@ def add_up(procs, key):
         name = key(proc)
         if name is None:
             continue
-        group = groups.setdefault(name, {"name": name, "count": 0, "mem": 0, "cmprs": 0, "cpu": 0.0})
+        group = groups.setdefault(
+            name, {"name": name, "count": 0, "mem": 0, "cmprs": 0, "cpu": 0.0}
+        )
         group["count"] += 1
         group["mem"] += proc["mem"]
         group["cmprs"] += proc["cmprs"]
@@ -483,7 +572,15 @@ def summarize_sessions(procs):
                 continue
             child = children.setdefault(
                 (proc["name"], proc["kind"]),
-                {"name": proc["name"], "kind": proc["kind"], "count": 0, "mem": 0, "cpu": 0.0, "pids": [], "oldest_s": 0},
+                {
+                    "name": proc["name"],
+                    "kind": proc["kind"],
+                    "count": 0,
+                    "mem": 0,
+                    "cpu": 0.0,
+                    "pids": [],
+                    "oldest_s": 0,
+                },
             )
             child["count"] += 1
             child["mem"] += proc["mem"]
@@ -492,16 +589,18 @@ def summarize_sessions(procs):
             if len(child["pids"]) < 8:
                 child["pids"].append(proc["pid"])
         folders = sorted(set(filter(None, (folder_of(p.get("cwd")) for p in tree))))
-        sessions.append({
-            "pid": session,
-            "cwd": tilde(root.get("cwd") or "") or None,
-            "folders": folders,
-            "total_mb": sum(p["mem"] for p in tree),
-            "claude_mb": root["mem"],
-            "processes": len(tree),
-            "cpu": round(sum(p["cpu"] for p in tree), 1),
-            "children": sorted(children.values(), key=lambda c: -c["mem"])[:12],
-        })
+        sessions.append(
+            {
+                "pid": session,
+                "cwd": tilde(root.get("cwd") or "") or None,
+                "folders": folders,
+                "total_mb": sum(p["mem"] for p in tree),
+                "claude_mb": root["mem"],
+                "processes": len(tree),
+                "cpu": round(sum(p["cpu"] for p in tree), 1),
+                "children": sorted(children.values(), key=lambda c: -c["mem"])[:12],
+            }
+        )
     return sorted(sessions, key=lambda s: -s["total_mb"])
 
 
@@ -509,14 +608,34 @@ def session_repeats(procs):
     """The same helper running once per session, which one shared or disabled copy would save."""
     seen = {}
     for proc in procs:
-        if proc["session"] and proc["pid"] != proc["session"] and proc["kind"] in ("mcp", "server"):
-            entry = seen.setdefault(proc["name"], {"name": proc["name"], "kind": proc["kind"], "sessions": set(), "mem": 0, "copies": 0})
+        if (
+            proc["session"]
+            and proc["pid"] != proc["session"]
+            and proc["kind"] in ("mcp", "server")
+        ):
+            entry = seen.setdefault(
+                proc["name"],
+                {
+                    "name": proc["name"],
+                    "kind": proc["kind"],
+                    "sessions": set(),
+                    "mem": 0,
+                    "copies": 0,
+                },
+            )
             entry["sessions"].add(proc["session"])
             entry["mem"] += proc["mem"]
             entry["copies"] += 1
     repeats = [
-        {"name": e["name"], "kind": e["kind"], "sessions": len(e["sessions"]), "copies": e["copies"], "mem": e["mem"]}
-        for e in seen.values() if len(e["sessions"]) >= 2
+        {
+            "name": e["name"],
+            "kind": e["kind"],
+            "sessions": len(e["sessions"]),
+            "copies": e["copies"],
+            "mem": e["mem"],
+        }
+        for e in seen.values()
+        if len(e["sessions"]) >= 2
     ]
     return sorted(repeats, key=lambda r: -r["mem"])
 
@@ -534,7 +653,11 @@ def history(directory):
                 sample = json.load(handle)
         except (OSError, ValueError):
             continue
-        if isinstance(sample, dict) and isinstance(sample.get("procs"), list) and isinstance(sample.get("at"), int):
+        if (
+            isinstance(sample, dict)
+            and isinstance(sample.get("procs"), list)
+            and isinstance(sample.get("at"), int)
+        ):
             samples.append(sample)
     return samples
 
@@ -547,7 +670,11 @@ def save_sample(sample, directory):
     stored = {
         "at": sample["at"],
         "machine": sample["machine"],
-        "procs": [public(p) for p in sample["procs"] if p["mem"] >= STORE_MIN_MB or "orphaned" in p["flags"]],
+        "procs": [
+            public(p)
+            for p in sample["procs"]
+            if p["mem"] >= STORE_MIN_MB or "orphaned" in p["flags"]
+        ],
     }
     path = os.path.join(folder, f"{sample['at']}.json")
     descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
@@ -574,20 +701,36 @@ def growth(samples):
                 continue
             entries = series.setdefault(proc.get("pid"), [])
             # start is worked out from a one-second etime read a moment after `now`, so it jitters
-            entry = next((e for e in entries if abs(e["start"] - start) <= START_JITTER_S), None)
+            entry = next(
+                (e for e in entries if abs(e["start"] - start) <= START_JITTER_S), None
+            )
             if entry is None:
-                entry = {"start": start, "pid": proc.get("pid"), "name": proc.get("name"), "app": proc.get("app"), "session": proc.get("session"), "points": []}
+                entry = {
+                    "start": start,
+                    "pid": proc.get("pid"),
+                    "name": proc.get("name"),
+                    "app": proc.get("app"),
+                    "session": proc.get("session"),
+                    "points": [],
+                }
                 entries.append(entry)
-            entry["points"].append((sample["at"], proc.get("mem", 0), proc.get("cpu", 0)))
+            entry["points"].append(
+                (sample["at"], proc.get("mem", 0), proc.get("cpu", 0))
+            )
     growing, steady = [], []
     for entry in (e for entries in series.values() for e in entries):
         points = sorted(entry["points"])
-        if len(points) < GROW_MIN_POINTS or points[-1][0] - points[0][0] < GROW_MIN_SPAN_S:
+        if (
+            len(points) < GROW_MIN_POINTS
+            or points[-1][0] - points[0][0] < GROW_MIN_SPAN_S
+        ):
             continue
         first, last = points[0][1], points[-1][1]
         span = points[-1][0] - points[0][0]
         steps = list(zip(points, points[1:]))
-        rising = sum(1 for a, b in steps if b[1] >= a[1] * GROW_ALLOWED_DIP) / len(steps)
+        rising = sum(1 for a, b in steps if b[1] >= a[1] * GROW_ALLOWED_DIP) / len(
+            steps
+        )
         cpu = sum(p[2] for p in points) / len(points)
         row = {
             "pid": entry["pid"],
@@ -603,14 +746,20 @@ def growth(samples):
             "cpu_avg": round(cpu, 1),
         }
         delta = last - first
-        if delta >= GROW_MIN_MB and delta >= first * GROW_MIN_FRACTION and rising >= GROW_RISING_STEPS:
+        if (
+            delta >= GROW_MIN_MB
+            and delta >= first * GROW_MIN_FRACTION
+            and rising >= GROW_RISING_STEPS
+        ):
             row["class"] = "growing_idle" if cpu < IDLE_CPU_PCT else "growing_busy"
             growing.append(row)
         elif last >= LARGE_MB:
             row["class"] = "large_not_growing"
             steady.append(row)
     return {
-        "growing": sorted(growing, key=lambda r: r["last_mb"] - r["first_mb"], reverse=True)[:12],
+        "growing": sorted(
+            growing, key=lambda r: r["last_mb"] - r["first_mb"], reverse=True
+        )[:12],
         "large_not_growing": sorted(steady, key=lambda r: -r["last_mb"])[:12],
     }
 
@@ -621,10 +770,16 @@ def extras(machine):
     rows = text.splitlines() if code == 0 else []
     if len(rows) >= 2:
         fields = rows[-1].split()
-        out["disk_free_gb"] = round(int(fields[3]) / (1024 * 1024)) if len(fields) > 3 and fields[3].isdigit() else None
+        out["disk_free_gb"] = (
+            round(int(fields[3]) / (1024 * 1024))
+            if len(fields) > 3 and fields[3].isdigit()
+            else None
+        )
 
     if swap_too_full(swap_pct(machine)):
-        out["sizes_note"] = f"swap is over {HIGH_SWAP_PCT}% full or unreadable, so folder sizes were skipped to avoid adding load"
+        out["sizes_note"] = (
+            f"swap is over {HIGH_SWAP_PCT}% full or unreadable, so folder sizes were skipped to avoid adding load"
+        )
     else:
         sizes = {}
         for path in DU_PATHS:
@@ -636,7 +791,10 @@ def extras(machine):
     out["worktrees"] = count_worktrees()
 
     caps = {}
-    for key in ("IDEBuildOperationMaxNumberOfConcurrentCompileTasks", "PBXNumberOfParallelBuildSubtasks"):
+    for key in (
+        "IDEBuildOperationMaxNumberOfConcurrentCompileTasks",
+        "PBXNumberOfParallelBuildSubtasks",
+    ):
         code, text, _ = run("defaults", ["read", "com.apple.dt.Xcode", key], timeout=5)
         caps[key] = text.strip() if code == 0 else None
     out["xcode_parallel_caps"] = caps
@@ -645,7 +803,12 @@ def extras(machine):
     try:
         with open(log, encoding="utf-8", errors="replace") as handle:
             lines = sum(1 for _ in handle)
-        out["reap_log"] = {"lines": lines, "last_write": datetime.fromtimestamp(os.path.getmtime(log)).isoformat(timespec="minutes")}
+        out["reap_log"] = {
+            "lines": lines,
+            "last_write": datetime.fromtimestamp(os.path.getmtime(log)).isoformat(
+                timespec="minutes"
+            ),
+        }
     except OSError:
         out["reap_log"] = None
     return out
@@ -676,7 +839,10 @@ def count_worktrees():
             continue
         if entries:
             oldest = min(e.stat().st_mtime for e in entries)
-            found[repo] = {"count": len(entries), "oldest_days": round((now - oldest) / 86400)}
+            found[repo] = {
+                "count": len(entries),
+                "oldest_days": round((now - oldest) / 86400),
+            }
     return found
 
 
@@ -694,7 +860,11 @@ def build_summary(samples, directory, older, extra):
         return "Claude Code sessions" if proc["session"] else proc["app"]
 
     def loose_folder(proc):
-        return folder_of(proc.get("cwd")) if not proc["session"] and proc["mine"] and proc["app"] != "macOS" else None
+        return (
+            folder_of(proc.get("cwd"))
+            if not proc["session"] and proc["mine"] and proc["app"] != "macOS"
+            else None
+        )
 
     top_mem = sorted(procs, key=lambda p: -p["mem"])[:20]
     top_cpu = [p for p in sorted(procs, key=lambda p: -p["cpu"])[:8] if p["cpu"] >= 10]
@@ -706,12 +876,30 @@ def build_summary(samples, directory, older, extra):
         "sessions": summarize_sessions(procs),
         "repeated_per_session": session_repeats(procs),
         "folders": add_up(procs, loose_folder)[:10],
-        "orphans": [public(p) for p in procs if "orphaned" in p["flags"] or "worktree_gone" in p["flags"]],
-        "launch_agents": [public(p) for p in sorted(procs, key=lambda p: -p["mem"]) if "launch_agent" in p["flags"]][:10],
-        "long_running": [public(p) for p in sorted(procs, key=lambda p: -p["mem"]) if "long_running" in p["flags"]][:10],
+        "orphans": [
+            public(p)
+            for p in procs
+            if "orphaned" in p["flags"] or "worktree_gone" in p["flags"]
+        ],
+        "launch_agents": [
+            public(p)
+            for p in sorted(procs, key=lambda p: -p["mem"])
+            if "launch_agent" in p["flags"]
+        ][:10],
+        "long_running": [
+            public(p)
+            for p in sorted(procs, key=lambda p: -p["mem"])
+            if "long_running" in p["flags"]
+        ][:10],
         "top_memory": [public(p) for p in top_mem],
         "top_cpu": [public(p) for p in top_cpu],
-        "growth": growth(older + [{"at": s["at"], "procs": [public(p) for p in s["procs"]]} for s in samples]),
+        "growth": growth(
+            older
+            + [
+                {"at": s["at"], "procs": [public(p) for p in s["procs"]]}
+                for s in samples
+            ]
+        ),
         "history_samples": len(older),
         "data_dir": tilde(directory),
     }
@@ -726,7 +914,9 @@ def cmd_sample(options):
     if not MIN_INTERVAL <= options.interval <= MAX_INTERVAL:
         raise Refused(f"--interval must be {MIN_INTERVAL} to {MAX_INTERVAL} seconds")
     if options.samples * options.interval > MAX_RUN_SECONDS:
-        raise Refused(f"--samples x --interval must stay within {MAX_RUN_SECONDS} seconds")
+        raise Refused(
+            f"--samples x --interval must stay within {MAX_RUN_SECONDS} seconds"
+        )
     directory = data_dir()
     os.makedirs(directory, mode=0o700, exist_ok=True)
     older = history(directory)
@@ -752,9 +942,13 @@ def parse_footprint(text):
         out["peak_mb"] = round(size_mb(peak.group(1)))
     regions = []
     for line in text.splitlines():
-        row = re.match(r"^\s*([\d.]+ \w+)\s+[\d.]+ \w+\s+[\d.]+ \w+\s+\d+\s+(.+?)\s*$", line)
+        row = re.match(
+            r"^\s*([\d.]+ \w+)\s+[\d.]+ \w+\s+[\d.]+ \w+\s+\d+\s+(.+?)\s*$", line
+        )
         if row and row.group(2) != "TOTAL":
-            regions.append({"category": row.group(2), "dirty_mb": round(size_mb(row.group(1)), 1)})
+            regions.append(
+                {"category": row.group(2), "dirty_mb": round(size_mb(row.group(1)), 1)}
+            )
     out["categories"] = sorted(regions, key=lambda r: -r["dirty_mb"])[:6]
     return out
 
@@ -769,11 +963,16 @@ def parse_vmmap(text):
         out["peak_mb"] = round(size_mb(peak.group(1)))
     regions = []
     for line in text.split("REGION TYPE", 1)[-1].splitlines():
-        row = re.match(r"^(\S.*?)\s+(\S+[BKMGT])\s+(\S+[BKMGT])\s+(\S+[BKMGT])\s+(\S+[BKMGT])\s+\S+\s+\S+\s+\S+\s+\d+\s*$", line)
+        row = re.match(
+            r"^(\S.*?)\s+(\S+[BKMGT])\s+(\S+[BKMGT])\s+(\S+[BKMGT])\s+(\S+[BKMGT])\s+\S+\s+\S+\s+\S+\s+\d+\s*$",
+            line,
+        )
         if row and not row.group(1).startswith("TOTAL"):
             dirty = size_mb(row.group(4)) + size_mb(row.group(5))
             if dirty:
-                regions.append({"region": row.group(1), "dirty_plus_swapped_mb": round(dirty, 1)})
+                regions.append(
+                    {"region": row.group(1), "dirty_plus_swapped_mb": round(dirty, 1)}
+                )
         elif row:
             break
     out["regions"] = sorted(regions, key=lambda r: -r["dirty_plus_swapped_mb"])[:6]
@@ -784,21 +983,49 @@ def parse_leaks(text):
     row = re.search(r"(\d+) leaks? for (\d+) total leaked bytes", text)
     if not row:
         return {"tool": "leaks", "leaks": None}
-    return {"tool": "leaks", "leaks": int(row.group(1)), "leaked_mb": round(int(row.group(2)) / MB, 1)}
+    return {
+        "tool": "leaks",
+        "leaks": int(row.group(1)),
+        "leaked_mb": round(int(row.group(2)) / MB, 1),
+    }
 
 
 def parse_heap(text):
     row = re.search(r"All zones: (\d+) nodes \((\d+) bytes\)", text)
     if not row:
         return {"tool": "heap", "nodes": None}
-    return {"tool": "heap", "nodes": int(row.group(1)), "allocated_mb": round(int(row.group(2)) / MB, 1)}
+    return {
+        "tool": "heap",
+        "nodes": int(row.group(1)),
+        "allocated_mb": round(int(row.group(2)) / MB, 1),
+    }
 
 
 INSPECT_TOOLS = {
-    "footprint": {"flags": ["-p"], "timeout": 15, "parse": parse_footprint, "figure": "footprint_mb"},
-    "vmmap": {"flags": ["--summary"], "timeout": 20, "parse": parse_vmmap, "figure": "footprint_mb"},
-    "heap": {"flags": ["--quiet"], "timeout": 60, "parse": parse_heap, "figure": "nodes"},
-    "leaks": {"flags": ["--quiet"], "timeout": 60, "parse": parse_leaks, "figure": "leaks"},
+    "footprint": {
+        "flags": ["-p"],
+        "timeout": 15,
+        "parse": parse_footprint,
+        "figure": "footprint_mb",
+    },
+    "vmmap": {
+        "flags": ["--summary"],
+        "timeout": 20,
+        "parse": parse_vmmap,
+        "figure": "footprint_mb",
+    },
+    "heap": {
+        "flags": ["--quiet"],
+        "timeout": 60,
+        "parse": parse_heap,
+        "figure": "nodes",
+    },
+    "leaks": {
+        "flags": ["--quiet"],
+        "timeout": 60,
+        "parse": parse_leaks,
+        "figure": "leaks",
+    },
 }
 
 
@@ -808,27 +1035,44 @@ def cmd_inspect(options):
     if pid <= 1:
         raise Refused("--pid must be a process number above 1")
     if name in TOOLS_NEEDING_APPROVAL and not options.approved:
-        raise Refused(f"{name} pauses the process and can pull swapped memory back in, so it needs the owner's OK for this process, then --approved")
+        raise Refused(
+            f"{name} pauses the process and can pull swapped memory back in, so it needs the owner's OK for this process, then --approved"
+        )
     if name in TOOLS_NEEDING_APPROVAL and options.start is None:
-        raise Refused(f"{name} needs --start, the start time from the sample, to be sure this is the process the owner approved")
+        raise Refused(
+            f"{name} needs --start, the start time from the sample, to be sure this is the process the owner approved"
+        )
     code, out, _ = run("ps", ["-o", "uid=,state=,etime=", "-p", str(pid)])
     fields = out.split()
     if code != 0 or len(fields) < 3:
         raise Refused(f"process {pid} isn't running")
     if int(fields[0]) != os.getuid():
-        raise Refused(f"process {pid} belongs to another user, and inspecting it would need root")
-    if options.start is not None and abs(time.time() - parse_etime(fields[2]) - options.start) > START_JITTER_S:
-        raise Refused(f"process {pid} started at a different time, so it's a different process using the same number")
+        raise Refused(
+            f"process {pid} belongs to another user, and inspecting it would need root"
+        )
+    if (
+        options.start is not None
+        and abs(time.time() - parse_etime(fields[2]) - options.start) > START_JITTER_S
+    ):
+        raise Refused(
+            f"process {pid} started at a different time, so it's a different process using the same number"
+        )
     if name == "vmmap":
         pct = swap_pct(take_machine())
         if swap_too_full(pct):
-            raise Refused(f"swap is {'unreadable' if pct is None else f'{pct}% full'}; vmmap could add to the problem, so try again when swap is at or below {HIGH_SWAP_PCT}%")
+            raise Refused(
+                f"swap is {'unreadable' if pct is None else f'{pct}% full'}; vmmap could add to the problem, so try again when swap is at or below {HIGH_SWAP_PCT}%"
+            )
     code, text, err = run(name, tool["flags"] + [str(pid)], timeout=tool["timeout"])
     result = tool["parse"](text)
     result["pid"] = pid
     # Checked before any failure too: a tool that timed out is the likeliest to leave a process paused
     _, state, _ = run("ps", ["-o", "state=", "-p", str(pid)])
-    paused = f"process {pid} is still paused after {name}; tell the owner" if state.strip().startswith("T") else None
+    paused = (
+        f"process {pid} is still paused after {name}; tell the owner"
+        if state.strip().startswith("T")
+        else None
+    )
     # `leaks` exits 1 when it finds leaks, so only a missing figure counts as failure
     if result.get(tool["figure"]) is None:
         message = (err.strip().splitlines() or [f"exit code {code}"])[0]
@@ -854,7 +1098,9 @@ def main(argv=None):
     inspect.add_argument("--approved", action="store_true")
     options = parser.parse_args(argv)
     try:
-        result = cmd_sample(options) if options.command == "sample" else cmd_inspect(options)
+        result = (
+            cmd_sample(options) if options.command == "sample" else cmd_inspect(options)
+        )
     except Refused as err:
         print(json.dumps({"ok": False, "error": str(err)}))
         return 1
