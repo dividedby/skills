@@ -54,7 +54,7 @@ Capture/drain protocol: [`docs/agents/idea-inbox.md`](./docs/agents/idea-inbox.m
 
 ## Code style
 
-Formatting uses each tool's standard defaults, the same across all `dividedby` repos. Don't add style options or format by hand. Files format on edit through the post-edit hook.
+Formatting uses each tool's standard defaults, the same across all `dividedby` repos. Don't add style options or format by hand. Files format on edit through the post-edit hook. CI checks it in `.github/workflows/format.yml`.
 
 - **JS, TS, HTML, CSS, JSON, Markdown, YAML:** Prettier defaults. Run `pnpm format`, or `pnpm format:check` to check.
 - **Python:** `ruff format` defaults. Run `ruff format .`.
