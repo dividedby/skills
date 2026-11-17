@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Self-test for git-guard.py.
+"""Self-test for destructive-git-guard.py.
 
 Runs the hook as a subprocess with a synthetic PreToolUse payload on stdin and
 asserts exit 2 (blocked) for destructive git and exit 0 (allowed) for benign
 commands and non-git commands. This test is the feedback gate for the guard:
-run it directly (`./git-guard.test.py`) — no test framework required.
+run it directly (`./destructive-git-guard.test.py`) — no test framework required.
 """
 
 import json
@@ -13,7 +13,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-HOOK = Path(__file__).with_name("git-guard.py")
+HOOK = Path(__file__).with_name("destructive-git-guard.py")
 
 # (command, should_be_blocked)
 BLOCK = True
@@ -116,10 +116,10 @@ def main() -> int:
         check(cmd, ALLOW, unattended=False)
 
     if failures:
-        print("git-guard self-test FAILED:\n" + "\n".join(failures))
+        print("destructive-git-guard self-test FAILED:\n" + "\n".join(failures))
         return 1
     total = len(CASES) + 2 * len(BRANCH_DELETE_CASES)
-    print(f"git-guard self-test passed ({total} cases)")
+    print(f"destructive-git-guard self-test passed ({total} cases)")
     return 0
 
 
