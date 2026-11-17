@@ -10,11 +10,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
 - `idea-intake`: a new skill that fires on "file an idea" or an unqualified "file an issue" in any repo. It adds an enriched row (the idea, context and links, one sentence of why) to the top of that repo's Idea Inbox issue without scoping it. "File a tracked issue" or a plainly-scoped bug skips the Inbox and files a `needs-triage` issue. It reads the repo's `docs/agents/idea-inbox.md` first, which wins over the skill. Replaces the Intake convention block copied into each project's `CLAUDE.md`. `docs/agents/idea-inbox.md` now names the skill as the capture path and stays the protocol and drain source.
 - `mac-activity`: a new user-invoked skill for when a Mac is slow or short of memory. It measures memory by app and by Claude session, asks the running sessions what can stop, looks for leaks and labels the evidence, and ends with a ranked list you approve item by item. It stops nothing on its own, and its reports stay private. A session may ask you to confirm in that session, and you close whole sessions yourself. macOS only.
+- ADR 0044: capture for the Idea Inbox moves from per-repo `CLAUDE.md` text to the `idea-intake` skill; the repo's `docs/agents/idea-inbox.md` stays the protocol and overrides the skill; drain stays a convention.
 - ADR 0043: `mac-activity` reports and asks, and bundles a tested stdlib sampler.
 - ADR 0042: `repo-audit` becomes a read-only audit that publishes one report page; supersedes the `repo-audit` amendment in ADR 0041.
 
 ### Changed
 
+- `CLAUDE.md`: trimmed from 60 to 28 lines. The Intake convention block is now a one-line pointer to the Idea Inbox, there is a new Checks section listing the format checks and the three self-tests, and the tracker, labels and changelog blocks are folded into one Conventions list. The `docs/agents/idea-inbox.md` stance changed with it: capture goes through the `idea-intake` skill, and drain stays a convention.
 - `repo-audit`: **Breaking:** now a read-only audit that changes nothing in the repo and files no issues. Four lenses run in parallel: code and performance (with measured benchmarks); architecture, repo and docs; design (with screenshots and a mockup spec); and market research. Every high finding is re-checked at its source before the result is published as one private report page with verdicts, a Now/Next/Later plan, screenshots, mockups, and what was and was not verified. Run `/to-tickets` on the plan if you want issues.
 
 ### Removed

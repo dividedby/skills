@@ -13,8 +13,9 @@ A bucket's own `README.md` is **not** required by default. Add one only when eit
 
 ## Conventions
 
-Cross-cutting rules that multiple skills follow. Not invokable — read by
-skills during their work. See [`CONTEXT.md`](./CONTEXT.md) for vocabulary.
+Cross-cutting rules that multiple skills follow. The rules themselves aren't
+invokable — skills read them during their work (the Ideas bullet points at the
+`idea-intake` skill, which is). See [`CONTEXT.md`](./CONTEXT.md) for vocabulary.
 
 - **Issue tracker, labels, domain docs:** GitHub Issues via `gh` ([`docs/agents/issue-tracker.md`](./docs/agents/issue-tracker.md)); triage labels `needs-triage`, `ready-for-agent`, `ready-for-human`, `blocked`, `wontfix` ([`docs/agents/labels.md`](./docs/agents/labels.md)); single-context `CONTEXT.md` + `docs/adr/` ([`docs/agents/domain.md`](./docs/agents/domain.md)).
 - **Ideas:** Idea Inbox is issue #91 (label `idea-inbox`); protocol in [`docs/agents/idea-inbox.md`](./docs/agents/idea-inbox.md).

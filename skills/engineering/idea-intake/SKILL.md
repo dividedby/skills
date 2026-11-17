@@ -24,16 +24,13 @@ Parse `owner/repo` from `git remote get-url origin` only (`gh repo view` is Grap
 
 ## Capture to the Inbox
 
-1. Find the Inbox: `gh api 'repos/{owner}/{repo}/issues?labels=idea-inbox&state=open'`. Use the one open issue; if none, say so and ask before creating one.
-2. Fetch the current body, then write a new body with one unchecked item at the **top** of `## Ideas` (newest on top). Leave everything else untouched, including the hidden breadcrumb comment on the first line.
-3. Write the row from what is known now:
-   - The raw idea, in the user's words.
-   - Ambient context: the source file, issue, PR or link that prompted it.
-   - One sentence on why it matters.
+1. Find the Inbox: `gh api 'repos/{owner}/{repo}/issues?labels=idea-inbox&state=open'`. Exactly one open issue is the Inbox. With zero or more than one, stop and ask the user which to use (or whether to create one).
+2. Read its current body, then write a new body with one unchecked item at the **top** of `## Ideas`. Leave everything else untouched, including the hidden breadcrumb comment on the first line.
+3. Build the row as the Capture section of the repo's `docs/agents/idea-inbox.md` describes (idea, ambient context and links, why). Without that doc, use the raw idea, the source that prompted it, and one sentence of why.
 4. Update with `gh api -X PATCH repos/{owner}/{repo}/issues/<n> -F body=@<file>`. Write the body file with the Write tool, not a heredoc.
 5. Confirm with the issue link and the row added.
 
-Don't grill, expand or scope the idea. Don't add operating instructions to the issue body; it is human-facing.
+Don't grill, expand or scope the idea.
 
 ## File a tracked issue
 
