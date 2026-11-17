@@ -128,7 +128,7 @@ def main() -> int:
     label = find_block(cmd)
     if label:
         print(
-            f"Blocked by project git-guard: {label}. This is disallowed in "
+            f"Blocked by project destructive-git-guard: {label}. This is disallowed in "
             f"unattended runs; ask the user before running it.",
             file=sys.stderr,
         )

@@ -16,7 +16,7 @@ push and PR:
 - `harness-tests.yml` — the de-vendored proposal-loop harness (`harness/cli.py`,
   21 stdlib tests).
 - `hook-self-tests.yml` — the hooks' own self-tests
-  (`check-skill-registration`, `git-guard`).
+  (`check-skill-registration`, `destructive-git-guard`).
 
 The proposal's only delta over these is **when** the signal surfaces: turn-end
 (Stop hook) vs. post-push (CI). For a single-maintainer repo where the agent
