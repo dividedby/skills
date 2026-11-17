@@ -23,5 +23,17 @@
         ]
       }
     ]
+  },
+  "permissions": {
+    "allow": [
+      "Bash(pnpm format:check)",
+      "Bash(ruff format --check .)",
+      "Bash(python3 .claude/hooks/check-skill-registration.test.py)",
+      "Bash(python3 .claude/hooks/git-guard.test.py)",
+      "Bash(python3 docs/agents/labels.test.py)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)"
+    ]
   }
 }

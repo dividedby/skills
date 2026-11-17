@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
 ### Added
 
+- `idea-intake`: a new skill that fires on "file an idea" or an unqualified "file an issue" in any repo. It adds an enriched row (the idea, context and links, one sentence of why) to the top of that repo's Idea Inbox issue without scoping it. "File a tracked issue" or a plainly-scoped bug skips the Inbox and files a `needs-triage` issue. It reads the repo's `docs/agents/idea-inbox.md` first, which wins over the skill. Replaces the Intake convention block copied into each project's `CLAUDE.md`. `docs/agents/idea-inbox.md` now names the skill as the capture path and stays the protocol and drain source.
 - `mac-activity`: a new user-invoked skill for when a Mac is slow or short of memory. It measures memory by app and by Claude session, asks the running sessions what can stop, looks for leaks and labels the evidence, and ends with a ranked list you approve item by item. It stops nothing on its own, and its reports stay private. A session may ask you to confirm in that session, and you close whole sessions yourself. macOS only.
 - ADR 0043: `mac-activity` reports and asks, and bundles a tested stdlib sampler.
 - ADR 0042: `repo-audit` becomes a read-only audit that publishes one report page; supersedes the `repo-audit` amendment in ADR 0041.

@@ -7,3 +7,4 @@ coverage
 .next
 *.min.js
 *.min.css
+.pytest_cache

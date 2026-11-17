@@ -6,55 +6,23 @@ Each skill is registered in `.claude-plugin/plugin.json` (`skills[]`) and linked
 
 A bucket's own `README.md` is **not** required by default. Add one only when either: (a) the repo has ≥3 buckets and the top-level README is getting long, or (b) a single bucket holds ≥3 skills and a localized index aids navigation.
 
+## Checks
+
+- `pnpm format:check` (Prettier; `pnpm format` fixes) and `ruff format --check .` — both run in CI (`.github/workflows/format.yml`).
+- Hook and script self-tests: `python3 .claude/hooks/check-skill-registration.test.py`, `python3 .claude/hooks/git-guard.test.py`, `python3 docs/agents/labels.test.py`. Plain `python3`, no pytest needed.
+
 ## Conventions
 
 Cross-cutting rules that multiple skills follow. Not invokable — read by
 skills during their work. See [`CONTEXT.md`](./CONTEXT.md) for vocabulary.
 
-### Issue tracker
-
-Issues live in GitHub Issues via the `gh` CLI. See `docs/agents/issue-tracker.md`.
-
-### Triage labels
-
-Default vocabulary: `needs-triage`, `ready-for-agent`, `ready-for-human`, `blocked`, `wontfix`. See `docs/agents/labels.md`.
-
-### Domain docs
-
-Single-context: one `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.
-
-### Skill editorial intent
-
-Skills in this repo prescribe at the principle level; code examples are illustrative sketches, not literal rules. See [`docs/adr/0002-design-skills-prescribe-at-principle-level.md`](./docs/adr/0002-design-skills-prescribe-at-principle-level.md).
-
-Skills here are user-invoked orchestrators by default — each `SKILL.md` carries `disable-model-invocation: true`, so its description doesn't load into every session's context.
-
-### Skill authoring
-
-Composition patterns (which wrapper calls which sub-skill) and worked editorial-judgement examples (ADR 0002 edge cases) live in [`docs/agents/skill-authoring.md`](./docs/agents/skill-authoring.md). Read it when authoring a new skill or deciding whether to add a code example to an existing skill.
-
-### Changelog
-
-Notable changes land in the top-level [`CHANGELOG.md`](./CHANGELOG.md) (Keep a Changelog format) — the human-readable record the version-bump / roll-up step updates. It tracks the published surface: the skills catalog (and, through 2.0.0, the `harness/` Python). What a good entry says — audience, the six categories, `## [Unreleased]` discipline, the 2.0.0 conventions — is the fleet rubric in [`docs/agents/changelog-guideline.md`](./docs/agents/changelog-guideline.md); the hand-maintained (not semantic-release) decision is [ADR 0034](./docs/adr/0034-fleet-changelogs-are-hand-maintained-and-llm-evaluated.md).
-
-### Coding standards
-
-Authoring and code style for markdown skills. See [`CODING_STANDARDS.md`](./CODING_STANDARDS.md).
-
-<important if="filing an issue or idea">
-
-### Intake convention
-
-- **"file an idea"** / unqualified **"file an issue"** → append an enriched row (the raw idea **plus the ambient context/links available now**) to the top of the [Idea Inbox](https://github.com/dividedby/skills/issues/91) (`idea-inbox`, one per repo); don't scope it yet.
-- **"file a _tracked_ issue"** or a plainly-scoped bug → skip the Inbox, file a `needs-triage` issue directly via `gh`.
-
-Capture/drain protocol: [`docs/agents/idea-inbox.md`](./docs/agents/idea-inbox.md).
-
-</important>
+- **Issue tracker, labels, domain docs:** GitHub Issues via `gh` ([`docs/agents/issue-tracker.md`](./docs/agents/issue-tracker.md)); triage labels `needs-triage`, `ready-for-agent`, `ready-for-human`, `blocked`, `wontfix` ([`docs/agents/labels.md`](./docs/agents/labels.md)); single-context `CONTEXT.md` + `docs/adr/` ([`docs/agents/domain.md`](./docs/agents/domain.md)).
+- **Ideas:** Idea Inbox is issue #91 (label `idea-inbox`); protocol in [`docs/agents/idea-inbox.md`](./docs/agents/idea-inbox.md).
+- **Skill editorial intent:** skills prescribe at the principle level; code examples are illustrative sketches, not literal rules. See [`docs/adr/0002-design-skills-prescribe-at-principle-level.md`](./docs/adr/0002-design-skills-prescribe-at-principle-level.md).
+- **Invocation:** skills here are user-invoked orchestrators by default — each `SKILL.md` carries `disable-model-invocation: true`, so its description doesn't load into every session's context. A skill that must fire on a phrase (`idea-intake`) omits the flag.
+- **Skill authoring:** composition patterns and worked editorial-judgement examples live in [`docs/agents/skill-authoring.md`](./docs/agents/skill-authoring.md). Read it when authoring a new skill or deciding whether to add a code example to an existing skill. Markdown style: [`CODING_STANDARDS.md`](./CODING_STANDARDS.md).
+- **Changelog:** notable changes land in [`CHANGELOG.md`](./CHANGELOG.md) (Keep a Changelog; hand-maintained per [ADR 0034](./docs/adr/0034-fleet-changelogs-are-hand-maintained-and-llm-evaluated.md)). It tracks the published surface: the skills catalog (and, through 2.0.0, the `harness/` Python). Entry rubric: [`docs/agents/changelog-guideline.md`](./docs/agents/changelog-guideline.md).
 
 ## Code style
 
-Formatting uses each tool's standard defaults, the same across all `dividedby` repos. Don't add style options or format by hand. Files format on edit through the post-edit hook. CI checks it in `.github/workflows/format.yml`.
-
-- **JS, TS, HTML, CSS, JSON, Markdown, YAML:** Prettier defaults. Run `pnpm format`, or `pnpm format:check` to check.
-- **Python:** `ruff format` defaults. Run `ruff format .`.
+Formatting uses each tool's standard defaults; don't add style options or format by hand. Files format on edit through the post-edit hook. Check with `pnpm format:check`.

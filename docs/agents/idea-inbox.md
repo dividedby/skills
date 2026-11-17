@@ -4,8 +4,11 @@ The canonical, single source for how an agent operates the repo's **Idea Inbox**
 issue (label `idea-inbox`, one per repo). The Inbox body is **human-facing** — the
 live `## Ideas` list plus a collapsed `✅ Actioned` window — and carries no
 operating instructions; those live here, discovered via the body's breadcrumb.
-The Inbox stays a **convention**, not a skill or a hook: this doc plus the
-breadcrumb are the discovery path.
+Capture goes through the `idea-intake` skill
+(`skills/engineering/idea-intake`), which defers to this doc; this doc stays the
+protocol and drain source, and a repo's own copy overrides the skill. Drain stays
+a convention, not a skill or a hook: this doc plus the breadcrumb are the
+discovery path.
 
 ## Discovery — the breadcrumb
 
@@ -16,7 +19,7 @@ The Inbox body's first line is a hidden HTML-comment breadcrumb:
 ```
 
 `drain=docs/agents/idea-inbox.md` points an agent that reads the raw body — without
-entering via the intake convention — at this doc.
+entering via the `idea-intake` skill — at this doc.
 
 ## Capture (enriched intake)
 
