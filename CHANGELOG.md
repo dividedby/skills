@@ -16,7 +16,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
 ### Changed
 
-- `CLAUDE.md`: trimmed from 60 to 28 lines. The Intake convention block is now a one-line pointer to the Idea Inbox, there is a new Checks section listing the format checks and the three self-tests, and the tracker, labels and changelog blocks are folded into one Conventions list. The `docs/agents/idea-inbox.md` stance changed with it: capture goes through the `idea-intake` skill, and drain stays a convention.
 - `repo-audit`: **Breaking:** now a read-only audit that changes nothing in the repo and files no issues. Four lenses run in parallel: code and performance (with measured benchmarks); architecture, repo and docs; design (with screenshots and a mockup spec); and market research. Every high finding is re-checked at its source before the result is published as one private report page with verdicts, a Now/Next/Later plan, screenshots, mockups, and what was and was not verified. Run `/to-tickets` on the plan if you want issues.
 
 ### Removed
