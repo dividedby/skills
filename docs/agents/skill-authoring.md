@@ -18,7 +18,7 @@ sub-skills, and when that composition fires.
 **File:** `~/.claude/skills/grill-with-docs/SKILL.md` (globally installed)
 
 A relentless interview loop, one question at a time, until shared understanding
-is reached — and it writes down what crystallises: pins terms into `CONTEXT.md`
+is reached — and it writes down what crystallises: pins terms into `GLOSSARY.md`
 and records hard decisions as ADRs in `docs/adr/`.
 
 **Trigger for composition:** any time domain vocabulary needs to be established or
