@@ -61,5 +61,5 @@ and will block unregistered skills.
 - Lead with the frontmatter block; follow with a `# Title` heading, then the
   skill body.
 - Reference other docs by relative path from the repo root. Prefer linking over
-  re-stating content that already lives in `CLAUDE.md`, `CONTEXT.md`, or an ADR.
+  re-stating content that already lives in `CLAUDE.md`, `GLOSSARY.md`, or an ADR.
 - Defers / dependencies go in a short `Defers:` block near the top, not buried.

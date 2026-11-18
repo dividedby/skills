@@ -15,9 +15,9 @@ A bucket's own `README.md` is **not** required by default. Add one only when eit
 
 Cross-cutting rules that multiple skills follow. The rules themselves aren't
 invokable — skills read them during their work (the Ideas bullet points at the
-`idea-intake` skill, which is). See [`CONTEXT.md`](./CONTEXT.md) for vocabulary.
+`idea-intake` skill, which is). See [`GLOSSARY.md`](./GLOSSARY.md) for vocabulary.
 
-- **Issue tracker, labels, domain docs:** GitHub Issues via `gh` ([`docs/agents/issue-tracker.md`](./docs/agents/issue-tracker.md)); triage labels `needs-triage`, `ready-for-agent`, `ready-for-human`, `blocked`, `wontfix` ([`docs/agents/labels.md`](./docs/agents/labels.md)); single-context `CONTEXT.md` + `docs/adr/` ([`docs/agents/domain.md`](./docs/agents/domain.md)).
+- **Issue tracker, labels, domain docs:** GitHub Issues via `gh` ([`docs/agents/issue-tracker.md`](./docs/agents/issue-tracker.md)); triage labels `needs-triage`, `ready-for-agent`, `ready-for-human`, `blocked`, `wontfix` ([`docs/agents/labels.md`](./docs/agents/labels.md)); single-context `GLOSSARY.md` + `docs/adr/` ([`docs/agents/domain.md`](./docs/agents/domain.md)).
 - **Ideas:** Idea Inbox is issue #91 (label `idea-inbox`); protocol in [`docs/agents/idea-inbox.md`](./docs/agents/idea-inbox.md).
 - **Skill editorial intent:** skills prescribe at the principle level; code examples are illustrative sketches, not literal rules. See [`docs/adr/0002-design-skills-prescribe-at-principle-level.md`](./docs/adr/0002-design-skills-prescribe-at-principle-level.md).
 - **Invocation:** skills here are user-invoked orchestrators by default — each `SKILL.md` carries `disable-model-invocation: true`, so its description doesn't load into every session's context. A skill that must fire on a phrase (`idea-intake`) omits the flag.

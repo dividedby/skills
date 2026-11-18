@@ -37,4 +37,4 @@ alongside this plugin: `mattpocock/skills` and the
 
 **From `anthropics/claude-plugins-official`:** `typescript-lsp`, `pyright-lsp`
 
-See [`CONTEXT.md`](./CONTEXT.md) and [ADR 0024](./docs/adr/0024-lean-on-upstream-skills-soft-depend-over-reinvent.md) for the authoritative contract (delete-and-soft-depend posture, thin-wrapper conditions, authoring standard).
+See [`GLOSSARY.md`](./GLOSSARY.md) and [ADR 0024](./docs/adr/0024-lean-on-upstream-skills-soft-depend-over-reinvent.md) for the authoritative contract (delete-and-soft-depend posture, thin-wrapper conditions, authoring standard).

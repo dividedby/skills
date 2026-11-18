@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
 ### Changed
 
+- The domain glossary `CONTEXT.md` is renamed to `GLOSSARY.md`, the name the upstream `grilling`, `domain-modeling`, `tdd`, `to-spec` and `to-tickets` skills now read; `docs/agents/domain.md` (including `CONTEXT-MAP.md` → `GLOSSARY-MAP.md`), `docs/agents/idea-inbox.md` and the instruction files point at it. `CODING_STANDARDS.md`, `README.md` and `docs/agents/skill-authoring.md` follow. Consumer repos' `docs/agents/domain.md` copies are updated in their own PRs.
 - `repo-audit`: **Breaking:** now a read-only audit that changes nothing in the repo and files no issues. Four lenses run in parallel: code and performance (with measured benchmarks); architecture, repo and docs; design (with screenshots and a mockup spec); and market research. Every high finding is re-checked at its source before the result is published as one private report page with verdicts, a Now/Next/Later plan, screenshots, mockups, and what was and was not verified. Run `/to-tickets` on the plan if you want issues.
 
 ### Removed
