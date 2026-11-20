@@ -1,6 +1,9 @@
 <!--
 REPO-AUDIT REPORT TEMPLATE. The filler clones each repeat block, replaces the double-brace tokens, and deletes the comments.
 Optional sections (Measurements, Screens, Mockups, Research, Checked, any area): delete the whole h2 block AND its nav link.
+Fleet standards is not optional: when the checklist could not be read, keep the section, put the reason in STANDARDS_INTRO
+and delete the table. Its verdict card uses AREA_ID "standards"; when the area is
+not checked, that card takes STATUS_CLASS mixed and STATUS_LABEL "Not checked".
 Each screenshot's src is {{IMG_NAME}}: replace it with that image's data: URI. Class tokens take only the values listed
 in parentheses below. One area-section per lens (Code, Design, Repo & docs, Market); fold "why it matters" into FINDING.
 The sample mockup is a desktop window: swap its chrome for a browser, phone or terminal frame to match the platform.
@@ -12,6 +15,11 @@ PLACEHOLDERS
   Plan:       PLAN_INTRO, NOW_WHEN, NEXT_WHEN, LATER_WHEN, ITEM_TEXT, EFFORT (S|M|L), FINDING_ID
   Areas:      AREA_ID, AREA_TITLE, AREA_INTRO, FINDING_ID, SEV_CLASS (hi|med|low), SEVERITY (HIGH|MED|LOW),
               FINDING, EVIDENCE (file:line), FIX, EFFORT
+  Standards:  STANDARDS_INTRO (checklist source and commit, how it was read, repo facts, counts per result),
+              STANDARD_ID (row id), STANDARD_REQUIREMENT, RESULT_CLASS (pass|fail|na|unchecked), RESULT_LABEL
+              (PASS|FAIL|N/A|NOT CHECKED), SEV_CLASS, SEVERITY (fail rows only: delete the sev span otherwise),
+              STANDARD_EVIDENCE, STANDARD_FIX (fail rows; an em dash otherwise), STANDARD_SOURCE (the row's
+              source cell)
   Measures:   MEASUREMENTS_INTRO, METRIC, VALUE, HOW_MEASURED
   Screens:    SCREENS_INTRO, IMG_NAME, IMG_ALT, IMG_CAPTION
   Mockups:    MOCKUPS_INTRO, MOCKUP_TITLE, MOCKUP_CONTEXT, MOCKUP_WIDTH, MOCKUP_HTML, MOCKUP_NOTE
@@ -20,9 +28,10 @@ PLACEHOLDERS
 
 REPEAT BLOCKS (each is wrapped in a repeat comment pair named as below; clone everything between the markers)
   nav-link, verdict-card, plan-item (once inside each of Now/Next/Later), area-section (contains finding-row),
-  finding-row, measurement-row, screenshot, mockup (contains mockup-note), mockup-note, research-source,
+  finding-row, standard-row (one per checklist row, n/a rows included), measurement-row, screenshot, mockup (contains mockup-note), mockup-note, research-source,
   verified-item, corrected-item, disputed-item, unverified-item
-  FINDING_ID on a plan-item must equal the FINDING_ID of a finding-row (id="..." on the <tr>).
+  FINDING_ID on a plan-item must equal the FINDING_ID of a finding-row (id="..." on the <tr>); a fleet-standards
+  fail's id is fs-STANDARD_ID.
 -->
 <title>{{PROJECT}} Audit</title>
 <meta name="claude:viewport-fit-sides" content="cover" />
@@ -357,6 +366,43 @@ REPEAT BLOCKS (each is wrapped in a repeat comment pair named as below; clone ev
   .sev.low {
     color: var(--low);
     background: var(--low-bg);
+  }
+  .res {
+    display: inline-block;
+    font: 600 11px/1 var(--display);
+    letter-spacing: 0.04em;
+    padding: 4px 7px;
+    border-radius: 4px;
+    white-space: nowrap;
+    margin: 0 4px 4px 0;
+  }
+  .res.pass {
+    color: var(--good);
+    background: var(--good-bg);
+  }
+  .res.fail {
+    color: var(--hi);
+    background: var(--hi-bg);
+  }
+  .res.na {
+    color: var(--ink-3);
+    background: var(--bg);
+    border: 1px solid var(--rule);
+  }
+  .res.unchecked {
+    color: var(--med);
+    background: var(--med-bg);
+  }
+  .req {
+    display: block;
+    margin-top: 4px;
+    color: var(--ink-2);
+  }
+  .src {
+    display: block;
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--ink-3);
   }
 
   .tablewrap {
@@ -721,6 +767,7 @@ REPEAT BLOCKS (each is wrapped in a repeat comment pair named as below; clone ev
     <!-- repeat: nav-link -->
     <a href="#{{NAV_ID}}">{{NAV_LABEL}}</a>
     <!-- /repeat -->
+    <a href="#standards">Fleet standards</a>
     <a href="#measurements">Measurements</a>
     <a href="#screens">Screens</a>
     <a href="#mockups">Mockups</a>
@@ -808,6 +855,38 @@ REPEAT BLOCKS (each is wrapped in a repeat comment pair named as below; clone ev
     </table>
   </div>
   <!-- /repeat -->
+
+  <h2 id="standards">Fleet standards</h2>
+  <div class="col"><p>{{STANDARDS_INTRO}}</p></div>
+  <div class="tablewrap">
+    <table class="wide">
+      <thead>
+        <tr>
+          <th>Standard</th>
+          <th>Result</th>
+          <th>Evidence</th>
+          <th>Fix</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- repeat: standard-row -->
+        <tr id="fs-{{STANDARD_ID}}">
+          <td>
+            <code>{{STANDARD_ID}}</code
+            ><span class="req">{{STANDARD_REQUIREMENT}}</span
+            ><span class="src">Source: {{STANDARD_SOURCE}}</span>
+          </td>
+          <td>
+            <span class="res {{RESULT_CLASS}}">{{RESULT_LABEL}}</span
+            ><span class="sev {{SEV_CLASS}}">{{SEVERITY}}</span>
+          </td>
+          <td>{{STANDARD_EVIDENCE}}</td>
+          <td>{{STANDARD_FIX}}</td>
+        </tr>
+        <!-- /repeat -->
+      </tbody>
+    </table>
+  </div>
 
   <h2 id="measurements">Measurements</h2>
   <div class="col"><p>{{MEASUREMENTS_INTRO}}</p></div>
