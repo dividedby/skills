@@ -87,6 +87,7 @@ def run(cmd: str, unattended: bool) -> int:
     proc = subprocess.run(
         [sys.executable, str(HOOK)],
         input=payload,
+        check=False,
         capture_output=True,
         text=True,
         env=env,

@@ -3,7 +3,10 @@
 and its SKILL.md must carry valid frontmatter (non-empty name + description,
 each within the skill spec's limits)."""
 
-import json, os, re, sys
+import json
+import os
+import re
+import sys
 from pathlib import Path
 
 REQUIRED_FRONTMATTER = ("name", "description")
@@ -69,7 +72,7 @@ try:
     stdin = json.load(sys.stdin)
     if stdin.get("stop_hook_active"):
         sys.exit(0)
-except Exception:
+except Exception:  # noqa: BLE001, S110  # fail open: unreadable stdin must not block the Stop hook
     pass
 
 root = Path(os.environ.get("CLAUDE_PROJECT_DIR", "."))
@@ -83,7 +86,7 @@ skill_dirs = sorted(
 
 try:
     registered = set(json.loads(plugin_path.read_text()).get("skills", []))
-except Exception as e:
+except Exception as e:  # noqa: BLE001  # any read or parse failure gets the same exit-2 message
     print(f"skill-registration: cannot read plugin.json ({e})", file=sys.stderr)
     sys.exit(2)
 

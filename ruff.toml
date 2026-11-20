@@ -1,1 +1,4 @@
+# Hooks and scripts run under the system python3 on macOS (3.9).
+target-version = "py39"
+
 [format]

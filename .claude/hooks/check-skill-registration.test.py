@@ -136,6 +136,7 @@ def run(body: str, registered: bool, linked: bool):
         proc = subprocess.run(
             [sys.executable, str(HOOK)],
             input="{}",
+            check=False,
             capture_output=True,
             text=True,
             env=env,

@@ -15,7 +15,7 @@ import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-import snapshot  # noqa: E402
+import snapshot
 
 ME = os.getuid()
 HOME = os.path.expanduser("~")

@@ -120,7 +120,7 @@ def find_block(cmd: str):
 def main() -> int:
     try:
         data = json.load(sys.stdin)
-    except Exception:
+    except Exception:  # noqa: BLE001  # fail open: malformed hook input must not block the tool call
         return 0
     cmd = (data.get("tool_input") or {}).get("command") or ""
     if not cmd:
