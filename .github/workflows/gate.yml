@@ -41,11 +41,27 @@ jobs:
             exit 1
           fi
 
+  lint-python:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - name: Ruff lint
+        run: pipx run ruff==0.17.0 check .
+
+  typecheck-python:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - name: Pyright (basic mode)
+        run: pipx run pyright==1.1.414
+
   # Merge gate: the one CI check the default-branch ruleset requires. Always
   # runs; fails only when a needed job failed or was cancelled (skipped passes).
   ci-ok:
     if: always()
-    needs: [gate]
+    needs: [gate, lint-python, typecheck-python]
     runs-on: ubuntu-latest
     steps:
       - if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
