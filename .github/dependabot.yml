@@ -10,3 +10,13 @@ updates:
           - "*"
     commit-message:
       prefix: chore
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      npm:
+        patterns:
+          - "*"
+    commit-message:
+      prefix: chore

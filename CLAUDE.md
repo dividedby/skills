@@ -10,6 +10,7 @@ A bucket's own `README.md` is **not** required by default. Add one only when eit
 
 - `pnpm format:check` (Prettier; `pnpm format` fixes) and `ruff format --check .` — both run in CI (`.github/workflows/format.yml`).
 - Hook and script self-tests: `python3 .claude/hooks/check-skill-registration.test.py`, `python3 .claude/hooks/destructive-git-guard.test.py`, `python3 docs/agents/labels.test.py`. Plain `python3`, no pytest needed.
+- Lint: no separate linter; the Prettier and `ruff format` checks above are the gate.
 
 ## Conventions
 
