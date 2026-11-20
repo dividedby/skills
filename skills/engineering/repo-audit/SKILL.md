@@ -1,7 +1,7 @@
 ---
 name: repo-audit
 description: >
-  User-invoked, read-only audit of a repo's code, design, repo hygiene and docs, and market — parallel lens agents, every high finding verified at its source, published as one private report page with screenshots, mockups and a Now/Next/Later plan.
+  User-invoked, read-only audit of a repo's code, design, repo hygiene and docs, fleet standards, and market — parallel lens agents, every high finding verified at its source, published as one private report page with screenshots, mockups and a Now/Next/Later plan.
 disable-model-invocation: true
 ---
 
@@ -10,7 +10,8 @@ disable-model-invocation: true
 A **read-only** review a maintainer can start and walk away from (overnight is
 the intended use). It looks at a repo through four lenses — code and
 performance, design, architecture/repo/docs, and the outside world — checks
-every claim that matters against the source, and ends in **one report page**:
+the repo against the fleet-wide repo standards, checks every claim that matters
+against the source, and ends in **one report page**:
 verdicts, a phased plan, evidenced findings, screenshots, mockups, and an honest
 list of what was and was not verified.
 
@@ -19,6 +20,8 @@ Defers:
 - Agent tool (lens agents run in parallel); the Artifact tool to publish the page.
 - The built-in browser or the project's own run tooling, for screenshots.
 - `/to-tickets` — only if the user later asks for the plan as issues.
+- `dividedby/claude-config` `docs/standards.md`, the fleet-standards checklist,
+  read fresh on each run per [`fleet-standards.md`](./fleet-standards.md).
 
 ## When to use
 
@@ -55,7 +58,9 @@ commit and every agent confirms which one it read.
 
 Profile the project: languages, size (lines per area, largest files), test
 suite and its run time, build and release path, CI, docs present, licence,
-public or private. These are the profile's **known facts**; the lenses verify
+public or private, and the repo facts the fleet-standards check needs
+([`fleet-standards.md`](./fleet-standards.md) section 2). These are the
+profile's **known facts**; the lenses verify
 them rather than trust them. Decide which lenses apply and say so in one line
 each:
 
@@ -85,19 +90,27 @@ Gather the evidence the lenses cannot gather blind:
   screenshots, say so, and let the design lens work from source.
 - **Baseline numbers** the code lens will need: test run time, build time,
   sizes of state or output files, anything cheap to measure now.
+- **Fleet standards.** The main session reads the checklist fresh, records the
+  commit it read, and marks every row pass, fail, n/a or not checked with
+  evidence and a fix line, as [`fleet-standards.md`](./fleet-standards.md)
+  directs. The checklist's checks run only when they are read-only; the audit
+  fixes nothing it finds.
 
 Stop any server or app this stage started before Stage 3 ends.
 
-**Done when:** each main screen has a capture (or the reason it has none), and
-the captures sit in the scratchpad.
+**Done when:** each main screen has a capture (or the reason it has none), the
+captures sit in the scratchpad, and every checklist row has a result (or the
+area is marked not checked, with the reason).
 
 ## Stage 3 — Lenses (parallel)
 
 Launch the applicable lens agents in one message so they run concurrently. Each
 gets the pinned commit, the profile, the read-only rule, the relevant captures,
 and its brief from [`briefs.md`](./briefs.md), which also sets the shape of a
-finding. Each writes its report (and the design lens its mockup spec) to a
-named scratchpad path and returns a short summary.
+finding. The Architecture, repo and docs lens also gets the fleet-standards
+results, so it does not re-report those rows. Each writes its report (and the
+design lens its mockup spec) to a named scratchpad path and returns a short
+summary.
 
 | Lens                     | Model  | Finds                                                                                   |
 | ------------------------ | ------ | --------------------------------------------------------------------------------------- |
@@ -113,7 +126,8 @@ named scratchpad path and returns a short summary.
 The lens reports are claims. Before anything reaches the page:
 
 1. Re-check every **High** finding, and any finding the plan's "Now" column
-   rests on, at its cited source. Read the line; rerun the command.
+   rests on, at its cited source. Read the line; rerun the command. This
+   includes High fleet-standards fails.
 2. Correct what does not hold: lower the severity, fix the evidence, or drop the
    finding. Keep a list of every correction with the reason.
 3. Where lenses disagree with each other or with the code (a research claim
@@ -144,7 +158,8 @@ browser, phone or terminal frame as needed); they are not screenshots of code.
 ## Stage 6 — Publish
 
 Fill [`template.html`](./template.html) as its header comment directs: one
-section per lens, each `<!-- repeat: … -->` block cloned per item, every
+section per lens, the Fleet standards table with a row per checklist row and
+its verdict card, each `<!-- repeat: … -->` block cloned per item, every
 `{{PLACEHOLDER}}` replaced, unused sections removed with their nav links, and
 screenshots embedded as `data:` URIs
 (downscale first; keep the page under the Artifact size limit). Preview it
@@ -154,7 +169,8 @@ publishing.
 Publish as a **private** Artifact. Where the Artifact tool is unavailable, save
 the page in the scratchpad and send it to the user as a file.
 
-Close with a short message: the link, one verdict line per area, the top
+Close with a short message: the link, one verdict line per area (fleet
+standards included, with the checklist commit), the top
 findings, what was verified and what was not, confirmation that the repo is
 unchanged, and **one question** — which part of the plan to start on. Offer
 `/to-tickets` for the plan in one line.
@@ -167,6 +183,8 @@ the closing message names what is unverified.
 ## Failure conditions
 
 - Any change to the audited repo. The audit has failed even if the report is good.
+- A fleet-standards check run that was not read-only, or a checklist copy
+  reused instead of read fresh.
 - A High finding on the page that was not re-checked in Stage 4.
 - A projection presented as a measurement.
 - Real personal data or a secret value in a screenshot or on the page.

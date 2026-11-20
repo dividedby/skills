@@ -47,7 +47,10 @@ Focus on cost at realistic scale and on correctness risk:
 ## Architecture, repo and docs
 
 Start by verifying the profile's "known facts" (what docs, CI and release
-tooling exist) rather than trusting them. Then assess:
+tooling exist) rather than trusting them. The brief names the fleet-standards
+results file: do not re-report a row it already rates; add only what a row
+could not see (a check that passed on a technicality, a gap no row covers).
+Then assess:
 
 1. **Module architecture.** Layering and dependency direction, god objects,
    test-only or demo code shipped in production targets, whether parts should

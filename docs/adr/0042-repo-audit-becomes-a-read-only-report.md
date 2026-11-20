@@ -2,6 +2,8 @@
 
 > **Status: Accepted** — maintainer decision (2026-10-27). **Supersedes the 2026-10-12 `repo-audit` amendment in [ADR 0041](./0041-council-drops-peer-rank-and-runs-selector-inline.md).**
 
+> **Amended by [ADR 0045](./0045-repo-audit-checks-fleet-standards-read-fresh.md)** — the main session also checks the repo against the fleet standards in `dividedby/claude-config`, read fresh each run; the read-only rule, lenses and stages are unchanged.
+
 ## Context
 
 `/repo-audit` (3.1.0) ran a leverage hunt: up to five lens seats on the Workflow
