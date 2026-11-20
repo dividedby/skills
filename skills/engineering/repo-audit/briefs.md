@@ -41,8 +41,23 @@ Focus on cost at realistic scale and on correctness risk:
 - **Structure.** Dead code, duplicated logic, types that do too much.
 - **Errors.** Swallowed failures (`try?`, empty catches), failures that leave
   state half-written.
-- **Tests.** Run time, sleeps and timing-based flakiness, risky paths with no
-  test, missing scale tests.
+- **Tests.** Review whether the suite earns its keep against `docs/testing.md`
+  in `dividedby/claude-config`. The main session reads it as
+  [`fleet-standards.md`](./fleet-standards.md) section 1 reads `standards.md`
+  (same pinned commit, same fallback) and passes the text and commit to this
+  lens; if it cannot, say the guideline was not read. Recommend only; delete and
+  edit nothing.
+  - **Measure:** run time, test count, test-to-source line ratio and the largest
+    test file, with the commands. Reuse the `test-size` numbers from the fleet
+    check; its flag asks for this review and is not a finding by itself.
+  - **List**, each with `file:line` samples: change-detector tests and tests of
+    trivial code; assertion-free and sleep-based tests; mock-heavy tests;
+    near-duplicate clusters, as parametrise candidates; one behaviour tested at
+    several layers; skipped and flaky tests; risky paths with no test and
+    missing scale tests.
+  - **End with a prune-and-split list.** Each item names the safe-deletion
+    check to run first: the lower-level test that covers the behaviour, or a
+    coverage or mutation run.
 
 ## Architecture, repo and docs
 

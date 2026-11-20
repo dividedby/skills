@@ -35,6 +35,12 @@ Read it on every run; never reuse a copy from an earlier run or a vendored one.
    **not checked (reason)**. Say so in the section, the verdict card and the
    closing message, and carry on with the rest of the audit.
 
+Also read `docs/testing.md` at the same `$sha` (the same call with that path;
+the local fallback reads `~/repos/claude-config/docs/testing.md`) and record it
+beside the checklist commit. The main session hands its text and commit to the
+Code and performance lens for the test-suite review. If it cannot be read, that
+review says the guideline was not read; the fleet-standards area is unaffected.
+
 Find the columns by their header names, not their position, so a new column
 does not shift the others. Take every row in the table; do not work from a
 remembered list of ids.
@@ -75,9 +81,11 @@ blocks the row.
 
 - **Commands**, including each one inside a `$(...)` substitution and on
   either side of a shell pipe: `test`, `ls`, `cat`, `grep`, `head`, `wc`;
-  `git -C $R` (run as `git --no-optional-locks -C $R`) followed by `log`, `ls-files`, `show` or
-  `rev-parse` (with `--no-textconv --no-ext-diff` added to `log` and `show`),
-  and no other `git` option before the subcommand; `gh api` with no
+  `git -C $R` (run as `git --no-optional-locks -C $R`) followed by `log`, `ls-files`, `show`,
+  `rev-parse` or `grep` (with `--no-textconv --no-ext-diff` added to `log` and
+  `show`, and only `-h` or `-c` after `grep`; its pathspecs after `--` are
+  patterns, not file arguments), and no other `git` option before the
+  subcommand; `gh api` with no
   `-X`/`--method`, `-f`, `-F`, `--field`, `--raw-field`, `--input` or
   `--output`.
 - **Targets.** File arguments are under `$R`, or `/dev/null`. `gh api` paths
@@ -107,6 +115,13 @@ result:
   private repo), or the check is not read-only. When a row has two
   alternatives ("CI job or GitHub setting"), one that passes decides the row.
 
+A row the checklist marks **report-only** (`test-size`) never gets a **fail**.
+Run its check and print the numbers as evidence. The result is **OK** when no
+limit in the row is crossed and **flag** when one is (or **not checked** as
+above). A limit the check cannot measure, such as wall time with no CI run to
+read, is reported as unknown and is not a flag. Its limits are house rules, so
+say that on the page.
+
 Evidence is what the check returned, short: the matched path, the printed
 value, or "no `CHANGELOG.md`". Never print a secret, a personal address or a
 private name; for `commit-identity`, give the count of non-conforming commits,
@@ -131,6 +146,10 @@ Every fail is a finding, cites its row id and source, and gets a severity:
 A row id this list does not name takes the tier its requirement fits; say so
 in the evidence.
 
+A report-only **flag** is a Low finding with id `fs-<row id>`, and its fix line
+points at the Code and performance lens's test-suite review for the
+prune-and-split list. It asks for a look, not a change.
+
 The fix line is the concrete change, one line, in the checklist's own terms
 ("add `.github/workflows/format.yml` running `ruff format --check`"). Name a
 fleet repo that already passes the row as a model only when this run checked
@@ -143,8 +162,9 @@ workflow, config, label or setting.
 - **Mixed** — fails, none High.
 - **Weak** — at least one High fail.
 
-Rows marked **not checked** do not count toward the verdict; list each one
-under "Unverified" in the page's "What was checked" section.
+Report-only flags do not count toward the verdict. Rows marked **not checked**
+do not either; list each one under "Unverified" in the page's "What was checked"
+section.
 
 Write the results to a scratchpad file (`fleet-standards.md`): the source and
 commit, the repo facts, then one line per row with id, result, severity,

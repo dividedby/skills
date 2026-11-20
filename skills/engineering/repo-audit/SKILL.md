@@ -21,7 +21,9 @@ Defers:
 - The built-in browser or the project's own run tooling, for screenshots.
 - `/to-tickets` — only if the user later asks for the plan as issues.
 - `dividedby/claude-config` `docs/standards.md`, the fleet-standards checklist,
-  read fresh on each run per [`fleet-standards.md`](./fleet-standards.md).
+  read fresh on each run per [`fleet-standards.md`](./fleet-standards.md),
+  along with `docs/testing.md` at the same commit, which the Code and
+  performance lens's test-suite review runs against.
 
 ## When to use
 
@@ -112,12 +114,12 @@ results, so it does not re-report those rows. Each writes its report (and the
 design lens its mockup spec) to a named scratchpad path and returns a short
 summary.
 
-| Lens                     | Model  | Finds                                                                                   |
-| ------------------------ | ------ | --------------------------------------------------------------------------------------- |
-| Code and performance     | sonnet | Cost at scale, measured; correctness and concurrency risk; I/O and API use; test health |
-| Architecture, repo, docs | sonnet | Module shape, security and privacy, build and release, CI, docs, repo settings          |
-| Design                   | opus   | Per-screen and app-level issues against the platform's guidelines; a mockup spec        |
-| Market and research      | sonnet | Competitors, real user complaints, technical gotchas, projects worth copying            |
+| Lens                     | Model  | Finds                                                                                                 |
+| ------------------------ | ------ | ----------------------------------------------------------------------------------------------------- |
+| Code and performance     | sonnet | Cost at scale, measured; correctness and concurrency risk; I/O and API use; test-suite value and size |
+| Architecture, repo, docs | sonnet | Module shape, security and privacy, build and release, CI, docs, repo settings                        |
+| Design                   | opus   | Per-screen and app-level issues against the platform's guidelines; a mockup spec                      |
+| Market and research      | sonnet | Competitors, real user complaints, technical gotchas, projects worth copying                          |
 
 **Done when:** every launched lens has returned and its report file exists.
 
