@@ -20,14 +20,21 @@ also carries the shared header below.
   summary reply (top findings, under 500 words). Write progressively: create
   the file first and append each finding as you find it, so a lens that is
   stopped or fails leaves usable partial output.
-- Finding shape: severity (High / Med / Low), evidence (`file:line`, command
-  and result, or URL), why it matters, fix plan (no edits), effort (S / M / L).
-  Rank by impact. Measured numbers say how they were measured; projections
-  are labelled as projections.
+- The **Severity** section of [`rubric.md`](./rubric.md), pasted verbatim.
+  Rate every finding on it; invent no other scale.
+- The areas the lens owns, by name, and the profile facts that decide whether
+  each applies. [`rubric.md`](./rubric.md) holds each area's checks, methods and
+  evidence. For an area that does not apply, or a method the lens cannot use,
+  the report says so with a reason from that file's not-assessed list.
+- Finding shape: severity (Blocker / High / Med / Low), area, evidence
+  (`file:line`, command and result, or URL), why it matters, fix plan (no
+  edits), effort (S / M / L). Rank by impact. Measured numbers say how they
+  were measured; projections are labelled as projections.
 
 ## Code and performance (sonnet)
 
-Focus on cost at realistic scale and on correctness risk:
+Owns Code quality, Tests and Performance. Focus on cost at realistic scale and
+on correctness risk:
 
 - **Scale.** Pick the sizes a heavy real user reaches (records, files,
   requests) and look for super-linear work: nested matching, repeated full
@@ -64,8 +71,11 @@ Focus on cost at realistic scale and on correctness risk:
 
 ## Architecture, repo and docs (sonnet)
 
-The brief names the fleet-standards results file: add only what a row could not
-see (a check that passed on a technicality, a gap no row covers). Then assess:
+Owns Architecture, Tech stack, dependencies and supply chain, Security, Privacy,
+Data integrity, Feature completeness vs docs, Repo organisation, docs and
+hygiene, Ops, release and observability, External facts and Agent readiness. The
+brief names the fleet-standards results file: add only what a row could not see
+(a check that passed on a technicality, a gap no row covers). Then assess:
 
 1. **Module architecture.** Layering and dependency direction, god objects,
    test-only or demo code shipped in production targets, whether parts should
@@ -87,9 +97,10 @@ see (a check that passed on a technicality, a gap no row covers). Then assess:
 
 ## Design (opus)
 
-Runs only with a UI. The reviewer is a senior product designer for the
-platform; the bar is first-class platform-native or top-tier third-party
-software. Name three to six apps in the same category to compare against.
+Runs only with a UI. Owns Accessibility, Content, copy and branding, and
+Usability and flows. The reviewer is a senior product designer for the platform;
+the bar is first-class platform-native or top-tier third-party software. Name
+three to six apps in the same category to compare against.
 
 - **Inputs.** Every Stage 2 capture (list the paths; read them all), icons and
   other visual assets, and the UI source.
@@ -115,8 +126,9 @@ software. Name three to six apps in the same category to compare against.
 
 ## Market and research (sonnet)
 
-The repo is context only. Use web search (standard first, extended when thin)
-and page fetches.
+Owns no area. The repo is context only; the output is evidence for External
+facts and Tech stack and the page's Research section, not rated findings. Use
+web search (standard first, extended when thin) and page fetches.
 
 1. **Competitors and prior art.** Commercial tools, and open source found by
    searching GitHub; for each, the approach, features, price and common
