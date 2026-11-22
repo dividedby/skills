@@ -68,7 +68,7 @@ and are illustrations, not a closed list.
 
 #### CLI probe
 
-Build into ignored output, then run: `--help`, a bad argument, a missing
+Build into the scratchpad ([execution boundary](./SKILL.md#execution-boundary)), then run: `--help`, a bad argument, a missing
 argument, the exit code of each, output at 80 columns, `NO_COLOR` set, and
 output piped (non-TTY). Never point the probe at real accounts or data.
 
