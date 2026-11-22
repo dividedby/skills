@@ -136,8 +136,9 @@ The lens reports are claims. Before anything reaches the page:
 
 1. **Merge duplicates, before any re-check.** Two findings are duplicates when
    they cite the same `file:line` or the same command output.
-   - Keep one, in the lens with the most specific evidence. Record the other
-     lenses as "also reported by".
+   - Keep one, in the lens that owns the finding's rubric area; while lenses
+     own no rubric areas, in the lens with the most specific evidence. Record
+     the other lenses as "also reported by".
    - Keep the highest severity that survives verification.
    - A finding that restates a fleet-standards row is folded into that row.
    - Each merge is a "merged" line in the correction list.
