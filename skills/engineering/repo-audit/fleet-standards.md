@@ -9,6 +9,8 @@ The checklist owns the rules; nothing here restates them.
 ## 1. Read the checklist fresh
 
 Read it on every run; never reuse a copy from an earlier run or a vendored one.
+`dividedby/claude-config` is private: a user with no read access and no local
+checkout lands in case 3, and the rest of the audit runs as normal.
 
 1. **API (default).** Pin the commit, then read the file at that commit:
 
