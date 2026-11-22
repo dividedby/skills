@@ -23,15 +23,15 @@ stage        | start | end
 
 ## Agents
 
-One row per agent. Findings are High / Med / Low.
+One row per agent. Findings are Blocker / High / Med / Low.
 Status is `running`, `running (retry)`, `done`, `partial (reason)` or
 `failed (reason)`. `partial` keeps some output; `failed` left nothing usable, so
 its areas are Not assessed.
 
 ```text
 lens    | model  | wall time | tokens | tool uses | findings | status
-code    | sonnet | 11 min    | 148k   | 62        | 2/5/3    | done
-design  | opus   | 4 min     | 71k    | 24        | 1/3/2    | partial (stopped at cap)
+code    | sonnet | 11 min    | 148k   | 62        | 0/2/5/3  | done
+design  | opus   | 4 min     | 71k    | 24        | 0/1/3/2  | partial (stopped at cap)
 ```
 
 ## Commands

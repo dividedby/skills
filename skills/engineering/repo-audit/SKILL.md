@@ -12,8 +12,9 @@ the intended use). It looks at a repo through four lenses — code and
 performance, design, architecture/repo/docs, and the outside world — checks
 the repo against the fleet-wide repo standards, checks every claim that matters
 against the source, and ends in **one report page**:
-verdicts, a phased plan, evidenced findings, screenshots, mockups, and an honest
-list of what was and was not verified.
+a readiness scorecard with a verdict per area, a phased plan, evidenced findings,
+screenshots, mockups, and an honest list of what was and was not verified. The
+areas, severity scale and verdict rules are in [`rubric.md`](./rubric.md).
 
 Defers:
 
@@ -78,8 +79,8 @@ apply the resume rule in Stage 3.
 Pin the subject: repo path, branch, commit, remote. Every agent brief names that
 commit and every agent confirms which one it read.
 
-Profile the project: languages (Node/TS, Python, Swift, Go, shell, userscript
-`*.user.js`; each with tracked source beyond a stray script), size (lines per
+Profile the project at the pinned commit and branch: languages (Node/TS,
+Python, Swift, Go, shell, userscript `*.user.js`; each with tracked source beyond a stray script), size (lines per
 area, largest files), test suite (test files or a test command) and its run
 time, build and release path, CI (`.github/workflows/` holds a workflow), docs
 present, licence, public or private (`gh api repos/$GH --jq .private`), and the
@@ -87,10 +88,14 @@ repo facts the fleet-standards check adds
 ([`fleet-standards.md`](./fleet-standards.md) section 2). Write the profile as
 a table of `fact | value | source`.
 
+Decide whether each area in [`rubric.md`](./rubric.md) applies, from the
+profile's facts: it applies, or it is Not assessed with a reason from that
+file's list. Record the decision and its fact per area.
+
 Decide which lenses apply and say so in one line each:
 
-- **Design** runs only when there is a user-facing UI (app, site, or CLI output
-  when the output is the product). A library skips it.
+- **Design** runs only when the profile shows a user-facing UI
+  ([`rubric.md`](./rubric.md) defines it). A library skips it.
 - **Market** runs when the project has users or competitors to compare against;
   internal tooling may skip it.
 
@@ -112,7 +117,8 @@ release cadence      | monthly        | unverified
 ```
 
 **Done when:** the commit is pinned, the profile is written down with a source
-per fact, and the lens lineup is stated with reasons.
+per fact, every area is marked applicable or Not assessed with its reason, and
+the lens lineup is stated with reasons.
 
 ## Stage 2 — Capture
 
@@ -136,7 +142,7 @@ Stop any server or app this stage started before Stage 3 ends.
 
 **Done when:** each main screen has a capture (or the reason it has none), the
 captures sit in the scratchpad, and every checklist row has a result (or the
-area is marked not checked, with the reason).
+section is marked not checked, with the reason).
 
 ## Stage 3 — Lenses (parallel)
 
@@ -144,8 +150,8 @@ Launch the applicable lens agents in one message so they run concurrently. Each
 gets the pinned commit, the profile, the read-only rule, the relevant captures,
 the fleet-standards results and the baseline numbers, and its brief from
 [`briefs.md`](./briefs.md): the brief's heading names the lens's model, its body
-says what the lens finds, and the shared header sets the shape of a finding and
-how to use the profile and those results. Each writes its report (and the
+says what the lens finds, and the shared header sets the severity scale, the areas the lens
+owns, the shape of a finding and how to use the profile and those results. Each writes its report (and the
 design lens its mockup spec) to a named scratchpad path and returns a short
 summary.
 
@@ -157,7 +163,7 @@ and tokens.
   partial; if it wrote nothing, mark it failed. No retry.
 - **Errors, hits a usage or rate limit, or returns without a report file:** if
   it wrote nothing, relaunch it once with the same brief. A second failure marks
-  its areas "Not assessed (lens failed: reason)".
+  the areas it owns "Not assessed (lens failed: reason)".
 - **Failed after writing something:** keep the partial output, marked partial,
   with the reason. No retry.
 - **Resume, same session only** (the scratchpad is per-session). Read `state`
@@ -179,15 +185,16 @@ The lens reports are claims. Before anything reaches the page:
 
 1. **Merge duplicates, before any re-check.** Two findings are duplicates when
    they cite the same `file:line` or the same command output.
-   - Keep one, in the lens that owns the finding's rubric area; while lenses
-     own no rubric areas, in the lens with the most specific evidence. Record
-     the other lenses as "also reported by".
+   - Keep one, in the lens that owns the finding's area
+     ([`rubric.md`](./rubric.md)). Record the other lenses as "also reported
+     by".
    - Keep the highest severity that survives verification.
    - A finding that restates a fleet-standards row is folded into that row.
    - Each merge is a "merged" line in the correction list.
-2. Re-check every **High** finding, and any finding the plan's "Now" column
-   rests on, at its cited source. Read the line; rerun the command. This
-   includes High fleet-standards fails.
+2. Re-check every **Blocker** and every **High** finding, every area marked
+   **Not ready**, and any finding the plan's "Now" column rests on, at its cited
+   source. Read the line; rerun the command. This includes fleet-standards
+   fails at those severities.
 3. Correct what does not hold: lower the severity, fix the evidence, or drop the
    finding. Keep a list of every correction with the reason.
 4. Where lenses disagree with each other or with the code (a research claim
@@ -195,15 +202,19 @@ The lens reports are claims. Before anything reaches the page:
    list.
 5. Context a lens lacked can change a rating (sandboxing, single-user scope,
    data size). Apply it and note it.
+6. Set each area's verdict and the overall verdict from the corrected findings,
+   as [`rubric.md`](./rubric.md) directs.
 
-**Done when:** duplicates are merged, every High is confirmed or corrected, and
-the correction list (merged, corrected and disputed lines) is written.
+**Done when:** duplicates are merged, every Blocker and High is confirmed or
+corrected, every applicable area has a verdict or a Not-assessed reason, and the
+correction list (merged, corrected and disputed lines) is written.
 
 ## Stage 5 — Plan and mockups
 
 Turn verified findings into a **Now / Next / Later** plan:
 
-- **Now** — high value, small effort, low risk; can start tomorrow.
+- **Now** — high value, small effort, low risk; can start tomorrow. Every
+  Blocker is in Now, whatever its effort.
 - **Next** — the redesigns and refactors that need a go-ahead.
 - **Later** — strategic work (release path, new capabilities).
 
@@ -225,27 +236,58 @@ fill rules live there. Embed each screenshot at its original width up to
 keep the page under the Artifact size limit. Preview it locally in the browser
 pane, light and dark, desktop and phone width, before publishing.
 
-Publish `run-log.md` beside the page through the Artifact `files` map and link
-it from the page. The page names every partial or failed lens and marks the
-areas that lens owns, as the template header directs. Finish the read-only proof
-and the totals in the log first.
+Write `findings.json` from the verified findings. Its top-level sections:
+
+- `profile`: the Stage 1 table, one `{fact, value, source}` object per row,
+  the pinned commit and branch included.
+- `findings`: one object per finding on the page, fleet-standards fails
+  included, with these fields:
+  - `id`: the page anchor: `fs-<row id>` for a fleet fail, otherwise
+    `<area id>-<n>`.
+  - `key`: stable across runs: `<area id>:<rule id or check>:<primary path>`.
+    The rule id is the fleet row id; otherwise a short name for the check. For
+    example `security:secret-scan:.github/workflows` on a web app or
+    `ops-release:no-rollback:ops/deploy.sh` on an infra repo.
+  - `area`: the area id from [`rubric.md`](./rubric.md).
+  - `severity`: `blocker`, `high`, `med` or `low`.
+  - `title`, `evidence`, `fix`, and `effort` (`S`, `M` or `L`).
+  - `rule_source`: where the rule comes from (the fleet row's source cell, a
+    repo document `file:line`, or a named standard), or `null`.
+  - `also_reported_by`: the other lenses from Stage 4's merge; `[]` when none.
+- `scorecard`: `overall` (`not_ready`, `ready_with_fixes`, `ready`, or
+  `not_assessed` when no applicable area has a verdict), `blockers` (the ids of
+  every Blocker) and `areas`, one object per rubric area: `area`, `applies`
+  (boolean), `verdict` (`not_ready`, `ready_with_fixes`, `ready` or
+  `not_assessed`), `not_assessed_reason` (a reason from the rubric's list, else
+  `null`) and `top_finding` (the id of the area's most severe finding, else
+  `null`).
+- `coverage`: one object per rubric area: `area`; `read`, `ran`, `measured` and
+  `browsed` (booleans for the methods used); `not_assessed_reason`, the same as
+  the scorecard's; and `skipped_methods`, a list of `{method, reason}` for each
+  method the area lists and the run did not use.
+
+Publish `run-log.md` and `findings.json` beside the page through the Artifact
+`files` map and link both from the page. The page names every partial or failed
+lens and marks the areas that lens owns, as the template header directs. Finish
+the read-only proof and the totals in the log first.
 
 Publish as a **private** Artifact. If the Artifact tool offers a `quickstart`,
 run it (it is read-only), then keep this skill's template, which already meets
 the page contract. Where the Artifact tool is unavailable, save the page in the
-scratchpad and send it and `run-log.md` to the user as files.
+scratchpad and send it, `run-log.md` and `findings.json` to the user as files.
 
-Close with a short message: the link, one verdict line per area (fleet
-standards included, with the checklist commit), the top
-findings, what was verified and what was not, the run's totals (wall time and
+Close with a short message: the link, the overall verdict with any Blockers
+by name, one line per area (its verdict, or its Not-assessed reason), a line
+for the fleet-standards section (counts per result and the checklist commit),
+the top findings, what was verified and what was not, the run's totals (wall time and
 agent tokens, against the budget once one is set), the number of guesses, any
 partial or failed lens, and confirmation that the repo is unchanged. When the
 run reports to the user, end with **one question** — which part of the plan to
 start on — and offer `/to-tickets` for the plan in one line. When it reports to
 another session, end with the page link and the plan's first item instead.
 
-**Done when:** the page is published (or sent) with the run log beside it, the
-repo shows no changes, and the closing message names what is unverified and any
+**Done when:** the page is published (or sent) with the run log and
+`findings.json` beside it, the repo shows no changes, and the closing message names what is unverified and any
 partial or failed lens.
 
 ---
@@ -258,6 +300,7 @@ partial or failed lens.
 - No run log, or a run log missing a section (a section with nothing to log
   says `none`).
 - A lens failed and its areas are not marked "Not assessed".
-- A High finding on the page that was not re-checked in Stage 4.
+- A Blocker or High finding on the page that was not re-checked in Stage 4.
+- An applicable area with no verdict and no Not-assessed reason.
 - A projection presented as a measurement.
 - Real personal data or a secret value in a screenshot or on the page.

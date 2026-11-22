@@ -1,19 +1,35 @@
 <!--
 REPO-AUDIT REPORT TEMPLATE. FILL RULES
 - Clone each repeat block once per item, replace every double-brace token, and delete these comments.
-- Optional sections (Measurements, Screens, Mockups, Research, Checked, any area): delete the whole h2 block AND its nav link.
-- Fleet standards is not optional: when the checklist could not be read, keep the section, put the reason in STANDARDS_INTRO
-  and delete the table. Its verdict card uses AREA_ID "standards"; when the area is
-  not checked, that card takes STATUS_CLASS mixed and STATUS_LABEL "Not checked".
-- Run log: METHOD_NOTE links `run-log.md` (published beside the page) and names every partial or failed lens. A lens that
-  failed with no output keeps each area it owns: the verdict card takes STATUS_CLASS mixed and STATUS_LABEL
-  "Not assessed (lens failed: reason)", and the area-section stays, with the reason in AREA_INTRO and no finding rows. A
-  partial lens keeps its card, and AREA_INTRO and UNVERIFIED_ITEM say "Partial" with the reason. No area is left out
-  without a verdict or a Not assessed mark.
+- Area names, ids, verdicts and reasons come from rubric.md. Section order: Scorecard, Plan, one section per area that has
+  findings, Fleet standards, Coverage, Measurements, Screens, Mockups, Research, What was checked.
+- Optional sections (Measurements, Screens, Mockups, Research, Checked, any area-section): delete the whole h2 block AND its nav
+  link. Scorecard, Coverage and Fleet standards are not optional. When the fleet checklist could not be read, keep its section,
+  put the reason in STANDARDS_INTRO and delete the table.
+- Scorecard: first section. OVERALL_VERDICT is the overall verdict; with no Blockers, delete the Blockers h3 and list and say
+  so in OVERALL_TEXT. OVERALL_TEXT also names every applicable area that is Not assessed. One row per area in rubric order, areas that do not apply included. An area with findings: its verdict,
+  its top finding, and a link to that finding's id. An area with none: an em dash in the top-finding and link cells. A Not
+  assessed area (not applicable, depth, lens failed, and so on): class not-assessed, label "Not assessed", and the reason in
+  the top-finding cell, for example "lens failed: usage limit". The area name links to its area-section when it has one.
+- Area-sections: one per area that has findings. Not-assessed areas have none; the scorecard and Coverage carry their reason.
+  Put "Also reported by: lens" under a finding the Stage 4 merge combined; delete that span otherwise. Fold "why it matters"
+  into FINDING. A fleet fail stays a row in the Fleet standards table only; the scorecard row of the area it counts toward
+  links to its fs- id when it is that area's top finding.
+- Run log: METHOD_NOTE links `run-log.md` and `findings.json` (both published beside the page) and names every partial or
+  failed lens. A lens that failed with no output: each area it owns is Not assessed with reason "lens failed: reason" in the
+  scorecard and Coverage. A partial lens keeps its verdicts; its scorecard top-finding cells, its Coverage reasons, its
+  AREA_INTRO and UNVERIFIED_ITEM say "Partial" with the reason. No area is left out without a verdict or a Not assessed mark.
+- Coverage: one row per area in rubric order. Read, Ran, Measured, Browsed hold a check mark or an em dash. Not assessed holds
+  "yes" for a Not assessed area, else an em dash. Reason holds the area's Not-assessed reason, or each skipped method and its
+  reason, else an em dash.
+- evidence-table: the one generic table, used for the Scorecard (Area, Verdict, Top finding, Link), Coverage (Area, Read, Ran,
+  Measured, Browsed, Not assessed, Reason) and Measurements (Metric, Value, How measured). A cell may hold inline HTML (a
+  pill, a link, code). Add class "wide" to the table when it has more than four columns. A new table elsewhere is another
+  instance of it, never new markup. Keep tables inside .tablewrap so the page never scrolls sideways.
 - Each screenshot's src is {{IMG_NAME}}: replace it with that image's data: URI. Class tokens take only the values listed
-  in parentheses below. One area-section per lens (Code, Design, Repo & docs, Market); fold "why it matters" into FINDING.
-- Market area vs Research: findings (competitor strengths, user complaints, gaps, what to copy) are rows in the Market area;
-  Research lists the sources behind them and what could not be found or verified.
+  in parentheses below.
+- Market output is context, not an area: it appears in Research and as evidence in External facts and Tech stack findings. A plan
+  item that rests on it links to #research.
 - Mockups: the sample is a browser window. For a desktop-app window, a phone or a terminal, copy that frame from
   snippets.html: its CSS into this file's <style>, its markup in place of the sample inside .mk, and any --mk-* token it
   lists that this file lacks (light value in :root, dark value in both dark blocks). Use only --mk-* colours so the
@@ -22,17 +38,21 @@ REPO-AUDIT REPORT TEMPLATE. FILL RULES
 PLACEHOLDERS
   Header:     PROJECT, SCOPE_REPO, SCOPE_BRANCH, SCOPE_COMMIT, SCOPE_DATE, SUMMARY_LEDE, METHOD_NOTE
   Nav:        NAV_ID, NAV_LABEL
-  Verdicts:   AREA_ID, AREA_NAME, STATUS_CLASS (good|mixed|weak), STATUS_LABEL, VERDICT_HEADLINE, VERDICT_TEXT
+  Scorecard:  VERDICT_CLASS (not-ready|fixes|ready|not-assessed), OVERALL_VERDICT (Not ready|Ready with fixes|Ready|Not
+              assessed), OVERALL_TEXT, FINDING_ID, BLOCKER_NAME, AREA_NAME
+  Tables:     TABLE_CAPTION, HEAD_CELL, CELL; in the Scorecard a verdict cell is a pill: VERDICT_CLASS, VERDICT_LABEL
+              (Not ready|Ready with fixes|Ready|Not assessed)
   Plan:       PLAN_INTRO, NOW_WHEN, NEXT_WHEN, LATER_WHEN, ITEM_TEXT, EFFORT (S|M|L), FINDING_ID
-  Areas:      AREA_ID, AREA_TITLE, AREA_INTRO, FINDING_ID, SEV_CLASS (hi|med|low), SEVERITY (HIGH|MED|LOW),
-              FINDING, EVIDENCE (file:line), FIX, EFFORT
+  Areas:      AREA_ID (the rubric id), AREA_TITLE, AREA_INTRO, FINDING_ID, SEV_CLASS (blocker|hi|med|low), SEVERITY
+              (BLOCKER|HIGH|MED|LOW), FINDING, ALSO_REPORTED_BY, EVIDENCE (file:line), FIX, EFFORT
   Standards:  STANDARDS_INTRO (checklist source and commit, how it was read, repo facts, counts per result),
               STANDARD_ID (row id), STANDARD_REQUIREMENT, RESULT_CLASS (pass|fail|na|unchecked), RESULT_LABEL
               (PASS|FAIL|N/A|NOT CHECKED; a report-only row shows OK in class pass, or FLAG in class
               unchecked), SEV_CLASS, SEVERITY (fail and flag rows only: delete the sev span otherwise),
               STANDARD_EVIDENCE, STANDARD_FIX (fail and flag rows; an em dash otherwise), STANDARD_SOURCE (the row's
               source cell)
-  Measures:   MEASUREMENTS_INTRO, METRIC, VALUE, HOW_MEASURED
+  Measures:   MEASUREMENTS_INTRO (the table is an evidence-table)
+  Coverage:   COVERAGE_INTRO (the table is an evidence-table)
   Screens:    SCREENS_INTRO, IMG_NAME, IMG_ALT, IMG_CAPTION
   Mockups:    MOCKUPS_INTRO, MOCKUP_TITLE, MOCKUP_CONTEXT, MOCKUP_WIDTH, MOCKUP_HTML, MOCKUP_NOTE
   Research:   RESEARCH_INTRO, SOURCE_TOPIC, SOURCE_SUMMARY, SOURCE_URL, SOURCE_TITLE, RESEARCH_GAPS
@@ -41,11 +61,12 @@ PLACEHOLDERS
               UNVERIFIED_ITEM
 
 REPEAT BLOCKS (each is wrapped in a repeat comment pair named as below; clone everything between the markers)
-  nav-link, verdict-card, plan-item (once inside each of Now/Next/Later), area-section (contains finding-row),
-  finding-row, standard-row (one per checklist row, n/a rows included), measurement-row, screenshot, mockup (contains mockup-note), mockup-note, research-source,
-  verified-item, corrected-item, merged-item, disputed-item, unverified-item
-  FINDING_ID on a plan-item must equal the FINDING_ID of a finding-row (id="..." on the <tr>); a fleet-standards
-  fail's id is fs-STANDARD_ID.
+  nav-link, blocker-item, evidence-table (contains evidence-head, evidence-row, evidence-cell), plan-item (once inside each of
+  Now/Next/Later), area-section (contains finding-row), finding-row, standard-row (one per checklist row, n/a rows included),
+  screenshot, mockup (contains mockup-note), mockup-note, research-source, verified-item, corrected-item, merged-item,
+  disputed-item, unverified-item
+  FINDING_ID on a plan-item, a blocker-item or a scorecard link must equal the FINDING_ID of a finding-row (id="..." on the
+  <tr>); a fleet-standards fail's id is fs-STANDARD_ID.
 -->
 <title>{{PROJECT}} Audit</title>
 <meta name="claude:viewport-fit-sides" content="cover" />
@@ -67,6 +88,8 @@ REPEAT BLOCKS (each is wrapped in a repeat comment pair named as below; clone ev
     --accent-soft: #e1f2f1;
     --hi: #b42318;
     --hi-bg: #fdecea;
+    --blocker: #7a0c0c;
+    --blocker-bg: #f9cfca;
     --med: #9a5b00;
     --med-bg: #fff3dc;
     --low: #3b5b7a;
@@ -103,6 +126,8 @@ REPEAT BLOCKS (each is wrapped in a repeat comment pair named as below; clone ev
       --accent-soft: #143331;
       --hi: #ff8a80;
       --hi-bg: #3a1714;
+      --blocker: #ffb4ab;
+      --blocker-bg: #5c1410;
       --med: #f5b649;
       --med-bg: #33260c;
       --low: #9dbbda;
@@ -134,6 +159,8 @@ REPEAT BLOCKS (each is wrapped in a repeat comment pair named as below; clone ev
     --accent-soft: #143331;
     --hi: #ff8a80;
     --hi-bg: #3a1714;
+    --blocker: #ffb4ab;
+    --blocker-bg: #5c1410;
     --med: #f5b649;
     --med-bg: #33260c;
     --low: #9dbbda;
@@ -294,36 +321,6 @@ REPEAT BLOCKS (each is wrapped in a repeat comment pair named as below; clone ev
     outline: 0;
   }
 
-  .verdicts {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-    gap: 12px;
-    margin-top: 28px;
-  }
-  .verdict {
-    background: var(--surface);
-    border: 1px solid var(--rule);
-    border-radius: 10px;
-    padding: 16px 18px;
-    min-width: 0;
-  }
-  .verdict h3 {
-    margin: 0 0 6px;
-    font-size: 16px;
-  }
-  .verdict h3 a {
-    color: inherit;
-    text-decoration: none;
-  }
-  .verdict .grade {
-    font: 600 13px var(--display);
-    color: var(--accent);
-  }
-  .verdict p {
-    margin: 6px 0 0;
-    font-size: 14px;
-    color: var(--ink-2);
-  }
   .pill,
   .sev {
     display: inline-block;
@@ -337,19 +334,25 @@ REPEAT BLOCKS (each is wrapped in a repeat comment pair named as below; clone ev
     text-transform: uppercase;
     border-radius: 999px;
     padding: 4px 9px;
-    margin-bottom: 6px;
   }
-  .pill.good {
+  .pill.ready {
     color: var(--good);
     background: var(--good-bg);
   }
-  .pill.mixed {
+  .pill.fixes {
     color: var(--med);
     background: var(--med-bg);
   }
-  .pill.weak {
-    color: var(--hi);
-    background: var(--hi-bg);
+  .pill.not-ready,
+  .sev.blocker {
+    color: var(--blocker);
+    background: var(--blocker-bg);
+    border: 1px solid var(--blocker);
+  }
+  .pill.not-assessed {
+    color: var(--ink-3);
+    background: var(--bg);
+    border: 1px solid var(--rule);
   }
   .sev.hi {
     color: var(--hi);
@@ -415,6 +418,14 @@ REPEAT BLOCKS (each is wrapped in a repeat comment pair named as below; clone ev
   }
   table.wide {
     min-width: 720px;
+  }
+  caption {
+    caption-side: top;
+    text-align: left;
+    padding: 10px 12px;
+    font: 600 13px var(--display);
+    color: var(--ink-2);
+    border-bottom: 1px solid var(--rule);
   }
   th,
   td {
@@ -684,11 +695,13 @@ REPEAT BLOCKS (each is wrapped in a repeat comment pair named as below; clone ev
   <p class="meta">{{METHOD_NOTE}}</p>
 
   <nav class="nav" aria-label="Sections">
+    <a href="#scorecard">Scorecard</a>
     <a href="#plan">Plan</a>
     <!-- repeat: nav-link -->
     <a href="#{{NAV_ID}}">{{NAV_LABEL}}</a>
     <!-- /repeat -->
     <a href="#standards">Fleet standards</a>
+    <a href="#coverage">Coverage</a>
     <a href="#measurements">Measurements</a>
     <a href="#screens">Screens</a>
     <a href="#mockups">Mockups</a>
@@ -696,16 +709,44 @@ REPEAT BLOCKS (each is wrapped in a repeat comment pair named as below; clone ev
     <a href="#checked">What was checked</a>
   </nav>
 
-  <div class="verdicts">
-    <!-- repeat: verdict-card -->
-    <div class="verdict">
-      <h3><a href="#{{AREA_ID}}">{{AREA_NAME}}</a></h3>
-      <span class="pill {{STATUS_CLASS}}">{{STATUS_LABEL}}</span>
-      <div class="grade">{{VERDICT_HEADLINE}}</div>
-      <p>{{VERDICT_TEXT}}</p>
-    </div>
-    <!-- /repeat -->
+  <h2 id="scorecard">Readiness scorecard</h2>
+  <div class="col">
+    <p>
+      <span class="pill {{VERDICT_CLASS}}">{{OVERALL_VERDICT}}</span>
+      {{OVERALL_TEXT}}
+    </p>
+    <h3>Blockers</h3>
+    <ul class="tight">
+      <!-- repeat: blocker-item -->
+      <li><a href="#{{FINDING_ID}}">{{BLOCKER_NAME}}</a> ({{AREA_NAME}})</li>
+      <!-- /repeat -->
+    </ul>
   </div>
+  <!-- repeat: evidence-table -->
+  <div class="tablewrap">
+    <table>
+      <caption>
+        {{TABLE_CAPTION}}
+      </caption>
+      <thead>
+        <tr>
+          <!-- repeat: evidence-head -->
+          <th>{{HEAD_CELL}}</th>
+          <!-- /repeat -->
+        </tr>
+      </thead>
+      <tbody>
+        <!-- repeat: evidence-row -->
+        <tr>
+          <!-- repeat: evidence-cell -->
+          <td>{{CELL}}</td>
+          <!-- /repeat -->
+        </tr>
+        <!-- /repeat -->
+      </tbody>
+    </table>
+  </div>
+  <!-- /repeat -->
 
   <h2 id="plan">Plan</h2>
   <div class="col"><p>{{PLAN_INTRO}}</p></div>
@@ -766,7 +807,10 @@ REPEAT BLOCKS (each is wrapped in a repeat comment pair named as below; clone ev
         <!-- repeat: finding-row -->
         <tr id="{{FINDING_ID}}">
           <td><span class="sev {{SEV_CLASS}}">{{SEVERITY}}</span></td>
-          <td>{{FINDING}}</td>
+          <td>
+            {{FINDING}}
+            <span class="src">Also reported by: {{ALSO_REPORTED_BY}}</span>
+          </td>
           <td><code>{{EVIDENCE}}</code></td>
           <td>{{FIX}}</td>
           <td class="eff">{{EFFORT}}</td>
@@ -809,28 +853,61 @@ REPEAT BLOCKS (each is wrapped in a repeat comment pair named as below; clone ev
     </table>
   </div>
 
-  <h2 id="measurements">Measurements</h2>
-  <div class="col"><p>{{MEASUREMENTS_INTRO}}</p></div>
+  <h2 id="coverage">Coverage</h2>
+  <div class="col"><p>{{COVERAGE_INTRO}}</p></div>
+  <!-- repeat: evidence-table -->
   <div class="tablewrap">
-    <table>
+    <table class="wide">
+      <caption>
+        {{TABLE_CAPTION}}
+      </caption>
       <thead>
         <tr>
-          <th>Metric</th>
-          <th>Value</th>
-          <th>How measured</th>
+          <!-- repeat: evidence-head -->
+          <th>{{HEAD_CELL}}</th>
+          <!-- /repeat -->
         </tr>
       </thead>
       <tbody>
-        <!-- repeat: measurement-row -->
+        <!-- repeat: evidence-row -->
         <tr>
-          <td>{{METRIC}}</td>
-          <td class="n">{{VALUE}}</td>
-          <td>{{HOW_MEASURED}}</td>
+          <!-- repeat: evidence-cell -->
+          <td>{{CELL}}</td>
+          <!-- /repeat -->
         </tr>
         <!-- /repeat -->
       </tbody>
     </table>
   </div>
+  <!-- /repeat -->
+
+  <h2 id="measurements">Measurements</h2>
+  <div class="col"><p>{{MEASUREMENTS_INTRO}}</p></div>
+  <!-- repeat: evidence-table -->
+  <div class="tablewrap">
+    <table>
+      <caption>
+        {{TABLE_CAPTION}}
+      </caption>
+      <thead>
+        <tr>
+          <!-- repeat: evidence-head -->
+          <th>{{HEAD_CELL}}</th>
+          <!-- /repeat -->
+        </tr>
+      </thead>
+      <tbody>
+        <!-- repeat: evidence-row -->
+        <tr>
+          <!-- repeat: evidence-cell -->
+          <td>{{CELL}}</td>
+          <!-- /repeat -->
+        </tr>
+        <!-- /repeat -->
+      </tbody>
+    </table>
+  </div>
+  <!-- /repeat -->
 
   <h2 id="screens">Screens</h2>
   <div class="col"><p>{{SCREENS_INTRO}}</p></div>

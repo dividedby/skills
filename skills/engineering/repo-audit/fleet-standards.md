@@ -29,9 +29,9 @@ checkout lands in case 3, and the rest of the audit runs as normal.
    local edits. Say on the page that the local copy may lag `main`.
 
 3. **Neither works**, or the file has no table with the columns `id`,
-   `requirement`, `applies to`, `check` and `source`: the whole area is
-   **not checked (reason)**. Say so in the section, the verdict card and the
-   closing message, and carry on with the rest of the audit.
+   `requirement`, `applies to`, `check` and `source`: the whole section is
+   **not checked (reason)**. Say so in the section and the closing message,
+   and carry on with the rest of the audit.
 
 Also read `docs/testing.md` at the same `$sha` (the same call with that path;
 the local fallback reads `~/repos/claude-config/docs/testing.md`) and record it
@@ -105,10 +105,16 @@ result:
 - **fail** — it does not. A missing file the check needs is a fail, not an
   error.
 - **n/a** — the row does not apply (section 2).
-- **not checked (reason)** — the check could not decide: an API call refused
-  or returned nothing that settles it (secret-scanning status hidden on a
-  private repo), or the check is not read-only. When a row has two
-  alternatives ("CI job or GitHub setting"), one that passes decides the row.
+- **not checked (reason)** — nothing could be read: an API call refused or
+  returned nothing that settles it, or the check is not read-only.
+
+A row can offer two alternatives ("CI job or GitHub setting"):
+
+- One alternative passes: the row passes.
+- One clearly fails and the other cannot be read (a CI job is absent and the
+  secret-scanning setting is hidden on a private repo): the row is **fail**.
+  The fix names both: "add gitleaks to CI or show secret scanning is on".
+- Neither can be read: **not checked**.
 
 A row the checklist marks **report-only** (`test-size`) never gets a **fail**.
 Run its check and print the numbers as evidence. The result is **OK** when no
@@ -116,9 +122,9 @@ limit in the row is crossed and **flag** when one is (or **not checked** as
 above). A limit the check cannot measure, such as wall time with no CI run to
 read, is reported as unknown and is not a flag. Its limits are house rules, so
 say that on the page. A flag asks for the Code and performance lens's test-suite
-review, which reuses these numbers; the flag is not a finding there. In this
-area it is a Low finding with id `fs-<row id>`, whose fix line points at that
-review's prune-and-split list. It asks for a look, not a change.
+review, which reuses these numbers; the flag is not a finding there. It is a
+Low finding with id `fs-<row id>`, whose fix line points at that review's
+prune-and-split list. It asks for a look, not a change.
 
 Evidence is what the check returned, short: the matched path, the printed
 value, or "no `CHANGELOG.md`". Never print a secret, a personal address or a
@@ -127,7 +133,11 @@ not the addresses.
 
 ## 4. Rate and write the fix line
 
-Every fail is a finding, cites its row id and source, and gets a severity:
+Every fail is a finding, cites its row id and source, and is rated on the
+Severity scale in [`rubric.md`](./rubric.md), which also says how it counts
+toward an area. The ids below are the usual ratings; a fail
+that meets a higher line on the scale (a secret in the tree is a Blocker) takes
+that rating.
 
 - **High** — a gate that stops broken or leaking code reaching users is
   missing on a repo that ships: tests, typecheck or secret scanning not run in
@@ -150,15 +160,12 @@ fleet repo that already passes the row as a model only when this run checked
 it; never guess one. Fixes are written down, never applied: the audit adds no
 workflow, config, label or setting.
 
-## 5. Verdict and handoff
+## 5. Results and handoff
 
-- **Good** — no fails.
-- **Mixed** — fails, none High.
-- **Weak** — at least one High fail.
-
-Report-only flags do not count toward the verdict. Rows marked **not checked**
-do not either; list each one under "Unverified" in the page's "What was checked"
-section.
+The section has no verdict of its own (see section 4). The page and the closing message give the count per result and the checklist
+commit. Report-only flags are not fails. Rows marked **not checked** are listed
+under "Unverified" in the page's "What was checked" section, each with its
+reason.
 
 Write the results to a scratchpad file (`fleet-standards.md`): the source and
 commit, the repo facts, then one line per row with id, result, severity,
