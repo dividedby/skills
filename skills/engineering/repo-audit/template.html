@@ -2,8 +2,8 @@
 REPO-AUDIT REPORT TEMPLATE. FILL RULES
 - Clone each repeat block once per item, replace every double-brace token, and delete these comments.
 - Area names, ids, verdicts and reasons come from rubric.md. Section order: Scorecard, Plan, one section per area that has
-  findings (and External facts, below), Fleet standards, Rules conformance, Coverage, Measurements, Screens, Mockups,
-  Research, What was checked.
+  findings (and External facts and Agent readiness, below), Fleet standards, Rules conformance, Coverage, Measurements,
+  Screens, Mockups, Research, What was checked.
 - Optional sections (Measurements, Screens, Mockups, Research, Checked, any area-section): delete the whole h2 block AND its nav
   link. Scorecard, Coverage, Fleet standards and Rules conformance are not optional. When the fleet checklist could not be read,
   keep its section, put the reason in STANDARDS_INTRO and delete the table.
@@ -14,8 +14,9 @@ REPO-AUDIT REPORT TEMPLATE. FILL RULES
   the top-finding cell, for example "lens failed: usage limit". The area name links to its area-section when it has one.
   Not-applicable areas that share one reason may merge into one row naming their ids. Monorepo: add a second evidence-table
   (Package, Type, Verdict, Top finding, Link); a package the user did not select is Not assessed, reason Not selected.
-- Area-sections: one per area that has findings, plus `external-facts` when facts were checked (see External facts below).
-  Not-assessed areas have none; the scorecard and Coverage carry their reason.
+- Area-sections: one per area that has findings, plus `external-facts` when facts were checked and `agent-readiness` when it
+  applies and is assessed (see External facts and Agent readiness below). Not-assessed areas have none; the scorecard and Coverage carry
+  their reason.
   Put "Also reported by: lens" under a finding the Stage 4 merge combined; delete that span otherwise. Fold "why it matters"
   into FINDING. A fleet fail stays a row in the Fleet standards table only; the scorecard row of the area it counts toward
   links to its fs- id when it is that area's top finding.
@@ -34,6 +35,17 @@ REPO-AUDIT REPORT TEMPLATE. FILL RULES
   "res unchecked" label COULDN'T VERIFY, with the reason in the cell). One row per checked fact, mismatches first. A mismatch is
   also a finding-row. When the cap leaves candidates unchecked, the last row reads "Not checked: N more", lists where they live in
   the File:line cell, has an em dash in Source URL and Date read, and is class "res unchecked" label NOT CHECKED.
+- Agent readiness: the area-section of `agent-readiness` also holds the gates table, an evidence-table with class "wide" after
+  AREA_INTRO and before the finding table. Keep the section whenever the area applies, even with no findings: then delete the
+  finding table. AREA_INTRO names each agent file with its lines and words (reported, not scored), the focused test command and
+  its wall time or that there is none, and the counts (stale paths or commands, duplicated items); with no agent file it says
+  so; with no gate documented anywhere it says that and the gates table is deleted. Columns: Gate, Documented at (file:line),
+  As written (ran as written, ran with a change and what, failed as written, or not run with its reason), Result (class
+  "res pass" label PASS, "res fail" label FAIL, or "res unchecked" label NOT RUN, with the counts in the cell), Time, Manual
+  steps (the steps the doc leaves out, or an em dash). One row per gate in the baseline digest's Gates table, fails first.
+  Documented at follows rubric.md's Documented gates check. Each stale path or command and each duplicated item is a
+  finding-row with its file:line (both file:lines for a duplicate); the sampled-issues result goes in AREA_INTRO, or its skip
+  reason does.
 - Run log: METHOD_NOTE links `run-log.md` and `findings.json` (both published beside the page) and names every partial or
   failed lens. A lens that failed with no output: each area it owns is Not assessed with reason "lens failed: reason" in the
   scorecard and Coverage. A partial lens keeps its verdicts; its scorecard top-finding cells, its Coverage reasons, its
@@ -47,8 +59,9 @@ REPO-AUDIT REPORT TEMPLATE. FILL RULES
 - evidence-table: the one generic table, used for the Scorecard (Area, Verdict, Top finding, Link), Coverage (Area, Read, Ran,
   Measured, Browsed, Not assessed, Reason), Measurements (Metric, Value, How measured), the monorepo package table (Package,
   Type, Verdict, Top finding, Link), the lens coverage table (Lens, Read, How chosen), the two Rules conformance tables
-  (Source, Rules, Pass, Fail, Not assessed; Rule, Source, Result, Evidence, Link) and the External facts table (Fact, File:line,
-  Source URL, Date read, Result). A cell may hold inline HTML (a pill, a link, code). Add class "wide" to the table when it
+  (Source, Rules, Pass, Fail, Not assessed; Rule, Source, Result, Evidence, Link), the External facts table (Fact, File:line,
+  Source URL, Date read, Result) and the Agent readiness gates table (Gate, Documented at, As written, Result, Time, Manual
+  steps). A cell may hold inline HTML (a pill, a link, code). Add class "wide" to the table when it
   has more than four columns. A new table elsewhere is another instance of it, never new markup. Keep tables inside .tablewrap so the page never scrolls sideways.
 - Each screenshot's src is {{IMG_NAME}}: replace it with that image's data: URI. Class tokens take only the values listed
   in parentheses below.

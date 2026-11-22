@@ -208,10 +208,53 @@ finding with no evidence is not a finding.
 
 ### Agent readiness
 
-- **Checks:** the documented gates run as written, a focused test command
-  exists, the agent instruction file matches the repo.
-- **How:** read; run each documented command as written.
-- **Evidence:** the doc `file:line` and the command's result.
+An agent has no memory of the repo: each session it orients from the code, the
+agent file and the commands it can run. The area asks whether it can do that
+and check its own work. An agent file is `CLAUDE.md`, `AGENTS.md` or another
+agent instruction file the repo keeps, nested ones included.
+
+- **Checks:**
+  - **Documented gates run verbatim.** Each gate an agent file documents, from
+    the baseline digest's Gates (documented vs actual) table
+    ([`baseline.md`](./baseline.md) section 2): pass or fail, wall time, and the
+    manual steps needed, meaning a step the doc leaves out that the run needed
+    (a tool install, an environment variable). The check judges the gates an
+    agent file documents; the page's gates table lists every gate in the digest,
+    and a gate the agent file does not document shows its README or CI
+    `file:line` with "not in agent file".
+  - **Time to first signal.** A focused fast test command exists: one file, one
+    test or one package, documented or discoverable from the test config. Its
+    absence is a finding. A repo with no tracked source skips this row, reason
+    "Not applicable (no tracked source)".
+  - **Named paths and commands exist.** Every path and command an agent file
+    names exists and works.
+  - **Repo-specific facts only.** The file holds facts about this repo. It does
+    not copy fleet or global rules or restate docs; it points to the glossary,
+    ADRs and docs instead.
+  - **Size.** Each agent file's lines and words are reported, not scored.
+  - **Open issues (optional).** Sample 10 open issues for one state label and
+    acceptance criteria. Only when the repo has a GitHub remote and more than 5
+    open issues; otherwise skipped, reason "Needs X: a GitHub remote" or "Not
+    applicable (5 or fewer open issues)".
+- **How:** read the agent files and the digest; this area does not re-run
+  gates. A named command that is a gate takes the baseline's result. Any other
+  named command is checked for existence (the script, the make or just target,
+  the package script, the binary) and run only when it is read-only and inside
+  the [execution boundary](./SKILL.md#execution-boundary); otherwise it is
+  checked for existence only and recorded as "exists, not run (not read-only)",
+  a finding only if missing. Run the focused command once, on one test, inside the
+  boundary, and record its wall time. Compare each agent file's statements
+  against the docs they overlap to find duplicates.
+- **Evidence:** the agent file `file:line` of each stale path or command, each
+  missing manual step and each duplicated item (a duplicate cites both
+  `file:line`s); the baseline gate row; the focused command, its result and
+  wall time; the issue numbers sampled.
+- **No agent file:** one finding, rated on the scale. The gate rows still run,
+  from the documented gates the README, CI config and manifests give, and so
+  does time to first signal. Exactly two rows are Not assessed, Named paths and
+  commands and Repo-specific facts only, reason "Not applicable (no agent
+  file)". The open-issues sample still runs under its own condition, which does
+  not depend on an agent file; Size has nothing to report.
 
 ## Not-assessed reasons
 

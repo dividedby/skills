@@ -151,6 +151,20 @@ Check their `rules.md` rows as the shared header directs, then:
 5. **No README.** One finding in `repo-hygiene`, rated on the scale.
    `feature-completeness` is Not assessed, reason Not applicable (no README),
    and its `rules.md` rows are not checked, with the same reason.
+6. **Agent readiness.** [`rubric.md`](./rubric.md) holds the checks, the
+   skip rules and the evidence; this is the order of work.
+   - **Agent files.** Read every one and record its size.
+   - **Gates.** Take their rows from the baseline digest's Gates (documented vs
+     actual) table; do not re-run them.
+   - **First signal.** Find the focused test command and run it once. Examples:
+     `pytest tests/test_orders.py::test_refund` in a Python web app, one `bats`
+     file in an infra repo, `swift test --filter ParserTests` in a CLI.
+   - **Named paths and commands.** Check each against the tree, then each
+     command as the rubric's How says.
+   - **Repo-specific only.** Compare the agent file with the fleet or global
+     instructions and with the README, glossary and ADRs.
+   - **Open issues.** Sample them read-only with `gh api` when the rubric's
+     condition holds.
 
 ## Design (opus)
 
