@@ -55,6 +55,8 @@ profile supplies languages, tests, CI and visibility; the check adds:
 | Ships            | Someone uses it beyond its development: a deployed site or service, a released package or app, a tool the owner runs day to day. Scratch and archived repos do not ship |
 | CD               | A deploy or release workflow, or a documented deploy path                                                                                                               |
 | Several packages | More than one `package.json` that belongs to the repo (not `node_modules`)                                                                                              |
+| Monorepo         | A workspace manifest or several packages that belong to the repo, in any stack ([`types.md`](./types.md) monorepo rule); not vendored copies                            |
+| GitHub remote    | The repo has a remote on github.com, so `$GH` is set                                                                                                                    |
 
 A row applies when the repo has every fact its `applies to` names ("all"
 applies to every repo). When the column uses a word this table and the
@@ -63,7 +65,19 @@ that row's evidence. A row that does not apply is **n/a** with the reason ("no S
 
 ## 3. Run each applicable row
 
-Set `$R` to the repo path and `$GH` to its `owner/name`. The checklist is a
+Set `$R` to the repo path and `$GH` to its `owner/name`.
+
+**No GitHub remote.** A repo that is local only, or on another host, has no
+`$GH`. Every row whose check uses `gh api` is **not checked (no GitHub
+remote)**; every other row runs. A row that asks for CI means any CI config, not
+only `.github/workflows`: a check that greps that path is a proxy, so read the
+other provider's config before failing the row. A local-only repo counts as
+trusted: [`rubric.md`](./rubric.md)'s "Untrusted not run" reason does not apply,
+so the run may execute the repo's own code under the existing rules; the
+allowlist and the read-only rule below still hold. In a monorepo, a row whose
+check reads a package-level file (a manifest, lockfile or test config) is
+checked per package; every other row is repo-level. A per-package row's result is **fail** if
+any audited package fails, and the evidence names the package. The checklist is a
 Markdown table, so each `\|` in a check cell is an escaped `|`: unescape it
 before reading or running the check. Inside quotes (a `grep -E` pattern, a
 `--jq` filter) it is part of that argument; outside quotes it is a shell pipe.
@@ -106,7 +120,8 @@ result:
   error.
 - **n/a** — the row does not apply (section 2).
 - **not checked (reason)** — nothing could be read: an API call refused or
-  returned nothing that settles it, or the check is not read-only.
+  returned nothing that settles it, no GitHub remote, or the check is not
+  read-only.
 
 A row can offer two alternatives ("CI job or GitHub setting"):
 

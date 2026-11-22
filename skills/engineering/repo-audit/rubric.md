@@ -14,14 +14,14 @@ Stage 1 records these facts in the profile, each with a source, and decides
 every area's applicability from them. A fact is read from the files, not from the
 repo's own claims.
 
-| Fact               | Meaning                                                                                                              |
-| ------------------ | -------------------------------------------------------------------------------------------------------------------- |
-| Type               | The kind of project: web app, native app, CLI, library, service, infra, docs, data, config, or a mix                 |
-| Target platform    | Where users run it: a browser, a phone, a desktop OS, a server, a pipeline                                           |
-| Ships              | As [`fleet-standards.md`](./fleet-standards.md) section 2 defines it                                                 |
-| UI present         | A user-facing UI: an app, a site, or CLI output when the output is the product. A library or a pure service has none |
-| Data store present | The project keeps data of its own that outlives a run: a database, a state file, a cache or queue on disk            |
-| Tier               | The repo's size tier. None is defined yet, so no area's applicability depends on it                                  |
+| Fact               | Meaning                                                                                                                  |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------ |
+| Type               | The kind of project, one or more, as [`types.md`](./types.md) defines them; a repo matching none gets its fallback       |
+| Target platform    | Where users run it: a browser, a phone, a desktop OS, a server, a pipeline                                               |
+| Ships              | As [`fleet-standards.md`](./fleet-standards.md) section 2 defines it                                                     |
+| UI present         | A user-facing UI: an app, a site, or CLI output when the output is the product. A library or a pure service has none     |
+| Data store present | The project keeps data of its own that outlives a run: a database, a state file, a cache or queue on disk                |
+| Tier               | Small, Medium or Large by [`types.md`](./types.md). No area's applicability depends on it; it sets how much a lens reads |
 
 An area applies when its "Applies when" holds. An area that does not apply is
 Not assessed, with the reason "not applicable" and the fact that decided it. A
@@ -167,7 +167,7 @@ finding with no evidence is not a finding.
 
 - **Checks:** structure, cruft, glossary, ADRs; README, CHANGELOG, licence,
   ignore rules, repo settings.
-- **How:** read; read repo settings with `gh api`.
+- **How:** read; read repo settings with `gh api` when a GitHub remote exists.
 - **Evidence:** the path, `file:line` or API field.
 
 ### Ops, release and observability
@@ -203,7 +203,9 @@ the fact, tool or need in the reason.
 - **Depth:** the run's depth did not reach it. Say what was sampled.
 - **Untrusted not run:** it needs code from a repo whose code the run may not
   run.
-- **Needs X:** credentials, a service or a device the run does not have. Name X.
+- **Needs X:** credentials, a service or a device the run does not have (for
+  example a GitHub remote). Name X.
+- **Not selected:** the user limited the run to named packages. Name them.
 - **Lens failed:** the owning lens failed. Give its reason.
 - **Tool unavailable:** a scanner or browser the check needs is missing. Name it.
 

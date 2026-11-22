@@ -21,6 +21,8 @@ Defers:
 - Agent tool (lens agents run in parallel); the Artifact tool to publish the page.
 - The built-in browser or the project's own run tooling, for screenshots.
 - `/to-tickets` — only if the user later asks for the plan as issues.
+- [`types.md`](./types.md), a supporting file (not a skill): the repo types,
+  size tiers and monorepo rule Stage 1 applies.
 - `dividedby/claude-config` `docs/standards.md` (the fleet-standards checklist)
   and `docs/testing.md`, read fresh on each run per
   [`fleet-standards.md`](./fleet-standards.md).
@@ -76,23 +78,32 @@ apply the resume rule in Stage 3.
 
 ## Stage 1 — Scope
 
-Pin the subject: repo path, branch, commit, remote. Every agent brief names that
-commit and every agent confirms which one it read.
+Pin the subject: repo path, branch, commit, remote (if any). Every agent brief
+names that commit and every agent confirms which one it read.
 
-Profile the project at the pinned commit and branch: languages (Node/TS,
-Python, Swift, Go, shell, userscript `*.user.js`; each with tracked source beyond a stray script), size (lines per
-area, largest files), test suite (test files or a test command) and its run
-time, build and release path, CI (`.github/workflows/` holds a workflow), docs
-present, licence, public or private (`gh api repos/$GH --jq .private`), and the
-repo facts the fleet-standards check adds
+Profile the project at the pinned commit and branch: languages (any; each with
+tracked source beyond a stray script), type or types and the areas each needs
+([`types.md`](./types.md)), size (lines per area after the exclusions, largest
+files), tier and exclusions with their line counts, packages for a monorepo,
+natural language of the docs and UI text, test suite (test files or a test
+command) and its run time, build and release path, CI (any CI config file: a
+`.github/workflows/` workflow or another provider's config), docs present,
+licence, remote, public or private (`gh api repos/$GH --jq .private` with a
+GitHub remote; otherwise "unknown (no GitHub remote)", and a local-only repo
+counts as trusted, so executing its code is allowed under the existing rules),
+and the repo facts the fleet-standards check adds
 ([`fleet-standards.md`](./fleet-standards.md) section 2). Write the profile as
-a table of `fact | value | source`.
+a table of `fact | value | source`. A part or package that matches no type, or
+a repo with none, follows the fallback in [`types.md`](./types.md). In a large
+monorepo, ask once which packages to audit when the run can ask.
 
 Decide whether each area in [`rubric.md`](./rubric.md) applies, from the
 profile's facts: it applies, or it is Not assessed with a reason from that
-file's list. Record the decision and its fact per area.
+file's list. Record the decision and its fact per area. A type's
+usually-not-applicable list is a hint; the fact decides.
 
-Decide which lenses apply and say so in one line each:
+Decide which lenses apply and say so in one line each, with the
+[`types.md`](./types.md) entries that apply and the brief bullets they add:
 
 - **Design** runs only when the profile shows a user-facing UI
   ([`rubric.md`](./rubric.md) defines it). A library skips it.
@@ -117,20 +128,19 @@ release cadence      | monthly        | unverified
 ```
 
 **Done when:** the commit is pinned, the profile is written down with a source
-per fact, every area is marked applicable or Not assessed with its reason, and
-the lens lineup is stated with reasons.
+per fact (types, tier, exclusions and package list included), every area is
+marked applicable or Not assessed with its reason, and the lens lineup is
+stated with reasons.
 
 ## Stage 2 — Capture
 
 Gather the evidence the lenses cannot gather blind:
 
 - **Screenshots** of every main screen and state (empty, loading, error,
-  populated), from the project's own demo, sample-data or dev mode. Native
-  apps: build and run a separate copy from a clone in the scratchpad,
-  with its own identity (bundle id or equivalent), so the user's real install
-  and data are untouched; any change needed for that happens in the clone,
-  never in the repo. Web apps: the built-in browser against a local dev
-  server. Capture light and dark where the product supports both.
+  populated), from the project's own demo, sample-data or dev mode, capturing
+  as the type's entry in [`types.md`](./types.md) directs. Web apps: the
+  built-in browser against a local dev server. Capture light and dark where the
+  product supports both.
 - **No safe way to run it** (no demo mode, real accounts required): skip
   screenshots, say so, and let the design lens work from source.
 - **Baseline numbers** the code lens will need: test run time, build time,
@@ -148,7 +158,8 @@ section is marked not checked, with the reason).
 
 Launch the applicable lens agents in one message so they run concurrently. Each
 gets the pinned commit, the profile, the read-only rule, the relevant captures,
-the fleet-standards results and the baseline numbers, and its brief from
+the fleet-standards results, the baseline numbers, the type entries and the
+tier's reading rule, and its brief from
 [`briefs.md`](./briefs.md): the brief's heading names the lens's model, its body
 says what the lens finds, and the shared header sets the severity scale, the areas the lens
 owns, the shape of a finding and how to use the profile and those results. Each writes its report (and the
@@ -239,7 +250,11 @@ pane, light and dark, desktop and phone width, before publishing.
 Write `findings.json` from the verified findings. Its top-level sections:
 
 - `profile`: the Stage 1 table, one `{fact, value, source}` object per row,
-  the pinned commit and branch included.
+  the pinned commit and branch included. Type, tier, line-count exclusions,
+  packages and remote are rows here, and a type with no `types.md` entry is a
+  `type` row marked "fallback profile".
+- `lens_coverage`: one `{lens, read, chosen_by}` object per launched lens, from
+  its coverage line.
 - `findings`: one object per finding on the page, fleet-standards fails
   included, with these fields:
   - `id`: the page anchor: `fs-<row id>` for a fleet fail, otherwise
@@ -254,13 +269,17 @@ Write `findings.json` from the verified findings. Its top-level sections:
   - `rule_source`: where the rule comes from (the fleet row's source cell, a
     repo document `file:line`, or a named standard), or `null`.
   - `also_reported_by`: the other lenses from Stage 4's merge; `[]` when none.
+  - `package`: the package the finding is in, or `null`.
 - `scorecard`: `overall` (`not_ready`, `ready_with_fixes`, `ready`, or
   `not_assessed` when no applicable area has a verdict), `blockers` (the ids of
   every Blocker) and `areas`, one object per rubric area: `area`, `applies`
   (boolean), `verdict` (`not_ready`, `ready_with_fixes`, `ready` or
   `not_assessed`), `not_assessed_reason` (a reason from the rubric's list, else
   `null`) and `top_finding` (the id of the area's most severe finding, else
-  `null`).
+  `null`). Its `packages` field holds, for a monorepo, one object per package
+  with `package`, `type`, `verdict`, `not_assessed_reason` and `top_finding` (an
+  unselected package has verdict `not_assessed`, reason Not selected); `[]`
+  otherwise.
 - `coverage`: one object per rubric area: `area`; `read`, `ran`, `measured` and
   `browsed` (booleans for the methods used); `not_assessed_reason`, the same as
   the scorecard's; and `skipped_methods`, a list of `{method, reason}` for each
@@ -300,6 +319,8 @@ partial or failed lens.
 - No run log, or a run log missing a section (a section with nothing to log
   says `none`).
 - A lens failed and its areas are not marked "Not assessed".
+- A lens report with no coverage line, or a sampled read presented as a full
+  read.
 - A Blocker or High finding on the page that was not re-checked in Stage 4.
 - An applicable area with no verdict and no Not-assessed reason.
 - A projection presented as a measurement.
