@@ -226,16 +226,10 @@ Gather the evidence the lenses cannot gather blind:
 - **No safe way to run it** (no demo mode, real accounts required): skip
   screenshots, say so, and let the design lens work from source.
 - **Baseline.** The main session runs [`baseline.md`](./baseline.md) before the
-  lenses launch, under the [Execution boundary](#execution-boundary): the
-  universal tools (dependency vulnerabilities, secrets in the tree and history,
-  size, churn), then the repo's own gates (documented versus actual, pass or
-  fail, counts, wall time, a 10-minute default time-box), each detected stack's
-  scanners (including the declared minimum runtime), supply-chain and licence
-  scans, a cruft digest and a test digest. It also covers the build time and
-  the sizes of state or output files the code lens needs. It writes
-  `digest.md` with the raw output beside it in the scratchpad, and judges
-  nothing: the lenses do. Every tool or gate that could not run gets a reason
-  from [`rubric.md`](./rubric.md)'s closed list.
+  lenses launch, under the [Execution boundary](#execution-boundary). It writes
+  `digest.md` with the raw output beside it in the scratchpad and judges
+  nothing: the lenses do. It also covers the build time and the sizes of state
+  or output files the code lens needs.
 - **Fleet standards.** The main session runs the check in
   [`fleet-standards.md`](./fleet-standards.md) and fixes nothing it finds.
 

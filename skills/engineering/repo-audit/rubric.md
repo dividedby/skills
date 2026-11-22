@@ -60,7 +60,7 @@ lens owns no area: it feeds evidence to External facts and Tech stack.
 
 Each area below lists its checks, how they are done and the evidence a finding
 needs. The four methods are **read** (source and docs), **run** (a build, test or
-tool, inside `SKILL.md`'s execution boundary), **measure** (a number with its method) and
+tool, inside the [execution boundary](./SKILL.md#execution-boundary)), **measure** (a number with its method) and
 **browse** (the running UI, a capture, or a web page). A method an area lists
 and the run does not use is skipped with a reason from the list below. A
 finding with no evidence is not a finding.
