@@ -194,8 +194,7 @@ The lens reports are claims. Before anything reaches the page:
 2. Re-check every **Blocker** and every **High** finding, every area marked
    **Not ready**, and any finding the plan's "Now" column rests on, at its cited
    source. Read the line; rerun the command. This includes fleet-standards
-   fails at those severities. An area is Not ready only while a Blocker in it
-   holds.
+   fails at those severities.
 3. Correct what does not hold: lower the severity, fix the evidence, or drop the
    finding. Keep a list of every correction with the reason.
 4. Where lenses disagree with each other or with the code (a research claim

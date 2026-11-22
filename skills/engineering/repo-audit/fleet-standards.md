@@ -134,8 +134,8 @@ not the addresses.
 ## 4. Rate and write the fix line
 
 Every fail is a finding, cites its row id and source, and is rated on the
-Severity scale in [`rubric.md`](./rubric.md). It also counts toward the rubric
-area its requirement belongs to. The ids below are the usual ratings; a fail
+Severity scale in [`rubric.md`](./rubric.md), which also says how it counts
+toward an area. The ids below are the usual ratings; a fail
 that meets a higher line on the scale (a secret in the tree is a Blocker) takes
 that rating.
 
@@ -147,8 +147,7 @@ that rating.
   template or issue, lint, lockfiles, dependency updates, merge settings,
   default branch, branch ruleset, CI gate shape, deploy paths, pnpm
   workspaces, commit identity, userscript release notes and `@grant`. A High row on
-  a repo that does not ship drops to Med, the scale's cap for a missing release
-  gate.
+  a repo that does not ship drops to Med.
 - **Low** — style and scaffolding: formatter config, `.editorconfig`, the
   format workflow, `CLAUDE.md` commands, `docs/agents/`, README, licence.
 
@@ -163,8 +162,7 @@ workflow, config, label or setting.
 
 ## 5. Results and handoff
 
-The section has no verdict of its own: a fail counts toward its rubric area.
-The page and the closing message give the count per result and the checklist
+The section has no verdict of its own (see section 4). The page and the closing message give the count per result and the checklist
 commit. Report-only flags are not fails. Rows marked **not checked** are listed
 under "Unverified" in the page's "What was checked" section, each with its
 reason.
