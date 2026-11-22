@@ -154,7 +154,7 @@ Until a depth budget is set, no ceiling is enforced: log each lens's wall time
 and tokens.
 
 - **Over its ceiling:** stop the lens. Use what it wrote so far and mark it
-  partial.
+  partial; if it wrote nothing, mark it failed. No retry.
 - **Errors, hits a usage or rate limit, or returns without a report file:** if
   it wrote nothing, relaunch it once with the same brief. A second failure marks
   its areas "Not assessed (lens failed: reason)".
@@ -233,7 +233,7 @@ and the totals in the log first.
 Publish as a **private** Artifact. If the Artifact tool offers a `quickstart`,
 run it (it is read-only), then keep this skill's template, which already meets
 the page contract. Where the Artifact tool is unavailable, save the page in the
-scratchpad and send it to the user as a file.
+scratchpad and send it and `run-log.md` to the user as files.
 
 Close with a short message: the link, one verdict line per area (fleet
 standards included, with the checklist commit), the top
