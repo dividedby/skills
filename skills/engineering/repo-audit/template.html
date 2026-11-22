@@ -43,9 +43,9 @@ REPO-AUDIT REPORT TEMPLATE. FILL RULES
   As written (ran as written, ran with a change and what, failed as written, or not run with its reason), Result (class
   "res pass" label PASS, "res fail" label FAIL, or "res unchecked" label NOT RUN, with the counts in the cell), Time, Manual
   steps (the steps the doc leaves out, or an em dash). One row per gate in the baseline digest's Gates table, fails first.
-  Documented at is the agent file's file:line, or the README or CI file:line with "not in agent file" when the agent file
-  does not document the gate. Each stale path or command and each duplicated item is a finding-row with its file:line (both
-  file:lines for a duplicate); the sampled-issues result goes in AREA_INTRO, or its skip reason does.
+  Documented at follows rubric.md's Documented gates check. Each stale path or command and each duplicated item is a
+  finding-row with its file:line (both file:lines for a duplicate); the sampled-issues result goes in AREA_INTRO, or its skip
+  reason does.
 - Run log: METHOD_NOTE links `run-log.md` and `findings.json` (both published beside the page) and names every partial or
   failed lens. A lens that failed with no output: each area it owns is Not assessed with reason "lens failed: reason" in the
   scorecard and Coverage. A partial lens keeps its verdicts; its scorecard top-finding cells, its Coverage reasons, its

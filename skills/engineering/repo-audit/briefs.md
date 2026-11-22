@@ -151,34 +151,20 @@ Check their `rules.md` rows as the shared header directs, then:
 5. **No README.** One finding in `repo-hygiene`, rated on the scale.
    `feature-completeness` is Not assessed, reason Not applicable (no README),
    and its `rules.md` rows are not checked, with the same reason.
-6. **Agent readiness.** [`rubric.md`](./rubric.md) holds the checks and the
-   evidence; this is the order of work. Read every agent file, nested ones
-   included, and record its lines and words.
-   - **Gates.** Take each gate the agent file documents from the baseline
-     digest's Gates (documented vs actual) table and report its result, wall
-     time and manual steps (the rubric defines them); do not re-run it.
-   - **First signal.** Find the focused test command in the docs or the test
-     config, and run it once on one test, inside the boundary. Examples:
+6. **Agent readiness.** [`rubric.md`](./rubric.md) holds the checks, the
+   skip rules and the evidence; this is the order of work.
+   - **Agent files.** Read every one and record its size.
+   - **Gates.** Take their rows from the baseline digest's Gates (documented vs
+     actual) table; do not re-run them.
+   - **First signal.** Find the focused test command and run it once. Examples:
      `pytest tests/test_orders.py::test_refund` in a Python web app, one `bats`
-     file in an infra repo, `swift test --filter ParserTests` in a CLI. Record
-     its wall time. With none, that is the finding; with no tracked source,
-     skip it with the rubric's reason.
-   - **Named paths and commands.** Check each path and command the file names
-     against the tree. A gate takes the baseline's result; another command is
-     checked for existence and run only when read-only and inside the boundary
-     (`--help`, `just --list`, `make -n <target>`); any other is checked for
-     existence only, as the rubric says. Each stale one is a finding with the
-     agent file's `file:line`.
-   - **Repo-specific only.** Flag a rule copied from the fleet or global
-     instructions and a passage that restates a README, glossary or ADR rather
-     than pointing to it; each duplicate cites both `file:line`s.
-   - **Open issues.** With a GitHub remote and more than 5 open issues, sample
-     10 read-only with `gh api` and record the issue numbers, how many carry a
-     state label and how many state acceptance criteria; otherwise skip with
-     the rubric's reason.
-   - **No agent file.** Take the gates and the first-signal command from the
-     README, CI config and manifests; the open-issues step keeps its own
-     condition; skip the rest as the rubric's No agent file rule says.
+     file in an infra repo, `swift test --filter ParserTests` in a CLI.
+   - **Named paths and commands.** Check each against the tree, then each
+     command as the rubric's How says.
+   - **Repo-specific only.** Compare the agent file with the fleet or global
+     instructions and with the README, glossary and ADRs.
+   - **Open issues.** Sample them read-only with `gh api` when the rubric's
+     condition holds.
 
 ## Design (opus)
 
