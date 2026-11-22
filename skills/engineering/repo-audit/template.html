@@ -69,6 +69,24 @@ REPO-AUDIT REPORT TEMPLATE. FILL RULES
   live (the raw digest path), has em dashes in Evidence and Finding. An avoided term still used is a finding-row whose EVIDENCE
   gives the `git grep` hit count, the count judged in sense and up to five `file:line` samples; an ADR problem is a finding-row
   naming the ADR numbers.
+- UI probe: the Measurements section holds the probe's evidence, from the probe folder's `summary.json` and cells (probe.md),
+  as evidence-tables after MEASUREMENTS_INTRO. Keep it when a probe cell ran, with or without findings; when a web UI was in
+  scope but no cell ran, the section holds the Dimensions not run table alone; otherwise delete it. MEASUREMENTS_INTRO names
+  how the instances were isolated (the mechanism), that both were stopped before Stage 4, the matrix size (screens, states,
+  widths, themes, cells), and that every figure is a lab or probe measurement on throwaway data, not user data. Tables, in
+  order:
+  1. Totals per screen (class "wide"): Screen, Cells run, Cells failing, Axe violations, Overflow, Small targets, Console and
+     failed requests, Copy flags (sentences over 25 words, longest block in words). One row per main screen, failing screens first.
+  2. Failing cells (class "wide"): Screen, Cell (state, width, theme), Check, Detail (the rule and impact and count, the
+     offending selector, the measured size), Link (the finding's id, or an em dash). At most 30 rows, worst first; when more
+     fail, the last row reads "N more in the probe JSON" with em dashes. Passing cells are counts in table 1, never rows.
+  3. Lighthouse, hosted sites only: Metric (each labelled "(lab)"), Value, Threshold or budget, How measured. Then, when a
+     keyboard pass ran, one row per flow: Flow, Steps, Result (class "res pass" or "res fail"), First failing step.
+  4. Dimensions not run: Dimension, Reason (rubric.md's reason; identical reasons merge as in the Scorecard).
+  A failing check that matters is also a finding in its area: axe, targets and overflow in `accessibility`, copy metrics in
+  `content-branding`, Lighthouse in `performance`, keyboard failures in `usability`; the Link cell carries its id. Coverage
+  ticks Measured and Browsed for the areas the probe ran for, and its Reason lists each dimension not run. SCREENS_INTRO says
+  which cells were captured and why (every failing cell, the first cell per screen).
 - Run log: METHOD_NOTE links `run-log.md` and `findings.json` (both published beside the page) and names every partial or
   failed lens. A lens that failed with no output: each area it owns is Not assessed with reason "lens failed: reason" in the
   scorecard and Coverage. A partial lens keeps its verdicts; its scorecard top-finding cells, its Coverage reasons, its
@@ -80,8 +98,8 @@ REPO-AUDIT REPORT TEMPLATE. FILL RULES
   (Lens, Read, How chosen), one row per launched lens, from the lens's coverage line, for example "read 60 of 1,900 files:
   entry points, top 20 by churn, 20 random". Areas that share one Not-applicable reason may merge as in the Scorecard.
 - evidence-table: the one generic table, used for the Scorecard (Area, Verdict, Top finding, Link), Coverage (Area, Read, Ran,
-  Measured, Browsed, Not assessed, Reason), Measurements (Metric, Value, How measured), the monorepo package table (Package,
-  Type, Verdict, Top finding, Link), the lens coverage table (Lens, Read, How chosen), the two Rules conformance tables
+  Measured, Browsed, Not assessed, Reason), Measurements (Metric, Value, How measured; the UI probe tables above), the monorepo package table
+  (Package, Type, Verdict, Top finding, Link), the lens coverage table (Lens, Read, How chosen), the two Rules conformance tables
   (Source, Rules, Pass, Fail, Not assessed; Rule, Source, Result, Evidence, Link), the External facts table (Fact, File:line,
   Source URL, Date read, Result), the Agent readiness gates table (Gate, Documented at, As written, Result, Time, Manual
   steps) and the Repo organisation cruft table (Path, Kind, Evidence, Finding). A cell may hold inline HTML (a pill, a link,
@@ -112,7 +130,7 @@ PLACEHOLDERS
               unchecked), SEV_CLASS, SEVERITY (fail and flag rows only: delete the sev span otherwise),
               STANDARD_EVIDENCE, STANDARD_FIX (fail and flag rows; an em dash otherwise), STANDARD_SOURCE (the row's
               source cell)
-  Measures:   MEASUREMENTS_INTRO (the table is an evidence-table)
+  Measures:   MEASUREMENTS_INTRO (the tables are evidence-tables)
   Rules:      RULES_INTRO (the tables are evidence-tables)
   Coverage:   COVERAGE_INTRO (the table is an evidence-table)
   Screens:    SCREENS_INTRO, IMG_NAME, IMG_ALT, IMG_CAPTION

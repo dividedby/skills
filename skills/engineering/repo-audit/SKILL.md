@@ -19,7 +19,10 @@ areas, severity scale and verdict rules are in [`rubric.md`](./rubric.md).
 Defers:
 
 - Agent tool (lens agents run in parallel); the Artifact tool to publish the page.
-- The built-in browser or the project's own run tooling, for screenshots.
+- Playwright in a scratch install ([`probe.md`](./probe.md), a supporting file,
+  not a skill) for web-app capture and the UI probe; the project's own run
+  tooling for other types; the built-in browser pane only to preview the page in
+  Stage 6.
 - `/to-tickets` — only if the user later asks for the plan as issues.
 - [`types.md`](./types.md), a supporting file (not a skill): the repo types,
   size tiers and monorepo rule Stage 1 applies.
@@ -134,8 +137,11 @@ licence, remote, public or private (`gh api repos/$GH --jq .private` with a
 GitHub remote; otherwise "unknown (no GitHub remote)"), the owner, the
 ownership test and trust results and the execute answer (see **Ownership and
 trust** below), the names of the environment variables the demo or sample mode needs (the
-[Execution boundary](#execution-boundary) passes only these), and the repo facts
-the fleet-standards check adds ([`fleet-standards.md`](./fleet-standards.md)
+[Execution boundary](#execution-boundary) passes only these), for a web UI how
+its data can be isolated (a variable, flag, demo mode or temp profile, or none,
+and where it was found), the ports its docs reserve, the widths and themes it
+supports, the minimum target size its docs set, whether it is a hosted site, and
+the repo facts the fleet-standards check adds ([`fleet-standards.md`](./fleet-standards.md)
 section 2). Write the profile as
 a table of `fact | value | source`. A part or package that matches no type, or
 a repo with none, follows the fallback in [`types.md`](./types.md). In a large
@@ -276,13 +282,26 @@ read-only baseline (status snapshot and marker) is saved.
 Gather the evidence the lenses cannot gather blind. Anything here that executes
 the repo's code follows the execute answer from Stage 1:
 
-- **Screenshots** of every main screen and state (empty, loading, error,
-  populated), from the project's own demo, sample-data or dev mode, capturing
-  as the type's entry in [`types.md`](./types.md) directs. Web apps: the
-  built-in browser against a local dev server. Capture light and dark where the
-  product supports both.
-- **No safe way to run it** (no demo mode, real accounts required): skip
-  screenshots, say so, and let the design lens work from source.
+- **Isolated instances (web UIs).** Start the app against throwaway data: the
+  repo's demo or sample mode, an environment variable that points its data into
+  the scratchpad, a profile flag, or a temp profile. Use a free port its docs and
+  config do not reserve, never the user's real data folder, and the scrubbed
+  environment; [`probe.md`](./probe.md) says how. Start two: a **primary** for
+  captures, the probe and walkthroughs, and a **second**, with its own data
+  directory and port, for the fault and security requests the architecture lens
+  makes. With none of these modes the UI is "not probed (reason)", the reason
+  from [`rubric.md`](./rubric.md), and the design lens works from source. Log
+  each process in the run log (started, port, data directory, stopped).
+- **UI probe.** [`probe.md`](./probe.md) against the primary instance: each main
+  screen, in the states the product has (empty, loading, error, populated), at
+  the widths it supports and in the themes it supports, with states reached by
+  scripted interaction; a keyboard-only pass of each primary flow; for a hosted
+  site, Lighthouse. Screenshots come from the same run. Raw JSON stays in the
+  scratchpad. Every skipped dimension records its reason.
+- **Other UI types** (CLI, native app, userscript): capture as the type's entry
+  in [`types.md`](./types.md) directs.
+- **Lifetime.** Both instances stay up through Stage 3. The main session stops
+  both before Stage 4 and logs it; none is left running at publish.
 - **Baseline.** The main session runs [`baseline.md`](./baseline.md) before the
   lenses launch, under the [Execution boundary](#execution-boundary). It writes
   `digest.md` with the raw output beside it in the scratchpad and judges
@@ -293,10 +312,10 @@ the repo's code follows the execute answer from Stage 1:
   nothing it finds; otherwise the section is "n/a (not a fleet repo)" and no row
   runs.
 
-Stop any server or app this stage started before Stage 3 ends.
-
 **Done when:** each main screen has a capture (or the reason it has none), the
-captures sit in the scratchpad, every checklist row has a result (or the
+captures sit in the scratchpad, a web UI has a probe cell set per main screen and
+a `probe` folder summary (or the reason it has none) and both instances are up
+for Stage 3 (or the reason there are none), every checklist row has a result (or the
 section is marked not checked, with the reason, or n/a for a repo that is not a
 fleet repo), and `digest.md` is written with
 a reason for every tool or gate that did not run.
@@ -305,7 +324,9 @@ a reason for every tool or gate that did not run.
 
 Launch the applicable lens agents in one message so they run concurrently. Each
 gets the pinned commit, the profile, the read-only rule, the relevant captures,
-the fleet-standards results, the execute answer, the baseline digest and the path of its raw
+the fleet-standards results, the execute answer, the baseline digest, the probe
+output paths and the running instances' addresses (the primary for every lens,
+the second for the architecture lens) and the path of its raw
 output, the type entries and the tier's reading rule, the `rules.md` rows for the areas it owns, and its brief from
 [`briefs.md`](./briefs.md): the brief's heading names the lens's model, its body
 says what the lens finds, and the shared header sets the severity scale, the areas the lens
@@ -327,15 +348,17 @@ and tokens.
 - **Resume, same session only** (the scratchpad is per-session). Read `state`
   from the run log and restart at the first incomplete stage if the repo `HEAD`
   is unchanged, relaunching lenses still `running` and launching any with no row
-  yet. The execute answer is read from the log's Run block, not asked again. A lens cut off at `running (retry)` counts as its second failure. Lenses
+  yet. The execute answer is read from the log's Run block, not asked again. The
+  instances are checked and restarted from the same data directories if they no
+  longer answer. A lens cut off at `running (retry)` counts as its second failure. Lenses
   marked `done`, `partial` or `failed` keep their status and any retry already
   used. A changed `HEAD` starts a new run.
 
 Log each agent as [The run log](#the-run-log) directs.
 
 **Done when:** every launched lens has returned, been stopped or been marked
-failed, and each one's report file exists, or its areas are marked "Not
-assessed".
+failed, each one's report file exists, or its areas are marked "Not
+assessed", and both instances are stopped (Stage 2, Lifetime).
 
 ## Stage 4 — Verify (main session)
 
@@ -434,6 +457,10 @@ Write `findings.json` from the verified findings. Its top-level sections:
   the scorecard's; and `skipped_methods`, a list of `{method, reason}` for each
   method the area lists and the run did not use, a baseline tool or gate that
   did not run included, with its reason from the digest's Not run table.
+  `measured` and `browsed` are true for `accessibility`, `content-branding`,
+  `usability` and `performance` when probe cells ran for them, and
+  `skipped_methods` holds one `{method, reason}` for each probe dimension that
+  did not run (cells, keyboard pass, Lighthouse, the second instance).
 
 Publish `run-log.md` and `findings.json` beside the page through the Artifact
 `files` map and link both from the page. The page names every partial or failed
@@ -472,6 +499,9 @@ partial or failed lens.
 - Code from an untrusted repo executed without a yes for this run, or outside the
   Execution boundary or not from a scratch clone.
 - A baseline tool or gate that did not run, with no reason in the digest.
+- An instance started on the user's real data folder, outside the Execution
+  boundary or left running at publish, or a skipped probe dimension with no
+  reason.
 - A fleet-standards check run that was not read-only, or a checklist copy
   reused instead of read fresh.
 - No run log, or a run log missing a section (a section with nothing to log
