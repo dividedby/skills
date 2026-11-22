@@ -58,11 +58,12 @@ made.
 ## Read-only proof
 
 ```text
-check                    | before          | after
-git status --short       | clean           | clean
-HEAD                     | 41d7e60         | 41d7e60
-untracked, ignored files | build/ ignored  | build/ ignored, nothing new
-process started          | dev server :8080| stopped 21:20
+check                           | before           | after
+git status --short              | clean            | clean
+git status --porcelain --ignored| saved snapshot   | equal to before
+HEAD                            | 41d7e60          | 41d7e60
+files newer than the marker     | (marker made)    | none
+process started                 | dev server :8080 | stopped 21:20
 ```
 
 ## State
