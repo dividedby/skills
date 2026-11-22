@@ -106,6 +106,8 @@ The brief names the fleet-standards results file: add only what a row could not 
 6. **Repo settings and hygiene.** Licence, description, topics, branch
    protection, ignore rules, fixture hygiene, history size. Read with `gh api`
    (read-only) when a GitHub remote exists; otherwise from the files and `git`.
+   Folder structure, cruft, the glossary and the ADRs are not here: they are
+   item 7 of Product and docs conformance, so no check is done twice.
 7. **External facts.** The area `external-facts`, which applies when the repo
    hard-codes external values. [`rubric.md`](./rubric.md) defines a fact, an
    official source and the evidence. Use web search and page fetches. Three
@@ -165,6 +167,34 @@ Check their `rules.md` rows as the shared header directs, then:
      instructions and with the README, glossary and ADRs.
    - **Open issues.** Sample them read-only with `gh api` when the rubric's
      condition holds.
+7. **Repo organisation.** [`rubric.md`](./rubric.md) holds the checks, the
+   tests for "stale", the skip rules and the evidence; this is the order of
+   work. Repo settings stay with Architecture item 6.
+   - **Structure.** Count top-level entries and depth first; they cost two
+     commands. Then, from Medium tier up, check each top-level source folder
+     for a findable public surface; on Small tier skip that with the rubric's
+     Depth reason. Report the numbers and the list; raise nothing from them.
+   - **Cruft.** Start from the baseline digest's cruft section and cite it; do
+     not re-run it; it gives counts and its top 10, so cite those and name the
+     rest as "N more" with the raw path. Then the four extra kinds, each item
+     with its path. Examples: in a web app, a `scratch/` folder untouched for
+     180 days that nothing names, a `docs/old-checkout-flow.md` nothing links
+     to, a commented-out block of handlers; in an infra repo, a
+     `terraform/archive/` folder untouched for a year that no root or doc
+     names, a runbook no other tracked file links to or names, a `TODO(#212)`
+     for an issue that is closed. Take markers from item 4's list and test only
+     their age and state. Check the rubric's Skips first (no GitHub remote,
+     shallow history) and record each reason.
+   - **Glossary and ADRs.** Find each file first. Absent: record the skip
+     reason from the rubric and move on. Present: run its checks, taking
+     avoided terms from the glossary and counting hits with `git grep`, no `-w`,
+     so identifiers match (`_Avoid_: client` in a web app that still has
+     `client_id` columns; in an infra repo, `_Avoid_: box` while a module
+     variable is `box_count`). ADR problems cite the numbers (a gap after 0012,
+     0007 "Superseded by 0019" while 0019 never mentions it).
+   - **Recommend.** Last, from what the other items and areas already read:
+     name a term the code spells two ways, or a hard-to-reverse choice no doc
+     records, with `file:line`s. Name nothing and there is no finding.
 
 ## Design (opus)
 

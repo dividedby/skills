@@ -2,8 +2,8 @@
 REPO-AUDIT REPORT TEMPLATE. FILL RULES
 - Clone each repeat block once per item, replace every double-brace token, and delete these comments.
 - Area names, ids, verdicts and reasons come from rubric.md. Section order: Scorecard, Plan, one section per area that has
-  findings (and External facts and Agent readiness, below), Fleet standards, Rules conformance, Coverage, Measurements,
-  Screens, Mockups, Research, What was checked.
+  findings (and External facts, Agent readiness and Repo organisation, below), Fleet standards, Rules conformance, Coverage,
+  Measurements, Screens, Mockups, Research, What was checked.
 - Optional sections (Measurements, Screens, Mockups, Research, Checked, any area-section): delete the whole h2 block AND its nav
   link. Scorecard, Coverage, Fleet standards and Rules conformance are not optional. When the fleet checklist could not be read,
   keep its section, put the reason in STANDARDS_INTRO and delete the table.
@@ -14,9 +14,9 @@ REPO-AUDIT REPORT TEMPLATE. FILL RULES
   the top-finding cell, for example "lens failed: usage limit". The area name links to its area-section when it has one.
   Not-applicable areas that share one reason may merge into one row naming their ids. Monorepo: add a second evidence-table
   (Package, Type, Verdict, Top finding, Link); a package the user did not select is Not assessed, reason Not selected.
-- Area-sections: one per area that has findings, plus `external-facts` when facts were checked and `agent-readiness` when it
-  applies and is assessed (see External facts and Agent readiness below). Not-assessed areas have none; the scorecard and Coverage carry
-  their reason.
+- Area-sections: one per area that has findings, plus `external-facts` when facts were checked, and `agent-readiness` and
+  `repo-hygiene` when they apply and are assessed (see External facts, Agent readiness and Repo organisation below).
+  Not-assessed areas have none; the scorecard and Coverage carry their reason.
   Put "Also reported by: lens" under a finding the Stage 4 merge combined; delete that span otherwise. Fold "why it matters"
   into FINDING. A fleet fail stays a row in the Fleet standards table only; the scorecard row of the area it counts toward
   links to its fs- id when it is that area's top finding.
@@ -46,6 +46,23 @@ REPO-AUDIT REPORT TEMPLATE. FILL RULES
   Documented at follows rubric.md's Documented gates check. Each stale path or command and each duplicated item is a
   finding-row with its file:line (both file:lines for a duplicate); the sampled-issues result goes in AREA_INTRO, or its skip
   reason does.
+- Repo organisation: the area-section of `repo-hygiene` also holds the cruft table, an evidence-table after AREA_INTRO and
+  before the finding table. Keep the section whenever the area is assessed, even with no findings: then delete the finding table,
+  and delete the cruft table when there is no cruft item. AREA_INTRO gives the structure counts (top-level folders and files, the
+  maximum depth and its deepest path, and how many top-level source folders have a findable public surface, with the ones that do
+  not named, or on a Small tier repo the reason "Depth: Small tier, counts and depth only"; reported, not scored), then the
+  glossary result (entries, entries breaking the format, definitions with implementation detail, avoided terms still used) and
+  the lean report (entry count, unused terms as prune candidates), then the ADR result (count, numbering gaps or duplicates,
+  status and supersede-link problems, noise ADRs), or for either the skip reason from rubric.md, for example "Not applicable (no
+  glossary)", and last every other check or test the area skipped with its reason from rubric.md's Skips, for example "Stale
+  markers, closed-issue test: Needs X: a GitHub remote". Columns: Path, Kind (digest item, scratch directory, orphan
+  doc, commented-out code, stale marker), Evidence (the test it failed: the last commit date, the marker and its age or closed
+  issue, the line count of the block; for a digest item its size and the digest's reason), Finding (its id as a link, or an em
+  dash). One row per item, each with its own path, never a count alone. The baseline digest gives counts and its top 10, so those
+  10 are rows with Kind "digest item"; when it counts more, the last row reads "Digest: N more", names in the Path cell where they
+  live (the raw digest path), has em dashes in Evidence and Finding. An avoided term still used is a finding-row whose EVIDENCE
+  gives the `git grep` hit count, the count judged in sense and up to five `file:line` samples; an ADR problem is a finding-row
+  naming the ADR numbers.
 - Run log: METHOD_NOTE links `run-log.md` and `findings.json` (both published beside the page) and names every partial or
   failed lens. A lens that failed with no output: each area it owns is Not assessed with reason "lens failed: reason" in the
   scorecard and Coverage. A partial lens keeps its verdicts; its scorecard top-finding cells, its Coverage reasons, its
@@ -60,9 +77,10 @@ REPO-AUDIT REPORT TEMPLATE. FILL RULES
   Measured, Browsed, Not assessed, Reason), Measurements (Metric, Value, How measured), the monorepo package table (Package,
   Type, Verdict, Top finding, Link), the lens coverage table (Lens, Read, How chosen), the two Rules conformance tables
   (Source, Rules, Pass, Fail, Not assessed; Rule, Source, Result, Evidence, Link), the External facts table (Fact, File:line,
-  Source URL, Date read, Result) and the Agent readiness gates table (Gate, Documented at, As written, Result, Time, Manual
-  steps). A cell may hold inline HTML (a pill, a link, code). Add class "wide" to the table when it
-  has more than four columns. A new table elsewhere is another instance of it, never new markup. Keep tables inside .tablewrap so the page never scrolls sideways.
+  Source URL, Date read, Result), the Agent readiness gates table (Gate, Documented at, As written, Result, Time, Manual
+  steps) and the Repo organisation cruft table (Path, Kind, Evidence, Finding). A cell may hold inline HTML (a pill, a link,
+  code). Add class "wide" to the table when it has more than four columns. A new table elsewhere is another instance of it,
+  never new markup. Keep tables inside .tablewrap so the page never scrolls sideways.
 - Each screenshot's src is {{IMG_NAME}}: replace it with that image's data: URI. Class tokens take only the values listed
   in parentheses below.
 - Market output is context, not an area: it appears in Research and as evidence in External facts and Tech stack findings. A plan
