@@ -9,7 +9,7 @@ A bucket's own `README.md` is **not** required by default. Add one only when eit
 ## Checks
 
 - `pnpm format:check` (Prettier; `pnpm format` fixes) and `ruff format --check .` — both run in CI (`.github/workflows/format.yml`).
-- Hook and script self-tests: `python3 .claude/hooks/check-skill-registration.test.py`, `python3 .claude/hooks/destructive-git-guard.test.py`, `python3 docs/agents/labels.test.py`. Plain `python3`, no pytest needed.
+- Hook and script self-tests: `python3 .claude/hooks/check-skill-registration.test.py`, `python3 .claude/hooks/destructive-git-guard.test.py`, `python3 docs/agents/labels.test.py`, `python3 skills/engineering/mac-activity/scripts/snapshot.test.py`. Plain `python3`, no pytest needed; CI's `gate` job runs every `*.test.py` under `.claude/hooks/`, `docs/agents/` and `skills/`.
 - Python lint: `pipx run ruff==0.17.0 check .` (default rules plus `ruff.toml`, target `py39`); typecheck: `pipx run pyright==1.1.414` (basic mode, `pyrightconfig.json`). Both run in CI as the `lint-python` and `typecheck-python` jobs in `.github/workflows/gate.yml`; locally `uvx ruff@0.17.0 check .` and `uvx pyright@1.1.414` work too.
 
 ## Conventions
