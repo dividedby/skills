@@ -148,7 +148,7 @@ source:
 owner              | acme-labs          | git remote get-url origin
 ownership test     | fail (owner leg)   | gh api user --jq .login; gh api user/orgs --jq '.[].login'
 trust              | untrusted          | ownership test; no override in the prompt
-execute repo code  | no (asked 21:03 CT, no answer) | the question
+execute repo code  | no (asked 21:03 CT, no answer by 21:05 CT) | the question
 ```
 
 - **Ownership test.** The maintainer owns the repo or the fleet includes it. It
