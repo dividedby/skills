@@ -63,8 +63,9 @@ area, largest files), test suite (test files or a test command) and its run
 time, build and release path, CI (`.github/workflows/` holds a workflow), docs
 present, licence, public or private (`gh api repos/$GH --jq .private`), and the
 repo facts the fleet-standards check adds
-([`fleet-standards.md`](./fleet-standards.md) section 2). These are the
-profile's **known facts**; the lenses verify them rather than trust them.
+([`fleet-standards.md`](./fleet-standards.md) section 2). Write the profile as
+a table of `fact | value | source`.
+
 Decide which lenses apply and say so in one line each:
 
 - **Design** runs only when there is a user-facing UI (app, site, or CLI output
@@ -75,8 +76,22 @@ Decide which lenses apply and say so in one line each:
 Read the user's prompt for a focus ("design only", "perf first") and weight the
 briefs toward it.
 
-**Done when:** the commit is pinned, the profile is written down, and the lens
-lineup is stated with reasons.
+**Check the profile's facts before any brief is written.** Every fact a brief
+will rely on (a date, version, tracked or ignored file, count, port or command)
+gets a source: a `file:line`, a command and its output, or a URL. A fact with
+no source is marked "unverified" in the brief. Tracked or ignored is settled by
+`git ls-files <path>`, so no fact of that kind stays unverified.
+
+```text
+fact                 | value          | source
+lockfile tracked     | yes            | git ls-files Cargo.lock -> Cargo.lock
+test command         | pnpm test      | package.json:14
+build command        | make release   | Makefile:12
+release cadence      | monthly        | unverified
+```
+
+**Done when:** the commit is pinned, the profile is written down with a source
+per fact, and the lens lineup is stated with reasons.
 
 ## Stage 2 — Capture
 
@@ -106,10 +121,10 @@ area is marked not checked, with the reason).
 
 Launch the applicable lens agents in one message so they run concurrently. Each
 gets the pinned commit, the profile, the read-only rule, the relevant captures,
-and its brief from [`briefs.md`](./briefs.md): the brief's heading names the
-lens's model, its body says what the lens finds, and the shared header sets the
-shape of a finding. The Architecture, repo and docs lens also gets the fleet-standards
-results, so it does not re-report those rows. Each writes its report (and the
+the fleet-standards results and the baseline numbers, and its brief from
+[`briefs.md`](./briefs.md): the brief's heading names the lens's model, its body
+says what the lens finds, and the shared header sets the shape of a finding and
+how to use the profile and those results. Each writes its report (and the
 design lens its mockup spec) to a named scratchpad path and returns a short
 summary.
 
@@ -119,19 +134,27 @@ summary.
 
 The lens reports are claims. Before anything reaches the page:
 
-1. Re-check every **High** finding, and any finding the plan's "Now" column
+1. **Merge duplicates, before any re-check.** Two findings are duplicates when
+   they cite the same `file:line` or the same command output.
+   - Keep one, in the lens that owns the finding's rubric area; while lenses
+     own no rubric areas, in the lens with the most specific evidence. Record
+     the other lenses as "also reported by".
+   - Keep the highest severity that survives verification.
+   - A finding that restates a fleet-standards row is folded into that row.
+   - Each merge is a "merged" line in the correction list.
+2. Re-check every **High** finding, and any finding the plan's "Now" column
    rests on, at its cited source. Read the line; rerun the command. This
    includes High fleet-standards fails.
-2. Correct what does not hold: lower the severity, fix the evidence, or drop the
+3. Correct what does not hold: lower the severity, fix the evidence, or drop the
    finding. Keep a list of every correction with the reason.
-3. Where lenses disagree with each other or with the code (a research claim
-   versus what the code does), list it as disputed: both readings, and which
-   the evidence favours.
-4. Context a lens lacked can change a rating (sandboxing, single-user scope,
+4. Where lenses disagree with each other or with the code (a research claim
+   versus what the code does), list it as a "disputed" line in the correction
+   list.
+5. Context a lens lacked can change a rating (sandboxing, single-user scope,
    data size). Apply it and note it.
 
-**Done when:** every High is confirmed or corrected, and the correction list is
-written.
+**Done when:** duplicates are merged, every High is confirmed or corrected, and
+the correction list (merged, corrected and disputed lines) is written.
 
 ## Stage 5 — Plan and mockups
 

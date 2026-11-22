@@ -162,7 +162,7 @@ section.
 
 Write the results to a scratchpad file (`fleet-standards.md`): the source and
 commit, the repo facts, then one line per row with id, result, severity,
-evidence, fix and source. Give the path to the Architecture, repo and docs lens so it
-does not re-report these rows; it may add context a row could not see. Fails
+evidence, fix and source. Give the path to every lens; the Architecture, repo
+and docs lens may add context a row could not see. Fails
 enter Stage 4 and the plan like any other finding, with finding id
 `fs-<row id>`.

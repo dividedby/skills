@@ -31,12 +31,14 @@ PLACEHOLDERS
   Screens:    SCREENS_INTRO, IMG_NAME, IMG_ALT, IMG_CAPTION
   Mockups:    MOCKUPS_INTRO, MOCKUP_TITLE, MOCKUP_CONTEXT, MOCKUP_WIDTH, MOCKUP_HTML, MOCKUP_NOTE
   Research:   RESEARCH_INTRO, SOURCE_TOPIC, SOURCE_SUMMARY, SOURCE_URL, SOURCE_TITLE, RESEARCH_GAPS
-  Checked:    VERIFIED_ITEM, CORRECTED_ITEM, DISPUTED_ITEM (both readings, and which the evidence favours), UNVERIFIED_ITEM
+  Checked:    VERIFIED_ITEM, CORRECTED_ITEM, MERGED_ITEM (the kept finding's id, the lenses it also came from; the
+              fleet-standards row id for a fold), DISPUTED_ITEM (both readings, and which the evidence favours),
+              UNVERIFIED_ITEM
 
 REPEAT BLOCKS (each is wrapped in a repeat comment pair named as below; clone everything between the markers)
   nav-link, verdict-card, plan-item (once inside each of Now/Next/Later), area-section (contains finding-row),
   finding-row, standard-row (one per checklist row, n/a rows included), measurement-row, screenshot, mockup (contains mockup-note), mockup-note, research-source,
-  verified-item, corrected-item, disputed-item, unverified-item
+  verified-item, corrected-item, merged-item, disputed-item, unverified-item
   FINDING_ID on a plan-item must equal the FINDING_ID of a finding-row (id="..." on the <tr>); a fleet-standards
   fail's id is fs-STANDARD_ID.
 -->
@@ -909,6 +911,12 @@ REPEAT BLOCKS (each is wrapped in a repeat comment pair named as below; clone ev
     <ul class="tight">
       <!-- repeat: corrected-item -->
       <li>{{CORRECTED_ITEM}}</li>
+      <!-- /repeat -->
+    </ul>
+    <h3>Merged</h3>
+    <ul class="tight">
+      <!-- repeat: merged-item -->
+      <li>{{MERGED_ITEM}}</li>
       <!-- /repeat -->
     </ul>
     <h3>Disputed</h3>

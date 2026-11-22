@@ -13,6 +13,9 @@ also carries the shared header below.
   allowed (build and test into ignored output, read-only `gh` calls, scratch
   packages outside the repo).
 - The size facts: lines per area, the largest files, test count and run time.
+- The profile with a source per fact. Facts marked unverified must be checked
+  before use.
+- Don't repeat fleet-standards rows or baseline numbers; cite them.
 - Output: the full report as Markdown at a named scratchpad path, then a short
   summary reply (top findings, under 500 words).
 - Finding shape: severity (High / Med / Low), evidence (`file:line`, command
@@ -46,7 +49,7 @@ Focus on cost at realistic scale and on correctness risk:
   ([`fleet-standards.md`](./fleet-standards.md) section 1). Recommend only;
   delete and edit nothing.
   - **Measure:** run time, test count, test-to-source line ratio and the largest
-    test file, with the commands. Reuse the `test-size` numbers from the fleet
+    test file, with the commands. Cite the `test-size` numbers from the fleet
     check ([section 3](./fleet-standards.md#3-run-each-applicable-row)).
   - **List**, each with `file:line` samples: change-detector tests and tests of
     trivial code; assertion-free and sleep-based tests; mock-heavy tests;
@@ -59,11 +62,8 @@ Focus on cost at realistic scale and on correctness risk:
 
 ## Architecture, repo and docs (sonnet)
 
-Start by verifying the profile's "known facts" (what docs, CI and release
-tooling exist) rather than trusting them. The brief names the fleet-standards
-results file: do not re-report a row it already rates; add only what a row
-could not see (a check that passed on a technicality, a gap no row covers).
-Then assess:
+The brief names the fleet-standards results file: add only what a row could not
+see (a check that passed on a technicality, a gap no row covers). Then assess:
 
 1. **Module architecture.** Layering and dependency direction, god objects,
    test-only or demo code shipped in production targets, whether parts should
