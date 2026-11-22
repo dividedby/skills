@@ -25,7 +25,8 @@ stage        | start | end
 
 One row per agent. Findings are High / Med / Low.
 Status is `running`, `running (retry)`, `done`, `partial (reason)` or
-`failed (reason)`.
+`failed (reason)`. `partial` keeps some output; `failed` left nothing usable, so
+its areas are Not assessed.
 
 ```text
 lens    | model  | wall time | tokens | tool uses | findings | status

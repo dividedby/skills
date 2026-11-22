@@ -255,7 +255,8 @@ partial or failed lens.
 - Any change to the audited repo. The audit has failed even if the report is good.
 - A fleet-standards check run that was not read-only, or a checklist copy
   reused instead of read fresh.
-- No run log, or a run log missing a section.
+- No run log, or a run log missing a section (a section with nothing to log
+  says `none`).
 - A lens failed and its areas are not marked "Not assessed".
 - A High finding on the page that was not re-checked in Stage 4.
 - A projection presented as a measurement.
