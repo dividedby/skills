@@ -2,7 +2,7 @@
 
 My personal Claude Code skills.
 
-This repo is the public, versioned skill catalog and the decisions behind it. Conventions that other repos follow (labels, issue tracker, changelog) live here too. My private runtime config, agents, hooks and fleet standards live in `dividedby/claude-config`, the home repo.
+This repo is the public, versioned skill catalog and the decisions behind it. Fleet conventions that other repos follow (labels, issue tracker, changelog) live here too. My private runtime config, agents, hooks and fleet standards live in `dividedby/claude-config` (the home repo).
 
 ## Install
 
