@@ -6,10 +6,6 @@ that checklist is one rule, the repos it applies to, a read-only check and the
 document it comes from. This file says how to read it, run it and report it.
 The checklist owns the rules; nothing here restates them.
 
-The check stands alone. When the audit rubric (dividedby/skills#612) lands,
-**Fleet standards** joins it as one area: the rubric lists the verdict rule
-below and takes these row results unchanged.
-
 ## 1. Read the checklist fresh
 
 Read it on every run; never reuse a copy from an earlier run or a vendored one.
@@ -48,23 +44,20 @@ remembered list of ids.
 ## 2. Pin the repo facts
 
 The `applies to` column names repo types and traits. Decide these facts once,
-in Stage 1, from the profile and the files (not from the repo's own claims):
+in Stage 1, from the files (not from the repo's own claims). The Stage 1
+profile supplies languages, tests, CI and visibility; the check adds:
 
 | Fact             | Meaning                                                                                                                                                                 |
 | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Languages        | Node/TS, Python, Swift, Go, shell, userscript (`*.user.js`) — each one with tracked source files beyond a stray script                                                  |
 | Code             | Any tracked source file. A docs-only repo has none                                                                                                                      |
-| Tests            | A test suite exists (test files or a test command)                                                                                                                      |
-| CI               | `.github/workflows/` holds at least one workflow                                                                                                                        |
 | Ships            | Someone uses it beyond its development: a deployed site or service, a released package or app, a tool the owner runs day to day. Scratch and archived repos do not ship |
 | CD               | A deploy or release workflow, or a documented deploy path                                                                                                               |
 | Several packages | More than one `package.json` that belongs to the repo (not `node_modules`)                                                                                              |
-| Public           | `gh api repos/$GH --jq .private` is `false`                                                                                                                             |
 
 A row applies when the repo has every fact its `applies to` names ("all"
-applies to every repo). When the column uses a word this table does not
-cover, read it plainly, decide, and write the reading into that row's
-evidence. A row that does not apply is **n/a** with the reason ("no Swift").
+applies to every repo). When the column uses a word this table and the
+profile do not cover, read it plainly, decide, and write the reading into
+that row's evidence. A row that does not apply is **n/a** with the reason ("no Swift").
 
 ## 3. Run each applicable row
 
@@ -120,7 +113,10 @@ Run its check and print the numbers as evidence. The result is **OK** when no
 limit in the row is crossed and **flag** when one is (or **not checked** as
 above). A limit the check cannot measure, such as wall time with no CI run to
 read, is reported as unknown and is not a flag. Its limits are house rules, so
-say that on the page.
+say that on the page. A flag asks for the Code and performance lens's test-suite
+review, which reuses these numbers; the flag is not a finding there. In this
+area it is a Low finding with id `fs-<row id>`, whose fix line points at that
+review's prune-and-split list. It asks for a look, not a change.
 
 Evidence is what the check returned, short: the matched path, the printed
 value, or "no `CHANGELOG.md`". Never print a secret, a personal address or a
@@ -145,10 +141,6 @@ Every fail is a finding, cites its row id and source, and gets a severity:
 
 A row id this list does not name takes the tier its requirement fits; say so
 in the evidence.
-
-A report-only **flag** is a Low finding with id `fs-<row id>`, and its fix line
-points at the Code and performance lens's test-suite review for the
-prune-and-split list. It asks for a look, not a change.
 
 The fix line is the concrete change, one line, in the checklist's own terms
 ("add `.github/workflows/format.yml` running `ruff format --check`"). Name a

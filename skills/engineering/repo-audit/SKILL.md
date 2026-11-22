@@ -20,10 +20,9 @@ Defers:
 - Agent tool (lens agents run in parallel); the Artifact tool to publish the page.
 - The built-in browser or the project's own run tooling, for screenshots.
 - `/to-tickets` — only if the user later asks for the plan as issues.
-- `dividedby/claude-config` `docs/standards.md`, the fleet-standards checklist,
-  read fresh on each run per [`fleet-standards.md`](./fleet-standards.md),
-  along with `docs/testing.md` at the same commit, which the Code and
-  performance lens's test-suite review runs against.
+- `dividedby/claude-config` `docs/standards.md` (the fleet-standards checklist)
+  and `docs/testing.md`, read fresh on each run per
+  [`fleet-standards.md`](./fleet-standards.md).
 
 ## When to use
 
@@ -58,13 +57,15 @@ dev build, and secrets found in history are reported as present, never printed.
 Pin the subject: repo path, branch, commit, remote. Every agent brief names that
 commit and every agent confirms which one it read.
 
-Profile the project: languages, size (lines per area, largest files), test
-suite and its run time, build and release path, CI, docs present, licence,
-public or private, and the repo facts the fleet-standards check needs
+Profile the project: languages (Node/TS, Python, Swift, Go, shell, userscript
+`*.user.js`; each with tracked source beyond a stray script), size (lines per
+area, largest files), test suite (test files or a test command) and its run
+time, build and release path, CI (`.github/workflows/` holds a workflow), docs
+present, licence, public or private (`gh api repos/$GH --jq .private`), and the
+repo facts the fleet-standards check adds
 ([`fleet-standards.md`](./fleet-standards.md) section 2). These are the
-profile's **known facts**; the lenses verify
-them rather than trust them. Decide which lenses apply and say so in one line
-each:
+profile's **known facts**; the lenses verify them rather than trust them.
+Decide which lenses apply and say so in one line each:
 
 - **Design** runs only when there is a user-facing UI (app, site, or CLI output
   when the output is the product). A library skips it.
@@ -92,11 +93,8 @@ Gather the evidence the lenses cannot gather blind:
   screenshots, say so, and let the design lens work from source.
 - **Baseline numbers** the code lens will need: test run time, build time,
   sizes of state or output files, anything cheap to measure now.
-- **Fleet standards.** The main session reads the checklist fresh, records the
-  commit it read, and marks every row pass, fail, n/a or not checked with
-  evidence and a fix line, as [`fleet-standards.md`](./fleet-standards.md)
-  directs. The checklist's checks run only when they are read-only; the audit
-  fixes nothing it finds.
+- **Fleet standards.** The main session runs the check in
+  [`fleet-standards.md`](./fleet-standards.md) and fixes nothing it finds.
 
 Stop any server or app this stage started before Stage 3 ends.
 
@@ -108,18 +106,12 @@ area is marked not checked, with the reason).
 
 Launch the applicable lens agents in one message so they run concurrently. Each
 gets the pinned commit, the profile, the read-only rule, the relevant captures,
-and its brief from [`briefs.md`](./briefs.md), which also sets the shape of a
-finding. The Architecture, repo and docs lens also gets the fleet-standards
+and its brief from [`briefs.md`](./briefs.md): the brief's heading names the
+lens's model, its body says what the lens finds, and the shared header sets the
+shape of a finding. The Architecture, repo and docs lens also gets the fleet-standards
 results, so it does not re-report those rows. Each writes its report (and the
 design lens its mockup spec) to a named scratchpad path and returns a short
 summary.
-
-| Lens                     | Model  | Finds                                                                                                 |
-| ------------------------ | ------ | ----------------------------------------------------------------------------------------------------- |
-| Code and performance     | sonnet | Cost at scale, measured; correctness and concurrency risk; I/O and API use; test-suite value and size |
-| Architecture, repo, docs | sonnet | Module shape, security and privacy, build and release, CI, docs, repo settings                        |
-| Design                   | opus   | Per-screen and app-level issues against the platform's guidelines; a mockup spec                      |
-| Market and research      | sonnet | Competitors, real user complaints, technical gotchas, projects worth copying                          |
 
 **Done when:** every launched lens has returned and its report file exists.
 
@@ -152,30 +144,33 @@ Turn verified findings into a **Now / Next / Later** plan:
 Each plan item links to its finding. Keep the plan short enough to read in a
 minute; the tables hold the detail.
 
-Render the design lens's mockup spec as HTML inside the page, in the template's
-mockup frame, following the theme toggle. Mockups are hand-written HTML and CSS
-that match the platform's look (swap the sample's desktop-window chrome for a
-browser, phone or terminal frame as needed); they are not screenshots of code.
+Render the two or three screens behind the top findings, the only ones the
+design lens specs, as HTML inside the page, in the template's mockup frame,
+following the theme toggle. Mockups are hand-written HTML and CSS that match the
+platform's look; they are not screenshots of code. The template ships a browser
+frame, and its header says when to copy a desktop-window, phone or terminal
+frame from [`snippets.html`](./snippets.html).
 
 ## Stage 6 — Publish
 
-Fill [`template.html`](./template.html) as its header comment directs: one
-section per lens, the Fleet standards table with a row per checklist row and
-its verdict card, each `<!-- repeat: … -->` block cloned per item, every
-`{{PLACEHOLDER}}` replaced, unused sections removed with their nav links, and
-screenshots embedded as `data:` URIs
-(downscale first; keep the page under the Artifact size limit). Preview it
-locally in the browser pane, light and dark, desktop and phone width, before
-publishing.
+Fill [`template.html`](./template.html) as its header comment directs; the
+fill rules live there. Embed each screenshot at its original width up to
+1,280 px, downscale only above that, never upscale, as JPEG at about q70, and
+keep the page under the Artifact size limit. Preview it locally in the browser
+pane, light and dark, desktop and phone width, before publishing.
 
-Publish as a **private** Artifact. Where the Artifact tool is unavailable, save
-the page in the scratchpad and send it to the user as a file.
+Publish as a **private** Artifact. If the Artifact tool offers a `quickstart`,
+run it (it is read-only), then keep this skill's template, which already meets
+the page contract. Where the Artifact tool is unavailable, save the page in the
+scratchpad and send it to the user as a file.
 
 Close with a short message: the link, one verdict line per area (fleet
 standards included, with the checklist commit), the top
-findings, what was verified and what was not, confirmation that the repo is
-unchanged, and **one question** — which part of the plan to start on. Offer
-`/to-tickets` for the plan in one line.
+findings, what was verified and what was not, and confirmation that the repo is
+unchanged. When the run reports to the user, end with **one question** — which
+part of the plan to start on — and offer `/to-tickets` for the plan in one
+line. When it reports to another session, end with the page link and the plan's
+first item instead.
 
 **Done when:** the page is published (or sent), the repo shows no changes, and
 the closing message names what is unverified.
