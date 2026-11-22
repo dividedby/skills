@@ -33,7 +33,7 @@ and are illustrations, not a closed list.
 - **Added checks:** the version field bumped with each change; stable namespace
   and update and download URLs; anchored match and include patterns; no wildcard
   `@connect`; decoders that fail safe (bad input leaves the page alone); the
-  store description kept current. A push to the default branch is a release.
+  store description (such as a `greasyfork-description.md`) kept current. A push to the default branch is a release.
 - **Usually not applicable:** `data-integrity` when the script keeps no storage
   (Not applicable: no data store).
 - **Brief bullets:** Code: decoders and their failure path. Architecture: update
@@ -96,8 +96,8 @@ output piped (non-TTY). Never point the probe at real accounts or data.
 
 ### Server or MCP
 
-- **Detect:** server entry points, web framework imports, a container that runs
-  a service, MCP SDK imports.
+- **Detect:** server entry points, web framework imports, a `Dockerfile` or
+  `compose.yaml` that runs a service, MCP SDK imports.
 - **Added checks:** contract tests; lock drift; tools that claim to be
   read-only really are; log redaction; a health endpoint; the blast radius of an
   image tag; blocking the event loop.
@@ -147,8 +147,9 @@ output piped (non-TTY). Never point the probe at real accounts or data.
 
 ### Docs, config or data
 
-- **Detect:** no tracked source beyond scripts (the non-code trigger, as in
-  [Non-code repos](#non-code-repos)); Markdown, YAML, JSON or CSV dominate.
+- **Detect:** no runtime: no tracked source beyond scripts (the non-code
+  trigger, as in [Non-code repos](#non-code-repos)); Markdown, YAML, JSON or CSV
+  dominate.
 - **Added checks:** link integrity; accuracy against the code or sources it
   describes; safety labelling for commands; structure and freshness; hook or
   script self-tests.

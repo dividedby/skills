@@ -76,8 +76,9 @@ trusted: [`rubric.md`](./rubric.md)'s "Untrusted not run" reason does not apply,
 so the run may execute the repo's own code under the existing rules; the
 allowlist and the read-only rule below still hold. In a monorepo, a row whose
 check reads a package-level file (a manifest, lockfile or test config) is
-checked per package; every other row is repo-level. A per-package row's result is **fail** if
-any audited package fails, and the evidence names the package. The checklist is a
+checked per package; every other row is repo-level. A per-package row's
+evidence gives each audited package's result by name, and the row's result is
+**fail** if any of them fails. The checklist is a
 Markdown table, so each `\|` in a check cell is an escaped `|`: unescape it
 before reading or running the check. Inside quotes (a `grep -E` pattern, a
 `--jq` filter) it is part of that argument; outside quotes it is a shell pipe.
