@@ -106,6 +106,25 @@ The brief names the fleet-standards results file: add only what a row could not 
 6. **Repo settings and hygiene.** Licence, description, topics, branch
    protection, ignore rules, fixture hygiene, history size. Read with `gh api`
    (read-only) when a GitHub remote exists; otherwise from the files and `git`.
+7. **External facts.** The area `external-facts`, which applies when the repo
+   hard-codes external values. [`rubric.md`](./rubric.md) defines a fact, an
+   official source and the evidence. Use web search and page fetches. Three
+   steps, in order:
+   - **Find** the facts and count them, every kind the rubric lists, including
+     the `rules.md` rows for this area and the `VERIFY` markers that item 4 of
+     Product and docs conformance passes here.
+   - **Check** each against an official source. Search the issuing body's or the
+     provider's own site and read the page; a search snippet is not a source.
+     Record the source URL, the date read, the value found and the result.
+   - **Stay current.** Look for the way the values stay current: an update step
+     in a doc or checklist, a test that pins them, a date after which the app
+     warns. Cite it, or report that there is none.
+
+   Over 30 candidates: check every marked value and every value that feeds a
+   user-facing number first, then list the rest as not checked with the count.
+   Report the facts as a table (fact, `file:line`, source URL, date read,
+   result). Each mismatch is also a finding, and a missing update path is one.
+   Repair nothing.
 
 ### Product and docs conformance
 
@@ -173,7 +192,8 @@ web search (standard first, extended when thin) and page fetches.
 2. **What users say.** Forums and Reddit communities for the platform and
    problem space. One short quote per source (under 15 words) with its URL.
 3. **Technical gotchas.** Quotas, token or cursor expiry, platform permissions,
-   format limits — whatever others in this space hit.
+   format limits — whatever others in this space hit. Evidence only: the
+   Architecture lens checks the repo's own values against official sources.
 4. **Gaps and opportunities** versus the field.
 5. **Projects worth copying** for structure, polish, README, CI and release:
    repo URLs and what to copy.

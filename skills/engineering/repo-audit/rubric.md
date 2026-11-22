@@ -55,7 +55,7 @@ lens owns no area: it feeds evidence to External facts and Tech stack.
 | Feature completeness vs docs              | `feature-completeness` | Product and docs conformance | Architecture, repo and docs | The docs describe behaviour the code should have             |
 | Repo organisation, docs and hygiene       | `repo-hygiene`         | Product and docs conformance | Architecture, repo and docs | Always                                                       |
 | Ops, release and observability            | `ops-release`          | Product and docs conformance | Architecture, repo and docs | Ships                                                        |
-| External facts                            | `external-facts`       | Architecture, security, data | Architecture, repo and docs | The code hard-codes external values                          |
+| External facts                            | `external-facts`       | Architecture, security, data | Architecture, repo and docs | The repo hard-codes external values                          |
 | Agent readiness                           | `agent-readiness`      | Product and docs conformance | Architecture, repo and docs | Always                                                       |
 
 Each area below lists its checks, how they are done and the evidence a finding
@@ -181,10 +181,30 @@ finding with no evidence is not a finding.
 
 ### External facts
 
-- **Checks:** domain values, external API limits and formats the code relies on,
-  each against its official source; each `VERIFY` marker the repo carries.
-- **How:** read the code for hard-coded values; browse the official source.
-- **Evidence:** the code `file:line`, the source URL and the date it was read.
+- **Checks:** each value the repo hard-codes from outside itself, against its
+  official source, and how the values stay current. A fact is:
+  - a constant or table in a config or data file (a tax table or an eligibility
+    threshold in a web app, a quota or an instance limit in infra code);
+  - a value with a year, a date, a percentage or an amount of money;
+  - a value the repo marks (`VERIFY`, "update yearly"), including the
+    `rules.md` rows with this area;
+  - an external API limit or format the code relies on: a quota, a rate limit, a
+    page-size cap, a deprecation, a format change.
+
+  Currency is an update step, a test that pins the values, or a date after
+  which the app warns.
+
+- **How:** read the code, config and data files for the facts; browse the
+  official source for each: a government or standards-body page, the provider's
+  own docs, the standard. A blog, a forum or the repo's own comment is not a
+  source. A fact whose source cannot be found or read is "couldn't verify", never
+  a match. Over 30 candidates, check every marked value and every value that
+  feeds a user-facing number (an amount, date or limit the user sees or decides
+  on), then list the rest as not checked with the count.
+- **Evidence:** per fact, the code `file:line`, the source URL, the date it was
+  read, the value found and the result: match, mismatch or couldn't verify. A
+  mismatch gives both values. The `file:line` of the update step, the pinning
+  test or the warning, or a statement that there is none.
 
 ### Agent readiness
 
