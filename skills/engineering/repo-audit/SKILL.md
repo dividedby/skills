@@ -50,6 +50,27 @@ showing nothing new.
 Real user data never enters the report: screenshots come from a demo, sample or
 dev build, and secrets found in history are reported as present, never printed.
 
+## The run log
+
+The run writes `run-log.md` to the scratchpad **while it works**, in the format
+of [`run-log.md`](./run-log.md), so a later run can be compared with this one
+and a cut-off run can resume as Stage 3 directs. Write each section when its
+event happens. Before Stage 1, if the scratchpad already holds `run-log.md`,
+apply the resume rule in Stage 3.
+
+- **Run** (skill commit, subject commit): at Stage 1, once the commit is pinned.
+- **Stages:** the start time when a stage begins, the end time when it ends.
+- **Agents:** a row when the agent is launched (`running`; a retry sets
+  `running (retry)`), updated when it returns with its wall time, tokens, tool
+  uses, findings by severity and status.
+- **Commands:** when a main-session command fails or takes over 30 s.
+- **Guesses:** at the moment a point in this skill is unclear, silent or
+  contradictory: one row with the choice made. Never batch them to the end.
+- **Read-only proof:** `git status` and `HEAD` at Stage 1 and again at Stage 6,
+  with untracked and ignored files checked and any process started and stopped.
+- **State:** rewritten at every stage boundary and every agent return.
+- **Totals against budget:** updated at each stage end, closed at Stage 6.
+
 ---
 
 ## Stage 1 — Scope
@@ -128,7 +149,29 @@ how to use the profile and those results. Each writes its report (and the
 design lens its mockup spec) to a named scratchpad path and returns a short
 summary.
 
-**Done when:** every launched lens has returned and its report file exists.
+Each lens has a wall-time and token ceiling derived from the depth budget.
+Until a depth budget is set, no ceiling is enforced: log each lens's wall time
+and tokens.
+
+- **Over its ceiling:** stop the lens. Use what it wrote so far and mark it
+  partial.
+- **Errors, hits a usage or rate limit, or returns without a report file:** if
+  it wrote nothing, relaunch it once with the same brief. A second failure marks
+  its areas "Not assessed (lens failed: reason)".
+- **Failed after writing something:** keep the partial output, marked partial,
+  with the reason. No retry.
+- **Resume, same session only** (the scratchpad is per-session). Read `state`
+  from the run log and restart at the first incomplete stage if the repo `HEAD`
+  is unchanged, relaunching lenses still `running` and launching any with no row
+  yet. A lens cut off at `running (retry)` counts as its second failure. Lenses
+  marked `done`, `partial` or `failed` keep their status and any retry already
+  used. A changed `HEAD` starts a new run.
+
+Log each agent as [The run log](#the-run-log) directs.
+
+**Done when:** every launched lens has returned, been stopped or been marked
+failed, and each one's report file exists, or its areas are marked "Not
+assessed".
 
 ## Stage 4 — Verify (main session)
 
@@ -182,6 +225,11 @@ fill rules live there. Embed each screenshot at its original width up to
 keep the page under the Artifact size limit. Preview it locally in the browser
 pane, light and dark, desktop and phone width, before publishing.
 
+Publish `run-log.md` beside the page through the Artifact `files` map and link
+it from the page. The page names every partial or failed lens and marks the
+areas that lens owns, as the template header directs. Finish the read-only proof
+and the totals in the log first.
+
 Publish as a **private** Artifact. If the Artifact tool offers a `quickstart`,
 run it (it is read-only), then keep this skill's template, which already meets
 the page contract. Where the Artifact tool is unavailable, save the page in the
@@ -189,14 +237,16 @@ scratchpad and send it to the user as a file.
 
 Close with a short message: the link, one verdict line per area (fleet
 standards included, with the checklist commit), the top
-findings, what was verified and what was not, and confirmation that the repo is
-unchanged. When the run reports to the user, end with **one question** — which
-part of the plan to start on — and offer `/to-tickets` for the plan in one
-line. When it reports to another session, end with the page link and the plan's
-first item instead.
+findings, what was verified and what was not, the run's totals (wall time and
+agent tokens, against the budget once one is set), the number of guesses, any
+partial or failed lens, and confirmation that the repo is unchanged. When the
+run reports to the user, end with **one question** — which part of the plan to
+start on — and offer `/to-tickets` for the plan in one line. When it reports to
+another session, end with the page link and the plan's first item instead.
 
-**Done when:** the page is published (or sent), the repo shows no changes, and
-the closing message names what is unverified.
+**Done when:** the page is published (or sent) with the run log beside it, the
+repo shows no changes, and the closing message names what is unverified and any
+partial or failed lens.
 
 ---
 
@@ -205,6 +255,8 @@ the closing message names what is unverified.
 - Any change to the audited repo. The audit has failed even if the report is good.
 - A fleet-standards check run that was not read-only, or a checklist copy
   reused instead of read fresh.
+- No run log, or a run log missing a section.
+- A lens failed and its areas are not marked "Not assessed".
 - A High finding on the page that was not re-checked in Stage 4.
 - A projection presented as a measurement.
 - Real personal data or a secret value in a screenshot or on the page.

@@ -5,6 +5,11 @@ REPO-AUDIT REPORT TEMPLATE. FILL RULES
 - Fleet standards is not optional: when the checklist could not be read, keep the section, put the reason in STANDARDS_INTRO
   and delete the table. Its verdict card uses AREA_ID "standards"; when the area is
   not checked, that card takes STATUS_CLASS mixed and STATUS_LABEL "Not checked".
+- Run log: METHOD_NOTE links `run-log.md` (published beside the page) and names every partial or failed lens. A lens that
+  failed with no output keeps each area it owns: the verdict card takes STATUS_CLASS mixed and STATUS_LABEL
+  "Not assessed (lens failed: reason)", and the area-section stays, with the reason in AREA_INTRO and no finding rows. A
+  partial lens keeps its card, and AREA_INTRO and UNVERIFIED_ITEM say "Partial" with the reason. No area is left out
+  without a verdict or a Not assessed mark.
 - Each screenshot's src is {{IMG_NAME}}: replace it with that image's data: URI. Class tokens take only the values listed
   in parentheses below. One area-section per lens (Code, Design, Repo & docs, Market); fold "why it matters" into FINDING.
 - Market area vs Research: findings (competitor strengths, user complaints, gaps, what to copy) are rows in the Market area;
