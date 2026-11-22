@@ -165,10 +165,113 @@ finding with no evidence is not a finding.
 
 ### Repo organisation, docs and hygiene
 
-- **Checks:** structure, cruft, glossary, ADRs; README, CHANGELOG, licence,
-  ignore rules, repo settings.
-- **How:** read; read repo settings with `gh api` when a GitHub remote exists.
-- **Evidence:** the path, `file:line` or API field.
+A person or an agent orients in a repo from its folders and its docs. The area
+asks whether they lead somewhere true: nothing stray in the tree, no doc
+nothing points to, and a glossary and ADR set that are lean and current when the
+repo keeps them. Code against what the ADRs decide is `rules.md` work, not this
+area's.
+
+- **Checks:**
+  - **Structure (reported, not scored).** Top-level tracked entries (folders and
+    files, counted apart), the maximum directory depth with the deepest path,
+    and for each top-level source folder whether its public surface is findable
+    from the folder: an entry file, an index, a README or a manifest target that
+    shows what it offers without opening the internals. Never a finding on its
+    own: no threshold on the counts, no "too many top-level folders". On a Small
+    tier repo the findability check is skipped, reason "Depth: Small tier,
+    counts and depth only"; the counts and depth are still given.
+  - **Cruft.** The baseline digest's cruft section
+    ([`baseline.md`](./baseline.md) section 6: tracked generated, vendored or
+    build output, large binaries, files an ignore rule matches) is cited as it
+    stands, never re-run. Add what the digest cannot see; each item states its
+    own test, so "stale" is checkable:
+    - **Stale scratch directory:** a tracked folder named for throwaway use
+      (`scratch`, `tmp`, `old`, `backup`, `archive`, `wip`, `playground`) or
+      holding only experiments, with no commit touching it in 180 days
+      (`git log -1 --format=%cs -- <dir>`) and no tracked file outside it naming
+      it (`git grep -l <name>`, each hit judged in context: `tmp` and `old`
+      match almost everywhere).
+    - **Orphan doc:** a tracked doc (`.md`, `.rst`, or a `.txt` that is prose,
+      not a tool input such as `CMakeLists.txt` or `robots.txt`) that no other
+      tracked file links to or names by path or file name. Not orphans: README,
+      CHANGELOG, licence, contributing, security and code-of-conduct files,
+      agent files, the glossary, `.github` templates, any file a manifest,
+      config or index registers, the ADRs (the ADR checks below cover them),
+      and any file in a folder another tracked file names as where such docs
+      live (a decisions folder, a records folder the glossary points to).
+    - **Commented-out code:** a run of 3 or more consecutive comment lines that
+      read as code (statements, calls, braces) rather than prose, in a source
+      file. Examples in doc comments and licence headers do not count.
+    - **Stale marker:** a `TODO`, `FIXME`, `XXX` or "not built" marker from the
+      `rules.md` rows [`briefs.md`](./briefs.md) Product and docs conformance
+      item 4 lists (not listed again here) that is stale when it names an issue
+      or pull request that is closed, names a date or version already past, or
+      sits on a line `git blame` dates over 365 days ago.
+  - **Glossary, when present.** A glossary is `GLOSSARY.md`, `CONTEXT.md` or a
+    file the README or agent file names as the project's vocabulary.
+    - **Format:** each entry has a term, a one or two sentence definition and,
+      where the term has rivals, the synonyms to avoid (`_Avoid_`). Count the
+      entries missing a definition or breaking the pattern the rest follow.
+    - **No implementation detail:** a definition that names a file, function,
+      class, table or library says how the thing is built, not what it means.
+    - **Avoided terms still used:** each `_Avoid_` term still used in tracked
+      source, tests or user-facing strings, outside the glossary, ADRs and
+      changelog. Match the term inside identifiers too, with
+      `git grep -n -i <term>` and no `-w` (`client` finds `client_id` and
+      `ClientId`), and judge each hit in context.
+    - **Lean (reported):** the entry count, and the terms nothing outside the
+      glossary uses, as candidates to prune.
+  - **ADRs, when present.** The decision records, in `docs/adr/`, `adr/`,
+    `docs/decisions/` or the directory the README names.
+    - **Numbering:** gaps and duplicate numbers in the sequence, and a number
+      format that changes partway.
+    - **Status:** every ADR has one, from the set the repo's own ADRs use or
+      Proposed, Accepted, Rejected, Deprecated, Superseded; a Proposed ADR
+      untouched for 180 days is stale.
+    - **Supersede links:** where an ADR supersedes or amends another, both
+      directions exist (the old one says "Superseded by N", the new one says
+      "Supersedes M"), both numbers resolve, and a superseded ADR is no longer
+      marked Accepted.
+    - **Noise ADRs:** a decision a person could reverse by editing one file
+      that records no rejected alternative. The finding names which of three
+      tests the ADR fails: hard to reverse, surprising without its context, a
+      real trade-off. Judgement, so Low.
+  - **Recommend a glossary entry or an ADR** only when a specific undocumented
+    term or decision is named, with its `file:line`s: a concept the code names
+    two ways, or a non-obvious hard-to-reverse choice the code makes and no doc
+    records. This holds whether or not the file exists. It uses only what the
+    lens read for its other areas; it does not go looking. With nothing named,
+    there is no finding, however thin the docs.
+  - **README, CHANGELOG, licence, ignore rules, repo settings:** present and
+    current; ignore rules cover what the stack generates.
+- **How:** read; measure with `git ls-tree`, `git ls-files` and `git log`; read
+  repo settings with `gh api` when a GitHub remote exists. Without `-w` an
+  avoided term also hits longer words and other senses (`client` in `clientele`,
+  or a common word used as ordinary prose); only a hit in the term's sense is a
+  use.
+- **Evidence:** the path of every cruft item the lens finds, one per row, never
+  a count alone. The baseline digest gives counts and its top 10 with sizes, so
+  those 10 are cited as rows and the rest as "N more" with the raw digest
+  path where they live. For an avoided term the `git grep` hit count, the count
+  judged in sense and up to five `file:line` samples; for an ADR problem the ADR
+  numbers and the line that breaks the rule; for structure the counts and the
+  command. The path, `file:line` or API field otherwise.
+- **Severity:** a cruft finding is Med when it misleads a reader or an agent
+  (an orphan doc that describes removed behaviour, a scratch folder that
+  shadows a real one), otherwise Low. Structure never produces one.
+- **Skips:** each check or test that cannot run is skipped with its reason, and
+  the rest of the area still runs:
+  - no glossary: the glossary checks, "Not applicable (no glossary)";
+  - no ADRs: the ADR checks, "Not applicable (no ADRs)";
+  - no tracked source: findability and commented-out code, "Not applicable (no
+    tracked source)";
+  - no GitHub remote: the closed-issue test for stale markers and the repo
+    settings, "Needs X: a GitHub remote"; the date, version and age tests still
+    run;
+  - shallow history (`git rev-parse --is-shallow-repository` prints `true`):
+    the commit-age and `git blame` tests, "Needs X: full git history";
+  - a digest check the baseline did not run: its reason from the digest's Not
+    run table.
 
 ### Ops, release and observability
 
