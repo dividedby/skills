@@ -5,8 +5,9 @@ name: gate
 # a path-filtered lib-tests workflow) were path-filtered subsets of this suite that
 # also re-ran on push, double-running the same tests gate already covers at PR
 # time; they were removed. The `gate` job has no path filter and runs every
-# stdlib self-test in the repo in one sub-second pass; `ci-ok` below is the check
-# the default-branch ruleset requires.
+# stdlib self-test in the repo (Python scripts, and `node:test` files for the
+# JS helpers) in one pass; `ci-ok` below is the check the default-branch
+# ruleset requires.
 
 on:
   pull_request:
@@ -44,6 +45,21 @@ jobs:
             echo "no standalone self-tests found — gate would pass having tested nothing"
             exit 1
           fi
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+
+      - name: Run node:test files
+        run: |
+          set -e
+          shopt -s nullglob globstar
+          files=(skills/**/*.test.mjs)
+          if [ "${#files[@]}" -eq 0 ]; then
+            echo "no node:test files found — gate would pass having tested nothing"
+            exit 1
+          fi
+          node --test "${files[@]}"
 
   lint-python:
     runs-on: ubuntu-latest

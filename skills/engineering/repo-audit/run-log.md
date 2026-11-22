@@ -65,13 +65,17 @@ made.
 
 ## Read-only proof
 
+One `process started` row per instance Stage 2 starts: its role, port, PID and
+data directory (in the scratchpad), and when it was stopped.
+
 ```text
 check                           | before           | after
 git status --short              | clean            | clean
 git status --porcelain --ignored| saved snapshot   | equal to before
 HEAD                            | 41d7e60          | 41d7e60
 files newer than the marker     | (marker made)    | none
-process started                 | dev server :8080 | stopped 21:20
+process started                 | primary :8080 pid 4121 data $B/data/a | stopped 21:20
+process started                 | second :8081 pid 4130 data $B/data/b | stopped 21:20, before Stage 4
 ```
 
 ## State

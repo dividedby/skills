@@ -140,9 +140,9 @@ Check their `rules.md` rows as the shared header directs, then:
 1. **Feature completeness.** Give every feature and command the README
    documents one status: **works**, **broken** (what failed, with the doc and
    code `file:line` or the command's output), or **not checkable** with a reason
-   from the not-assessed list. Run each on the running build or instance Stage 2
-   started for captures where there is one (a web app's screen, a CLI's
-   command); with none, read the code and mark what reading cannot settle not
+   from the not-assessed list. Run each on the primary instance
+   ([`SKILL.md`](./SKILL.md) Stage 2) where there is one (a web app's screen), or
+   a CLI's command; with none, read the code and mark what reading cannot settle not
    checkable. Give the table of statuses in the report.
 2. **Docs against code.** Read each statement a doc makes about behaviour (what
    it stores, sends, defaults to, requires, refuses) against the code. A
@@ -205,8 +205,10 @@ Runs only with a UI. The reviewer is a senior product designer for the platform;
 the bar is first-class platform-native or top-tier third-party software. Name
 three to six apps in the same category to compare against.
 
-- **Inputs.** Every Stage 2 capture (list the paths; read them all), icons and
-  other visual assets, and the UI source.
+- **Inputs.** Every Stage 2 capture (list the paths; read them all), the probe
+  JSON and keyboard logs (paths; [`probe.md`](./probe.md)), icons and other
+  visual assets, and the UI source. Use the probe's measured numbers; do not
+  re-measure them.
 - **Research.** The platform's current interface guidelines for the patterns
   the product uses: windows and navigation, toolbars, settings, menus,
   onboarding, destructive actions, progress, empty states,

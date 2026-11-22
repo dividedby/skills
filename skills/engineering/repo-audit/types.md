@@ -129,8 +129,8 @@ output piped (non-TTY). Never point the probe at real accounts or data.
 - **Added checks:** Host and Origin header checks (DNS-rebinding defence);
   loopback-only binding; the launcher works on a fresh clone; an isolated data
   directory and port for capture and fault runs; backups; port conflicts.
-- **Capture:** browse the running instance, started with its own port and data
-  directory.
+- **Capture:** the isolated instances and the probe ([`SKILL.md`](./SKILL.md)
+  Stage 2).
 - **Brief bullets:** Architecture: Host and Origin checks, binding, where data
   lands. Code: behaviour on a taken port.
 
@@ -140,6 +140,8 @@ output piped (non-TTY). Never point the probe at real accounts or data.
   HTML only.
 - **Added checks:** the deploy re-runs the gates; lab Core Web Vitals; security
   headers; the privacy page kept current; consent where the site sets cookies.
+- **Capture:** the probe with Lighthouse, against a local build of the site
+  ([`probe.md`](./probe.md)).
 - **Usually not applicable:** `data-integrity` for static HTML only (Not
   applicable: no data store).
 - **Brief bullets:** Architecture: deploy path and headers. Design: Core Web

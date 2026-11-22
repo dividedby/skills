@@ -271,9 +271,10 @@ loaded by `<script src>` from HTML. The Node rows do not apply, so run these:
 
 - **Coverage:** when the repo has browser JS and UI tests, collect JS coverage
   from Chromium with Playwright's coverage API in a scratch script outside the
-  repo (Playwright installed into `$B/pw` with `PLAYWRIGHT_BROWSERS_PATH` there):
-  `page.coverage.startJSCoverage()`, drive the UI tests' flows (or the Stage 2
-  screen walk) against the isolated instance, `stopJSCoverage()`, and report used
+  repo (the scratch install of [`probe.md`](./probe.md)):
+  `page.coverage.startJSCoverage()`, drive the UI tests' flows (or the probe's
+  screen walk) against the primary instance
+  ([`SKILL.md`](./SKILL.md) Stage 2), `stopJSCoverage()`, and report used
   bytes over total bytes per script. Say which drove it; a screen walk is not the
   test suite. Without UI tests, a browser, or a way to start the instance:
   **"JS coverage: not measured (reason)"**, with the reason from the closed list.
