@@ -4,6 +4,8 @@
 
 > **Amended by [ADR 0045](./0045-repo-audit-checks-fleet-standards-read-fresh.md)** — the main session also checks the repo against the fleet standards in `dividedby/claude-config`, read fresh each run; the read-only rule, lenses and stages are unchanged.
 
+> **Amended by [ADR 0046](./0046-repo-audit-types-tiers-and-a-fallback.md)** — the profile adapts to the repo's type, size and shape (types, size tiers, a fallback, monorepos, no GitHub remote); the read-only rule, lenses and stages are unchanged.
+
 ## Context
 
 `/repo-audit` (3.1.0) ran a leverage hunt: up to five lens seats on the Workflow

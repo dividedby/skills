@@ -2,8 +2,9 @@
 
 One brief per lens; each heading names the lens's model. Stage 3 adapts each to
 the project: name the stack's own tools, files and comparables from the Stage 1
-profile, drop bullets that do not apply, and add the user's focus. Every brief
-also carries the shared header below.
+profile, drop bullets that do not apply, add the brief bullets of each matched
+entry in [`types.md`](./types.md), and add the user's focus. Every brief also
+carries the shared header below.
 
 ## Shared header (every lens)
 
@@ -12,7 +13,11 @@ also carries the shared header below.
 - The read-only rule from `SKILL.md`, restated in full. Name what _is_
   allowed (build and test into ignored output, read-only `gh` calls, scratch
   packages outside the repo).
-- The size facts: lines per area, the largest files, test count and run time.
+- The size facts: lines per area after exclusions, the largest files, test
+  count and run time.
+- The profile's types, with their `types.md` brief bullets pasted, and the
+  tier with its reading rule. End the report with one coverage line: what the
+  lens read and how it chose.
 - The profile with a source per fact. Facts marked unverified must be checked
   before use.
 - Don't repeat fleet-standards rows or baseline numbers; cite them.
@@ -43,16 +48,15 @@ Focus on cost at realistic scale and on correctness risk:
 - **Measure, don't guess.** Build a scratch benchmark outside the repo that
   depends on it by path, generate synthetic data at two sizes, and time the hot
   paths. Report measured numbers with how they were made; mark projections.
-- **Concurrency.** Isolation and threading rules of the stack, work on the UI
-  thread that should not be, unstructured tasks, cancellation that does not
-  reach long loops, races between subsystems.
+- **Concurrency.** Isolation and threading rules of the stack, unstructured
+  tasks, cancellation that does not reach long loops, races between subsystems.
 - **I/O.** Write frequency, durability versus cost, journal and log growth,
   backup or export cost, memory held at once.
 - **External APIs.** Batching where the API offers it, paging, rate limits and
   backoff, request methods, timeouts, per-item fallbacks.
 - **Structure.** Dead code, duplicated logic, types that do too much.
-- **Errors.** Swallowed failures (`try?`, empty catches), failures that leave
-  state half-written.
+- **Errors.** Swallowed failures (empty catches, ignored results), failures
+  that leave state half-written.
 - **Tests.** Review whether the suite earns its keep against the
   `docs/testing.md` text and commit the main session passes
   ([`fleet-standards.md`](./fleet-standards.md) section 1). Recommend only;
@@ -78,19 +82,18 @@ The brief names the fleet-standards results file: add only what a row could not 
    test-only or demo code shipped in production targets, whether parts should
    be separate modules.
 2. **Security and privacy.** Credential and token storage, auth flow, scopes or
-   permissions requested versus used, sandboxing, entitlements and runtime
-   hardening (or the stack's equivalents), where personal data lands on disk and with what
-   permissions. Search history for secrets; report presence only, never values.
-3. **Build and release.** Signing, notarization or store path, update channel,
-   versioning, reproducibility, and whether the build setup itself (project
-   files, build configs) would help or is fine as it is.
-4. **CI.** A concrete workflow plan for the stack (test, build, lint, caching),
-   and any runner availability problem for the platform version targeted.
+   permissions requested versus used, sandboxing, where personal data lands on
+   disk and with what permissions. Search history for secrets; report presence only, never values.
+3. **Release path.** How a build reaches users, the update channel, versioning
+   and reproducibility, and whether the build setup itself would help or is
+   fine as it is.
+4. **CI.** A concrete workflow plan for the stack (test, build, lint, caching).
 5. **Documentation.** Outlines for what is missing (README, architecture,
    contributing, changelog convention); quality of in-code docs on a sample of
    about ten files.
-6. **Repo settings and hygiene.** Via read-only `gh api`: licence, description,
-   topics, branch protection, ignore rules, fixture hygiene, history size.
+6. **Repo settings and hygiene.** Licence, description, topics, branch
+   protection, ignore rules, fixture hygiene, history size. Read with `gh api`
+   (read-only) when a GitHub remote exists; otherwise from the files and `git`.
 
 ## Design (opus)
 
@@ -101,8 +104,8 @@ three to six apps in the same category to compare against.
 - **Inputs.** Every Stage 2 capture (list the paths; read them all), icons and
   other visual assets, and the UI source.
 - **Research.** The platform's current interface guidelines for the patterns
-  the product uses: windows and navigation, toolbars, settings, menus or menu
-  bar items, onboarding, destructive actions, progress, empty states,
+  the product uses: windows and navigation, toolbars, settings, menus,
+  onboarding, destructive actions, progress, empty states,
   accessibility.
 - **Per screen.** Information hierarchy, layout and spacing, type scale,
   colour and custom components versus system ones, control choice, toolbar
@@ -131,8 +134,8 @@ web search (standard first, extended when thin) and page fetches.
    complaints.
 2. **What users say.** Forums and Reddit communities for the platform and
    problem space. One short quote per source (under 15 words) with its URL.
-3. **Technical gotchas.** Quotas, token or cursor expiry, platform permissions
-   and entitlements, format limits — whatever others in this space hit.
+3. **Technical gotchas.** Quotas, token or cursor expiry, platform permissions,
+   format limits — whatever others in this space hit.
 4. **Gaps and opportunities** versus the field.
 5. **Projects worth copying** for structure, polish, README, CI and release:
    repo URLs and what to copy.

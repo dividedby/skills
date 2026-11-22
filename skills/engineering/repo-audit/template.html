@@ -11,6 +11,8 @@ REPO-AUDIT REPORT TEMPLATE. FILL RULES
   its top finding, and a link to that finding's id. An area with none: an em dash in the top-finding and link cells. A Not
   assessed area (not applicable, depth, lens failed, and so on): class not-assessed, label "Not assessed", and the reason in
   the top-finding cell, for example "lens failed: usage limit". The area name links to its area-section when it has one.
+  Not-applicable areas that share one reason may merge into one row naming their ids. Monorepo: add a second evidence-table
+  (Package, Type, Verdict, Top finding, Link); a package the user did not select is Not assessed, reason Not selected.
 - Area-sections: one per area that has findings. Not-assessed areas have none; the scorecard and Coverage carry their reason.
   Put "Also reported by: lens" under a finding the Stage 4 merge combined; delete that span otherwise. Fold "why it matters"
   into FINDING. A fleet fail stays a row in the Fleet standards table only; the scorecard row of the area it counts toward
@@ -21,9 +23,13 @@ REPO-AUDIT REPORT TEMPLATE. FILL RULES
   AREA_INTRO and UNVERIFIED_ITEM say "Partial" with the reason. No area is left out without a verdict or a Not assessed mark.
 - Coverage: one row per area in rubric order. Read, Ran, Measured, Browsed hold a check mark or an em dash. Not assessed holds
   "yes" for a Not assessed area, else an em dash. Reason holds the area's Not-assessed reason, or each skipped method and its
-  reason, else an em dash.
+  reason, else an em dash. COVERAGE_INTRO states the size tier, the line-count exclusions and the detected types (per package in a
+  monorepo); it names any type with no types.md entry and marks it "fallback profile". Add a second evidence-table
+  (Lens, Read, How chosen), one row per launched lens, from the lens's coverage line, for example "read 60 of 1,900 files:
+  entry points, top 20 by churn, 20 random". Areas that share one Not-applicable reason may merge as in the Scorecard.
 - evidence-table: the one generic table, used for the Scorecard (Area, Verdict, Top finding, Link), Coverage (Area, Read, Ran,
-  Measured, Browsed, Not assessed, Reason) and Measurements (Metric, Value, How measured). A cell may hold inline HTML (a
+  Measured, Browsed, Not assessed, Reason), Measurements (Metric, Value, How measured), the monorepo package table (Package,
+  Type, Verdict, Top finding, Link) and the lens coverage table (Lens, Read, How chosen). A cell may hold inline HTML (a
   pill, a link, code). Add class "wide" to the table when it has more than four columns. A new table elsewhere is another
   instance of it, never new markup. Keep tables inside .tablewrap so the page never scrolls sideways.
 - Each screenshot's src is {{IMG_NAME}}: replace it with that image's data: URI. Class tokens take only the values listed
