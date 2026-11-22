@@ -105,9 +105,8 @@ The brief names the fleet-standards results file: add only what a row could not 
 ### Product and docs conformance
 
 The areas `feature-completeness`, `repo-hygiene`, `ops-release` and
-`agent-readiness`, which [`rubric.md`](./rubric.md) maps to this lens today. This
-part holds all their conformance work, so it can move whole if the lens roster
-splits. Check their `rules.md` rows as the shared header directs, then:
+`agent-readiness`, which [`rubric.md`](./rubric.md) maps to this lens today.
+Check their `rules.md` rows as the shared header directs, then:
 
 1. **Feature completeness.** Give every feature and command the README
    documents one status: **works**, **broken** (what failed, with the doc and
