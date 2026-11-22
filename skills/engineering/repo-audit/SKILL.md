@@ -127,10 +127,49 @@ build command        | make release   | Makefile:12
 release cadence      | monthly        | unverified
 ```
 
+**Harvest the repo's own rules.** The strongest spec for a repo is the one it
+wrote itself, so the lenses hold it to that before generic practice. Write
+`rules.md` to the scratchpad, one row per rule: `id | text | source file:line |
+area | check`. The area is the [`rubric.md`](./rubric.md) area id the rule
+governs (a UI doc's copy rule is `content-branding`, an infra repo's provider
+pinning rule is `tech-stack`, a documented command is `agent-readiness`, a
+README feature is `feature-completeness`). A marker's area is
+`feature-completeness`, except a `VERIFY` marker's, which is `external-facts`.
+The check is `read`, `run` or `browse`. Sources, where the repo has them:
+
+- agent instruction files (`CLAUDE.md`, `AGENTS.md`);
+- the README: its features, commands and screenshots;
+- design, UI and brand docs;
+- coding standards;
+- accepted ADRs;
+- acceptance and definition-of-done docs;
+- glossary or context docs;
+- in-code markers: `TODO`, `FIXME`, `VERIFY`, `XXX` and "not built".
+
+Keep **rule-like sentences** only:
+
+- A statement that something must, never or always be so, or an imperative
+  about the product or the tree, that a file, command or behaviour at the pinned
+  commit could break; every README feature and documented command.
+- A decision in an accepted ADR, from its Decision section. Read the status
+  line and every banner: superseded, rejected and proposed ADRs give no rows, a
+  partly superseded one gives only the decisions its banner says stand, and one
+  with no status or banner counts as accepted.
+- A marker is a note left for later: the token begins a comment or list item or
+  is followed by `:` or `(`, and "not built" is a status for a planned or
+  missing item. A sentence that mentions the word is not a marker. List every
+  marker; they are not filtered further.
+
+Drop rationale, history, rejected alternatives, and process advice to the agent
+that leaves nothing in the tree to check. A rule stated in several sources is
+one row; name the others in its text. A repo with no such documents gets an
+empty `rules.md` that says so. A row whose area is Not assessed is not checked,
+with that area's reason.
+
 **Done when:** the commit is pinned, the profile is written down with a source
 per fact (types, tier, exclusions and package list included), every area is
-marked applicable or Not assessed with its reason, and the lens lineup is
-stated with reasons.
+marked applicable or Not assessed with its reason, `rules.md` is written with a
+source `file:line` on every row, and the lens lineup is stated with reasons.
 
 ## Stage 2 — Capture
 
@@ -159,7 +198,7 @@ section is marked not checked, with the reason).
 Launch the applicable lens agents in one message so they run concurrently. Each
 gets the pinned commit, the profile, the read-only rule, the relevant captures,
 the fleet-standards results, the baseline numbers, the type entries and the
-tier's reading rule, and its brief from
+tier's reading rule, the `rules.md` rows for the areas it owns, and its brief from
 [`briefs.md`](./briefs.md): the brief's heading names the lens's model, its body
 says what the lens finds, and the shared header sets the severity scale, the areas the lens
 owns, the shape of a finding and how to use the profile and those results. Each writes its report (and the
@@ -205,7 +244,7 @@ The lens reports are claims. Before anything reaches the page:
 2. Re-check every **Blocker** and every **High** finding, every area marked
    **Not ready**, and any finding the plan's "Now" column rests on, at its cited
    source. Read the line; rerun the command. This includes fleet-standards
-   fails at those severities.
+   fails and failed repo rules at those severities; read the rule's line too.
 3. Correct what does not hold: lower the severity, fix the evidence, or drop the
    finding. Keep a list of every correction with the reason.
 4. Where lenses disagree with each other or with the code (a research claim
@@ -260,7 +299,8 @@ Write `findings.json` from the verified findings. Its top-level sections:
   - `id`: the page anchor: `fs-<row id>` for a fleet fail, otherwise
     `<area id>-<n>`.
   - `key`: stable across runs: `<area id>:<rule id or check>:<primary path>`.
-    The rule id is the fleet row id; otherwise a short name for the check. For
+    The rule id is the fleet row id; otherwise a short name for the check (a
+    repo rule too: `rules.md` ids are per run, so they are not keys). For
     example `security:secret-scan:.github/workflows` on a web app or
     `ops-release:no-rollback:ops/deploy.sh` on an infra repo.
   - `area`: the area id from [`rubric.md`](./rubric.md).
@@ -297,7 +337,8 @@ scratchpad and send it, `run-log.md` and `findings.json` to the user as files.
 
 Close with a short message: the link, the overall verdict with any Blockers
 by name, one line per area (its verdict, or its Not-assessed reason), a line
-for the fleet-standards section (counts per result and the checklist commit),
+for the fleet-standards section (counts per result and the checklist commit), a
+line for Rules conformance (pass, fail and not-assessed counts),
 the top findings, what was verified and what was not, the run's totals (wall time and
 agent tokens, against the budget once one is set), the number of guesses, any
 partial or failed lens, and confirmation that the repo is unchanged. When the

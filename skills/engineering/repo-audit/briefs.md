@@ -32,6 +32,13 @@ carries the shared header below.
   each applies. [`rubric.md`](./rubric.md) holds each area's checks, methods and
   evidence. For an area that does not apply, or a method the lens cannot use,
   the report says so with a reason from that file's not-assessed list.
+- The `rules.md` rows for the areas the lens owns
+  ([`SKILL.md`](./SKILL.md) Stage 1). Check every row, and the repo's own rules
+  before generic practice. Report each failed row as its own finding: the row
+  id, the rule's `file:line` as its `rule_source` and the evidence that it
+  fails. Report passes as counts only. A row the lens could not check gets a
+  reason from [`rubric.md`](./rubric.md)'s not-assessed list. End the report
+  with one rules line: pass, fail and not-assessed counts per source file.
 - Finding shape: severity (Blocker / High / Med / Low), area, evidence
   (`file:line`, command and result, or URL), why it matters, fix plan (no
   edits), effort (S / M / L). Rank by impact. Measured numbers say how they
@@ -94,6 +101,32 @@ The brief names the fleet-standards results file: add only what a row could not 
 6. **Repo settings and hygiene.** Licence, description, topics, branch
    protection, ignore rules, fixture hygiene, history size. Read with `gh api`
    (read-only) when a GitHub remote exists; otherwise from the files and `git`.
+
+### Product and docs conformance
+
+The areas `feature-completeness`, `repo-hygiene`, `ops-release` and
+`agent-readiness`, which [`rubric.md`](./rubric.md) maps to this lens today.
+Check their `rules.md` rows as the shared header directs, then:
+
+1. **Feature completeness.** Give every feature and command the README
+   documents one status: **works**, **broken** (what failed, with the doc and
+   code `file:line` or the command's output), or **not checkable** with a reason
+   from the not-assessed list. Run each on the running build or instance Stage 2
+   started for captures where there is one (a web app's screen, a CLI's
+   command); with none, read the code and mark what reading cannot settle not
+   checkable. Give the table of statuses in the report.
+2. **Docs against code.** Read each statement a doc makes about behaviour (what
+   it stores, sends, defaults to, requires, refuses) against the code. A
+   mismatch is a finding citing both `file:line`s.
+3. **Drift the other way.** List behaviour the code has that no doc mentions (a
+   command, flag, setting, endpoint, schedule), each with its `file:line`.
+4. **Markers.** List every `TODO`, `FIXME`, `XXX` and "not built" row from
+   `rules.md` with its `file:line`. Pass each `VERIFY` marker to the
+   External facts area as a value to check against its source; do not check it
+   here.
+5. **No README.** One finding in `repo-hygiene`, rated on the scale.
+   `feature-completeness` is Not assessed, reason Not applicable (no README),
+   and its `rules.md` rows are not checked, with the same reason.
 
 ## Design (opus)
 

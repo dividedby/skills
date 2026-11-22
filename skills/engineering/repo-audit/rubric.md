@@ -158,8 +158,8 @@ finding with no evidence is not a finding.
 
 ### Feature completeness vs docs
 
-- **Checks:** each documented feature exists and works; TODO, VERIFY and "not
-  built" markers are listed; drift in both directions.
+- **Checks:** each documented feature exists and works; TODO, FIXME, XXX and
+  "not built" markers are listed; drift in both directions.
 - **How:** read the docs and the code; run the feature.
 - **Evidence:** the doc `file:line` and the code `file:line` or command output.
 
@@ -182,7 +182,7 @@ finding with no evidence is not a finding.
 ### External facts
 
 - **Checks:** domain values, external API limits and formats the code relies on,
-  each against its official source.
+  each against its official source; each `VERIFY` marker the repo carries.
 - **How:** read the code for hard-coded values; browse the official source.
 - **Evidence:** the code `file:line`, the source URL and the date it was read.
 
@@ -234,6 +234,12 @@ Caps:
 - A hard-coded external fact with no update path is Med. One that is out of date
   with no user impact yet is Med. One that is wrong in a number the user decides
   on is a Blocker.
+
+Repo rules: a failed row of the repo's own rules (`rules.md`, Stage 1) ranks
+above a generic gap with the same impact wherever findings are ordered by
+impact: a lens report, an area's table, the plan. Severity still follows the
+scale and its caps. The finding cites the rule, and its `rule_source` is the
+repo document's `file:line`.
 
 ## Verdicts
 
