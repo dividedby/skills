@@ -1,9 +1,9 @@
 # Repo Audit — Lens Briefs
 
-One brief per lens. Stage 3 adapts each to the project: name the stack's own
-tools, files and comparables from the Stage 1 profile, drop bullets that do
-not apply, and add the user's focus. Every brief also carries the shared
-header below.
+One brief per lens; each heading names the lens's model. Stage 3 adapts each to
+the project: name the stack's own tools, files and comparables from the Stage 1
+profile, drop bullets that do not apply, and add the user's focus. Every brief
+also carries the shared header below.
 
 ## Shared header (every lens)
 
@@ -20,7 +20,7 @@ header below.
   Rank by impact. Measured numbers say how they were measured; projections
   are labelled as projections.
 
-## Code and performance
+## Code and performance (sonnet)
 
 Focus on cost at realistic scale and on correctness risk:
 
@@ -41,15 +41,13 @@ Focus on cost at realistic scale and on correctness risk:
 - **Structure.** Dead code, duplicated logic, types that do too much.
 - **Errors.** Swallowed failures (`try?`, empty catches), failures that leave
   state half-written.
-- **Tests.** Review whether the suite earns its keep against `docs/testing.md`
-  in `dividedby/claude-config`. The main session reads it as
-  [`fleet-standards.md`](./fleet-standards.md) section 1 reads `standards.md`
-  (same pinned commit, same fallback) and passes the text and commit to this
-  lens; if it cannot, say the guideline was not read. Recommend only; delete and
-  edit nothing.
+- **Tests.** Review whether the suite earns its keep against the
+  `docs/testing.md` text and commit the main session passes
+  ([`fleet-standards.md`](./fleet-standards.md) section 1). Recommend only;
+  delete and edit nothing.
   - **Measure:** run time, test count, test-to-source line ratio and the largest
     test file, with the commands. Reuse the `test-size` numbers from the fleet
-    check; its flag asks for this review and is not a finding by itself.
+    check ([section 3](./fleet-standards.md#3-run-each-applicable-row)).
   - **List**, each with `file:line` samples: change-detector tests and tests of
     trivial code; assertion-free and sleep-based tests; mock-heavy tests;
     near-duplicate clusters, as parametrise candidates; one behaviour tested at
@@ -59,7 +57,7 @@ Focus on cost at realistic scale and on correctness risk:
     check to run first: the lower-level test that covers the behaviour, or a
     coverage or mutation run.
 
-## Architecture, repo and docs
+## Architecture, repo and docs (sonnet)
 
 Start by verifying the profile's "known facts" (what docs, CI and release
 tooling exist) rather than trusting them. The brief names the fleet-standards
@@ -85,7 +83,7 @@ Then assess:
 6. **Repo settings and hygiene.** Via read-only `gh api`: licence, description,
    topics, branch protection, ignore rules, fixture hygiene, history size.
 
-## Design
+## Design (opus)
 
 Runs only with a UI. The reviewer is a senior product designer for the
 platform; the bar is first-class platform-native or top-tier third-party
@@ -108,12 +106,12 @@ software. Name three to six apps in the same category to compare against.
   apps.
 - **Deliverables.** (1) The report: per-screen issues with severity, a concrete
   redesign and the platform APIs to use; app-level recommendations. (2) A
-  mockup spec for four or five key screens — layout regions, components, exact
-  copy, states, light and dark colour notes — precise enough to render as HTML
-  without guessing. The spec goes to its own named scratchpad path, beside the
-  report.
+  mockup spec for only the two or three screens behind the top findings —
+  layout regions, components, exact copy, states, light and dark colour notes —
+  precise enough to render as HTML without guessing. The spec goes to its own
+  named scratchpad path, beside the report.
 
-## Market and research
+## Market and research (sonnet)
 
 The repo is context only. Use web search (standard first, extended when thin)
 and page fetches.

@@ -1,12 +1,18 @@
 <!--
-REPO-AUDIT REPORT TEMPLATE. The filler clones each repeat block, replaces the double-brace tokens, and deletes the comments.
-Optional sections (Measurements, Screens, Mockups, Research, Checked, any area): delete the whole h2 block AND its nav link.
-Fleet standards is not optional: when the checklist could not be read, keep the section, put the reason in STANDARDS_INTRO
-and delete the table. Its verdict card uses AREA_ID "standards"; when the area is
-not checked, that card takes STATUS_CLASS mixed and STATUS_LABEL "Not checked".
-Each screenshot's src is {{IMG_NAME}}: replace it with that image's data: URI. Class tokens take only the values listed
-in parentheses below. One area-section per lens (Code, Design, Repo & docs, Market); fold "why it matters" into FINDING.
-The sample mockup is a desktop window: swap its chrome for a browser, phone or terminal frame to match the platform.
+REPO-AUDIT REPORT TEMPLATE. FILL RULES
+- Clone each repeat block once per item, replace every double-brace token, and delete these comments.
+- Optional sections (Measurements, Screens, Mockups, Research, Checked, any area): delete the whole h2 block AND its nav link.
+- Fleet standards is not optional: when the checklist could not be read, keep the section, put the reason in STANDARDS_INTRO
+  and delete the table. Its verdict card uses AREA_ID "standards"; when the area is
+  not checked, that card takes STATUS_CLASS mixed and STATUS_LABEL "Not checked".
+- Each screenshot's src is {{IMG_NAME}}: replace it with that image's data: URI. Class tokens take only the values listed
+  in parentheses below. One area-section per lens (Code, Design, Repo & docs, Market); fold "why it matters" into FINDING.
+- Market area vs Research: findings (competitor strengths, user complaints, gaps, what to copy) are rows in the Market area;
+  Research lists the sources behind them and what could not be found or verified.
+- Mockups: the sample is a browser window. For a desktop-app window, a phone or a terminal, copy that frame from
+  snippets.html: its CSS into this file's <style>, its markup in place of the sample inside .mk, and any --mk-* token it
+  lists that this file lacks (light value in :root, dark value in both dark blocks). Use only --mk-* colours so the
+  mockup follows the theme.
 
 PLACEHOLDERS
   Header:     PROJECT, SCOPE_REPO, SCOPE_BRANCH, SCOPE_COMMIT, SCOPE_DATE, SUMMARY_LEDE, METHOD_NOTE
@@ -65,23 +71,17 @@ REPEAT BLOCKS (each is wrapped in a repeat comment pair named as below; clone ev
     --body:
       -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
     --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
-    /* mockup tokens */
+    /* mockup tokens: mockups use only these colours, so they follow the theme */
     --mk-desk: #d8dce2;
     --mk-win: #ffffff;
-    --mk-side: #f0f0f3;
-    --mk-card: #ffffff;
+    --mk-bar: #eceef1;
     --mk-label: rgba(0, 0, 0, 0.85);
     --mk-2: rgba(0, 0, 0, 0.55);
     --mk-3: rgba(0, 0, 0, 0.3);
     --mk-sep: rgba(0, 0, 0, 0.1);
     --mk-ft: rgba(0, 0, 0, 0.07);
     --mk-accent: #007aff;
-    --mk-wash: rgba(0, 122, 255, 0.08);
     --mk-green: #28cd41;
-    --mk-orange: #ff9500;
-    --mk-red: #ff3b30;
-    --mk-av1: #a5a9b2;
-    --mk-av2: #868a93;
     --mk-shadow: 0 20px 60px rgba(0, 0, 0, 0.22);
   }
   @media (prefers-color-scheme: dark) {
@@ -104,20 +104,14 @@ REPEAT BLOCKS (each is wrapped in a repeat comment pair named as below; clone ev
       --good-bg: #12301e;
       --mk-desk: #0e0f12;
       --mk-win: #1e1e1e;
-      --mk-side: #28282b;
-      --mk-card: #2c2c2e;
+      --mk-bar: #2a2a2d;
       --mk-label: rgba(255, 255, 255, 0.88);
       --mk-2: rgba(255, 255, 255, 0.58);
       --mk-3: rgba(255, 255, 255, 0.3);
       --mk-sep: rgba(255, 255, 255, 0.1);
       --mk-ft: rgba(255, 255, 255, 0.1);
       --mk-accent: #0a84ff;
-      --mk-wash: rgba(10, 132, 255, 0.18);
       --mk-green: #32d74b;
-      --mk-orange: #ff9f0a;
-      --mk-red: #ff453a;
-      --mk-av1: #6e7179;
-      --mk-av2: #55585f;
       --mk-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
       color-scheme: dark;
     }
@@ -141,20 +135,14 @@ REPEAT BLOCKS (each is wrapped in a repeat comment pair named as below; clone ev
     --good-bg: #12301e;
     --mk-desk: #0e0f12;
     --mk-win: #1e1e1e;
-    --mk-side: #28282b;
-    --mk-card: #2c2c2e;
+    --mk-bar: #2a2a2d;
     --mk-label: rgba(255, 255, 255, 0.88);
     --mk-2: rgba(255, 255, 255, 0.58);
     --mk-3: rgba(255, 255, 255, 0.3);
     --mk-sep: rgba(255, 255, 255, 0.1);
     --mk-ft: rgba(255, 255, 255, 0.1);
     --mk-accent: #0a84ff;
-    --mk-wash: rgba(10, 132, 255, 0.18);
     --mk-green: #32d74b;
-    --mk-orange: #ff9f0a;
-    --mk-red: #ff453a;
-    --mk-av1: #6e7179;
-    --mk-av2: #55585f;
     --mk-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
     color-scheme: dark;
   }
@@ -554,7 +542,7 @@ REPEAT BLOCKS (each is wrapped in a repeat comment pair named as below; clone ev
     margin: 8px 0;
   }
 
-  /* Window chrome: size with style="--w:880px;--h:480px"; set the .scaler data-w to --w + 56. */
+  /* Browser frame: size with style="--w:880px;--h:480px"; set the .scaler data-w to --w + 56. */
   .mk {
     font:
       13px/1.3 -apple-system,
@@ -564,170 +552,95 @@ REPEAT BLOCKS (each is wrapped in a repeat comment pair named as below; clone ev
     color: var(--mk-label);
     -webkit-font-smoothing: antialiased;
   }
-  .win {
-    position: relative;
+  .bw {
     width: var(--w, 880px);
     height: var(--h, 480px);
     background: var(--mk-win);
-    border-radius: 14px;
+    border-radius: 12px;
     box-shadow: var(--mk-shadow);
     overflow: hidden;
     display: flex;
+    flex-direction: column;
   }
-  .lights {
-    position: absolute;
-    left: 16px;
-    top: 14px;
+  .bw-bar {
+    flex: none;
     display: flex;
-    gap: 8px;
-    z-index: 1;
+    align-items: center;
+    gap: 12px;
+    height: 40px;
+    padding: 0 14px;
+    background: var(--mk-bar);
+    border-bottom: 1px solid var(--mk-sep);
   }
-  .lights i {
-    width: 12px;
-    height: 12px;
+  .bw-dots {
+    display: flex;
+    gap: 6px;
+  }
+  .bw-dots i {
+    width: 10px;
+    height: 10px;
     border-radius: 50%;
+    background: var(--mk-3);
     display: block;
   }
-  .lights i:nth-child(1) {
-    background: #ff5f57;
-  }
-  .lights i:nth-child(2) {
-    background: #febc2e;
-  }
-  .lights i:nth-child(3) {
-    background: #28c840;
-  }
-  .side {
-    width: 200px;
-    flex: none;
-    background: var(--mk-side);
-    border-right: 1px solid var(--mk-sep);
-    padding: 48px 10px 10px;
-  }
-  .shead {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--mk-2);
-    padding: 14px 10px 6px;
-  }
-  .srow {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    height: 28px;
-    padding: 0 10px;
-    border-radius: 7px;
-  }
-  .srow.sel {
-    background: var(--mk-ft);
-  }
-  .badge {
-    margin-left: auto;
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--mk-2);
-    background: var(--mk-ft);
-    border-radius: 9px;
-    padding: 1px 7px;
-  }
-  .listcol {
-    width: 270px;
-    flex: none;
-    border-right: 1px solid var(--mk-sep);
-    padding: 48px 8px 8px;
-    overflow: hidden;
-  }
-  .lrow {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    height: 48px;
-    padding: 0 8px;
-    border-radius: 8px;
-  }
-  .lrow .t {
+  .bw-url {
+    flex: 1;
     min-width: 0;
-  }
-  .lrow .t div:first-child {
-    font-weight: 600;
-  }
-  .lrow .t div:last-child {
-    font-size: 11px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    border-radius: 13px;
+    background: var(--mk-ft);
     color: var(--mk-2);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  .lrow.sel {
-    background: var(--mk-accent);
-    color: #fff;
-  }
-  .lrow.sel .t div:last-child {
-    color: rgba(255, 255, 255, 0.8);
-  }
-  .detail {
+  .bw-page {
     flex: 1;
-    min-width: 0;
-    padding: 48px 28px 28px;
+    min-height: 0;
+    padding: 28px 32px;
+    overflow: hidden;
   }
-  .detail .ttl {
+  .bw-ttl {
     font-size: 20px;
     font-weight: 600;
   }
-  .detail .sub {
+  .bw-sub {
     color: var(--mk-2);
     margin-top: 4px;
   }
-  .av {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    background: linear-gradient(var(--mk-av1), var(--mk-av2));
-    color: #fff;
-    font:
-      600 12px -apple-system,
-      sans-serif;
-    display: grid;
-    place-items: center;
-    flex: none;
-  }
-  .av.l {
-    width: 56px;
-    height: 56px;
-    font-size: 22px;
-  }
-  .card {
-    background: var(--mk-card);
-    border: 1px solid var(--mk-sep);
-    border-radius: 12px;
+  .bw-card {
     margin-top: 16px;
+    border: 1px solid var(--mk-sep);
+    border-radius: 10px;
   }
-  .lc {
+  .bw-row {
     display: flex;
     justify-content: space-between;
-    height: 36px;
     align-items: center;
+    height: 36px;
     padding: 0 14px;
     border-bottom: 1px solid var(--mk-sep);
   }
-  .lc:last-child {
+  .bw-row:last-child {
     border-bottom: 0;
   }
-  .lc b {
+  .bw-row b {
     font-weight: 400;
     color: var(--mk-2);
   }
-  .btn {
+  .bw-btn {
     height: 28px;
     padding: 0 14px;
     border-radius: 7px;
     display: inline-flex;
     align-items: center;
     background: var(--mk-ft);
-    color: var(--mk-label);
     font-weight: 500;
   }
-  .btn.p {
+  .bw-btn.p {
     background: var(--mk-accent);
     color: #fff;
     font-weight: 600;
@@ -935,58 +848,25 @@ REPEAT BLOCKS (each is wrapped in a repeat comment pair named as below; clone ev
       <div class="scaler" data-w="{{MOCKUP_WIDTH}}">
         <div class="mk">
           <!-- {{MOCKUP_HTML}}: replace everything inside .mk. The block below is the pattern to copy:
-           a window with sidebar, list and detail. Use only the mk-prefixed colour tokens so it follows the theme. -->
-          <div class="win" style="--w: 880px; --h: 480px">
-            <div class="lights"><i></i><i></i><i></i></div>
-            <div class="side">
-              <div class="srow sel">Inbox<span class="badge">3</span></div>
-              <div class="srow">Drafts</div>
-              <div class="srow">Archive</div>
-              <div class="shead">Tags</div>
-              <div class="srow">Work</div>
-              <div class="srow">Personal</div>
+           a browser window with an address bar and a content area. -->
+          <div class="bw" style="--w: 880px; --h: 480px">
+            <div class="bw-bar">
+              <span class="bw-dots"><i></i><i></i><i></i></span>
+              <span class="bw-url">example.com/settings</span>
             </div>
-            <div class="listcol">
-              <div class="lrow sel">
-                <div class="av">AB</div>
-                <div class="t">
-                  <div>First item</div>
-                  <div>Selected row, subtitle text</div>
-                </div>
-              </div>
-              <div class="lrow">
-                <div class="av">CD</div>
-                <div class="t">
-                  <div>Second item</div>
-                  <div>Another subtitle</div>
-                </div>
-              </div>
-              <div class="lrow">
-                <div class="av">EF</div>
-                <div class="t">
-                  <div>Third item</div>
-                  <div>One more subtitle</div>
-                </div>
-              </div>
-            </div>
-            <div class="detail">
-              <div style="display: flex; align-items: center; gap: 14px">
-                <div class="av l">AB</div>
-                <div>
-                  <div class="ttl">First item</div>
-                  <div class="sub">Detail subtitle</div>
-                </div>
-              </div>
-              <div class="card">
-                <div class="lc">Label<b>Value</b></div>
-                <div class="lc">Label<b>Value</b></div>
-                <div class="lc">
+            <div class="bw-page">
+              <div class="bw-ttl">Page title</div>
+              <div class="bw-sub">Supporting text</div>
+              <div class="bw-card">
+                <div class="bw-row">Label<b>Value</b></div>
+                <div class="bw-row">Label<b>Value</b></div>
+                <div class="bw-row">
                   Status<b style="color: var(--mk-green)">Ready</b>
                 </div>
               </div>
               <div style="margin-top: 16px; display: flex; gap: 8px">
-                <span class="btn">Secondary</span
-                ><span class="btn p">Primary</span>
+                <span class="bw-btn">Secondary</span
+                ><span class="bw-btn p">Primary</span>
               </div>
             </div>
           </div>

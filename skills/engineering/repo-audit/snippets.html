@@ -1,0 +1,632 @@
+<!doctype html>
+<!--
+REPO-AUDIT MOCKUP FRAMES. Open this file to preview them; it is not part of the report.
+template.html ships a browser frame. When the audited product is a desktop app, a phone app or a terminal tool,
+copy the matching frame:
+1. Its CSS block (between its "=== name ===" markers) into template.html's <style>.
+2. Its markup in place of the sample inside .mk.
+3. Each --mk-* token it lists that template.html lacks: the light value in :root, the dark value in both dark blocks.
+4. Set the mockup's data-w to the frame's --w + 56.
+Colours come only from --mk-* tokens so the mockup follows the theme. Frame classes are prefixed (bw-, ph-, tm-) or
+distinct, so two frames can sit in one file.
+-->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Repo-audit mockup frames</title>
+<style>
+  :root {
+    --bg: #f6f8f8;
+    --ink: #15201f;
+    --ink-2: #4a5856;
+    --rule: #dce4e3;
+    /* mockup tokens, every one a frame below uses */
+    --mk-desk: #d8dce2;
+    --mk-win: #ffffff;
+    --mk-side: #f0f0f3;
+    --mk-card: #ffffff;
+    --mk-label: rgba(0, 0, 0, 0.85);
+    --mk-2: rgba(0, 0, 0, 0.55);
+    --mk-sep: rgba(0, 0, 0, 0.1);
+    --mk-ft: rgba(0, 0, 0, 0.07);
+    --mk-accent: #007aff;
+    --mk-green: #28cd41;
+    --mk-red: #ff3b30;
+    --mk-av1: #a5a9b2;
+    --mk-av2: #868a93;
+    --mk-bezel: #1b1b1d;
+    --mk-term: #1c1f24;
+    --mk-term-bar: #2a2e35;
+    --mk-term-fg: #e6e8eb;
+    --mk-term-dim: #8b919a;
+    --mk-shadow: 0 20px 60px rgba(0, 0, 0, 0.22);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1514;
+      --ink: #e7eeed;
+      --ink-2: #a9b7b5;
+      --rule: #26322f;
+      --mk-desk: #0e0f12;
+      --mk-win: #1e1e1e;
+      --mk-side: #28282b;
+      --mk-card: #2c2c2e;
+      --mk-label: rgba(255, 255, 255, 0.88);
+      --mk-2: rgba(255, 255, 255, 0.58);
+      --mk-sep: rgba(255, 255, 255, 0.1);
+      --mk-ft: rgba(255, 255, 255, 0.1);
+      --mk-accent: #0a84ff;
+      --mk-green: #32d74b;
+      --mk-red: #ff453a;
+      --mk-av1: #6e7179;
+      --mk-av2: #55585f;
+      --mk-bezel: #3a3a3c;
+      --mk-term: #0b0c0e;
+      --mk-term-bar: #17181b;
+      --mk-term-fg: #e6e8eb;
+      --mk-term-dim: #8b919a;
+      --mk-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+      color-scheme: dark;
+    }
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font:
+      15px/1.6 -apple-system,
+      BlinkMacSystemFont,
+      "Helvetica Neue",
+      Arial,
+      sans-serif;
+    margin: 0;
+    padding: 32px 16px 64px;
+  }
+  main {
+    max-width: 1080px;
+    margin: 0 auto;
+  }
+  h1,
+  h2 {
+    line-height: 1.2;
+    margin: 0;
+  }
+  h2 {
+    margin-top: 48px;
+    padding-top: 16px;
+    border-top: 1px solid var(--rule);
+    font-size: 20px;
+  }
+  p {
+    margin: 8px 0;
+    color: var(--ink-2);
+    overflow-wrap: break-word;
+  }
+  code {
+    font-size: 0.86em;
+  }
+
+  /* Preview stage, the same as template.html's .stage and .scaler. */
+  .stage {
+    width: 100%;
+    overflow: hidden;
+    border-radius: 12px;
+    background: var(--mk-desk);
+    margin-top: 12px;
+  }
+  .scaler {
+    transform-origin: top left;
+    padding: 28px;
+  }
+  .mk {
+    font:
+      13px/1.3 -apple-system,
+      BlinkMacSystemFont,
+      "Helvetica Neue",
+      sans-serif;
+    color: var(--mk-label);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* === desktop window ===  Size with style="--w:880px;--h:480px". */
+  .win {
+    position: relative;
+    width: var(--w, 880px);
+    height: var(--h, 480px);
+    background: var(--mk-win);
+    border-radius: 14px;
+    box-shadow: var(--mk-shadow);
+    overflow: hidden;
+    display: flex;
+  }
+  .lights {
+    position: absolute;
+    left: 16px;
+    top: 14px;
+    display: flex;
+    gap: 8px;
+    z-index: 1;
+  }
+  .lights i {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: block;
+  }
+  .lights i:nth-child(1) {
+    background: #ff5f57;
+  }
+  .lights i:nth-child(2) {
+    background: #febc2e;
+  }
+  .lights i:nth-child(3) {
+    background: #28c840;
+  }
+  .side {
+    width: 200px;
+    flex: none;
+    background: var(--mk-side);
+    border-right: 1px solid var(--mk-sep);
+    padding: 48px 10px 10px;
+  }
+  .shead {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--mk-2);
+    padding: 14px 10px 6px;
+  }
+  .srow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 28px;
+    padding: 0 10px;
+    border-radius: 7px;
+  }
+  .srow.sel {
+    background: var(--mk-ft);
+  }
+  .badge {
+    margin-left: auto;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--mk-2);
+    background: var(--mk-ft);
+    border-radius: 9px;
+    padding: 1px 7px;
+  }
+  .listcol {
+    width: 270px;
+    flex: none;
+    border-right: 1px solid var(--mk-sep);
+    padding: 48px 8px 8px;
+    overflow: hidden;
+  }
+  .lrow {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    height: 48px;
+    padding: 0 8px;
+    border-radius: 8px;
+  }
+  .lrow .t {
+    min-width: 0;
+  }
+  .lrow .t div:first-child {
+    font-weight: 600;
+  }
+  .lrow .t div:last-child {
+    font-size: 11px;
+    color: var(--mk-2);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .lrow.sel {
+    background: var(--mk-accent);
+    color: #fff;
+  }
+  .lrow.sel .t div:last-child {
+    color: rgba(255, 255, 255, 0.8);
+  }
+  .detail {
+    flex: 1;
+    min-width: 0;
+    padding: 48px 28px 28px;
+  }
+  .detail .ttl {
+    font-size: 20px;
+    font-weight: 600;
+  }
+  .detail .sub {
+    color: var(--mk-2);
+    margin-top: 4px;
+  }
+  .av {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(var(--mk-av1), var(--mk-av2));
+    color: #fff;
+    font:
+      600 12px -apple-system,
+      sans-serif;
+    display: grid;
+    place-items: center;
+    flex: none;
+  }
+  .av.l {
+    width: 56px;
+    height: 56px;
+    font-size: 22px;
+  }
+  .card {
+    background: var(--mk-card);
+    border: 1px solid var(--mk-sep);
+    border-radius: 12px;
+    margin-top: 16px;
+  }
+  .lc {
+    display: flex;
+    justify-content: space-between;
+    height: 36px;
+    align-items: center;
+    padding: 0 14px;
+    border-bottom: 1px solid var(--mk-sep);
+  }
+  .lc:last-child {
+    border-bottom: 0;
+  }
+  .lc b {
+    font-weight: 400;
+    color: var(--mk-2);
+  }
+  .btn {
+    height: 28px;
+    padding: 0 14px;
+    border-radius: 7px;
+    display: inline-flex;
+    align-items: center;
+    background: var(--mk-ft);
+    color: var(--mk-label);
+    font-weight: 500;
+  }
+  .btn.p {
+    background: var(--mk-accent);
+    color: #fff;
+    font-weight: 600;
+  }
+  /* === end desktop window === */
+
+  /* === phone ===  Size with style="--w:300px;--h:600px". */
+  .ph {
+    width: var(--w, 300px);
+    height: var(--h, 600px);
+    padding: 10px;
+    border-radius: 44px;
+    background: var(--mk-bezel);
+    box-shadow: var(--mk-shadow);
+  }
+  .ph-screen {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    border-radius: 34px;
+    background: var(--mk-win);
+    overflow: hidden;
+  }
+  .ph-status {
+    flex: none;
+    display: flex;
+    justify-content: space-between;
+    padding: 14px 24px 6px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .ph-nav {
+    flex: none;
+    padding: 8px 18px 12px;
+    font-size: 24px;
+    font-weight: 700;
+  }
+  .ph-list {
+    flex: 1;
+    min-height: 0;
+    padding: 0 18px;
+    overflow: hidden;
+  }
+  .ph-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    height: 56px;
+    border-bottom: 1px solid var(--mk-sep);
+  }
+  .ph-row .t {
+    min-width: 0;
+  }
+  .ph-row .t div:last-child {
+    font-size: 11px;
+    color: var(--mk-2);
+  }
+  .ph-row b {
+    font-weight: 400;
+    color: var(--mk-2);
+  }
+  .ph-cta {
+    flex: none;
+    padding: 12px 18px;
+  }
+  .ph-btn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 44px;
+    border-radius: 12px;
+    background: var(--mk-accent);
+    color: #fff;
+    font-weight: 600;
+  }
+  .ph-tabs {
+    flex: none;
+    display: flex;
+    height: 60px;
+    border-top: 1px solid var(--mk-sep);
+  }
+  .ph-tabs span {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-bottom: 8px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--mk-2);
+  }
+  .ph-tabs span.on {
+    color: var(--mk-accent);
+  }
+  /* === end phone === */
+
+  /* === terminal ===  Size with style="--w:720px;--h:360px". */
+  .tm {
+    width: var(--w, 720px);
+    height: var(--h, 360px);
+    display: flex;
+    flex-direction: column;
+    border-radius: 10px;
+    background: var(--mk-term);
+    color: var(--mk-term-fg);
+    box-shadow: var(--mk-shadow);
+    overflow: hidden;
+    font:
+      12px/1.5 ui-monospace,
+      "SF Mono",
+      Menlo,
+      monospace;
+  }
+  .tm-bar {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 32px;
+    padding: 0 12px;
+    background: var(--mk-term-bar);
+    color: var(--mk-term-dim);
+  }
+  .tm-dots {
+    display: flex;
+    gap: 6px;
+  }
+  .tm-dots i {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--mk-term-dim);
+    display: block;
+  }
+  .tm-body {
+    flex: 1;
+    min-height: 0;
+    padding: 12px 16px;
+    overflow: hidden;
+  }
+  .tm-line {
+    min-height: 1.5em;
+  }
+  .tm-ok {
+    color: var(--mk-green);
+  }
+  .tm-err {
+    color: var(--mk-red);
+  }
+  .tm-dim {
+    color: var(--mk-term-dim);
+  }
+  /* === end terminal === */
+</style>
+
+<main>
+  <h1>Repo-audit mockup frames</h1>
+  <p>
+    Copy a frame into <code>template.html</code> as the header comment there
+    says. Each frame lists the <code>--mk-*</code> tokens it uses.
+  </p>
+
+  <h2>Desktop window</h2>
+  <p>
+    Tokens:
+    <code>desk win side card label 2 sep ft accent green av1 av2</code> and
+    <code>shadow</code>. Width 880 (data-w 936).
+  </p>
+  <div class="stage">
+    <div class="scaler" data-w="936">
+      <div class="mk">
+        <div class="win" style="--w: 880px; --h: 480px">
+          <div class="lights"><i></i><i></i><i></i></div>
+          <div class="side">
+            <div class="srow sel">Inbox<span class="badge">3</span></div>
+            <div class="srow">Drafts</div>
+            <div class="srow">Archive</div>
+            <div class="shead">Tags</div>
+            <div class="srow">Work</div>
+            <div class="srow">Personal</div>
+          </div>
+          <div class="listcol">
+            <div class="lrow sel">
+              <div class="av">AB</div>
+              <div class="t">
+                <div>First item</div>
+                <div>Selected row, subtitle text</div>
+              </div>
+            </div>
+            <div class="lrow">
+              <div class="av">CD</div>
+              <div class="t">
+                <div>Second item</div>
+                <div>Another subtitle</div>
+              </div>
+            </div>
+            <div class="lrow">
+              <div class="av">EF</div>
+              <div class="t">
+                <div>Third item</div>
+                <div>One more subtitle</div>
+              </div>
+            </div>
+          </div>
+          <div class="detail">
+            <div style="display: flex; align-items: center; gap: 14px">
+              <div class="av l">AB</div>
+              <div>
+                <div class="ttl">First item</div>
+                <div class="sub">Detail subtitle</div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="lc">Label<b>Value</b></div>
+              <div class="lc">Label<b>Value</b></div>
+              <div class="lc">
+                Status<b style="color: var(--mk-green)">Ready</b>
+              </div>
+            </div>
+            <div style="margin-top: 16px; display: flex; gap: 8px">
+              <span class="btn">Secondary</span
+              ><span class="btn p">Primary</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h2>Phone</h2>
+  <p>
+    Tokens: <code>desk win label 2 sep accent bezel</code> and
+    <code>shadow</code>. Width 300 (data-w 356).
+  </p>
+  <div class="stage">
+    <div class="scaler" data-w="356">
+      <div class="mk">
+        <div class="ph" style="--w: 300px; --h: 600px">
+          <div class="ph-screen">
+            <div class="ph-status"><span>9:41</span><span>100%</span></div>
+            <div class="ph-nav">Title</div>
+            <div class="ph-list">
+              <div class="ph-row">
+                <div class="t">
+                  <div>First item</div>
+                  <div>Subtitle text</div>
+                </div>
+                <b>Value</b>
+              </div>
+              <div class="ph-row">
+                <div class="t">
+                  <div>Second item</div>
+                  <div>Another subtitle</div>
+                </div>
+                <b>Value</b>
+              </div>
+              <div class="ph-row">
+                <div class="t">
+                  <div>Third item</div>
+                  <div>One more subtitle</div>
+                </div>
+                <b>Value</b>
+              </div>
+            </div>
+            <div class="ph-cta"><span class="ph-btn">Primary action</span></div>
+            <div class="ph-tabs">
+              <span class="on">Home</span><span>Search</span
+              ><span>Settings</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h2>Terminal</h2>
+  <p>
+    Tokens:
+    <code>desk label 3 green red term term-bar term-fg term-dim</code> and
+    <code>shadow</code>. Width 720 (data-w 776).
+  </p>
+  <div class="stage">
+    <div class="scaler" data-w="776">
+      <div class="mk">
+        <div class="tm" style="--w: 720px; --h: 360px">
+          <div class="tm-bar">
+            <span class="tm-dots"><i></i><i></i><i></i></span>
+            <span>zsh — 80×24</span>
+          </div>
+          <div class="tm-body">
+            <div class="tm-line">
+              <span class="tm-ok">$</span> tool run --flag value
+            </div>
+            <div class="tm-line">Reading input... done</div>
+            <div class="tm-line">
+              <span class="tm-dim">3 items, 0.4s</span>
+            </div>
+            <div class="tm-line">
+              <span class="tm-err">error:</span> one item failed
+            </div>
+            <div class="tm-line"><span class="tm-ok">$</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+  (function () {
+    var stages = Array.prototype.slice.call(
+      document.querySelectorAll(".stage"),
+    );
+    function fit() {
+      stages.forEach(function (st) {
+        var sc = st.querySelector(".scaler");
+        var w = +sc.dataset.w || 936;
+        sc.style.width = w + "px";
+        sc.style.transform = "none";
+        var natural = sc.scrollHeight;
+        var s = Math.min(1, st.clientWidth / w);
+        sc.style.transform = "scale(" + s + ")";
+        st.style.height = Math.ceil(natural * s) + "px";
+      });
+    }
+    fit();
+    if ("ResizeObserver" in window) {
+      var ro = new ResizeObserver(fit);
+      stages.forEach(function (s) {
+        ro.observe(s);
+      });
+    } else window.addEventListener("resize", fit);
+  })();
+</script>
