@@ -8,9 +8,17 @@ illustrative.
 ## Run
 
 ```text
-skill commit    | 9f3c2ab
-subject commit  | 41d7e60 (branch main)
+skill commit      | 9f3c2ab
+subject commit    | 41d7e60 (branch main)
+ownership test    | fail (remote owner is not the user or an org of theirs)
+trust             | untrusted (no override in the prompt)
+execute repo code | no (asked 21:03 CT, no answer by 21:05 CT)
 ```
+
+The ownership test and trust are written at Stage 1. The execute row holds the
+answer (`yes` or `no`) with the time asked and the time answered, or the reason
+nobody was asked (`no (not asked: unattended run)`), or `not needed (trusted)`.
+A resumed run reads it from here.
 
 ## Stages
 

@@ -4,11 +4,16 @@ The main session checks the audited repo against the fleet-wide repo standards:
 the checklist in `dividedby/claude-config` at `docs/standards.md`. Each row of
 that checklist is one rule, the repos it applies to, a read-only check and the
 document it comes from. This file says how to read it, run it and report it.
-The checklist owns the rules; nothing here restates them.
+The checklist owns the rules; nothing here restates them. The rows are house
+rules, so the section applies only to a repo that passes the ownership test
+([`SKILL.md`](./SKILL.md) Stage 1); section 2 says what a repo that fails gets.
 
 ## 1. Read the checklist fresh
 
-Read it on every run; never reuse a copy from an earlier run or a vendored one.
+Skipped for a repo that fails the ownership test; `docs/testing.md` below is
+still read, since the test-suite review uses it on any repo. Otherwise read the
+checklist on every run; never reuse a copy from an earlier run or a vendored
+one.
 `dividedby/claude-config` is private: a user with no read access and no local
 checkout lands in case 3, and the rest of the audit runs as normal.
 
@@ -45,6 +50,11 @@ remembered list of ids.
 
 ## 2. Pin the repo facts
 
+**Ownership first.** A repo that fails the ownership test is "n/a (not a fleet
+repo)": the whole section is n/a, no row runs, and the page and the closing
+message say so. A prompt that trusts the repo does not change this: it lets the
+run execute the repo's code, and it does not make the repo a fleet repo.
+
 The `applies to` column names repo types and traits. Decide these facts once,
 in Stage 1, from the files (not from the repo's own claims). The Stage 1
 profile supplies languages, tests, CI and visibility; the check adds:
@@ -71,10 +81,7 @@ Set `$R` to the repo path and `$GH` to its `owner/name`.
 `$GH`. Every row whose check uses `gh api` is **not checked (no GitHub
 remote)**; every other row runs. A row that asks for CI means any CI config, not
 only `.github/workflows`: a check that greps that path is a proxy, so read the
-other provider's config before failing the row. A local-only repo counts as
-trusted: [`rubric.md`](./rubric.md)'s "Untrusted not run" reason does not apply,
-so the run may execute the repo's own code under the existing rules; the
-allowlist and the read-only rule below still hold. In a monorepo, a row whose
+other provider's config before failing the row. In a monorepo, a row whose
 check reads a package-level file (a manifest, lockfile or test config) is
 checked per package; every other row is repo-level. A per-package row's
 evidence gives each audited package's result by name, and the row's result is

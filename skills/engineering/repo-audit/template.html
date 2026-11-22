@@ -6,7 +6,13 @@ REPO-AUDIT REPORT TEMPLATE. FILL RULES
   Measurements, Screens, Mockups, Research, What was checked.
 - Optional sections (Measurements, Screens, Mockups, Research, Checked, any area-section): delete the whole h2 block AND its nav
   link. Scorecard, Coverage, Fleet standards and Rules conformance are not optional. When the fleet checklist could not be read,
-  keep its section, put the reason in STANDARDS_INTRO and delete the table.
+  keep its section, put the reason in STANDARDS_INTRO and delete the table. A repo that fails the ownership test keeps the
+  section too: STANDARDS_INTRO reads "n/a (not a fleet repo)" with the reason (the ownership test's result), and the table is
+  deleted.
+- Trust: METHOD_NOTE states how the run treated the repo's code: "trusted" (with the ownership leg that passed, or the prompt),
+  "untrusted, run allowed (answered HH:MM CT)" or "untrusted, not run (answered no HH:MM CT, no answer by HH:MM CT, or not asked: reason)". OVERALL_TEXT
+  names every area that lost a method or was Not assessed because of it, with the reason Untrusted not run; the Coverage reasons
+  and one UNVERIFIED_ITEM per skipped method carry the same reason. A trusted repo adds nothing more.
 - Scorecard: first section. OVERALL_VERDICT is the overall verdict; with no Blockers, delete the Blockers h3 and list and say
   so in OVERALL_TEXT. OVERALL_TEXT also names every applicable area that is Not assessed. One row per area in rubric order, areas that do not apply included. An area with findings: its verdict,
   its top finding, and a link to that finding's id. An area with none: an em dash in the top-finding and link cells. A Not

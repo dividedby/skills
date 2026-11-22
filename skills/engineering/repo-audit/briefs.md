@@ -14,6 +14,9 @@ carries the shared header below.
   full. Name what _is_ allowed (build and test with caches, coverage and output
   redirected to the scratchpad, read-only `gh` calls, scratch packages outside
   the repo) and the scrubbed environment the repo's code runs in.
+- Whether the lens may run the repo's code: the execute answer from Stage 1.
+  With No, the lens runs none of it and marks each such check "Untrusted not
+  run".
 - The size facts: lines per area after exclusions, the largest files, test
   count and run time.
 - The profile's types, with their `types.md` brief bullets pasted, and the
