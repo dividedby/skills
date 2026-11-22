@@ -146,6 +146,9 @@ format check, typecheck, tests, build, schema or link check.
 5. Tests run in the scrubbed environment. A test that reaches a live service is
    recorded as evidence (the test, the service, its time) and is not blocked; it
    never gets credentials.
+6. The build's wall time is recorded even when no doc names a build gate, and
+   so are the sizes of the state or output files the app writes (from the
+   build output or a demo run, both in the scratchpad), for the code lens.
 
 ## 3. Stack scanners
 
