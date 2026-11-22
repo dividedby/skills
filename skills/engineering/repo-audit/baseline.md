@@ -247,34 +247,13 @@ file. A floor that cannot be installed is "not run (tool unavailable: version)".
 Detect tracked `*.js` or `*.mjs` files that no `package.json` covers, usually
 loaded by `<script src>` from HTML. The Node rows do not apply, so run these:
 
-- **Lint and complexity:** write a default flat config to `$B/cfg/eslint.config.mjs`
-  with no imports, so it resolves from the scratchpad:
-
-  ```js
-  export default [
-    {
-      files: ["**/*.js", "**/*.mjs"],
-      languageOptions: {
-        ecmaVersion: "latest",
-        sourceType: "script", // "module" when the HTML loads it as a module
-        globals: {
-          window: "readonly",
-          document: "readonly",
-          fetch: "readonly",
-          console: "readonly",
-        },
-      },
-      rules: {
-        "no-undef": "error",
-        "no-unused-vars": "warn",
-        eqeqeq: "warn",
-        "no-empty": "warn",
-        complexity: ["warn", 10],
-      },
-    },
-  ];
-  ```
-
+- **Lint and complexity:** write a default flat config to
+  `$B/cfg/eslint.config.mjs` with no imports, so it resolves from the
+  scratchpad. It covers `*.js` and `*.mjs` at the latest ECMAScript version,
+  as scripts or modules the way the HTML loads them, declares browser
+  globals such as `window`, `document`, `fetch` and `console`,
+  and turns on `no-undef`, `no-unused-vars`, `eqeqeq`, `no-empty` and
+  `complexity` at 10;
   then, from the repo root, `pnpm dlx eslint -c $B/cfg/eslint.config.mjs -f json $(git ls-files '*.js' '*.mjs')`
   under the scrubbed environment. Add the globals the code uses (check what
   `no-undef` reports before counting it). Top 10 by complexity and the counts by
