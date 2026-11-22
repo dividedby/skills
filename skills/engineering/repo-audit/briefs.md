@@ -17,7 +17,9 @@ also carries the shared header below.
   before use.
 - Don't repeat fleet-standards rows or baseline numbers; cite them.
 - Output: the full report as Markdown at a named scratchpad path, then a short
-  summary reply (top findings, under 500 words).
+  summary reply (top findings, under 500 words). Write progressively: create
+  the file first and append each finding as you find it, so a lens that is
+  stopped or fails leaves usable partial output.
 - Finding shape: severity (High / Med / Low), evidence (`file:line`, command
   and result, or URL), why it matters, fix plan (no edits), effort (S / M / L).
   Rank by impact. Measured numbers say how they were measured; projections
