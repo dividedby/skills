@@ -45,6 +45,13 @@ Everything the baseline writes goes under one scratchpad folder, `$B`:
   the baseline installs and reads (`osv-scanner`, `gitleaks`, `scc`, `git log`)
   scan files; they do not run the repo's code and need no scrubbing.
 
+- **Untrusted repo.** The execute answer from Stage 1
+  ([`SKILL.md`](./SKILL.md) Ownership and trust) decides what runs. With No,
+  only tools that read files without executing the repo's code run
+  (`osv-scanner`, `gitleaks`, `scc`, `git log` and the like); every gate, test, build,
+  installation of the repo's dependencies, and any command this file marks as
+  running repo code is "not run (untrusted not run)". With Yes, each of those
+  runs from the scratch clone.
 - **Time-box:** 10 minutes per gate or scan by default (`timeout 600`; `gtimeout`
   from coreutils on macOS, or `perl -e 'alarm 600; exec @ARGV' -- <command>`). A
   timed-out command is stopped, keeps its partial output and is reported as "not
@@ -77,7 +84,7 @@ Everything the baseline writes goes under one scratchpad folder, `$B`:
   | the stack or fact it needs is absent (no manifest, no UI)         | Not applicable (fact)   |
   | the tool could not be installed or has no build for the platform  | Tool unavailable: name  |
   | Docker, a database, credentials, a device or a service is missing | Needs X: name it        |
-  | the run may not execute the repo's code (untrusted repo)          | Untrusted not run       |
+  | the repo is untrusted and the execute answer is not yes           | Untrusted not run       |
   | the 10-minute time-box or a sampled scan stopped it               | Depth: what was reached |
   | the user limited the run to named packages                        | Not selected            |
 

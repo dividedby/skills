@@ -96,7 +96,9 @@ and a cut-off run can resume as Stage 3 directs. Write each section when its
 event happens. Before Stage 1, if the scratchpad already holds `run-log.md`,
 apply the resume rule in Stage 3.
 
-- **Run** (skill commit, subject commit): at Stage 1, once the commit is pinned.
+- **Run** (skill commit, subject commit, ownership test, trust, execute answer):
+  at Stage 1, once the commit is pinned; the execute answer and its time are
+  added when the question is answered, or when the run decides it cannot ask.
 - **Stages:** the start time when a stage begins, the end time when it ends.
 - **Agents:** a row when the agent is launched (`running`; a retry sets
   `running (retry)`), updated when it returns with its wall time, tokens, tool
@@ -129,15 +131,68 @@ natural language of the docs and UI text, test suite (test files or a test
 command) and its run time, build and release path, CI (any CI config file: a
 `.github/workflows/` workflow or another provider's config), docs present,
 licence, remote, public or private (`gh api repos/$GH --jq .private` with a
-GitHub remote; otherwise "unknown (no GitHub remote)", and a local-only repo
-counts as trusted, so executing its code is allowed under the existing rules),
-the names of the environment variables the demo or sample mode needs (the
+GitHub remote; otherwise "unknown (no GitHub remote)"), the owner, the
+ownership test and trust results and the execute answer (see **Ownership and
+trust** below), the names of the environment variables the demo or sample mode needs (the
 [Execution boundary](#execution-boundary) passes only these), and the repo facts
 the fleet-standards check adds ([`fleet-standards.md`](./fleet-standards.md)
 section 2). Write the profile as
 a table of `fact | value | source`. A part or package that matches no type, or
 a repo with none, follows the fallback in [`types.md`](./types.md). In a large
 monorepo, ask once which packages to audit when the run can ask.
+
+**Ownership and trust.** Two results, each recorded in the profile with its
+source:
+
+```text
+owner              | acme-labs          | git remote get-url origin
+ownership test     | fail (owner leg)   | gh api user --jq .login; gh api user/orgs --jq '.[].login'
+trust              | untrusted          | ownership test; no override in the prompt
+execute repo code  | no (asked 21:03 CT, no answer) | the question
+```
+
+- **Ownership test.** The maintainer owns the repo or the fleet includes it. It
+  passes when any leg holds: the remote is on GitHub and its owner is the
+  authenticated user or an org that user belongs to (`gh api user --jq .login`,
+  `gh api user/orgs --jq '.[].login'`); its `owner/name` is listed in
+  `dividedby/claude-config` `docs/repos.md`, read at a pinned commit the way
+  [`fleet-standards.md`](./fleet-standards.md) section 1 reads the checklist
+  (when the file cannot be read, that leg is skipped and the profile says so);
+  or it has no remote (local only). Anything else fails: another host, another
+  GitHub owner, or a `gh` that cannot say who the user is.
+- **Trust.** A repo is trusted when it passes the ownership test, or when the
+  user's prompt says it is trusted or its code may run. Otherwise it is
+  untrusted. A prompt override trusts the repo for running its code only; it
+  does not make it a fleet repo, so the fleet-standards section follows the
+  ownership test alone ([`fleet-standards.md`](./fleet-standards.md) section 2).
+- **Untrusted: ask once.** Before anything in Stage 2 runs, the main session
+  asks the user one question: may this run execute the repo's code? It lists
+  what would run: tests, builds, the app or dev server, the repo's gate
+  commands, scanners that execute repo code, and a fresh-clone install. When the
+  user is driving the run, use one popup, batched with the monorepo package
+  question when that is also due, and say in it that a prompt line ("the repo's
+  code may run") answers it in advance and makes the repo trusted. Log the times
+  asked and answered.
+  - **Yes.** The code runs inside the [Execution boundary](#execution-boundary),
+    and every execution (gates and scanners that run repo code, tests, builds,
+    the app for screenshots, any lens that runs code, a fresh-clone install)
+    runs from a scratch clone of the pinned commit, never the repo folder. The
+    yes covers this run only: a resumed run in the same session keeps it, a new
+    run asks again.
+  - **No, or no answer.** A run that cannot ask (unattended, or reporting to
+    another session) does not ask: the answer is No. A question nobody answers is
+    No. Nothing that executes the repo's code runs: its tests, builds, gate
+    commands, app or dev server, screenshots that need it running, installs of
+    its dependencies and any lens benchmark. Static reading, and scanners that do
+    not execute repo code, still run. Each skipped method gets the reason
+    "Untrusted not run" ([`rubric.md`](./rubric.md)). An area whose applicable
+    methods all needed execution is Not assessed with that reason; an area still
+    assessed on static methods lists the skipped methods in
+    `coverage.skipped_methods`.
+  - **The page** states the result (trusted, untrusted and yes, or untrusted and
+    no, with the time) and names every area that lost a method or was Not
+    assessed because of it ([`template.html`](./template.html) header). It also
+    says that a prompt line trusting the repo answers the question next time.
 
 Decide whether each area in [`rubric.md`](./rubric.md) applies, from the
 profile's facts: it applies, or it is Not assessed with a reason from that
@@ -209,14 +264,17 @@ empty `rules.md` that says so. A row whose area is Not assessed is not checked,
 with that area's reason.
 
 **Done when:** the commit is pinned, the profile is written down with a source
-per fact (types, tier, exclusions and package list included), every area is
+per fact (types, tier, exclusions and package list included), the ownership test
+and trust are recorded, the execute question is answered when it is due (before
+Stage 2), every area is
 marked applicable or Not assessed with its reason, `rules.md` is written with a
 source `file:line` on every row, the lens lineup is stated with reasons, and the
 read-only baseline (status snapshot and marker) is saved.
 
 ## Stage 2 — Capture
 
-Gather the evidence the lenses cannot gather blind:
+Gather the evidence the lenses cannot gather blind. Anything here that executes
+the repo's code follows the execute answer from Stage 1:
 
 - **Screenshots** of every main screen and state (empty, loading, error,
   populated), from the project's own demo, sample-data or dev mode, capturing
@@ -230,21 +288,24 @@ Gather the evidence the lenses cannot gather blind:
   `digest.md` with the raw output beside it in the scratchpad and judges
   nothing: the lenses do. It also covers the build time and the sizes of state
   or output files the code lens needs.
-- **Fleet standards.** The main session runs the check in
-  [`fleet-standards.md`](./fleet-standards.md) and fixes nothing it finds.
+- **Fleet standards.** When the repo passes the ownership test, the main session
+  runs the check in [`fleet-standards.md`](./fleet-standards.md) and fixes
+  nothing it finds; otherwise the section is "n/a (not a fleet repo)" and no row
+  runs.
 
 Stop any server or app this stage started before Stage 3 ends.
 
 **Done when:** each main screen has a capture (or the reason it has none), the
 captures sit in the scratchpad, every checklist row has a result (or the
-section is marked not checked, with the reason), and `digest.md` is written with
+section is marked not checked, with the reason, or n/a for a repo that is not a
+fleet repo), and `digest.md` is written with
 a reason for every tool or gate that did not run.
 
 ## Stage 3 — Lenses (parallel)
 
 Launch the applicable lens agents in one message so they run concurrently. Each
 gets the pinned commit, the profile, the read-only rule, the relevant captures,
-the fleet-standards results, the baseline digest and the path of its raw
+the fleet-standards results, the execute answer, the baseline digest and the path of its raw
 output, the type entries and the tier's reading rule, the `rules.md` rows for the areas it owns, and its brief from
 [`briefs.md`](./briefs.md): the brief's heading names the lens's model, its body
 says what the lens finds, and the shared header sets the severity scale, the areas the lens
@@ -266,7 +327,7 @@ and tokens.
 - **Resume, same session only** (the scratchpad is per-session). Read `state`
   from the run log and restart at the first incomplete stage if the repo `HEAD`
   is unchanged, relaunching lenses still `running` and launching any with no row
-  yet. A lens cut off at `running (retry)` counts as its second failure. Lenses
+  yet. The execute answer is read from the log's Run block, not asked again. A lens cut off at `running (retry)` counts as its second failure. Lenses
   marked `done`, `partial` or `failed` keep their status and any retry already
   used. A changed `HEAD` starts a new run.
 
@@ -336,7 +397,8 @@ pane, light and dark, desktop and phone width, before publishing.
 Write `findings.json` from the verified findings. Its top-level sections:
 
 - `profile`: the Stage 1 table, one `{fact, value, source}` object per row,
-  the pinned commit and branch included. Type, tier, line-count exclusions,
+  the pinned commit and branch included. The owner, ownership test, trust and
+  execute-answer rows are here too. Type, tier, line-count exclusions,
   packages and remote are rows here, and a type with no `types.md` entry is a
   `type` row marked "fallback profile".
 - `lens_coverage`: one `{lens, read, chosen_by}` object per launched lens, from
@@ -385,7 +447,9 @@ scratchpad and send it, `run-log.md` and `findings.json` to the user as files.
 
 Close with a short message: the link, the overall verdict with any Blockers
 by name, one line per area (its verdict, or its Not-assessed reason), a line
-for the fleet-standards section (counts per result and the checklist commit), a
+for the fleet-standards section (counts per result and the checklist commit, or
+"n/a (not a fleet repo)"), a trust line (the ownership result and the execute
+answer, with the areas it cost), a
 line for Rules conformance (pass, fail and not-assessed counts),
 the top findings, what was verified and what was not, the run's totals (wall time and
 agent tokens, against the budget once one is set), the number of guesses, any
@@ -405,6 +469,8 @@ partial or failed lens.
 - Any change to the audited repo. The audit has failed even if the report is good.
 - The repo's code run with the host's tokens or API keys, or a tool installed into
   the repo or a global location.
+- Code from an untrusted repo executed without a yes for this run, or outside the
+  Execution boundary or not from a scratch clone.
 - A baseline tool or gate that did not run, with no reason in the digest.
 - A fleet-standards check run that was not read-only, or a checklist copy
   reused instead of read fresh.

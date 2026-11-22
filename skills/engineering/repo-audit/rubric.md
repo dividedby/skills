@@ -29,8 +29,8 @@ method inside an area follows the same rule: a method whose condition fails is
 skipped with a reason.
 
 Fleet standards are a section, not an area, and are not in the table. They apply
-to fleet repos. There is no ownership test yet, so every repo is checked, as
-before. A repo shown not to be a fleet repo gets "n/a (not a fleet repo)".
+to fleet repos, as the ownership test in [`SKILL.md`](./SKILL.md) Stage 1
+decides. A repo that fails it gets "n/a (not a fleet repo)".
 
 ## Areas
 
@@ -367,8 +367,9 @@ the fact, tool or need in the reason.
 - **Not applicable (fact):** the area's "Applies when" fails. Name the fact: "no
   user-facing UI".
 - **Depth:** the run's depth did not reach it. Say what was sampled.
-- **Untrusted not run:** it needs code from a repo whose code the run may not
-  run.
+- **Untrusted not run:** it needs code from an untrusted repo and the run was
+  not allowed to execute it: the answer was No, or nobody answered
+  ([`SKILL.md`](./SKILL.md) Stage 1, Ownership and trust).
 - **Needs X:** credentials, a service or a device the run does not have (for
   example a GitHub remote). Name X.
 - **Not selected:** the user limited the run to named packages. Name them.

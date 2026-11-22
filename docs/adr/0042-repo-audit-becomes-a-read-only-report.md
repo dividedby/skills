@@ -6,6 +6,8 @@
 
 > **Amended by [ADR 0046](./0046-repo-audit-types-tiers-and-a-fallback.md)** — the profile adapts to the repo's type, size and shape (types, size tiers, a fallback, monorepos, no GitHub remote); the read-only rule, lenses and stages are unchanged.
 
+> **Amended by [ADR 0047](./0047-repo-audit-asks-once-before-running-untrusted-code.md)** — a repo the maintainer does not own is untrusted: the run asks once whether it may execute the repo's code, and without a yes it does not; the fleet-standards section applies only to fleet repos; the read-only rule, lenses and stages are unchanged.
+
 ## Context
 
 `/repo-audit` (3.1.0) ran a leverage hunt: up to five lens seats on the Workflow
