@@ -94,12 +94,21 @@ REPO-AUDIT REPORT TEMPLATE. FILL RULES
   `accessibility`, `content-branding` and `usability` and cite the report section, and the AREA_INTRO of each of those
   area-sections links the file.
 - Architecture report: METHOD_NOTE also links the architecture lens's report file (published beside the page), which holds
-  the store, personal-data, outbound-call and module depth tables. The page adds no table for them: their findings are
-  finding-rows in `architecture`, `data-integrity`, `privacy` and `security`, and the
-  AREA_INTRO of each of those area-sections links the file.
+  the store, personal-data, outbound-call and module depth tables and the go-public checklist. The page adds no table for
+  them: their findings are finding-rows in `architecture`, `data-integrity`, `privacy` and `security`, and the
+  AREA_INTRO of each of those area-sections links the file. For a private repo the `security` AREA_INTRO also states the
+  go-public verdict (Ready, Ready after cleanup or Keep private), the items and which need a history rewrite, and the
+  minutes a month going public would save with measured or estimated; with the check not run it gives the reason from
+  rubric.md instead. Keep the `security` section for that sentence even when the area has no findings, and delete the
+  finding table then.
 - Product report: when the product lens ran, METHOD_NOTE also links its report file (published beside the page), which holds
-  the fresh-clone install log and the error-copy log. The page adds no table for them: their findings are finding-rows in
-  `ops-release` and cite the report section, and the AREA_INTRO of that area-section links the file.
+  the fresh-clone install log, the error-copy log and the CI cost table. The page adds no table for them: their findings are
+  finding-rows in `ops-release` and cite the report section, and the AREA_INTRO of that area-section links the file. When the
+  repo has CI workflows, that AREA_INTRO also gives the repo's billable minutes a month and its share of the included
+  minutes, each labelled measured or estimated, and the minutes the cuts would save; with no workflow it gives the reason. Keep
+  the `ops-release` section for that sentence even when the area has no findings, and delete the finding table then. The
+  go-public minutes in the `security` AREA_INTRO are `go_public.minutes_saved_per_month` with `go_public.basis`, or its
+  `basis_reason` when null.
 - Depth and budget: METHOD_NOTE states the depth (`standard` or `quick`), the run's wall time and agent tokens against the
   budget in SKILL.md (a measure over by more than 50% named, with by how much), and the main-session context size as
   reported, not budgeted. A `quick` run also names every area that is Not assessed (depth) in OVERALL_TEXT, with its lens

@@ -113,6 +113,20 @@ Run on every repo, whatever the stack. Each result is a file in `$B/raw/`.
   a filter that selects only the fields it needs
   (`jq -r '.[] | [.RuleID, .File, .StartLine, .Commit[0:8]] | @tsv'`). `dir` scans ignored files too, so a hit in an ignored path is a
   secret on disk, not in git; the digest says which.
+- **Secrets, all refs (private repos, `standard` only).** A conditional step that
+  runs only when the profile says the repo is private
+  (`gh api repos/$GH --jq .private`) and the go-public feasibility check runs
+  ([`briefs.md`](./briefs.md) Security, privacy and data, Method 5); a public repo,
+  a repo with no GitHub remote and a `quick` run skip it, and the digest says
+  which. It extends the history scan above and keeps its presence-and-location
+  rule: first `git -C <repo> rev-parse --is-shallow-repository`. `true` means no
+  scan and "Needs X: full git history" in the Not run table (a shallow clone
+  holds only part of the history); otherwise
+  `gitleaks git --no-banner --redact --log-opts="--all" --report-format json --report-path $B/raw/gitleaks-history-all.json <repo>`,
+  which scans every ref, not only the checked-out branch. Read it through the
+  same filter, and for each hit add whether the commit is on the checked-out
+  branch (`git merge-base --is-ancestor <commit> HEAD`) or only on another ref.
+  The digest reports it as its own `gitleaks (all refs)` row.
 - **Size:** `scc --by-file --format json --output $B/raw/scc.json <repo>` (honours
   `.gitignore`; `tokei`, or `git ls-files | xargs wc -l`, when `scc` is not
   available). Per-language lines feed the profile and the test digest.
@@ -457,6 +471,7 @@ tools         | name version (source), one per tool used
 ## Universal
 osv-scanner   | N vulnerable packages across M packages   | raw/osv.json
 gitleaks      | tree N, history M: rule | path:line | commit | still tracked
+gitleaks (all refs) | private repo only: N hits: rule | path:line | commit | on HEAD or other ref; or the skip reason
 size          | lines per language (scc)                  | raw/scc.json
 churn         | window (since <date or "1 year ago">), top 10: count | path
 
