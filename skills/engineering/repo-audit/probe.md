@@ -75,7 +75,7 @@ styles apply. Each cell opens a fresh browser, so cells do not share state.
 
 `node probe.js --summarise $B/probe/cells --out $B/probe/summary.json` totals
 the cells per screen, failing screens first, and lists every failing cell with
-its failing checks. The page's tables come from it.
+its failing checks. Long unstructured blocks are counted, never failing: the probe cannot know the main path. A screen row carries `spaceDelimited`, false when any cell is not, and leaves word figures out of that row. The page's tables come from it.
 
 ## 5. The matrix
 
@@ -118,17 +118,17 @@ measuring.
 `schema: 1`. Every list is capped at 20 entries; a capped list is named in
 `truncated`.
 
-| Field      | Content                                                                                                                                                                      |
-| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `axe`      | one entry per violated rule: `rule`, `impact`, `selector` (first node), `count` (nodes)                                                                                      |
-| `overflow` | `present` (the page scrolls sideways), `scrollWidth`, `clientWidth`, and `elements` (the ones that start the overflow, not their children)                                   |
-| `targets`  | `small`: under 24×24 CSS px (WCAG 2.2 SC 2.5.8); `belowRepoMin`: under the repo's documented minimum from `--min-target`, else `repoMin: null`                               |
-| `console`  | console errors and uncaught page errors; `failedRequests`: failed requests and responses of 400 or more, with no query string or body                                        |
-| `copy`     | `visibleWords`, `longestBlockWords`, `longSentences` (over 25 words), `meanSentenceWords`                                                                                    |
-| `colours`  | `unmatched`: computed colours in use that match no declared CSS custom property (either theme), `declared`: how many distinct colours the custom properties hold, `unparsed` |
-| `keyboard` | only with `--keyboard`: `focusable`, `steps`, `trap`, `orderJumps`                                                                                                           |
-| `notes`    | lines the actions module added                                                                                                                                               |
-| other      | `url` (no query), `screen`, `state`, `width`, `theme`, `probe` (Playwright and axe versions), `screenshot`, `truncated`                                                      |
+| Field      | Content                                                                                                                                                                                                                                                    |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `axe`      | one entry per violated rule: `rule`, `impact`, `selector` (first node), `count` (nodes)                                                                                                                                                                    |
+| `overflow` | `present` (the page scrolls sideways), `scrollWidth`, `clientWidth`, and `elements` (the ones that start the overflow, not their children)                                                                                                                 |
+| `targets`  | `small`: under 24×24 CSS px (WCAG 2.2 SC 2.5.8); `belowRepoMin`: under the repo's documented minimum from `--min-target`, else `repoMin: null`                                                                                                             |
+| `console`  | console errors and uncaught page errors; `failedRequests`: failed requests and responses of 400 or more, with no query string or body                                                                                                                      |
+| `copy`     | `visibleWords`, `longestBlockWords`, `longSentences` (over 25 words), `meanSentenceWords`, `longUnstructuredBlocks` (plain-prose blocks over 60 words), `repeatedBlocks` (distinct blocks of 8 words or more that appear more than once), `spaceDelimited` |
+| `colours`  | `unmatched`: computed colours in use that match no declared CSS custom property (either theme), `declared`: how many distinct colours the custom properties hold, `unparsed`                                                                               |
+| `keyboard` | only with `--keyboard`: `focusable`, `steps`, `trap`, `orderJumps`                                                                                                                                                                                         |
+| `notes`    | lines the actions module added                                                                                                                                                                                                                             |
+| other      | `url` (no query), `screen`, `state`, `width`, `theme`, `probe` (Playwright and axe versions), `screenshot`, `truncated`                                                                                                                                    |
 
 Read them with their limits:
 
@@ -143,8 +143,19 @@ Read them with their limits:
 - With 0 declared colours, every colour is unmatched: report it as "no design
   tokens", not as a hundred misses. Browser defaults (a button's grey) appear as
   unmatched; the design lens judges which matter.
-- Copy metrics count text the user sees, grouped by block. Whether the copy is
-  too long is the design lens's call.
+- Copy metrics count text the user sees, grouped by block: the text under one
+  block element, so a heading, list item or disclosure between two runs of text
+  splits them. A block inside a heading, list item or open disclosure is
+  structured and is never counted in `longUnstructuredBlocks`. `repeatedBlocks`
+  compares text within one screen cell, never across screens, and stores none of
+  it. `spaceDelimited` is false when more than half the letters are in an unspaced
+  script (Chinese, Japanese, Thai, Lao, Khmer, Myanmar): the word and sentence
+  fields mean nothing for that screen, and the totals leave them out. On any
+  screen, the word, sentence and block fields count only the blocks that are
+  themselves space-delimited, so a mixed-script screen is measured on its spaced
+  text. Whether the
+  copy is too long is the design lens's call, by the thresholds in
+  [`briefs.md`](./briefs.md).
 
 ## 8. Lighthouse (a hosted site only)
 
@@ -235,4 +246,7 @@ with one horizontal overflow, one 16 px button, one image with no alt text and
 one 30-word sentence. Run the probe at 1280 light and 375 dark: each of the four
 shows in the cell (`overflow`, `targets.small`, `axe` rule `image-alt`,
 `copy.longSentences: 1`). A twin page without the overflow shows
-`overflow.present: false`.
+`overflow.present: false`. Add a plain paragraph of 80 words in short sentences, the same 10-word
+sentence in two elements and an 80-word list item: the cell shows
+`copy.longUnstructuredBlocks: 1` (the list item is structured) and
+`copy.repeatedBlocks: 1`.

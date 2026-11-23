@@ -63,6 +63,88 @@ test("copyMetrics ignores punctuation-only tokens", () => {
   assert.equal(probe.copyMetrics(["Save — now"]).visibleWords, 2);
 });
 
+test("isSpaceDelimited", async (t) => {
+  const cases = [
+    ["English", "Save your changes before you leave.", true],
+    ["Korean uses spaces", "변경 사항을 저장하세요", true],
+    ["Japanese", "変更を保存してから終了してください。", false],
+    ["Chinese", "请在离开之前保存您的更改", false],
+    ["Thai", "กรุณาบันทึกการเปลี่ยนแปลงก่อนออก", false],
+    ["Latin text with a few CJK labels", `${words(20)} 保存`, true],
+    ["no letters", "123 — 45", true],
+  ];
+  for (const [name, input, want] of cases) {
+    await t.test(name, () => assert.equal(probe.isSpaceDelimited(input), want));
+  }
+});
+
+test("blockFlags counts plain-prose blocks over 60 words, not structured ones", () => {
+  const got = probe.blockFlags([
+    { text: words(61), structured: false },
+    { text: words(60), structured: false },
+    { text: words(90), structured: true },
+  ]);
+  assert.equal(got.longUnstructuredBlocks, 1);
+});
+
+test("blockFlags counts a repeated explanation once, ignoring case and spacing", () => {
+  const explain = "Archived items stay in the export until you delete them.";
+  const got = probe.blockFlags([
+    { text: explain, structured: false },
+    { text: explain.toUpperCase().replace(/ /g, "  "), structured: true },
+    { text: explain, structured: false },
+    { text: "Delete", structured: false },
+    { text: "Delete", structured: false },
+  ]);
+  assert.equal(got.repeatedBlocks, 1);
+});
+
+test("blockFlags on no text", () => {
+  assert.deepEqual(probe.blockFlags([]), {
+    longUnstructuredBlocks: 0,
+    repeatedBlocks: 0,
+    spaceDelimited: true,
+  });
+});
+
+test("copyFigures measures only space-delimited blocks", async (t) => {
+  const long = Array.from({ length: 30 }, (_, i) => `word${i}`).join(" ") + ".";
+  const cjk = "这是一个没有空格的很长的中文句子用来测试。".repeat(4);
+  const cases = [
+    {
+      name: "mixed screen: unspaced block left out of the figures",
+      blocks: [
+        { text: "Save your work.", structured: false },
+        { text: long, structured: false },
+        { text: cjk, structured: false },
+      ],
+      want: {
+        visibleWords: 33,
+        longestBlockWords: 30,
+        longSentences: 1,
+        meanSentenceWords: 16.5,
+        spaceDelimited: true,
+      },
+    },
+    {
+      name: "unspaced screen: no figures, flag false",
+      blocks: [{ text: cjk, structured: false }],
+      want: {
+        visibleWords: 0,
+        longestBlockWords: 0,
+        longSentences: 0,
+        spaceDelimited: false,
+      },
+    },
+  ];
+  for (const { name, blocks, want } of cases) {
+    await t.test(name, () => {
+      const got = probe.copyFigures(blocks);
+      for (const [k, v] of Object.entries(want)) assert.equal(got[k], v, k);
+    });
+  }
+});
+
 test("normaliseColour", async (t) => {
   const cases = [
     ["#FFF", "#ffffff"],
@@ -261,6 +343,54 @@ test("summariseCell lists the failing checks", () => {
   );
   assert.deepEqual(got.failing, ["axe", "overflow"]);
   assert.equal(probe.summariseCell(cell()).failing.length, 0);
+});
+
+test("summariseCell counts copy flags, and ignores word counts for unspaced text", () => {
+  const copy = {
+    longSentences: 2,
+    longestBlockWords: 90,
+    longUnstructuredBlocks: 1,
+    repeatedBlocks: 1,
+  };
+  const spaced = probe.summariseCell(
+    cell({ copy: { ...copy, spaceDelimited: true } }),
+  );
+  assert.deepEqual(spaced.failing, ["longSentences", "repeatedBlocks"]);
+  assert.equal(spaced.counts.longUnstructuredBlocks, 1);
+  const unspaced = probe.summariseCell(
+    cell({ copy: { ...copy, spaceDelimited: false } }),
+  );
+  assert.deepEqual(unspaced.failing, ["repeatedBlocks"]);
+});
+
+test("summariseScreens keeps the highest mean sentence length of spaced cells", () => {
+  const copy = (mean, spaceDelimited = true) => ({
+    longSentences: 0,
+    longestBlockWords: 10,
+    meanSentenceWords: mean,
+    spaceDelimited,
+  });
+  const got = probe.summariseScreens([
+    cell({ copy: copy(14) }),
+    cell({ copy: copy(22), width: 1280 }),
+    cell({ copy: copy(80, false), theme: "light" }),
+  ]);
+  assert.equal(got.screens[0].maxMeanSentenceWords, 22);
+});
+
+test("summariseScreens marks a screen unspaced and leaves its word figures out", () => {
+  const copy = (spaceDelimited, longestBlockWords) => ({
+    longSentences: 0,
+    longestBlockWords,
+    meanSentenceWords: 5,
+    spaceDelimited,
+  });
+  const got = probe.summariseScreens([
+    cell({ copy: copy(true, 12) }),
+    cell({ copy: copy(false, 400), width: 1280 }),
+  ]);
+  assert.equal(got.screens[0].spaceDelimited, false);
+  assert.equal(got.screens[0].longestBlockWords, 12);
 });
 
 test("summariseScreens puts failing screens first and totals per screen", () => {
