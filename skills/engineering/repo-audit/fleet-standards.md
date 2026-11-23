@@ -41,7 +41,7 @@ checkout lands in case 3, and the rest of the audit runs as normal.
 Also read `docs/testing.md` at the same `$sha` (the same call with that path;
 the local fallback reads `~/repos/claude-config/docs/testing.md`) and record it
 beside the checklist commit. The main session hands its text and commit to the
-Code and performance lens for the test-suite review. If it cannot be read, that
+code lens for the test-suite review. If it cannot be read, that
 review says the guideline was not read; the fleet-standards area is unaffected.
 
 Find the columns by their header names, not their position, so a new column
@@ -144,7 +144,7 @@ Run its check and print the numbers as evidence. The result is **OK** when no
 limit in the row is crossed and **flag** when one is (or **not checked** as
 above). A limit the check cannot measure, such as wall time with no CI run to
 read, is reported as unknown and is not a flag. Its limits are house rules, so
-say that on the page. A flag asks for the Code and performance lens's test-suite
+say that on the page. A flag asks for the code lens's test-suite
 review, which reuses these numbers; the flag is not a finding there. It is a
 Low finding with id `fs-<row id>`, whose fix line points at that review's
 prune-and-split list. It asks for a look, not a change.
@@ -192,7 +192,7 @@ reason.
 
 Write the results to a scratchpad file (`fleet-standards.md`): the source and
 commit, the repo facts, then one line per row with id, result, severity,
-evidence, fix and source. Give the path to every lens; the Architecture, repo
-and docs lens may add context a row could not see. Fails
+evidence, fix and source. Give the path to every lens; the architecture
+lens may add context a row could not see. Fails
 enter Stage 4 and the plan like any other finding, with finding id
 `fs-<row id>`.

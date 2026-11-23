@@ -88,8 +88,10 @@ populated) × the widths it supports × the themes it supports.
   has a theme toggle. A product with one theme gets that one, and the other is
   "Not applicable (product has no dark theme)".
 - **Write the cell list to `$B/probe/matrix.md` before running**, then log the
-  cell count and wall time. The depth caps for the matrix are not set yet:
-  until they are, sample by screen and say so ("Depth: <what was sampled>").
+  cell count and wall time. At `standard` the cap is 60 cells (provisional). Past
+  it, take the primary screens first, in the primary state, width and theme, then
+  each remaining screen once, and say what was sampled ("Depth: <what was
+  sampled>"). At `quick` the probe does not run, reason "Depth: quick run, probe not run".
 - Re-run a failing cell once; report only what reproduces, and say "flaky" for
   the rest.
 
@@ -227,6 +229,7 @@ Each skip is a reason from [`rubric.md`](./rubric.md)'s list, never silence.
 | A width the product does not support                       | Not applicable (product does not support 375 px)        |
 | No primary flow documented (keyboard pass)                 | Not applicable (no documented primary flow)             |
 | Matrix sampled                                             | Depth: <what was sampled>                               |
+| A `quick` run (no probe)                                   | Depth: quick run, probe not run                         |
 
 ## 11. Output
 

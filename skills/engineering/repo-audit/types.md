@@ -37,8 +37,8 @@ and are illustrations, not a closed list.
 - **Usually not applicable:** `data-integrity` when the script keeps no storage
   (Not applicable: no data store); the UI areas when it adds nothing visible to
   the pages (Not applicable: no user-facing UI).
-- **Brief bullets:** Code: decoders and their failure path. Architecture: update
-  URLs, requested grants and connect targets. Design (when it adds UI): the pages
+- **Brief bullets:** Code: decoders and their failure path. Architecture: requested
+  grants and connect targets. Product: update URLs. Design (when it adds UI): the pages
   it changes are its screens and its walkthroughs, and the store description is a
   branding surface.
 
@@ -53,7 +53,7 @@ and are illustrations, not a closed list.
 - **Usually not applicable:** `accessibility`, `content-branding`, `usability`
   (Not applicable: no user-facing UI).
 - **Brief bullets:** Architecture: API surface and what counts as a breaking
-  change. Tests: the documented examples run.
+  change. Product: the documented examples run.
 
 ### CLI
 
@@ -95,8 +95,8 @@ output piped (non-TTY). Never point the probe at real accounts or data.
 - **Never:** install to a real device, use the signing identity, or touch the
   user's real install or data.
 - **Brief bullets:** Code: UI-thread work, actor or thread isolation, swallowed
-  failures. Architecture: entitlements, signing, notarization or store path,
-  runner availability. Design: menu bar items against the platform's
+  failures. Architecture: entitlements. Product: signing, notarization or store
+  path, runner availability. Design: menu bar items against the platform's
   guidelines; the walkthroughs run in the scratch build at the window sizes the
   app supports, and copy counts come from the captures and the UI strings in
   source.
@@ -112,7 +112,7 @@ output piped (non-TTY). Never point the probe at real accounts or data.
   applicable: no user-facing UI).
 - **Never:** call a live third-party API with real credentials.
 - **Brief bullets:** Code: blocking calls on the request path. Architecture:
-  read-only guarantees, redaction, health and restart behaviour.
+  read-only guarantees, redaction. Product: health and restart behaviour.
 
 ### Infra or ops
 
@@ -126,8 +126,8 @@ output piped (non-TTY). Never point the probe at real accounts or data.
   `validate` only.
 - **Never:** `plan`, `apply`, or anything that contacts a provider.
 - **Usually not applicable:** UI areas (Not applicable: no user-facing UI).
-- **Brief bullets:** Architecture: state handling, pinning, blast radius of a
-  change. Tests: a test per script.
+- **Brief bullets:** Architecture: state handling, pinning. Product: blast
+  radius of a change. Code: a test per script.
 
 ### Local web app
 
@@ -171,7 +171,7 @@ output piped (non-TTY). Never point the probe at real accounts or data.
   ([`probe.md`](./probe.md)).
 - **Usually not applicable:** `data-integrity` for static HTML only (Not
   applicable: no data store).
-- **Brief bullets:** Architecture: deploy path and headers. Design: Core Web
+- **Brief bullets:** Architecture: headers. Product: deploy path. Design: Core Web
   Vitals and the privacy page.
 
 ### Docs, config or data
