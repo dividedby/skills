@@ -96,22 +96,15 @@ The brief names the fleet-standards results file: add only what a row could not 
 1. **Module architecture.** Layering and dependency direction, god objects,
    test-only or demo code shipped in production targets, whether parts should
    be separate modules.
-2. **Security and privacy.** Credential and token storage, auth flow, scopes or
-   permissions requested versus used, sandboxing, where personal data lands on
-   disk and with what permissions. Search history for secrets; report presence only, never values.
-3. **Release path.** How a build reaches users, the update channel, versioning
-   and reproducibility, and whether the build setup itself would help or is
-   fine as it is.
-4. **CI.** A concrete workflow plan for the stack (test, build, lint, caching).
-5. **Documentation.** Outlines for what is missing (README, architecture,
+2. **Documentation.** Outlines for what is missing (README, architecture,
    contributing, changelog convention); quality of in-code docs on a sample of
    about ten files.
-6. **Repo settings and hygiene.** Licence, description, topics, branch
+3. **Repo settings and hygiene.** Licence, description, topics, branch
    protection, ignore rules, fixture hygiene, history size. Read with `gh api`
    (read-only) when a GitHub remote exists; otherwise from the files and `git`.
    Folder structure, cruft, the glossary and the ADRs are not here: they are
    item 7 of Product and docs conformance, so no check is done twice.
-7. **External facts.** The area `external-facts`, which applies when the repo
+4. **External facts.** The area `external-facts`, which applies when the repo
    hard-codes external values. [`rubric.md`](./rubric.md) defines a fact, an
    official source and the evidence. Use web search and page fetches. Three
    steps, in order:
@@ -130,6 +123,140 @@ The brief names the fleet-standards results file: add only what a row could not 
    Report the facts as a table (fact, `file:line`, source URL, date read,
    result). Each mismatch is also a finding, and a missing update path is one.
    Repair nothing.
+
+### Security, privacy and data
+
+The areas `security`, `privacy`, `data-integrity` and `tech-stack`. Check their
+`rules.md` rows as the shared header directs, then run the methods below. Each
+has a rubric area ([`rubric.md`](./rubric.md)) and an output in the lens report
+file. Where a method cannot run, the report says so with the reason from that
+file's not-assessed list. Release, update and CI checks are not here: they are
+item 8 of Product and docs conformance, so no check is done twice.
+
+Faults, requests to the running app, forced errors and calls to outside
+services run the repo's code or touch a service, so they share these rules:
+
+- They follow the [Execution boundary](./SKILL.md#execution-boundary) and the
+  execute answer from Stage 1 ([`SKILL.md`](./SKILL.md)); neither is restated
+  here. With No, each is skipped with "Untrusted not run".
+- Every request goes to the **second instance** ([`SKILL.md`](./SKILL.md)
+  Stage 2), which the main session hands over with its port, data directory and PID;
+  never to the primary, and never against the user's data. With none, each
+  skips with the reason from [`probe.md`](./probe.md) section 10 ("Needs X: a
+  second data dir and port" or "Needs X: an isolated data mode"), and what it
+  would have tested is read from source and labelled "read, not run". A CLI or
+  an infra repo has no instance, so its faults take that reason; a CLI's forced
+  error runs from the scratch build instead ([`types.md`](./types.md) CLI probe).
+- A call that needs real credentials, or that writes to a third party, is not
+  sent: "Needs X: credentials" or "Needs X: a test account".
+- The one fault that kills the instance's process (see Data integrity) runs last
+  of everything this lens sends. Say in the report that the instance is down.
+
+1. **Data integrity** (`data-integrity`). Applies when the profile's Data store
+   present fact holds; otherwise Not applicable (no data store).
+   - **Store map.** Find every persisted store from the code that writes it, not
+     from the docs: files and databases, state and backup files, caches and
+     queues on disk, browser storage. Examples: in a web app, a JSON file under
+     the data directory, a SQLite file, a browser's local storage; in an infra
+     repo, a state file (report its path, never its contents), a backup
+     directory, the timestamp file a scheduled job reads on its next run.
+   - **Seven checks per store**, each ok, gap or not applicable with its
+     `file:line`: validation on write; atomicity (a temp file and rename, a
+     transaction); concurrent writers (a lock, one writer, a version check that
+     answers 409); backup, and a restore that a test or a runbook exercises;
+     behaviour on a corrupt file (an error that names the file, against a
+     silent reset to empty, which is data loss); format versioning (a version
+     field, a migration); size bounds and expiry (a cap, a TTL, rotation).
+   - **Faults.** Run only when a persisted user-data store or a documented
+     integrity claim exists (atomic writes, rolling backups, a single writer or
+     conflict detection, stated in the README, an ADR or a design doc);
+     otherwise Not applicable (no persisted user-data store or integrity claim).
+     At most 3: one per documented claim first, then the store with the riskiest
+     write path. Each runs on a scratch copy only: copy the second instance's
+     data directory before the fault and restore it after, so faults do not
+     compound, and never touch the repo's own data folder. Examples:
+     - corrupt the store: truncate it or overwrite it with invalid bytes, then
+       request the screen or command that reads it; when the store loads only at
+       start, read the loader and label it "read, not run";
+     - write from two clients: two simultaneous writes to the same record, then
+       check that the store parses and the second writer got a conflict or a
+       merge;
+     - kill a write midway: send a large write and kill the process listening on
+       the instance's port, after checking that its PID is the handed-over
+       instance PID or that process's child (a wrapper such as `timeout` is
+       not it; any other listener is left alone and the fault is skipped), then
+       look for a half-written file or a leftover temp file and whether the
+       store still loads from a copy.
+
+     Each reports the fault, the command, what happened and the state of the
+     data after, including whether a documented backup restored it.
+
+   - **Evidence:** the `file:line` of the write path for each check, and the
+     fault's command and result.
+
+2. **Privacy and outbound calls** (`privacy`). Applies always.
+   - **Personal data.** Name each kind the product holds (accounts, emails,
+     names, addresses, device or location data, financial or tax figures, free
+     text a user types) and trace it: where it is stored, the permission bits
+     (`ls -l` on what the second instance wrote, or the mode the code sets, with
+     its `file:line`), retention (how long, and what deletes it), where it
+     leaves the machine, and whether the docs say the same. A mismatch is a
+     finding citing both `file:line`s. Never print the data.
+   - **Synthetic data.** Fixtures in the tree and the Stage 2 captures hold
+     made-up names, emails and identifiers only. Report the path of any that
+     look real, never the value.
+   - **Outbound calls.** Every host the code calls (an API in a web app; a
+     provider, a registry or a notification endpoint in an infra repo), found
+     from the code and config. For each: what it sends, and whether that includes
+     personal data; the timeout; retries and backoff; caching; key handling
+     (where the key comes from, header against URL, whether it is logged); and
+     what the product does when the service is down or slow. Exercise this where
+     it is safe, against the second instance: a read-only call that needs no
+     credential, and a down or slow service by pointing the base-URL setting at a
+     closed port or a scratch stub that sleeps. Where the code has no such
+     setting, read it and label it "read, not run". With no outbound call, Not
+     applicable (no outbound calls).
+   - **Evidence:** the `file:line` of each store, call and doc statement; the
+     permission bits; for an exercised call, the request and what the product
+     did.
+
+3. **Security** (`security`). Applies always.
+   - **Every repo.** The trust boundary and input validation; credential and
+     token storage; authentication and authorisation, where there are any; the
+     scopes or permissions requested against used; sandboxing. Secrets in the
+     tree and in history come from the baseline digest's gitleaks row: cite it,
+     do not re-run it, and report presence only, never a value.
+   - **Web apps.** A local or hosted web app, or a server that serves a web UI or
+     an HTTP API: OWASP ASVS 5.0 Level 1. Check the requirements of the chapters
+     the app's features touch; a chapter for a feature the app lacks (login and
+     sessions in an app with no accounts) is Not applicable (no login), named.
+     Each finding cites its requirement id as its `rule_source`.
+   - **Local HTTP servers only.** A server bound to loopback: send the three Host
+     and Origin requests in [`types.md`](./types.md) (Local web app, Host and
+     Origin requests), and record each request, its status and whether the data
+     directory changed. Any other repo skips them, Not applicable (not a local
+     HTTP server).
+   - **Secret handling and log redaction.** Force an error with a canary in place
+     of a secret: a made-up bearer token in an `Authorization` header and a field
+     named `password` in a web app; the token variable of a CLI run with a bad
+     argument. Search the response, the instance's log and the process output
+     for the canary. Its presence is a finding; report where, not the string. An
+     infra repo's scripts that would contact a provider are not run
+     ([`types.md`](./types.md) Never): read the logging calls and label it "read,
+     not run".
+   - **Evidence:** `file:line`, or the request and the response, or the command
+     and result. A secret is reported with its path and commit, never its value.
+
+4. **Tech stack currency** (`tech-stack`). Applies when a manifest, lockfile,
+   workflow, container or IaC file exists. Read the baseline digest's
+   vulnerability, currency (outdated) and runtime end-of-life rows and its
+   supply-chain section: cite them with their raw paths and re-run nothing. The
+   lens adds what the scanners cannot judge: whether a vulnerable package is
+   reachable from the app's code (a reachable one is High on the scale), which
+   outdated packages are a major version behind on the framework or runtime
+   itself or are abandoned, and which end-of-life dates fall before the next
+   release. A digest check that did not run carries its reason from the digest's
+   Not run table.
 
 ### Product and docs conformance
 
@@ -172,7 +299,7 @@ Check their `rules.md` rows as the shared header directs, then:
      condition holds.
 7. **Repo organisation.** [`rubric.md`](./rubric.md) holds the checks, the
    tests for "stale", the skip rules and the evidence; this is the order of
-   work. Repo settings stay with Architecture item 6.
+   work. Repo settings stay with Architecture item 3.
    - **Structure.** Count top-level entries and depth first; they cost two
      commands. Then, from Medium tier up, check each top-level source folder
      for a findable public surface; on Small tier skip that with the rubric's
@@ -198,6 +325,81 @@ Check their `rules.md` rows as the shared header directs, then:
    - **Recommend.** Last, from what the other items and areas already read:
      name a term the code spells two ways, or a hard-to-reverse choice no doc
      records, with `file:line`s. Name nothing and there is no finding.
+8. **Ops, release and observability** (`ops-release`). Applies when the repo
+   Ships; otherwise Not applicable (does not ship). Each bullet states the
+   evidence it needs, and one that cannot run says why with a reason from
+   [`rubric.md`](./rubric.md). Checks that need a running app use the second
+   instance and the rules of Security, privacy and data above, and follow the
+   [Execution boundary](./SKILL.md#execution-boundary) and the Stage 1 execute
+   answer ([`SKILL.md`](./SKILL.md)).
+   - **CI runs the repo's gates.** Take the gates and their "in CI" column from
+     the baseline digest's Gates table and the fleet rows; do not re-run them. With
+     no CI, the fix plan is a concrete workflow for the stack (test, build, lint,
+     caching). Evidence: the workflow `file:line`.
+   - **A dependency-update tool.** A bot config or a documented manual routine,
+     with its `file:line`; none is a finding.
+   - **Versioning and changelog.** How versions are set and bumped, and whether
+     the changelog follows the repo's own convention. Evidence: the file and a
+     sample of recent entries.
+   - **The release path and its blast radius.** How a build reaches users, the
+     update channel, reproducibility, and what a bad release reaches: every user
+     at once, or one ring first. Examples: a web app deployed from the default
+     branch to every user; an infra change applied to every host by one timer.
+   - **Update path safety.** Dependencies pinned to a range that cannot jump a
+     major version, and tests run before the new version starts. Examples: a
+     local app updated by `git pull` and a reinstall with compatible-release
+     pins and no test run; a timer that pulls and restarts a service with no
+     check. Evidence: the update command and its `file:line`.
+   - **Fresh-clone install, following the README only.** In a scratch clone of the
+     pinned commit, run the README's install steps in order and nothing else,
+     then its first-run or smoke command. Record each step, its result and wall
+     time, any step the README omits, and the result: worked, or failed at step N.
+     Run it only when every step writes solely to the scratchpad. Otherwise
+     (a global install, a service unit, a path in the user's home, a call to a
+     provider) review the steps statically for missing prerequisites and writes
+     outside the scratchpad, and record Not applicable (install writes outside the
+     scratchpad).
+   - **Rollback.** A documented way back to the previous version or state, and
+     whether anything exercises it.
+   - **Runbooks for restore and rebuild.** Present, current against the code, and
+     reachable from the README. Evidence: the runbook `file:line`; one that names
+     a command or path that does not exist is a finding.
+   - **Config.** Environment variables and settings documented, validated at
+     start (a missing one fails with its name), and defaulting to the safe value.
+   - **Log levels and redaction.** The levels and how a user sets them. Redaction
+     is the result of the forced error in Security, cited, not repeated.
+   - **User-facing error copy.** Read from errors caused on the second instance:
+     the refusals, the corrupt-store and forced-error responses the earlier
+     methods caused, plus a missing record and an invalid input. Each says what
+     to do, and shows no stack trace, internal path or secret. A CLI's errors come
+     from the scratch build. Evidence: the response text and the request that
+     caused it.
+   - **A health endpoint or heartbeat.** For a service or a job that runs
+     unattended; otherwise Not applicable (nothing runs unattended).
+   - **Failure notification for scheduled jobs.** An `OnFailure` unit, a
+     dead-man's switch or a CI alert, with its `file:line`; none on a scheduled
+     job is a finding. With no scheduled job, Not applicable (no scheduled jobs).
+   - **Crash reporting where users are remote.** An error reporter, or a way a
+     remote user's crash reaches the maintainer; otherwise Not applicable (users
+     are not remote).
+
+### Deliverables
+
+The **lens report file**, at its named scratchpad path, holds:
+
+- the **store table**: store, path, holds user data, the seven checks, and the
+  fault result or its skip reason;
+- the **personal-data table**: data, where stored, permission bits, retention,
+  where it leaves the machine, what the docs say, match;
+- the **outbound-call table**: host, `file:line`, what is sent (personal data
+  yes or no), timeout, retries and backoff, caching, key handling, behaviour
+  when down or slow, exercised or "read, not run";
+- the fault log, the Host and Origin request log (request, status, data
+  changed), the fresh-clone install log and the error-copy log.
+
+The page links this file, published beside the page, and carries only the
+findings, in its generic evidence table; it gets no table of its own for these.
+Every finding cites its place in this file.
 
 ## Design (opus)
 

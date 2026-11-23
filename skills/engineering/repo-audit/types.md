@@ -133,13 +133,33 @@ output piped (non-TTY). Never point the probe at real accounts or data.
 
 - **Detect:** a server bound to loopback with a static or templated UI, a
   launcher script, no deploy workflow.
-- **Added checks:** Host and Origin header checks (DNS-rebinding defence);
-  loopback-only binding; the launcher works on a fresh clone; an isolated data
+- **Added checks:** Host and Origin header checks (DNS-rebinding defence; the
+  requests below); loopback-only binding; the launcher works on a fresh clone; an isolated data
   directory and port for capture and fault runs; backups; port conflicts.
 - **Capture:** the isolated instances and the probe ([`SKILL.md`](./SKILL.md)
   Stage 2).
-- **Brief bullets:** Architecture: Host and Origin checks, binding, where data
-  lands. Code: behaviour on a taken port.
+- **Host and Origin requests.** Sent to the second instance by the architecture
+  lens ([`briefs.md`](./briefs.md) Security, privacy and data, Security). `$PORT`
+  is its port, `<read>` a path that returns data, `<write>` a path and `<method>` the method
+  that changes data (from the routes or the docs) and `<body>` the smallest body it
+  accepts. Checksum the instance's data directory before and after. A server
+  with no write path skips requests 2 and 3, Not applicable (no write path).
+  1. Forged `Host`:
+     `curl -si -H 'Host: attacker.example' http://127.0.0.1:$PORT/<read>`.
+     Expect a refusal (4xx) with no data in the body.
+  2. Cross-origin write:
+     `curl -si -X <method> -H 'Origin: http://attacker.example' -H 'Content-Type: application/json' --data '<body>' http://127.0.0.1:$PORT/<write>`.
+     Expect a refusal and an unchanged data directory.
+  3. Write with no `Origin` header: request 2 without the `Origin` header. Expect a
+     refusal when the repo's docs or code require an `Origin` on writes; otherwise
+     report what happened and raise no finding.
+
+  Record request, status and whether the data changed. A 2xx or a changed
+  directory on request 1 or 2 is a hole reachable from outside the trust
+  boundary, rated on the Severity scale.
+
+- **Brief bullets:** Architecture: Host and Origin checks (the requests above),
+  binding, where data lands. Code: behaviour on a taken port.
 
 ### Hosted web app or site
 

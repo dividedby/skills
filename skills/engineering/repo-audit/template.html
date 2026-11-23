@@ -93,6 +93,9 @@ REPO-AUDIT REPORT TEMPLATE. FILL RULES
   copy table, the brand inventory and the walkthrough logs. The page adds no table for them: their findings are finding-rows in
   `accessibility`, `content-branding` and `usability` and cite the report section, and the AREA_INTRO of each of those
   area-sections links the file.
+- Architecture report: METHOD_NOTE also links the architecture lens's report file (published beside the page), which holds
+  the store, personal-data and outbound-call tables. The page adds no table for them: their findings are finding-rows in
+  `data-integrity`, `privacy`, `security` and `ops-release`, and the AREA_INTRO of each of those area-sections links the file.
 - Run log: METHOD_NOTE links `run-log.md` and `findings.json` (both published beside the page) and names every partial or
   failed lens. A lens that failed with no output: each area it owns is Not assessed with reason "lens failed: reason" in the
   scorecard and Coverage. A partial lens keeps its verdicts; its scorecard top-finding cells, its Coverage reasons, its
