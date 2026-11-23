@@ -87,10 +87,12 @@ finding with no evidence is not a finding.
   lock drift, known vulnerabilities, licences, unused dependencies, and the CI,
   container and IaC supply chain (unpinned actions, image tags, provider
   versions).
-- **How:** read; run the repo's own audit or lock-check command; browse the
-  vendor's support page for end-of-life dates.
-- **Evidence:** the manifest `file:line`, the tool's output line, or the URL and
-  the date it was read.
+- **How:** read the baseline digest's vulnerability, currency and runtime
+  end-of-life rows ([`baseline.md`](./baseline.md)) and judge them
+  ([`briefs.md`](./briefs.md) Security, privacy and data, Method 4); run nothing
+  the digest already ran.
+- **Evidence:** the manifest `file:line`, the digest row and its raw path, or the
+  URL and the date it was read.
 
 ### Tests
 
@@ -105,24 +107,36 @@ finding with no evidence is not a finding.
 - **Checks:** the trust boundary, input validation, authentication and
   authorisation, secrets in the tree and in history, log redaction. A web app
   also gets OWASP ASVS 5.0 Level 1.
-- **How:** read; run a secret scan; browse for the web checks.
-- **Evidence:** `file:line`, or the command and result. A secret is reported as
-  present with its path and commit, never its value.
+- **How:** read; take the secret scan from the baseline digest; for the web
+  checks and a local HTTP server's Host and Origin requests, send requests to the
+  second instance; force an error to check secret handling and log redaction
+  ([`briefs.md`](./briefs.md) Security, privacy and data, Method 3).
+- **Evidence:** `file:line`, or the request and response, or the command and
+  result. A secret is reported as present with its path and commit, never its
+  value.
 
 ### Privacy
 
 - **Checks:** personal data stored and sent, file permissions on stored data,
-  docs that match the code, no real data in fixtures or screenshots.
-- **How:** read; measure permissions with `ls -l` on the data paths.
-- **Evidence:** the `file:line` or path, with the permission bits. Never print
-  the data.
+  retention, docs that match the code, no real data in fixtures or screenshots;
+  outbound calls: each host, what it sends, timeouts, retries, caching, key
+  handling and behaviour when the service is down or slow.
+- **How:** read; measure permissions with `ls -l` on the data paths; exercise
+  the outbound calls against the second instance where it is safe
+  ([`briefs.md`](./briefs.md) Security, privacy and data, Method 2).
+- **Evidence:** the `file:line` or path, with the permission bits; the request
+  and the product's behaviour for an exercised call. Never print the data.
 
 ### Data integrity
 
 - **Checks:** validation on write, atomic writes, concurrent writers, backup and
   restore, recovery from corruption, format versioning, cache bounds.
-- **How:** read; run against a scratch copy of the data, never the real one.
-- **Evidence:** the `file:line` of the write path, or the scratch result.
+- **How:** read; run at most three faults on the second instance's scratch copy
+  of the data, never the real one, and only when a persisted user-data store or a
+  documented integrity claim exists ([`briefs.md`](./briefs.md) Security, privacy
+  and data, Method 1).
+- **Evidence:** the `file:line` of the write path, or the fault's command and
+  result.
 
 ### Performance
 
@@ -295,12 +309,17 @@ area's.
 
 ### Ops, release and observability
 
-- **Checks:** CI gates, dependency updates, versioning, the release path,
-  fresh-clone install, rollback, runbooks, config; log levels and redaction,
-  user-facing errors that say what to do, a health check or heartbeat, failure
-  notification.
-- **How:** read; run the fresh-clone install in a scratch clone.
-- **Evidence:** the workflow or runbook `file:line`, or the install output.
+- **Checks:** CI gates, dependency updates, versioning, the release path and
+  its blast radius, the update path's safety, fresh-clone install, rollback,
+  runbooks, config; log levels and redaction, user-facing errors that say what
+  to do, a health check or heartbeat, failure notification for scheduled jobs,
+  crash reporting where users are remote.
+- **How:** read; run the fresh-clone install in a scratch clone, only when it
+  writes solely to the scratchpad, otherwise review it statically; read the
+  error copy from errors caused on the second instance
+  ([`briefs.md`](./briefs.md) Product and docs conformance, item 8).
+- **Evidence:** the workflow or runbook `file:line`, the install output, or the
+  error response and the request that caused it.
 
 ### External facts
 

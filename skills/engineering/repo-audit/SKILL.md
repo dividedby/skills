@@ -326,7 +326,7 @@ Launch the applicable lens agents in one message so they run concurrently. Each
 gets the pinned commit, the profile, the read-only rule, the relevant captures,
 the fleet-standards results, the execute answer, the baseline digest, the probe
 output paths and the running instances' addresses (the primary for every lens,
-the second for the architecture lens) and the path of its raw
+the second for the architecture lens, with its data directory and PID) and the path of its raw
 output, the type entries and the tier's reading rule, the `rules.md` rows for the areas it owns, and its brief from
 [`briefs.md`](./briefs.md): the brief's heading names the lens's model, its body
 says what the lens finds, and the shared header sets the severity scale, the areas the lens
@@ -468,8 +468,8 @@ Write `findings.json` from the verified findings. Its top-level sections:
   `skipped_methods` holds one `{method, reason}` for each probe dimension that
   did not run (cells, keyboard pass, Lighthouse, the second instance).
 
-Publish `run-log.md`, `findings.json` and, when the design lens ran, its report
-file beside the page through the Artifact `files` map and link each from the page. The page names every partial or failed
+Publish `run-log.md`, `findings.json` and the report files of the architecture
+and design lenses, each when its lens ran, beside the page through the Artifact `files` map and link each from the page. The page names every partial or failed
 lens and marks the areas that lens owns, as the template header directs. Finish
 the read-only proof and the totals in the log first.
 
