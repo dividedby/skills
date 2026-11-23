@@ -217,8 +217,9 @@ The areas `security`, `privacy`, `data-integrity` and `tech-stack`. Check their
 `rules.md` rows as the shared header directs, then run the methods below. Each
 has a rubric area ([`rubric.md`](./rubric.md)) and an output in the lens report
 file. Where a method cannot run, the report says so with the reason from that
-file's not-assessed list. Release, update and CI checks, including what the CI costs, are not here: they
-are item 8 of Product and docs conformance, so no check is done twice.
+file's not-assessed list. Release, update and CI checks, including what the CI
+costs, are not here: they are item 8 of Product and docs conformance, so no
+check is done twice.
 
 Faults, requests to the running app, forced errors and calls to outside
 services run the repo's code or touch a service, so they share these rules:

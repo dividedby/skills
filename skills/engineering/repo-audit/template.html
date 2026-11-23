@@ -21,7 +21,9 @@ REPO-AUDIT REPORT TEMPLATE. FILL RULES
   Not-applicable areas that share one reason may merge into one row naming their ids. Monorepo: add a second evidence-table
   (Package, Type, Verdict, Top finding, Link); a package the user did not select is Not assessed, reason Not selected.
 - Area-sections: one per area that has findings, plus `external-facts` when facts were checked, and `agent-readiness` and
-  `repo-hygiene` when they apply and are assessed (see External facts, Agent readiness and Repo organisation below).
+  `repo-hygiene` when they apply and are assessed (see External facts, Agent readiness and Repo organisation below),
+  `security` for a private repo when go-public feasibility ran or was skipped with a reason, and `ops-release` when the
+  repo has CI workflows (see Architecture report and Product report below).
   Not-assessed areas have none; the scorecard and Coverage carry their reason.
   Put "Also reported by: lens" under a finding the Stage 4 merge combined; delete that span otherwise. Fold "why it matters"
   into FINDING. A fleet fail stays a row in the Fleet standards table only; the scorecard row of the area it counts toward
