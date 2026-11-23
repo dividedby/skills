@@ -1,0 +1,227 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "repo-audit findings.json",
+  "description": "The machine-readable record of one repo-audit run, written in SKILL.md Stage 6. The checker in findings_check.py implements this schema's keywords only: $ref to $defs, type (a name or a list, null included), enum, pattern, required, properties, items and additionalProperties false.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "profile",
+    "lens_coverage",
+    "findings",
+    "go_public",
+    "scorecard",
+    "coverage"
+  ],
+  "properties": {
+    "profile": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["fact", "value", "source"],
+        "properties": {
+          "fact": { "type": "string" },
+          "source": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "lens_coverage": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["lens", "read", "chosen_by"],
+        "properties": {
+          "lens": { "$ref": "#/$defs/lens" },
+          "read": { "type": "string" },
+          "chosen_by": { "type": "string" }
+        }
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "key",
+          "area",
+          "severity",
+          "title",
+          "evidence",
+          "fix",
+          "effort",
+          "rule_source",
+          "also_reported_by",
+          "package"
+        ],
+        "properties": {
+          "id": { "type": "string" },
+          "key": { "type": "string", "pattern": "^[a-z-]+:[^:]+:.+$" },
+          "area": { "$ref": "#/$defs/area" },
+          "severity": { "enum": ["blocker", "high", "med", "low"] },
+          "title": { "type": "string" },
+          "evidence": { "type": ["string", "array"] },
+          "fix": { "type": "string" },
+          "effort": { "enum": ["S", "M", "L"] },
+          "rule_source": { "type": ["string", "null"] },
+          "also_reported_by": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/lens" }
+          },
+          "package": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "go_public": {
+      "type": ["object", "null"],
+      "required": [
+        "verdict",
+        "minutes_saved_per_month",
+        "basis",
+        "basis_reason",
+        "items"
+      ],
+      "properties": {
+        "verdict": { "enum": ["ready", "ready_after_cleanup", "keep_private"] },
+        "minutes_saved_per_month": { "type": ["number", "null"] },
+        "basis": { "enum": ["measured", "estimated", null] },
+        "basis_reason": { "type": ["string", "null"] },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["row", "result", "needs_history_rewrite"],
+            "properties": {
+              "needs_history_rewrite": { "type": "boolean" }
+            }
+          }
+        }
+      }
+    },
+    "scorecard": {
+      "type": "object",
+      "required": ["overall", "blockers", "areas", "packages"],
+      "properties": {
+        "overall": { "$ref": "#/$defs/verdict" },
+        "blockers": { "type": "array", "items": { "type": "string" } },
+        "areas": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "area",
+              "applies",
+              "verdict",
+              "not_assessed_reason",
+              "top_finding"
+            ],
+            "properties": {
+              "area": { "$ref": "#/$defs/area" },
+              "applies": { "type": "boolean" },
+              "verdict": { "$ref": "#/$defs/verdict" },
+              "not_assessed_reason": { "type": ["string", "null"] },
+              "top_finding": { "type": ["string", "null"] }
+            }
+          }
+        },
+        "packages": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "package",
+              "type",
+              "verdict",
+              "not_assessed_reason",
+              "top_finding"
+            ],
+            "properties": {
+              "package": { "type": "string" },
+              "verdict": { "$ref": "#/$defs/verdict" },
+              "not_assessed_reason": { "type": ["string", "null"] },
+              "top_finding": { "type": ["string", "null"] }
+            }
+          }
+        }
+      }
+    },
+    "coverage": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "area",
+          "read",
+          "ran",
+          "measured",
+          "browsed",
+          "not_assessed_reason",
+          "skipped_methods"
+        ],
+        "properties": {
+          "area": { "$ref": "#/$defs/area" },
+          "read": { "type": "boolean" },
+          "ran": { "type": "boolean" },
+          "measured": { "type": "boolean" },
+          "browsed": { "type": "boolean" },
+          "not_assessed_reason": { "type": ["string", "null"] },
+          "skipped_methods": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["method", "reason"],
+              "properties": {
+                "method": { "type": "string" },
+                "reason": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "diff": {
+      "type": ["object", "null"],
+      "required": [
+        "previous_url",
+        "new",
+        "fixed",
+        "still_open",
+        "not_rechecked"
+      ],
+      "properties": {
+        "previous_url": { "type": "string" },
+        "new": { "type": "array", "items": { "type": "string" } },
+        "fixed": { "type": "array", "items": { "type": "string" } },
+        "still_open": { "type": "array", "items": { "type": "string" } },
+        "not_rechecked": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  },
+  "$defs": {
+    "lens": {
+      "enum": ["code", "architecture", "product", "design", "market"]
+    },
+    "verdict": {
+      "enum": ["not_ready", "ready_with_fixes", "ready", "not_assessed"]
+    },
+    "area": {
+      "enum": [
+        "code-quality",
+        "architecture",
+        "tech-stack",
+        "tests",
+        "security",
+        "privacy",
+        "data-integrity",
+        "performance",
+        "accessibility",
+        "content-branding",
+        "usability",
+        "feature-completeness",
+        "repo-hygiene",
+        "ops-release",
+        "external-facts",
+        "agent-readiness"
+      ]
+    }
+  }
+}

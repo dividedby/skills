@@ -1,0 +1,363 @@
+{
+  "profile": [
+    {
+      "fact": "commit",
+      "value": "d60d377989797ae1bf5d88d11fc475f92f76126e",
+      "source": "git rev-parse HEAD"
+    },
+    {
+      "fact": "branch",
+      "value": "main",
+      "source": "git branch --show-current"
+    },
+    {
+      "fact": "type",
+      "value": "CLI (Python script)",
+      "source": "tool.py:34 argparse main"
+    },
+    {
+      "fact": "tier",
+      "value": "Small",
+      "source": "wc -l on tool.py: 44 lines"
+    },
+    {
+      "fact": "depth",
+      "value": "quick",
+      "source": "prompt"
+    },
+    {
+      "fact": "remote",
+      "value": "none (local only)",
+      "source": "git remote -v"
+    }
+  ],
+  "lens_coverage": [
+    {
+      "lens": "code",
+      "read": "read 4 of 4 files",
+      "chosen_by": "Small tier: everything"
+    },
+    {
+      "lens": "architecture",
+      "read": "read 4 of 4 files",
+      "chosen_by": "Small tier: everything"
+    }
+  ],
+  "findings": [
+    {
+      "id": "security-1",
+      "key": "security:secret-scan:config.ini",
+      "area": "security",
+      "severity": "blocker",
+      "title": "A GitHub token is committed in config.ini",
+      "evidence": "config.ini:3 holds a token in the github-pat format; present in the first commit that added the file",
+      "fix": "Revoke the token, remove it from the file and read it from the environment",
+      "effort": "S",
+      "rule_source": null,
+      "also_reported_by": [],
+      "package": null
+    },
+    {
+      "id": "external-facts-1",
+      "key": "external-facts:stale-constant:tool.py",
+      "area": "external-facts",
+      "severity": "med",
+      "title": "The fee schedule is past its own valid-until date",
+      "evidence": "tool.py:8 RATES_VALID_UNTIL is 2019-12-31",
+      "fix": "Check the current schedule, update the values and the date, or add a check that warns after the date",
+      "effort": "S",
+      "rule_source": null,
+      "also_reported_by": ["code"],
+      "package": null
+    },
+    {
+      "id": "code-quality-1",
+      "key": "code-quality:duplicate-file:tool.orig.py",
+      "area": "code-quality",
+      "severity": "low",
+      "title": "tool.orig.py is a byte-identical copy of tool.py",
+      "evidence": "tool.py and tool.orig.py have the same hash",
+      "fix": "Delete the copy; history keeps it",
+      "effort": "S",
+      "rule_source": null,
+      "also_reported_by": [],
+      "package": null
+    }
+  ],
+  "go_public": null,
+  "scorecard": {
+    "overall": "not_ready",
+    "blockers": ["security-1"],
+    "areas": [
+      {
+        "area": "code-quality",
+        "applies": true,
+        "verdict": "ready_with_fixes",
+        "not_assessed_reason": null,
+        "top_finding": "code-quality-1"
+      },
+      {
+        "area": "architecture",
+        "applies": true,
+        "verdict": "ready",
+        "not_assessed_reason": null,
+        "top_finding": null
+      },
+      {
+        "area": "tech-stack",
+        "applies": false,
+        "verdict": "not_assessed",
+        "not_assessed_reason": "Not applicable: no manifest, lockfile, workflow, container or IaC file",
+        "top_finding": null
+      },
+      {
+        "area": "tests",
+        "applies": true,
+        "verdict": "ready",
+        "not_assessed_reason": null,
+        "top_finding": null
+      },
+      {
+        "area": "security",
+        "applies": true,
+        "verdict": "not_ready",
+        "not_assessed_reason": null,
+        "top_finding": "security-1"
+      },
+      {
+        "area": "privacy",
+        "applies": true,
+        "verdict": "ready",
+        "not_assessed_reason": null,
+        "top_finding": null
+      },
+      {
+        "area": "data-integrity",
+        "applies": false,
+        "verdict": "not_assessed",
+        "not_assessed_reason": "Not applicable: no data store",
+        "top_finding": null
+      },
+      {
+        "area": "performance",
+        "applies": true,
+        "verdict": "ready",
+        "not_assessed_reason": null,
+        "top_finding": null
+      },
+      {
+        "area": "accessibility",
+        "applies": false,
+        "verdict": "not_assessed",
+        "not_assessed_reason": "Not applicable: no user-facing UI",
+        "top_finding": null
+      },
+      {
+        "area": "content-branding",
+        "applies": false,
+        "verdict": "not_assessed",
+        "not_assessed_reason": "Not applicable: no user-facing UI",
+        "top_finding": null
+      },
+      {
+        "area": "usability",
+        "applies": false,
+        "verdict": "not_assessed",
+        "not_assessed_reason": "Not applicable: no user-facing UI",
+        "top_finding": null
+      },
+      {
+        "area": "feature-completeness",
+        "applies": true,
+        "verdict": "not_assessed",
+        "not_assessed_reason": "Depth: quick run, `product` lens not launched",
+        "top_finding": null
+      },
+      {
+        "area": "repo-hygiene",
+        "applies": true,
+        "verdict": "not_assessed",
+        "not_assessed_reason": "Depth: quick run, `product` lens not launched",
+        "top_finding": null
+      },
+      {
+        "area": "ops-release",
+        "applies": true,
+        "verdict": "not_assessed",
+        "not_assessed_reason": "Depth: quick run, `product` lens not launched",
+        "top_finding": null
+      },
+      {
+        "area": "external-facts",
+        "applies": true,
+        "verdict": "ready_with_fixes",
+        "not_assessed_reason": null,
+        "top_finding": "external-facts-1"
+      },
+      {
+        "area": "agent-readiness",
+        "applies": true,
+        "verdict": "not_assessed",
+        "not_assessed_reason": "Depth: quick run, `product` lens not launched",
+        "top_finding": null
+      }
+    ],
+    "packages": []
+  },
+  "coverage": [
+    {
+      "area": "code-quality",
+      "read": true,
+      "ran": false,
+      "measured": false,
+      "browsed": false,
+      "not_assessed_reason": null,
+      "skipped_methods": []
+    },
+    {
+      "area": "architecture",
+      "read": true,
+      "ran": false,
+      "measured": false,
+      "browsed": false,
+      "not_assessed_reason": null,
+      "skipped_methods": []
+    },
+    {
+      "area": "tech-stack",
+      "read": false,
+      "ran": false,
+      "measured": false,
+      "browsed": false,
+      "not_assessed_reason": "Not applicable: no manifest, lockfile, workflow, container or IaC file",
+      "skipped_methods": []
+    },
+    {
+      "area": "tests",
+      "read": true,
+      "ran": false,
+      "measured": false,
+      "browsed": false,
+      "not_assessed_reason": null,
+      "skipped_methods": []
+    },
+    {
+      "area": "security",
+      "read": true,
+      "ran": false,
+      "measured": false,
+      "browsed": false,
+      "not_assessed_reason": null,
+      "skipped_methods": [
+        {
+          "method": "go-public feasibility",
+          "reason": "Not applicable: not a private repo"
+        }
+      ]
+    },
+    {
+      "area": "privacy",
+      "read": true,
+      "ran": false,
+      "measured": false,
+      "browsed": false,
+      "not_assessed_reason": null,
+      "skipped_methods": []
+    },
+    {
+      "area": "data-integrity",
+      "read": false,
+      "ran": false,
+      "measured": false,
+      "browsed": false,
+      "not_assessed_reason": "Not applicable: no data store",
+      "skipped_methods": []
+    },
+    {
+      "area": "performance",
+      "read": true,
+      "ran": false,
+      "measured": false,
+      "browsed": false,
+      "not_assessed_reason": null,
+      "skipped_methods": [
+        {
+          "method": "benchmark",
+          "reason": "Depth: quick run, benchmark not run"
+        }
+      ]
+    },
+    {
+      "area": "accessibility",
+      "read": false,
+      "ran": false,
+      "measured": false,
+      "browsed": false,
+      "not_assessed_reason": "Not applicable: no user-facing UI",
+      "skipped_methods": []
+    },
+    {
+      "area": "content-branding",
+      "read": false,
+      "ran": false,
+      "measured": false,
+      "browsed": false,
+      "not_assessed_reason": "Not applicable: no user-facing UI",
+      "skipped_methods": []
+    },
+    {
+      "area": "usability",
+      "read": false,
+      "ran": false,
+      "measured": false,
+      "browsed": false,
+      "not_assessed_reason": "Not applicable: no user-facing UI",
+      "skipped_methods": []
+    },
+    {
+      "area": "feature-completeness",
+      "read": false,
+      "ran": false,
+      "measured": false,
+      "browsed": false,
+      "not_assessed_reason": "Depth: quick run, `product` lens not launched",
+      "skipped_methods": []
+    },
+    {
+      "area": "repo-hygiene",
+      "read": false,
+      "ran": false,
+      "measured": false,
+      "browsed": false,
+      "not_assessed_reason": "Depth: quick run, `product` lens not launched",
+      "skipped_methods": []
+    },
+    {
+      "area": "ops-release",
+      "read": false,
+      "ran": false,
+      "measured": false,
+      "browsed": false,
+      "not_assessed_reason": "Depth: quick run, `product` lens not launched",
+      "skipped_methods": []
+    },
+    {
+      "area": "external-facts",
+      "read": true,
+      "ran": false,
+      "measured": false,
+      "browsed": false,
+      "not_assessed_reason": null,
+      "skipped_methods": []
+    },
+    {
+      "area": "agent-readiness",
+      "read": false,
+      "ran": false,
+      "measured": false,
+      "browsed": false,
+      "not_assessed_reason": "Depth: quick run, `product` lens not launched",
+      "skipped_methods": []
+    }
+  ]
+}
