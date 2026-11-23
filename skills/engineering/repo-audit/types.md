@@ -61,8 +61,12 @@ and are illustrations, not a closed list.
   with an argument parser, an executable product.
 - **Added checks:** argument-list exec, no shell strings built from input; exit
   codes that mean something; errors to stderr; `--help` and `--version`;
-  release-binary hygiene (the release artefact ships only what it needs: no
-  debug symbols, test files or local paths).
+  release-binary hygiene (debug-only test hooks and code paths are absent from
+  the release build, checked on the built binary as sideload's
+  `scripts/check.sh` does; no debug symbols, test files or local paths);
+  explicit device or simulator targeting where the CLI drives one (every
+  command names a saved device id, never `booted` or an implicit default, as
+  mobile-safari-lab does).
 - **Usually not applicable:** none by default. Output is the UI when it is the
   product, so `accessibility`, `content-branding` and `usability` apply and use
   the probe. A CLI has no screens, so there is nothing to capture.
@@ -86,8 +90,8 @@ output piped (non-TTY). Never point the probe at real accounts or data.
   failures (`try?`, ignored results); signing, notarization, entitlements and
   runtime hardening, or the store path; the build setup itself (project files,
   build configs); CI runner availability for the targeted platform version;
-  release-binary hygiene, as for a CLI; explicit device or simulator targeting
-  in scripts and docs, never an implicit default device.
+  release-binary hygiene and explicit device or simulator targeting, as for a
+  CLI, in scripts and docs as well as code.
 - **Capture:** screenshots plus source. Build and run a separate copy from a
   clone in the scratchpad, with its own identity (bundle id or equivalent), so
   the user's real install and data are untouched; any change needed for that
