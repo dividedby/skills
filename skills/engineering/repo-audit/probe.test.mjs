@@ -107,6 +107,44 @@ test("blockFlags on no text", () => {
   });
 });
 
+test("copyFigures measures only space-delimited blocks", async (t) => {
+  const long = Array.from({ length: 30 }, (_, i) => `word${i}`).join(" ") + ".";
+  const cjk = "这是一个没有空格的很长的中文句子用来测试。".repeat(4);
+  const cases = [
+    {
+      name: "mixed screen: unspaced block left out of the figures",
+      blocks: [
+        { text: "Save your work.", structured: false },
+        { text: long, structured: false },
+        { text: cjk, structured: false },
+      ],
+      want: {
+        visibleWords: 33,
+        longestBlockWords: 30,
+        longSentences: 1,
+        meanSentenceWords: 16.5,
+        spaceDelimited: true,
+      },
+    },
+    {
+      name: "unspaced screen: no figures, flag false",
+      blocks: [{ text: cjk, structured: false }],
+      want: {
+        visibleWords: 0,
+        longestBlockWords: 0,
+        longSentences: 0,
+        spaceDelimited: false,
+      },
+    },
+  ];
+  for (const { name, blocks, want } of cases) {
+    await t.test(name, () => {
+      const got = probe.copyFigures(blocks);
+      for (const [k, v] of Object.entries(want)) assert.equal(got[k], v, k);
+    });
+  }
+});
+
 test("normaliseColour", async (t) => {
   const cases = [
     ["#FFF", "#ffffff"],

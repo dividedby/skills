@@ -150,7 +150,10 @@ Read them with their limits:
   compares text within one screen cell, never across screens, and stores none of
   it. `spaceDelimited` is false when more than half the letters are in an unspaced
   script (Chinese, Japanese, Thai, Lao, Khmer, Myanmar): the word and sentence
-  fields mean nothing for that screen, and the totals leave them out. Whether the
+  fields mean nothing for that screen, and the totals leave them out. On any
+  screen, the word, sentence and block fields count only the blocks that are
+  themselves space-delimited, so a mixed-script screen is measured on its spaced
+  text. Whether the
   copy is too long is the design lens's call, by the thresholds in
   [`briefs.md`](./briefs.md).
 

@@ -95,6 +95,18 @@ function blockFlags(blocks, { longAt = 60, minRepeat = 8 } = {}) {
   };
 }
 
+// A cell's `copy` record. Word and sentence figures cover only the blocks in a
+// space-delimited script, so a mixed-script screen is measured on its spaced
+// text; `spaceDelimited` still describes the whole screen.
+function copyFigures(blocks) {
+  const spaced = blocks.filter((b) => isSpaceDelimited(b.text));
+  return {
+    ...copyMetrics(spaced.map((b) => b.text)),
+    ...blockFlags(spaced),
+    spaceDelimited: blockFlags(blocks).spaceDelimited,
+  };
+}
+
 function hslToRgb(h, s, l) {
   const k = (n) => (n + h / 30) % 12;
   const a = s * Math.min(l, 1 - l);
@@ -772,10 +784,7 @@ async function runCell(args, tools) {
       targets,
       console: capList(consoleErrors, truncated, "console"),
       failedRequests: capList(failed, truncated, "failedRequests"),
-      copy: {
-        ...copyMetrics(raw.blocks.map((b) => b.text)),
-        ...blockFlags(raw.blocks),
-      },
+      copy: copyFigures(raw.blocks),
       colours,
       screenshot: args.screenshot ?? null,
       truncated,
@@ -868,6 +877,7 @@ module.exports = {
   copyMetrics,
   isSpaceDelimited,
   blockFlags,
+  copyFigures,
   normaliseColour,
   matchesDeclared,
   undeclaredColours,
