@@ -619,9 +619,15 @@ their `rules.md` rows. Check those rows as the shared header directs, then:
        from `total_count`). Call `jobs` (and `timing` as above) for at most 5 recent runs per
        workflow and at most 20 calls in all, extrapolate to the month and state
        the sample (workflow, runs, calls) in the table. Take the billing usage
-       once for the month. Split the 20 calls as: `jobs` for up to 5 runs per
-       workflow first, then, with calls left, `timing` for the same runs as the
-       cross-check; the runs-list pages and the billing call are not counted.
+       once for the month. Split the 20 calls as: `jobs` for every workflow
+       first, spread evenly (20 divided by the workflow count, at most 5 and at
+       least 1 run each), then, with calls left, `timing` for the same runs as
+       the cross-check; the runs-list pages and the billing call are not
+       counted. With more than 20 workflows, the 20 with the most runs get one
+       `jobs` call each; the rest are estimated from the runs list's
+       `run_started_at` to `updated_at` (each run's wall time, rounded up, times
+       the multiplier its workflow file sets), labelled estimated from run
+       times.
      - **When a figure is unavailable:** no billing scope (the call is refused):
        estimate from run and job durations and record "Needs X: billing scope",
        the figures labelled estimated. No `gh` access: "Needs X: gh access", and
