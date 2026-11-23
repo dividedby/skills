@@ -118,8 +118,9 @@ Run on every repo, whatever the stack. Each result is a file in `$B/raw/`.
   available). Per-language lines feed the profile and the test digest.
 - **Churn hotspots:**
   `git --no-optional-locks log --since="1 year ago" --name-only --pretty=format: | grep -v '^$' | sort | uniq -c | sort -rn | head -10`
-  (widen the window for a repo with little recent history). This is the churn
-  method [`types.md`](./types.md) refers to for large-tier sampling.
+  (widen the window for a repo with little recent history; the digest's churn
+  row states the window it used). This is the churn method
+  [`types.md`](./types.md) refers to for large-tier sampling.
 - **Optional:** `scorecard --local` (OpenSSF Scorecard) when installed.
 
 ## 2. The repo's own gates
@@ -457,7 +458,7 @@ tools         | name version (source), one per tool used
 osv-scanner   | N vulnerable packages across M packages   | raw/osv.json
 gitleaks      | tree N, history M: rule | path:line | commit | still tracked
 size          | lines per language (scc)                  | raw/scc.json
-churn         | top 10: count | path
+churn         | window (since <date or "1 year ago">), top 10: count | path
 
 ## Gates (documented vs actual)
 gate | documented at (file:line) | in CI | as written? | result | counts | time

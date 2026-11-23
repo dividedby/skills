@@ -226,9 +226,9 @@ Stage 1 counts tracked source lines from `git ls-files` with `wc -l`, or
   - **Medium:** up to about 50k lines. Each lens reads its areas in full where
     feasible.
   - **Large:** over about 50k lines. Each lens samples: the entry points, the
-    largest files, churn hotspots (the most-changed files in the git log, until
-    a churn method is defined), the code behind each documented feature, and a
-    random sample.
+    largest files, churn hotspots (the baseline digest's churn row,
+    [`baseline.md`](./baseline.md) section 1), the code behind each documented
+    feature, and a random sample.
 - **Coverage line.** Each lens ends its report with one line: what it read and how
   it chose. Example: "read 60 of 1,900 files: entry points, top 20 by churn, 20
   random". The page repeats it per lens.

@@ -76,10 +76,27 @@ finding with no evidence is not a finding.
 ### Architecture
 
 - **Checks:** layering, dependency direction, god modules, demo or test code in
-  production paths, whether a part should be its own module.
-- **How:** read; run the repo's dependency-graph tool if it has one.
+  production paths, whether a part should be its own module; and module depth,
+  by the deletion test: pass-through modules, one concept scattered across
+  shallow files, code extracted only so a test can reach it, and one-adapter
+  seams (an interface with one non-test implementation, Low by default). Depth
+  is leverage at the interface, not a line ratio.
+- **How:** read; run the repo's dependency-graph tool if it has one. For module
+  depth, measure each candidate's interface size and caller count (a
+  `git grep` of its imports) and write its deletion test
+  ([`briefs.md`](./briefs.md) Architecture, repo and docs, item 5, **Module
+  depth**, which also defines the badges). Candidates come from the baseline
+  digest's churn hotspots and the profile's entry points; a module with no
+  commit in the last year is not one, whatever window the digest used.
 - **Evidence:** the `file:line` of the import or reference that breaks the
-  direction.
+  direction. For module depth, the candidate's row in the module depth table
+  (interface size, caller count, deletion test, flag, badge) and the `file:line`
+  of each flag. Module shape with no measured user impact is a product opinion,
+  Med at most (see Severity).
+- **Skips:** module depth runs on Medium and Large tiers only, "Depth: Small
+  tier, no module depth review"; on a shallow clone, "Needs X: full git
+  history"; when no hotspot or entry point has a commit in the last year, "Not
+  applicable (no commit in the last year)".
 
 ### Tech stack, dependencies and supply chain
 
@@ -97,10 +114,15 @@ finding with no evidence is not a finding.
 ### Tests
 
 - **Checks:** the gates pass, run time, flakiness, untested risky paths,
-  core-logic coverage, an end-to-end test of the primary flow, tests run in CI.
+  core-logic coverage, an end-to-end test of the primary flow, tests run in CI;
+  test quality: tautological expectations (the expected value computed the same
+  way as the code under test), mocks of the repo's own modules (mock only at
+  system boundaries), and tests that bypass a module's interface to reach its
+  internals.
 - **How:** read; run the test command; measure run time, count and ratio.
 - **Evidence:** the command and its result; `file:line` samples. Cite the
-  `test-size` numbers, do not remeasure them.
+  `test-size` numbers, do not remeasure them. A test that bypasses an interface
+  is also evidence for module depth under Architecture.
 
 ### Security
 
