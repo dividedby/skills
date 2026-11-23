@@ -203,9 +203,10 @@ The brief names the fleet-standards results file: add only what a row could not 
      above is met or unclear. Give the candidate the strongest badge any raised
      flag earns and name that flag on its row:
      - **Strong:** all of the flag's evidence holds.
-     - **Worth exploring:** the rest, where some or all of the evidence is
-       unclear or against it.
-     - **Speculative:** no flag is raised.
+     - **Worth exploring:** some of the evidence holds or is unclear, not all
+       of it holds.
+     - **Speculative:** no flag is raised, or every raised flag's evidence is
+       against it.
 
      A Strong or Worth exploring candidate is a finding, rated on the Severity
      scale with its caps. A Speculative one stays in the table and is no finding
