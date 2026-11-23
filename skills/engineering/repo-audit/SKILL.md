@@ -130,7 +130,7 @@ the run log, `lens_coverage` and the page.
 | -------------- | --------------- | ------ | ------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------- | --------------------------------------------------------------------- | ------------ |
 | `code`         | general-purpose | sonnet | Code quality; Tests; Performance                                                                                   | base                                               | Always                                                                | Launched     |
 | `architecture` | general-purpose | sonnet | Architecture; Tech stack, dependencies and supply chain; Security; Privacy; Data integrity; External facts         | base, WebSearch and WebFetch (External facts)      | Always                                                                | Launched     |
-| `product`      | general-purpose | sonnet | Feature completeness vs docs; Repo organisation, docs and hygiene; Ops, release and observability; Agent readiness | base                                               | Always                                                                | Not launched |
+| `product`      | general-purpose | sonnet | Feature completeness vs docs; Repo organisation, docs and hygiene; Ops, release and observability; Agent readiness | base, WebFetch (billing rates)                     | Always                                                                | Not launched |
 | `design`       | general-purpose | opus   | Accessibility; Content, copy and branding; Usability and flows                                                     | base, WebSearch and WebFetch (platform guidelines) | The profile shows a user-facing UI                                    | Not launched |
 | `market`       | general-purpose | sonnet | No area: evidence for External facts, Tech stack and the Research section                                          | base, WebSearch and WebFetch                       | The market test below passes and a slot is free (the four-agent rule) | Not launched |
 
@@ -149,13 +149,17 @@ Each lens also gets the `rules.md` rows of the areas it owns.
   a lens and does not count.
 - **Depth.** Two levels: `standard` and `quick`. The prompt sets it ("quick",
   "quick audit"); with no word it is `standard`. It is a profile row, `depth`.
-  The baseline (Stage 2's gates and 10-minute time-box) is the same at both.
+  The baseline (Stage 2's gates and 10-minute time-box) is the same at both,
+  except the all-refs secret scan for go-public feasibility, which is `standard`
+  only.
   - **`standard`:** every method under the tier's reading rule, the four-agent
     rule, a probe matrix of at most 60 cells (provisional), `rules.md` from every
     source (a helper allowed), External facts under its 30-candidate rule.
   - **`quick`:** only `code` and `architecture`, from static reading, the
     baseline digest and the fleet check. No instances, probe, benchmarks, faults,
-    fresh-clone install or walkthroughs; module depth review skipped; `rules.md`
+    fresh-clone install or walkthroughs; module depth review skipped; go-public
+    feasibility skipped, reason "Depth: quick run, go-public feasibility not
+    run" (it needs `gh` calls and a full-history scan); `rules.md`
     harvested from agent files, coding standards, accepted ADRs and `VERIFY`
     markers only, with no helper; External facts checks the `VERIFY`-marked
     values first, then at most 10 more, and lists the rest as not checked with
@@ -406,7 +410,8 @@ the repo's code follows the execute answer from Stage 1:
   lenses launch, under the [Execution boundary](#execution-boundary). It writes
   `digest.md` with the raw output beside it in the scratchpad and judges
   nothing: the lenses do. It also covers the build time and the sizes of state
-  or output files the code lens needs.
+  or output files the code lens needs, and for a private repo at `standard`
+  the all-refs secret scan the go-public feasibility check reads.
 - **Fleet standards.** When the repo passes the ownership test, the main session
   runs the check in [`fleet-standards.md`](./fleet-standards.md) and fixes
   nothing it finds; otherwise the section is "n/a (not a fleet repo)" and no row
@@ -488,7 +493,13 @@ The lens reports are claims. Before anything reaches the page:
    data size). Apply it and note it. Add the user-facing text of each fault
    response in the architecture lens's report to the `ops-release` error-copy
    review, which the product lens ran without it.
-6. Set each area's verdict and the overall verdict from the corrected findings,
+6. Fill the go-public minutes-saved line. The architecture and product lenses
+   run together, so the architecture report leaves it as "from the CI cost
+   table": copy the repo's total billable minutes a month from the product
+   lens's CI cost table into it, labelled measured or estimated as that table
+   labels it ([`briefs.md`](./briefs.md) Security, privacy and data, Method 5).
+   With no product lens or no figure, write that table's reason instead.
+7. Set each area's verdict and the overall verdict from the corrected findings,
    as [`rubric.md`](./rubric.md) directs.
 
 **Done when:** duplicates are merged, every Blocker and High is confirmed or
@@ -554,6 +565,15 @@ Write `findings.json` from the verified findings. Its top-level sections:
     repo document `file:line`, or a named standard), or `null`.
   - `also_reported_by`: the other lenses from Stage 4's merge; `[]` when none.
   - `package`: the package the finding is in, or `null`.
+- `go_public`: the go-public feasibility result of a private repo, an object
+  `{verdict, minutes_saved_per_month, basis, basis_reason, items}`: `verdict` is
+  `ready`, `ready_after_cleanup` or `keep_private`; `minutes_saved_per_month` is
+  a number, or `null`; `basis` is `measured` or `estimated` (`null` when the
+  minutes are `null`); `basis_reason` is the Needs X or other reason from the CI
+  cost table when the minutes are `null`, else `null`; `items` is one `{row, result, needs_history_rewrite}` object per
+  checklist row that is not clear. `null` when the check did not run, with the
+  reason as a `{method, reason}` entry in `coverage.skipped_methods` for
+  `security`.
 - `scorecard`: `overall` (`not_ready`, `ready_with_fixes`, `ready`, or
   `not_assessed` when no applicable area has a verdict), `blockers` (the ids of
   every Blocker) and `areas`, one object per rubric area: `area`, `applies`

@@ -54,7 +54,7 @@ market lens owns no area: it feeds evidence to External facts and Tech stack.
 | Usability and flows                       | `usability`            | `design`       | UI present                                                   |
 | Feature completeness vs docs              | `feature-completeness` | `product`      | The docs describe behaviour the code should have             |
 | Repo organisation, docs and hygiene       | `repo-hygiene`         | `product`      | Always                                                       |
-| Ops, release and observability            | `ops-release`          | `product`      | Ships                                                        |
+| Ops, release and observability            | `ops-release`          | `product`      | Ships, or the repo has CI workflows (see the area's rule)    |
 | External facts                            | `external-facts`       | `architecture` | The repo hard-codes external values                          |
 | Agent readiness                           | `agent-readiness`      | `product`      | Always                                                       |
 
@@ -129,14 +129,19 @@ finding with no evidence is not a finding.
 
 - **Checks:** the trust boundary, input validation, authentication and
   authorisation, secrets in the tree and in history, log redaction. A web app
-  also gets OWASP ASVS 5.0 Level 1.
+  also gets OWASP ASVS 5.0 Level 1. A private repo also gets the go-public
+  feasibility checklist: the repo's secrets, personal data, infrastructure
+  details, issue and PR content, dependencies, licence and trust, ending in one
+  verdict. It applies only to a private repo ([`briefs.md`](./briefs.md)
+  Security, privacy and data, Method 5, which holds the rows and the verdict
+  rules); its personal-data row is the Privacy area's table, not a second one.
 - **How:** read; take the secret scan from the baseline digest; for the web
   checks and a local HTTP server's Host and Origin requests, send requests to the
   second instance; force an error to check secret handling and log redaction
   ([`briefs.md`](./briefs.md) Security, privacy and data, Method 3).
 - **Evidence:** `file:line`, or the request and response, or the command and
   result. A secret is reported as present with its path and commit, never its
-  value.
+  value. The go-public verdict names the rows behind it.
 
 ### Privacy
 
@@ -332,17 +337,28 @@ area's.
 
 ### Ops, release and observability
 
+- **Applies when:** the repo Ships, or has CI workflows. The two facts
+  scope different checks. The **CI cost review** applies to every repo with CI
+  workflows, Ships or not; a repo with none records Not applicable (no CI
+  workflows) for it. Every other check here applies only when the repo Ships;
+  on a repo that has CI but does not ship, each of them is skipped with Not
+  applicable (does not ship). A repo with neither has the area Not applicable.
 - **Checks:** CI gates, dependency updates, versioning, the release path and
   its blast radius, the update path's safety, fresh-clone install, rollback,
   runbooks, config; log levels and redaction, user-facing errors that say what
   to do, a health check or heartbeat, failure notification for scheduled jobs,
-  crash reporting where users are remote.
+  crash reporting where users are remote; and what the CI costs in billable
+  minutes a month, with the cuts that would save them.
 - **How:** read; run the fresh-clone install in a scratch clone, only when it
   writes solely to the scratchpad, otherwise review it statically; read the
   error copy from non-mutating errors caused on the primary instance
-  ([`briefs.md`](./briefs.md) Product and docs conformance, item 8).
+  ([`briefs.md`](./briefs.md) Product and docs conformance, item 8, which also
+  holds the CI cost method).
 - **Evidence:** the workflow or runbook `file:line`, the install output, or the
-  error response and the request that caused it.
+  error response and the request that caused it. A CI cost finding cites the
+  workflow `file:line`, the billable minutes a month (**measured** from
+  billing usage or **estimated** from run durations, and which) and the minutes
+  a month the cut saves.
 
 ### External facts
 
@@ -474,6 +490,40 @@ above a generic gap with the same impact wherever findings are ordered by
 impact: a lens report, an area's table, the plan. Severity still follows the
 scale and its caps. The finding cites the rule, and its `rule_source` is the
 repo document's `file:line`.
+
+## CI cost severity
+
+How a CI cost finding ([`briefs.md`](./briefs.md) Product and docs conformance,
+item 8) is rated, on the one scale above; the thresholds were set by the
+maintainer on 2026-11-23. Included minutes are the account's included monthly
+Actions minutes: the billing endpoint's figure when it states one (its
+`discountAmount` mixes free public usage with included minutes, so usage alone
+does not); otherwise the plan's, from `gh api user --jq .plan.name` when the
+owner is the authenticated user (an organisation:
+`gh api orgs/<org> --jq .plan.name`, which needs admin), by this table; with no
+plan readable, "Needs X: billing scope", with the plan assumed and stated.
+
+| Plan                    | Included per month                     |
+| ----------------------- | -------------------------------------- |
+| GitHub Free             | 2,000 Linux-equivalent minutes ($12)   |
+| GitHub Pro, GitHub Team | 3,000 Linux-equivalent minutes ($18)   |
+| GitHub Enterprise Cloud | 50,000 Linux-equivalent minutes ($300) |
+
+Source: <https://docs.github.com/en/billing/concepts/product-billing/github-actions>,
+read on each run for the current figures (when it cannot be read, the table here
+applies, as [`briefs.md`](./briefs.md) item 8 says); the docs state the allowance in
+dollars at the standard Linux rate of $0.006 a minute. Linux-equivalent minutes
+and the OS multiplier are defined in [`briefs.md`](./briefs.md) item 8.
+
+- **Med at least:** a private repo's CI uses more than **10%** of the included
+  minutes.
+- **High:** the **waste**, the billable minutes a month the recommended cuts
+  would save, is more than **5%** of the included minutes.
+- **Public repo:** standard-runner minutes are free, so the minutes are listed
+  and the finding caps at **Low**. The exception is a job on a larger runner,
+  which is billed on a public repo too and is rated as a private repo's. The
+  Ships cap above does not apply to CI cost: a repo that does not ship can
+  still waste minutes.
 
 ## Verdicts
 

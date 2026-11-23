@@ -217,8 +217,9 @@ The areas `security`, `privacy`, `data-integrity` and `tech-stack`. Check their
 `rules.md` rows as the shared header directs, then run the methods below. Each
 has a rubric area ([`rubric.md`](./rubric.md)) and an output in the lens report
 file. Where a method cannot run, the report says so with the reason from that
-file's not-assessed list. Release, update and CI checks are not here: they are
-item 8 of Product and docs conformance, so no check is done twice.
+file's not-assessed list. Release, update and CI checks, including what the CI
+costs, are not here: they are item 8 of Product and docs conformance, so no
+check is done twice.
 
 Faults, requests to the running app, forced errors and calls to outside
 services run the repo's code or touch a service, so they share these rules:
@@ -346,6 +347,73 @@ services run the repo's code or touch a service, so they share these rules:
    release. A digest check that did not run carries its reason from the digest's
    Not run table.
 
+5. **Go-public feasibility** (`security` and `privacy`). A checklist verdict on
+   whether the repo could be made public, never a recommendation to change its
+   visibility. Applies only to a private repo (`gh api repos/$GH --jq .private`
+   is true, from the profile). A public repo records Not applicable (public
+   repo); a repo with no GitHub remote records "Needs X: a GitHub remote". At
+   `quick` it does not run: "Depth: quick run, go-public feasibility not run".
+   Everything is read-only and reports presence and location, never a secret or
+   personal value. Seven rows, each clear, an item to fix or a block, with the
+   evidence:
+   - **Secrets, in the full history.** The baseline digest's
+     `gitleaks (all refs)` row ([`baseline.md`](./baseline.md) section 1: all
+     refs, a non-shallow clone). Cite it, do not re-run it. A hit is an item that needs a
+     history rewrite, and its key rotated whatever the verdict. A shallow clone
+     is "Needs X: full git history" and the row is unchecked.
+   - **Personal data.** The personal-data table above, not a second one. Add
+     two reads for this check only: the table's paths and any real-looking
+     fixture, searched in history for earlier versions
+     (`git log --all --oneline -- <path>`), and the Stage 2 captures. Report
+     paths and counts; a hit in history needs a rewrite.
+   - **Infrastructure details.** Private hostnames and internal URLs, private IP
+     ranges, tailnet names, cloud account IDs and resource names, in the tree
+     (`git grep -nE`) and in history (`git log --all -G<pattern> --format=%h`,
+     the first 20 commits). Examples: an infra repo's host inventory and
+     internal DNS names; a web app's staging URL and internal admin endpoint.
+     Report path, kind and count, not the value. In history only, it needs a
+     rewrite.
+   - **Content.** Issues, pull requests and their comments, releases and
+     retained Actions logs and artifacts that would become public. Read-only
+     through `gh api`, at most 5 list calls in all, paged at 100
+     (`repos/$GH/issues?state=all&per_page=100`, which lists PRs too, and the
+     issue-comments list); then give the totals and read a sample of the latest
+     30 issues and PRs with their comments, for personal data, internal URLs and
+     credentials, stating the sample. A hit is an
+     item: edit or delete it, no rewrite.
+   - **Dependencies.** Private dependencies and submodules: `.gitmodules` URLs,
+     git or SSH dependency URLs, private registries and scoped packages in the
+     manifests. Check each GitHub-hosted target's visibility
+     (`gh api repos/<o>/<r> --jq .private`). A private one the repo needs is an
+     item; one that cannot be made public or replaced blocks.
+   - **Licence.** A licence file exists, and the baseline's licence scan
+     ([`baseline.md`](./baseline.md) section 5) shows no third-party licence
+     incompatible with it. A missing file is an item (no rewrite); an
+     incompatible licence that cannot be replaced blocks.
+   - **Trust.** Whether the repo is in `dividedby/claude-config`
+     `docs/repos.md`, read as [`SKILL.md`](./SKILL.md) Stage 1 reads it for the
+     ownership test, and whether that entry gives a reason to stay private. A
+     reason blocks. When the file cannot be read, the row is "Needs X: access to
+     `docs/repos.md`" and is unchecked.
+   - **Verdict, exactly one:**
+     - **Ready:** every row checked and clear.
+     - **Ready after cleanup:** one or more items, each listed with its row and
+       whether it needs a history rewrite. An unchecked row is an item too (the
+       action is to check it), with its not-assessed reason.
+     - **Keep private:** a block, with the reason.
+   - **Minutes saved.** The minutes a month that going public would save: the
+     repo's total billable minutes a month from the product lens's CI cost table
+     (item 8), minus any larger-runner minutes, which stay billed. The two
+     lenses run together, so the architecture lens writes "from the CI cost
+     table" and the main session fills the number at Stage 4, with measured or
+     estimated carried over. With no figure, the reason from that table.
+   - **Findings.** A row whose item is already a defect on the Severity scale (a
+     secret in history is a Blocker) is a finding in `security` or `privacy`,
+     rated there; the checklist adds no finding of its own for it. A verdict
+     is not a finding.
+   - **Evidence:** the row, its command or `file:line`, and the verdict with
+     each item's rewrite flag.
+
 ### Architecture deliverables
 
 The **lens report file**, at its named scratchpad path, holds:
@@ -361,7 +429,10 @@ The **lens report file**, at its named scratchpad path, holds:
   deletion test, flag, badge, tests that reach past the interface; or the skip
   reason, from [`rubric.md`](./rubric.md) Architecture;
 - the fault log, with the user-facing text of each fault response quoted, and
-  the Host and Origin request log (request, status, data changed).
+  the Host and Origin request log (request, status, data changed);
+- the **go-public checklist** of a private repo: one row per item (row, result,
+  evidence, needs a history rewrite), the verdict, and the minutes-saved line, or
+  the skip reason from method 5.
 
 The page links this file, published beside the page, and carries only the
 findings, in its generic evidence table; it gets no table of its own for these.
@@ -434,7 +505,10 @@ their `rules.md` rows. Check those rows as the shared header directs, then:
      name a term the code spells two ways, or a hard-to-reverse choice no doc
      records, with `file:line`s. Name nothing and there is no finding.
 8. **Ops, release and observability** (`ops-release`). Applies when the repo
-   Ships; otherwise Not applicable (does not ship). Each bullet states the
+   Ships or has CI workflows. The **CI cost review** (last bullet) runs on any
+   repo with CI workflows; every other bullet runs only when the repo Ships,
+   otherwise Not applicable (does not ship). With neither, Not applicable (does
+   not ship, no CI workflows). Each bullet states the
    evidence it needs, and one that cannot run says why with a reason from
    [`rubric.md`](./rubric.md). Checks that need a running app follow the
    [Execution boundary](./SKILL.md#execution-boundary) and the Stage 1 execute
@@ -443,8 +517,8 @@ their `rules.md` rows. Check those rows as the shared header directs, then:
    primary instance, and reads every mutating path from source, labelled "read,
    not run". With no primary instance, the reason is from
    [`probe.md`](./probe.md) section 10. The lens report file holds the
-   fresh-clone install log and the error-copy log, and is published beside the
-   page.
+   fresh-clone install log, the error-copy log and the CI cost table, and is
+   published beside the page.
    - **CI runs the repo's gates.** Take the gates and their "in CI" column from
      the baseline digest's Gates table and the fleet rows; do not re-run them. With
      no CI, the fix plan is a concrete workflow for the stack (test, build, lint,
@@ -498,6 +572,101 @@ their `rules.md` rows. Check those rows as the shared header directs, then:
    - **Crash reporting where users are remote.** An error reporter, or a way a
      remote user's crash reaches the maintainer; otherwise Not applicable (users
      are not remote).
+   - **CI cost review.** Applies to every repo with CI workflows, Ships or
+     not, and weighs most on a private repo; with no workflow, Not applicable (no
+     CI workflows). Read every workflow under `.github/workflows/` (another
+     provider's config is read the same way, with no `gh` figures). The report
+     file holds one **CI cost table** and the cuts. Every figure says
+     **measured** (from billing usage) or **estimated** (from run durations), and
+     which; a projection is never presented as a measurement.
+     - **The OS multiplier,** defined here once: a runner SKU's per-minute rate
+       divided by the Linux 2-core rate, read on each run from the rate table of
+       <https://docs.github.com/en/billing/concepts/product-billing/github-actions>
+       ([`rubric.md`](./rubric.md) CI cost severity cites the same page). As a
+       guide only, today: Linux 2-core 1x, Windows about 1.7x, macOS about 10.3x;
+       smaller and arm Linux runners are cheaper. A **Linux-equivalent minute** is
+       a runner minute times its multiplier; the thresholds in
+       [`rubric.md`](./rubric.md) are in them. A larger or self-hosted runner is
+       named, and its rate is taken from the table when listed. When the page
+       cannot be read, use the guide values above and the plan table in
+       [`rubric.md`](./rubric.md), mark every figure that uses them, and record
+       "Needs X: GitHub billing docs (guide rates used)".
+     - **Per workflow, record:** triggers; runner OS and multiplier; matrix size
+       (legs, and which OS each runs on); median duration; runs per month;
+       estimated billable minutes (each job's duration rounded up to the whole
+       minute, times its multiplier, times its legs, summed over the month's
+       runs).
+     - **Reads, all read-only `gh api`,** over the last 30 days:
+       `repos/<o>/<r>/actions/runs` (paged, `created=>=<date>`; the run counts and
+       `run_started_at` to `updated_at` come from here), and
+       `repos/<o>/<r>/actions/runs/<id>/jobs` (per-job start, end and runner
+       labels: the primary per-job source). Optionally, as a cross-check while it
+       still answers, `repos/<o>/<r>/actions/runs/<id>/timing` (billable
+       milliseconds by OS, not minutes; empty on a public repo; GitHub is
+       retiring it): when it fails, skip it with "Needs X: timing
+       endpoint" and rely on `jobs`. The account's billing usage is
+       `/users/<owner>/settings/billing/usage?year=YYYY&month=MM` (an
+       organisation: `/organizations/<org>/settings/billing/usage`). Its
+       `usageItems` filtered to `product == "actions"` and the repo's
+       `repositoryName` give the measured minutes in `quantity`, by `sku`
+       (`actions_linux`, `actions_windows`, `actions_macos`, and the smaller or
+       arm SKUs; apply each SKU's multiplier to its raw-minute quantity to get
+       Linux-equivalent minutes, and say so). Its
+       `discountAmount` covers free public usage and included minutes together,
+       so it does not by itself say how many included minutes were used.
+     - **Budget: sample, do not walk every run.** Count runs per workflow from
+       the paged runs list (at most 5 pages of 100 runs; beyond that, extrapolate
+       from `total_count`). Call `jobs` (and `timing` as above) for at most 5 recent runs per
+       workflow and at most 20 calls in all, extrapolate to the month and state
+       the sample (workflow, runs, calls) in the table. Take the billing usage
+       once for the month. Split the 20 calls as: `jobs` for every workflow
+       first, spread evenly (20 divided by the workflow count, at most 5 and at
+       least 1 run each), then, with calls left, `timing` for the same runs as
+       the cross-check; the runs-list pages and the billing call are not
+       counted. With more than 20 workflows, the 20 with the most runs get one
+       `jobs` call each; the rest are estimated from the runs list's
+       `run_started_at` to `updated_at` (each run's wall time, rounded up, times
+       the multiplier its workflow file sets), labelled estimated from run
+       times.
+     - **When a figure is unavailable:** no billing scope (the call is refused):
+       estimate from run and job durations and record "Needs X: billing scope",
+       the figures labelled estimated. No `gh` access: "Needs X: gh access", and
+       read the workflows alone. No run in the window: "Needs X: workflow runs
+       (none in the last 30 days)", read the workflows alone and list the cuts
+       with no minute figure. Reading alone is the static fallback: the table
+       keeps its triggers, OS and matrix columns and the other columns read
+       "not measured".
+     - **Cuts to look for,** each with the minutes a month it saves: matrix legs
+       or OS runners that duplicate coverage (a matrix across two operating
+       systems for pure-Python code; the same test job on two Node versions both
+       in support); macOS or Windows jobs that could run on Linux (a lint or a
+       docs build on macOS; a shell-script test that never touches the OS);
+       a PR workflow with no `concurrency` group with `cancel-in-progress`;
+       no dependency or tool cache (a package manager's store, a Rust or Go
+       build cache); a schedule more frequent than its job needs (hourly for a
+       report read weekly); Dependabot or other bot PRs that run the full suite;
+       jobs that run on doc-only changes; a job time-out far above its median
+       duration; artifact and cache retention that drives storage (a
+       90-day default on a large build output); a heavy user (many minutes a
+       month on one repo) that could use a self-hosted runner; and several tiny
+       jobs that bill a whole minute each and could be folded into one.
+     - **Fleet rule, a hard constraint on every recommendation.** Keep the
+       always-reporting `ci-ok` gate job and never recommend a workflow-level
+       `paths:` or `paths-ignore:` on a `pull_request` trigger (the checklist's
+       `ci-gate` row, [`fleet-standards.md`](./fleet-standards.md) section 1).
+       To skip work, put a changed-files check inside a job and exit early, so
+       the job and `ci-ok` still report, or skip whole jobs with `if:` while the
+       gate job still runs. This holds for a repo that is not in the fleet too.
+     - **Severity** is in [`rubric.md`](./rubric.md) CI cost severity: the
+       thresholds, the included minutes and the public-repo cap are set there,
+       not here. Paste that section into this lens's brief beside the Severity
+       section. Evidence per finding: the workflow `file:line`, billable
+       minutes a month (measured or estimated), and the saving.
+     - **Output:** the CI cost table (workflow, triggers, runner OS and
+       multiplier, matrix, median duration, runs a month, billable minutes a
+       month with measured or estimated, cut, minutes saved) and the sample
+       statement, in the product lens report file. The repo's total billable
+       minutes a month is the figure the go-public verdict uses.
 9. **Documentation** (`repo-hygiene`). Outlines for what is missing (README,
    architecture, contributing, changelog convention); quality of in-code docs on
    a sample of about ten files.
