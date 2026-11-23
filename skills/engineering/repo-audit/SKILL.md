@@ -8,8 +8,9 @@ disable-model-invocation: true
 # Repo Audit
 
 A **read-only** review a maintainer can start and walk away from (overnight is
-the intended use). It looks at a repo through four lenses — code and
-performance, design, architecture/repo/docs, and the outside world — checks
+the intended use). It looks at a repo through a roster of five lenses, at most
+four launched at `standard` depth — code, architecture and security, product and
+docs, design, and the outside world (market) — checks
 the repo against the fleet-wide repo standards, checks every claim that matters
 against the source, and ends in **one report page**:
 a readiness scorecard with a verdict per area, a phased plan, evidenced findings,
@@ -115,6 +116,91 @@ apply the resume rule in Stage 3.
 - **State:** rewritten at every stage boundary and every agent return.
 - **Totals against budget:** updated at each stage end, closed at Stage 6.
 
+## Lenses, depth and budgets
+
+Five lenses, each launched with the Agent tool as `general-purpose`: it has
+Write, which every lens report file needs, and the named read-only agent types do
+not. This section is the one home for each lens's model, tools, areas and run
+condition; [`briefs.md`](./briefs.md) holds what each lens does. Every lens has
+Read, Grep, Glob, Bash and Write; the Tools column adds the web tools. A lens's
+short name (`code`, `architecture`, `product`, `design`, `market`) is the name in
+the run log, `lens_coverage` and the page.
+
+| Lens           | Agent type      | Model  | Owns (areas by name)                                                                                               | Tools                                              | Runs when (`standard`)                                                | At `quick`   |
+| -------------- | --------------- | ------ | ------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------- | --------------------------------------------------------------------- | ------------ |
+| `code`         | general-purpose | sonnet | Code quality; Tests; Performance                                                                                   | base                                               | Always                                                                | Launched     |
+| `architecture` | general-purpose | sonnet | Architecture; Tech stack, dependencies and supply chain; Security; Privacy; Data integrity; External facts         | base, WebSearch and WebFetch (External facts)      | Always                                                                | Launched     |
+| `product`      | general-purpose | sonnet | Feature completeness vs docs; Repo organisation, docs and hygiene; Ops, release and observability; Agent readiness | base                                               | Always                                                                | Not launched |
+| `design`       | general-purpose | opus   | Accessibility; Content, copy and branding; Usability and flows                                                     | base, WebSearch and WebFetch (platform guidelines) | The profile shows a user-facing UI                                    | Not launched |
+| `market`       | general-purpose | sonnet | No area: evidence for External facts, Tech stack and the Research section                                          | base, WebSearch and WebFetch                       | The market test below passes and a slot is free (the four-agent rule) | Not launched |
+
+Each lens also gets the `rules.md` rows of the areas it owns.
+
+- **Market test.** The lens runs only when the profile says the repo is public
+  (`gh api repos/$GH --jq .private` is false; "unknown (no GitHub remote)" counts
+  as not public) **and** its docs, release notes or listing name users other than
+  the owner. A private, local-only or single-user repo skips it, and the profile
+  says why.
+- **Four-agent rule.** At `standard` at most four lens agents launch. The core
+  lenses are `code`, `architecture`, `product` and, with a UI, `design`; `market`
+  launches only when fewer than four core lenses do. Otherwise it is skipped with
+  the reason "standard four-agent cap", and no prompt overrides the cap. `market`
+  owns no area, so no verdict is lost. The rules-harvest helper (Stage 1) is not
+  a lens and does not count.
+- **Depth.** Two levels: `standard` and `quick`. The prompt sets it ("quick",
+  "quick audit"); with no word it is `standard`. It is a profile row, `depth`.
+  The baseline (Stage 2's gates and 10-minute time-box) is the same at both.
+  - **`standard`:** every method under the tier's reading rule, the four-agent
+    rule, a probe matrix of at most 60 cells (provisional), `rules.md` from every
+    source (a helper allowed), External facts under its 30-candidate rule.
+  - **`quick`:** only `code` and `architecture`, from static reading, the
+    baseline digest and the fleet check. No instances, probe, benchmarks, faults,
+    fresh-clone install or walkthroughs; module depth review skipped; `rules.md`
+    harvested from agent files, coding standards, accepted ADRs and `VERIFY`
+    markers only, with no helper; External facts checks the `VERIFY`-marked
+    values first, then at most 10 more, and lists the rest as not checked with
+    the count.
+  - **Skipped areas.** Each area a lens not launched at `quick` owns reads "Not
+    assessed (depth)", with the reason "Depth: quick run, `<lens>` lens not
+    launched", the lens named. An area whose Applies-when fact fails stays Not
+    applicable: the fact wins. The page and the closing message name these
+    areas.
+
+**Budgets.** The `standard` and `quick` figures below are wall time and agent
+tokens per row; Medium and Large share a column (Large samples, so reading is
+bounded). They come from three costed runs at `standard` (a UI web app, an infra
+repo and a CLI with a menu-bar app) that ran at the same time on one machine, so
+wall times may overstate a lone run; the evidence table is in ADR 0049 in the
+skills repo's `docs/adr/`. Main-session context (327k to 415k tokens, up to 83%
+of a 500k window, in the runs that recorded it) is not in the agent totals: the
+run reports it in the run log and the closing message and does not budget it.
+
+| Row                  | Standard, Medium and Large | Standard, Small           | Quick, Medium and Large | Quick, Small |
+| -------------------- | -------------------------- | ------------------------- | ----------------------- | ------------ |
+| `code`               | 300k / 15 min              | 150k / 8 min              | 180k / 9 min            | 90k / 5 min  |
+| `architecture`       | 200k / 10 min              | 100k / 6 min              | 120k / 6 min            | 60k / 4 min  |
+| `product`            | 150k / 8 min               | 75k / 5 min               | not launched            | not launched |
+| `design`             | 320k / 15 min              | 160k / 8 min              | not launched            | not launched |
+| `market`             | 120k / 3 min               | 60k / 2 min               | not launched            | not launched |
+| rules-harvest helper | 150k / 3 min               | 150k / 3 min              | not allowed             | not allowed  |
+| Lenses total, UI     | 970k                       | 485k                      | 300k                    | 150k         |
+| Lenses total, no UI  | 650k (770k with `market`)  | 325k (385k with `market`) | 300k                    | 150k         |
+
+Whole run, Stages 1 to 6: Medium 45 min with a UI and 35 without; Large 40 min;
+Small 25 min with a UI and 20 without; `quick` 20 min (Medium and Large) or 12
+min (Small). The helper's tokens add to the lens total when it runs.
+
+Provisional until the audit's fixture runs confirm them: the `architecture` and
+`product` rows (the old single architecture agent was split in two, so the pair
+costs about 100k more), every Small and `quick` figure, the 60-cell probe cap and
+the helper's size threshold.
+
+- **Ceiling.** A lens's ceiling is 1.5 times its budget row, in wall time and in
+  tokens.
+- **Over budget by more than 50%** (a lens against its row, or the run against
+  its total or wall time): the page states the measure and by how much, the run
+  log's totals row shows it, and the closing message says so.
+
 ---
 
 ## Stage 1 — Scope
@@ -129,22 +215,24 @@ against.
 Profile the project at the pinned commit and branch: languages (any; each with
 tracked source beyond a stray script), type or types and the areas each needs
 ([`types.md`](./types.md)), size (lines per area after the exclusions, largest
-files), tier and exclusions with their line counts, packages for a monorepo,
-natural language of the docs and UI text, test suite (test files or a test
-command) and its run time, build and release path, CI (any CI config file: a
+files), tier and exclusions with their line counts, the depth (`quick` or
+`standard`, read from the prompt as [Lenses, depth and
+budgets](#lenses-depth-and-budgets) sets), packages for a monorepo, natural
+language of the docs and UI text, test suite (test files or a test command) and
+its run time, build and release path, CI (any CI config file: a
 `.github/workflows/` workflow or another provider's config), docs present,
 licence, remote, public or private (`gh api repos/$GH --jq .private` with a
-GitHub remote; otherwise "unknown (no GitHub remote)"), the owner, the
-ownership test and trust results and the execute answer (see **Ownership and
-trust** below), the names of the environment variables the demo or sample mode needs (the
-[Execution boundary](#execution-boundary) passes only these), for a web UI how
-its data can be isolated (a variable, flag, demo mode or temp profile, or none,
-and where it was found), the ports its docs reserve, the widths and themes it
-supports, the minimum target size its docs set, whether it is a hosted site, and
-the repo facts the fleet-standards check adds ([`fleet-standards.md`](./fleet-standards.md)
-section 2). Write the profile as
-a table of `fact | value | source`. A part or package that matches no type, or
-a repo with none, follows the fallback in [`types.md`](./types.md). In a large
+GitHub remote; otherwise "unknown (no GitHub remote)"), the owner, the ownership
+test and trust results and the execute answer (see **Ownership and trust**
+below), the names of the environment variables the demo or sample mode needs
+(the [Execution boundary](#execution-boundary) passes only these), for a web UI
+how its data can be isolated (a variable, flag, demo mode or temp profile, or
+none, and where it was found), the ports its docs reserve, the widths and themes
+it supports, the minimum target size its docs set, whether it is a hosted site,
+and the repo facts the fleet-standards check adds
+([`fleet-standards.md`](./fleet-standards.md) section 2). Write the profile as a
+table of `fact | value | source`. A part or package that matches no type, or a
+repo with none, follows the fallback in [`types.md`](./types.md). In a large
 monorepo, ask once which packages to audit when the run can ask.
 
 **Ownership and trust.** Two results, each recorded in the profile with its
@@ -205,13 +293,13 @@ profile's facts: it applies, or it is Not assessed with a reason from that
 file's list. Record the decision and its fact per area. A type's
 usually-not-applicable list is a hint; the fact decides.
 
-Decide which lenses apply and say so in one line each, with the
-[`types.md`](./types.md) entries that apply and the brief bullets they add:
-
-- **Design** runs only when the profile shows a user-facing UI
-  ([`rubric.md`](./rubric.md) defines it). A library skips it.
-- **Market** runs when the project has users or competitors to compare against;
-  internal tooling may skip it.
+Decide which lenses launch, from the Runs-when column of [Lenses, depth and
+budgets](#lenses-depth-and-budgets) and the depth. State each lens and each skip
+with its reason, one line each, with the [`types.md`](./types.md) entries that
+apply and the brief bullets they add. A UI-less repo skips `design` (a library
+has none; [`rubric.md`](./rubric.md) defines a UI); a repo that fails the market
+test, or a `standard` run with four core lenses, skips `market`; a `quick` run
+skips `product`, `design` and `market`.
 
 Read the user's prompt for a focus ("design only", "perf first") and weight the
 briefs toward it.
@@ -269,6 +357,15 @@ one row; name the others in its text. A repo with no such documents gets an
 empty `rules.md` that says so. A row whose area is Not assessed is not checked,
 with that area's reason.
 
+At `quick`, harvest only agent files, coding standards, accepted ADRs and `VERIFY`
+markers. At `standard`, when the harvest sources (the rule and claim documents
+above) run past about 1,000 lines (provisional), the main session may hand
+`rules.md` to one `general-purpose` sonnet helper that runs before the lenses.
+The helper is not a lens: it is not one of the four, not in `lens_coverage`, has
+its own row in the run log's Agents table (`rules-harvest (helper)`) and its own
+budget row, and its tokens count in the agent total. The main session still
+checks that every row has a source `file:line`. No helper at `quick`.
+
 **Done when:** the commit is pinned, the profile is written down with a source
 per fact (types, tier, exclusions and package list included), the ownership test
 and trust are recorded, the execute question is answered when it is due (before
@@ -282,6 +379,9 @@ read-only baseline (status snapshot and marker) is saved.
 Gather the evidence the lenses cannot gather blind. Anything here that executes
 the repo's code follows the execute answer from Stage 1:
 
+- **At `quick`,** the instances, the UI probe and the other UI captures below do
+  not run, reason "Depth: quick run, `<method>` not run" (for the probe,
+  "Depth: quick run, probe not run"); the baseline and the fleet check do.
 - **Isolated instances (web UIs).** Start the app against throwaway data: the
   repo's demo or sample mode, an environment variable that points its data into
   the scratchpad, a profile flag, or a temp profile. Use a free port its docs and
@@ -322,13 +422,14 @@ a reason for every tool or gate that did not run.
 
 ## Stage 3 — Lenses (parallel)
 
-Launch the applicable lens agents in one message so they run concurrently. Each
+Launch the applicable lens agents (at most four at `standard`) in one message so they run concurrently. Each
 gets the pinned commit, the profile, the read-only rule, the relevant captures,
 the fleet-standards results, the execute answer, the baseline digest, the probe
 output paths and the running instances' addresses (the primary for every lens,
 the second for the architecture lens, with its data directory and PID) and the path of its raw
 output, the type entries and the tier's reading rule, the `rules.md` rows for the areas it owns, and its brief from
-[`briefs.md`](./briefs.md): the brief's heading names the lens's model, its body
+[`briefs.md`](./briefs.md): the [lens table](#lenses-depth-and-budgets) sets the
+lens's agent type, model and tools (launch with that agent type and model), the brief's body
 says what the lens finds, and the shared header sets the severity scale, the areas the lens
 owns, the shape of a finding and how to use the profile and those results. Each writes its report (and the
 design lens, when it has a High or Blocker finding, its mockup spec) to a named scratchpad path and returns a short
@@ -336,9 +437,9 @@ summary. The design lens is one agent: its copy table, brand inventory and
 walkthrough logs go in its report file, and its walkthrough screenshots come from
 its own session on the primary instance.
 
-Each lens has a wall-time and token ceiling derived from the depth budget.
-Until a depth budget is set, no ceiling is enforced: log each lens's wall time
-and tokens.
+Each lens has a wall-time and token ceiling: 1.5 times its row in the [budget
+table](#lenses-depth-and-budgets) for the run's depth and tier. Log each lens's
+wall time and tokens against its row.
 
 - **Over its ceiling:** stop the lens. Use what it wrote so far and mark it
   partial; if it wrote nothing, mark it failed. No retry.
@@ -384,7 +485,9 @@ The lens reports are claims. Before anything reaches the page:
    versus what the code does), list it as a "disputed" line in the correction
    list.
 5. Context a lens lacked can change a rating (sandboxing, single-user scope,
-   data size). Apply it and note it.
+   data size). Apply it and note it. Add the user-facing text of each fault
+   response in the architecture lens's report to the `ops-release` error-copy
+   review, which the product lens ran without it.
 6. Set each area's verdict and the overall verdict from the corrected findings,
    as [`rubric.md`](./rubric.md) directs.
 
@@ -429,9 +532,12 @@ Write `findings.json` from the verified findings. Its top-level sections:
   the pinned commit and branch included. The owner, ownership test, trust and
   execute-answer rows are here too. Type, tier, line-count exclusions,
   packages and remote are rows here, and a type with no `types.md` entry is a
-  `type` row marked "fallback profile".
+  `type` row marked "fallback profile". The `depth` row is here too.
 - `lens_coverage`: one `{lens, read, chosen_by}` object per launched lens, from
-  its coverage line.
+  its coverage line. `lens` is the short name (`code`, `architecture`,
+  `product`, `design`, `market`); the rules-harvest helper is not a lens and has
+  no entry. A lens's areas are those the [lens table](#lenses-depth-and-budgets)
+  gives it, and `also_reported_by` below uses the same names.
 - `findings`: one object per finding on the page, fleet-standards fails
   included, with these fields:
   - `id`: the page anchor: `fs-<row id>` for a fleet fail, otherwise
@@ -468,8 +574,8 @@ Write `findings.json` from the verified findings. Its top-level sections:
   `skipped_methods` holds one `{method, reason}` for each probe dimension that
   did not run (cells, keyboard pass, Lighthouse, the second instance).
 
-Publish `run-log.md`, `findings.json` and the report files of the architecture
-and design lenses, each when its lens ran, beside the page through the Artifact `files` map and link each from the page. The page names every partial or failed
+Publish `run-log.md`, `findings.json` and the report files of the architecture,
+product and design lenses, each when its lens ran, beside the page through the Artifact `files` map and link each from the page. The page names every partial or failed
 lens and marks the areas that lens owns, as the template header directs. Finish
 the read-only proof and the totals in the log first.
 
@@ -485,8 +591,10 @@ for the fleet-standards section (counts per result and the checklist commit, or
 answer, with the areas it cost), a
 line for Rules conformance (pass, fail and not-assessed counts),
 the top findings, what was verified and what was not, the run's totals (wall time and
-agent tokens, against the budget once one is set), the number of guesses, any
-partial or failed lens, and confirmation that the repo is unchanged. When the
+agent tokens, against the budget, with any measure over by more than 50% named
+and by how much, and the main-session context size, reported not budgeted), the
+number of guesses, any partial or failed lens, the areas Not assessed (depth) on
+a `quick` run, and confirmation that the repo is unchanged. When the
 run reports to the user, end with **one question** — which part of the plan to
 start on — and offer `/to-tickets` for the plan in one line. When it reports to
 another session, end with the page link and the plan's first item instead.
@@ -513,6 +621,9 @@ partial or failed lens.
 - No run log, or a run log missing a section (a section with nothing to log
   says `none`).
 - A lens failed and its areas are not marked "Not assessed".
+- More than four lens agents launched at `standard`, or a `quick` run with an
+  area that has no verdict and no "Not assessed (depth)" reason.
+- A run over a budget by more than 50% with no statement on the page.
 - A lens report with no coverage line, or a sampled read presented as a full
   read.
 - A Blocker or High finding on the page that was not re-checked in Stage 4.

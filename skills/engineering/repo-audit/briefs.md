@@ -1,7 +1,8 @@
 # Repo Audit — Lens Briefs
 
-One brief per lens; each heading names the lens's model. Stage 3 adapts each to
-the project: name the stack's own tools, files and comparables from the Stage 1
+One brief per lens. The lens table in [`SKILL.md`](./SKILL.md#lenses-depth-and-budgets)
+holds each lens's agent type, model, tools and run condition; this file holds
+what each lens does. Stage 3 adapts each to the project: name the stack's own tools, files and comparables from the Stage 1
 profile, drop bullets that do not apply, add the brief bullets of each matched
 entry in [`types.md`](./types.md), and add the user's focus. Every brief also
 carries the shared header below.
@@ -35,8 +36,8 @@ carries the shared header below.
   stopped or fails leaves usable partial output.
 - The **Severity** section of [`rubric.md`](./rubric.md), pasted verbatim.
   Rate every finding on it; invent no other scale.
-- The areas the lens owns, by name, as [`rubric.md`](./rubric.md)'s "Lens
-  today" column maps them, and the profile facts that decide whether
+- The areas the lens owns, by name, as [`rubric.md`](./rubric.md)'s "Owner"
+  column gives them, and the profile facts that decide whether
   each applies. [`rubric.md`](./rubric.md) holds each area's checks, methods and
   evidence. For an area that does not apply, or a method the lens cannot use,
   the report says so with a reason from that file's not-assessed list.
@@ -52,7 +53,7 @@ carries the shared header below.
   edits), effort (S / M / L). Rank by impact. Measured numbers say how they
   were measured; projections are labelled as projections.
 
-## Code and performance (sonnet)
+## Code, tests and performance
 
 Focus on cost at realistic scale and on correctness risk:
 
@@ -95,29 +96,24 @@ Focus on cost at realistic scale and on correctness risk:
     check to run first: the lower-level test that covers the behaviour, or a
     coverage or mutation run.
 
-## Architecture, repo and docs (sonnet)
+## Architecture, security, privacy and data
 
 The brief names the fleet-standards results file: add only what a row could not see
-(a check that passed on a technicality, a gap no row covers). Then assess:
+(a check that passed on a technicality, a gap no row covers). The areas
+`architecture`, `tech-stack`, `security`, `privacy`, `data-integrity` and
+`external-facts` are this lens's; documentation and repo settings are the
+`product` lens's (Product and docs conformance, items 9 and 10). Then assess:
 
 1. **Module architecture.** Layering and dependency direction, god objects,
    test-only or demo code shipped in production targets, whether parts should
    be separate modules.
-2. **Documentation.** Outlines for what is missing (README, architecture,
-   contributing, changelog convention); quality of in-code docs on a sample of
-   about ten files.
-3. **Repo settings and hygiene.** Licence, description, topics, branch
-   protection, ignore rules, fixture hygiene, history size. Read with `gh api`
-   (read-only) when a GitHub remote exists; otherwise from the files and `git`.
-   Folder structure, cruft, the glossary and the ADRs are not here: they are
-   item 7 of Product and docs conformance, so no check is done twice.
-4. **External facts.** The area `external-facts`, which applies when the repo
+2. **External facts.** The area `external-facts`, which applies when the repo
    hard-codes external values. [`rubric.md`](./rubric.md) defines a fact, an
    official source and the evidence. Use web search and page fetches. Three
    steps, in order:
    - **Find** the facts and count them, every kind the rubric lists, including
-     the `rules.md` rows for this area and the `VERIFY` markers that item 4 of
-     Product and docs conformance passes here.
+     the `rules.md` rows for this area, which hold every `VERIFY` marker
+     (Stage 1 gives a `VERIFY` marker the area `external-facts`).
    - **Check** each against an official source. Search the issuing body's or the
      provider's own site and read the page; a search snippet is not a source.
      Record the source URL, the date read, the value found and the result.
@@ -127,11 +123,13 @@ The brief names the fleet-standards results file: add only what a row could not 
 
    Over 30 candidates: check every marked value and every value that feeds a
    user-facing number first, then list the rest as not checked with the count.
+   At `quick`, check the `VERIFY`-marked values first, then at most 10 more, and
+   list the rest as not checked with the count.
    Report the facts as a table (fact, `file:line`, source URL, date read,
    result). Each mismatch is also a finding, and a missing update path is one.
    Repair nothing.
 
-5. **Module depth.** The area `architecture`; [`rubric.md`](./rubric.md) holds
+3. **Module depth.** The area `architecture`; [`rubric.md`](./rubric.md) holds
    the checks and the skips, this is the order of work and the evidence each
    flag needs. A deep module hides a
    lot of behaviour behind a small interface; a web of shallow ones makes a
@@ -140,8 +138,9 @@ The brief names the fleet-standards results file: add only what a row could not 
    deep, and a long one that only forwards calls is shallow. Folder structure
    and top-level layout are item 7 of Product and docs conformance, and tooling
    that enforces import boundaries is out of scope, so no check is done twice.
-   - **Applies** on Medium and Large tiers, to code with a commit in the last
-     year only. The skips and their reasons are in [`rubric.md`](./rubric.md)
+   - **Applies** on Medium and Large tiers at `standard`, to code with a commit
+     in the last year only; a `quick` run skips it, "Depth: quick run, module
+     depth not run". The other skips and their reasons are in [`rubric.md`](./rubric.md)
      Architecture; record each in `coverage.skipped_methods` with the method
      name `module depth`. Check for a shallow clone with
      `git rev-parse --is-shallow-repository`.
@@ -347,11 +346,32 @@ services run the repo's code or touch a service, so they share these rules:
    release. A digest check that did not run carries its reason from the digest's
    Not run table.
 
-### Product and docs conformance
+### Architecture deliverables
+
+The **lens report file**, at its named scratchpad path, holds:
+
+- the **store table**: store, path, holds user data, the seven checks, and the
+  fault result or its skip reason;
+- the **personal-data table**: data, where stored, permission bits, retention,
+  where it leaves the machine, what the docs say, match;
+- the **outbound-call table**: host, `file:line`, what is sent (personal data
+  yes or no), timeout, retries and backoff, caching, key handling, behaviour
+  when down or slow, exercised or "read, not run";
+- the **module depth table**: candidate, path, interface size, caller count,
+  deletion test, flag, badge, tests that reach past the interface; or the skip
+  reason, from [`rubric.md`](./rubric.md) Architecture;
+- the fault log, with the user-facing text of each fault response quoted, and
+  the Host and Origin request log (request, status, data changed).
+
+The page links this file, published beside the page, and carries only the
+findings, in its generic evidence table; it gets no table of its own for these.
+Every finding cites its place in this file.
+
+## Product and docs conformance
 
 The areas `feature-completeness`, `repo-hygiene`, `ops-release` and
-`agent-readiness`, which [`rubric.md`](./rubric.md) maps to this lens today.
-Check their `rules.md` rows as the shared header directs, then:
+`agent-readiness`, which [`rubric.md`](./rubric.md) gives to this lens, with
+their `rules.md` rows. Check those rows as the shared header directs, then:
 
 1. **Feature completeness.** Give every feature and command the README
    documents one status: **works**, **broken** (what failed, with the doc and
@@ -366,9 +386,8 @@ Check their `rules.md` rows as the shared header directs, then:
 3. **Drift the other way.** List behaviour the code has that no doc mentions (a
    command, flag, setting, endpoint, schedule), each with its `file:line`.
 4. **Markers.** List every `TODO`, `FIXME`, `XXX` and "not built" row from
-   `rules.md` with its `file:line`. Pass each `VERIFY` marker to the
-   External facts area as a value to check against its source; do not check it
-   here.
+   `rules.md` with its `file:line`. A `VERIFY` marker is not checked here: the
+   architecture lens checks its value under External facts.
 5. **No README.** One finding in `repo-hygiene`, rated on the scale.
    `feature-completeness` is Not assessed, reason Not applicable (no README),
    and its `rules.md` rows are not checked, with the same reason.
@@ -388,7 +407,7 @@ Check their `rules.md` rows as the shared header directs, then:
      condition holds.
 7. **Repo organisation.** [`rubric.md`](./rubric.md) holds the checks, the
    tests for "stale", the skip rules and the evidence; this is the order of
-   work. Repo settings stay with Architecture item 3.
+   work. Repo settings are item 10.
    - **Structure.** Count top-level entries and depth first; they cost two
      commands. Then, from Medium tier up, check each top-level source folder
      for a findable public surface; on Small tier skip that with the rubric's
@@ -417,10 +436,15 @@ Check their `rules.md` rows as the shared header directs, then:
 8. **Ops, release and observability** (`ops-release`). Applies when the repo
    Ships; otherwise Not applicable (does not ship). Each bullet states the
    evidence it needs, and one that cannot run says why with a reason from
-   [`rubric.md`](./rubric.md). Checks that need a running app use the second
-   instance and the rules of Security, privacy and data above, and follow the
+   [`rubric.md`](./rubric.md). Checks that need a running app follow the
    [Execution boundary](./SKILL.md#execution-boundary) and the Stage 1 execute
-   answer ([`SKILL.md`](./SKILL.md)).
+   answer ([`SKILL.md`](./SKILL.md)). This lens never uses the second instance,
+   which is the architecture lens's: it sends only non-mutating requests to the
+   primary instance, and reads every mutating path from source, labelled "read,
+   not run". With no primary instance, the reason is from
+   [`probe.md`](./probe.md) section 10. The lens report file holds the
+   fresh-clone install log and the error-copy log, and is published beside the
+   page.
    - **CI runs the repo's gates.** Take the gates and their "in CI" column from
      the baseline digest's Gates table and the fleet rows; do not re-run them. With
      no CI, the fix plan is a concrete workflow for the stack (test, build, lint,
@@ -455,11 +479,14 @@ Check their `rules.md` rows as the shared header directs, then:
      a command or path that does not exist is a finding.
    - **Config.** Environment variables and settings documented, validated at
      start (a missing one fails with its name), and defaulting to the safe value.
-   - **Log levels and redaction.** The levels and how a user sets them. Redaction
-     is the result of the forced error in Security, cited, not repeated.
-   - **User-facing error copy.** Read from errors caused on the second instance:
-     the refusals, the corrupt-store and forced-error responses the earlier
-     methods caused, plus a missing record and an invalid input. Each says what
+   - **Log levels and redaction.** The levels and how a user sets them, and
+     nothing more: redaction is the architecture lens's Security result (its
+     forced error), which Stage 4 merges.
+   - **User-facing error copy.** Read from the errors this lens causes on the
+     primary instance with non-mutating requests (invalid input, a missing
+     resource, an unauthorised call) and from the error strings in source. The
+     architecture lens quotes the user-facing text of each fault response in its
+     report, and Stage 4 adds that text to this review. Each says what
      to do, and shows no stack trace, internal path or secret. A CLI's errors come
      from the scratch build. Evidence: the response text and the request that
      caused it.
@@ -471,29 +498,16 @@ Check their `rules.md` rows as the shared header directs, then:
    - **Crash reporting where users are remote.** An error reporter, or a way a
      remote user's crash reaches the maintainer; otherwise Not applicable (users
      are not remote).
+9. **Documentation** (`repo-hygiene`). Outlines for what is missing (README,
+   architecture, contributing, changelog convention); quality of in-code docs on
+   a sample of about ten files.
+10. **Repo settings and hygiene** (`repo-hygiene`). Licence, description, topics,
+    branch protection, ignore rules, fixture hygiene, history size. Read with
+    `gh api` (read-only) when a GitHub remote exists; otherwise from the files and
+    `git`. Folder structure, cruft, the glossary and the ADRs are not here: they
+    are item 7, so no check is done twice.
 
-### Architecture deliverables
-
-The **lens report file**, at its named scratchpad path, holds:
-
-- the **store table**: store, path, holds user data, the seven checks, and the
-  fault result or its skip reason;
-- the **personal-data table**: data, where stored, permission bits, retention,
-  where it leaves the machine, what the docs say, match;
-- the **outbound-call table**: host, `file:line`, what is sent (personal data
-  yes or no), timeout, retries and backoff, caching, key handling, behaviour
-  when down or slow, exercised or "read, not run";
-- the **module depth table**: candidate, path, interface size, caller count,
-  deletion test, flag, badge, tests that reach past the interface; or the skip
-  reason, from [`rubric.md`](./rubric.md) Architecture;
-- the fault log, the Host and Origin request log (request, status, data
-  changed), the fresh-clone install log and the error-copy log.
-
-The page links this file, published beside the page, and carries only the
-findings, in its generic evidence table; it gets no table of its own for these.
-Every finding cites its place in this file.
-
-## Design (opus)
+## Design and UX
 
 Runs only with a UI. With none (an infra repo, a library, a server) the lens does
 not run and its three areas are Not assessed, reason Not applicable (no
@@ -506,8 +520,8 @@ three areas, so the walkthroughs and the screens share one session.
   JSON, summary and keyboard logs (paths; [`probe.md`](./probe.md)), icons and
   other visual assets, the UI source, and the `rules.md` rows of the UI, brand
   and content docs. Use the probe's measured numbers; do not re-measure them.
-- **Research.** The platform's current interface guidelines for the patterns
-  the product uses: windows and navigation, toolbars, settings, menus,
+- **Research.** Use web search and page fetches for the platform's current
+  interface guidelines for the patterns the product uses: windows and navigation, toolbars, settings, menus,
   onboarding, destructive actions, progress, empty states,
   accessibility.
 - **Per screen.** Information hierarchy, layout and spacing, type scale,
@@ -620,11 +634,11 @@ reason from that file's not-assessed list.
    report. With no such finding there is no spec, and the report says "No
    mockups: no High or Blocker design finding".
 
-## Market and research (sonnet)
+## Market and research
 
 The repo is context only; the output is evidence for other lenses' areas and
 the page's Research section, not rated findings. Use
-web search (standard first, extended when thin) and page fetches.
+web search (a first pass, widened when thin) and page fetches.
 
 1. **Competitors and prior art.** Commercial tools, and open source found by
    searching GitHub; for each, the approach, features, price and common

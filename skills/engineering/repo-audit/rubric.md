@@ -35,28 +35,28 @@ decides. A repo that fails it gets "n/a (not a fleet repo)".
 ## Areas
 
 Order is the page order. `Id` is the slug used on the page and in
-`findings.json`. `Owner` is the proposed owning lens; `Lens today` maps it onto
-the lenses in [`briefs.md`](./briefs.md) until the roster changes. The market
-lens owns no area: it feeds evidence to External facts and Tech stack.
+`findings.json`. `Owner` is the launched lens that owns the area, by the short
+name in the lens table of [`SKILL.md`](./SKILL.md#lenses-depth-and-budgets). The
+market lens owns no area: it feeds evidence to External facts and Tech stack.
 
-| Area                                      | Id                     | Owner                        | Lens today                  | Applies when                                                 |
-| ----------------------------------------- | ---------------------- | ---------------------------- | --------------------------- | ------------------------------------------------------------ |
-| Code quality                              | `code-quality`         | Code, tests, performance     | Code and performance        | The repo has tracked source                                  |
-| Architecture                              | `architecture`         | Architecture, security, data | Architecture, repo and docs | The repo has tracked source                                  |
-| Tech stack, dependencies and supply chain | `tech-stack`           | Architecture, security, data | Architecture, repo and docs | A manifest, lockfile, workflow, container or IaC file exists |
-| Tests                                     | `tests`                | Code, tests, performance     | Code and performance        | The repo has tracked source                                  |
-| Security                                  | `security`             | Architecture, security, data | Architecture, repo and docs | Always                                                       |
-| Privacy                                   | `privacy`              | Architecture, security, data | Architecture, repo and docs | Always                                                       |
-| Data integrity                            | `data-integrity`       | Architecture, security, data | Architecture, repo and docs | Data store present                                           |
-| Performance                               | `performance`          | Code, tests, performance     | Code and performance        | The repo has tracked source                                  |
-| Accessibility                             | `accessibility`        | Design and UX                | Design                      | UI present                                                   |
-| Content, copy and branding                | `content-branding`     | Design and UX                | Design                      | UI present                                                   |
-| Usability and flows                       | `usability`            | Design and UX                | Design                      | UI present                                                   |
-| Feature completeness vs docs              | `feature-completeness` | Product and docs conformance | Architecture, repo and docs | The docs describe behaviour the code should have             |
-| Repo organisation, docs and hygiene       | `repo-hygiene`         | Product and docs conformance | Architecture, repo and docs | Always                                                       |
-| Ops, release and observability            | `ops-release`          | Product and docs conformance | Architecture, repo and docs | Ships                                                        |
-| External facts                            | `external-facts`       | Architecture, security, data | Architecture, repo and docs | The repo hard-codes external values                          |
-| Agent readiness                           | `agent-readiness`      | Product and docs conformance | Architecture, repo and docs | Always                                                       |
+| Area                                      | Id                     | Owner          | Applies when                                                 |
+| ----------------------------------------- | ---------------------- | -------------- | ------------------------------------------------------------ |
+| Code quality                              | `code-quality`         | `code`         | The repo has tracked source                                  |
+| Architecture                              | `architecture`         | `architecture` | The repo has tracked source                                  |
+| Tech stack, dependencies and supply chain | `tech-stack`           | `architecture` | A manifest, lockfile, workflow, container or IaC file exists |
+| Tests                                     | `tests`                | `code`         | The repo has tracked source                                  |
+| Security                                  | `security`             | `architecture` | Always                                                       |
+| Privacy                                   | `privacy`              | `architecture` | Always                                                       |
+| Data integrity                            | `data-integrity`       | `architecture` | Data store present                                           |
+| Performance                               | `performance`          | `code`         | The repo has tracked source                                  |
+| Accessibility                             | `accessibility`        | `design`       | UI present                                                   |
+| Content, copy and branding                | `content-branding`     | `design`       | UI present                                                   |
+| Usability and flows                       | `usability`            | `design`       | UI present                                                   |
+| Feature completeness vs docs              | `feature-completeness` | `product`      | The docs describe behaviour the code should have             |
+| Repo organisation, docs and hygiene       | `repo-hygiene`         | `product`      | Always                                                       |
+| Ops, release and observability            | `ops-release`          | `product`      | Ships                                                        |
+| External facts                            | `external-facts`       | `architecture` | The repo hard-codes external values                          |
+| Agent readiness                           | `agent-readiness`      | `product`      | Always                                                       |
 
 Each area below lists its checks, how they are done and the evidence a finding
 needs. The four methods are **read** (source and docs), **run** (a build, test or
@@ -84,8 +84,8 @@ finding with no evidence is not a finding.
 - **How:** read; run the repo's dependency-graph tool if it has one. For module
   depth, measure each candidate's interface size and caller count (a
   `git grep` of its imports) and write its deletion test
-  ([`briefs.md`](./briefs.md) Architecture, repo and docs, item 5, **Module
-  depth**, which also defines the badges). Candidates come from the baseline
+  ([`briefs.md`](./briefs.md) Architecture, security, privacy and data, item 3,
+  **Module depth**, which also defines the badges). Candidates come from the baseline
   digest's churn hotspots and the profile's entry points; a module with no
   commit in the last year is not one, whatever window the digest used.
 - **Evidence:** the `file:line` of the import or reference that breaks the
@@ -94,7 +94,8 @@ finding with no evidence is not a finding.
   of each flag. Module shape with no measured user impact is a product opinion,
   Med at most (see Severity).
 - **Skips:** module depth runs on Medium and Large tiers only, "Depth: Small
-  tier, no module depth review"; on a shallow clone, "Needs X: full git
+  tier, no module depth review"; not at `quick`, "Depth: quick run, module
+  depth not run"; on a shallow clone, "Needs X: full git
   history"; when no hotspot or entry point has a commit in the last year, "Not
   applicable (no commit in the last year)".
 
@@ -338,7 +339,7 @@ area's.
   crash reporting where users are remote.
 - **How:** read; run the fresh-clone install in a scratch clone, only when it
   writes solely to the scratchpad, otherwise review it statically; read the
-  error copy from errors caused on the second instance
+  error copy from non-mutating errors caused on the primary instance
   ([`briefs.md`](./briefs.md) Product and docs conformance, item 8).
 - **Evidence:** the workflow or runbook `file:line`, the install output, or the
   error response and the request that caused it.
@@ -427,7 +428,12 @@ the fact, tool or need in the reason.
 
 - **Not applicable (fact):** the area's "Applies when" fails. Name the fact: "no
   user-facing UI".
-- **Depth:** the run's depth did not reach it. Say what was sampled.
+- **Depth:** the run's depth level or the tier's reading rule did not reach it.
+  At `quick`, an area whose lens was not launched reads "Not assessed (depth)"
+  with the reason "Depth: quick run, `<lens>` lens not launched", the lens named.
+  A method a launched lens's area lists that `quick` does not run (a benchmark, a
+  fault, a browse) is skipped with "Depth: quick run,
+  `<method>` not run". Otherwise say what was sampled.
 - **Untrusted not run:** it needs code from an untrusted repo and the run was
   not allowed to execute it: the answer was No, or nobody answered
   ([`SKILL.md`](./SKILL.md) Stage 1, Ownership and trust).

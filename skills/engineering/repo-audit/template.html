@@ -95,8 +95,16 @@ REPO-AUDIT REPORT TEMPLATE. FILL RULES
   area-sections links the file.
 - Architecture report: METHOD_NOTE also links the architecture lens's report file (published beside the page), which holds
   the store, personal-data, outbound-call and module depth tables. The page adds no table for them: their findings are
-  finding-rows in `architecture`, `data-integrity`, `privacy`, `security` and `ops-release`, and the AREA_INTRO of each of
-  those area-sections links the file.
+  finding-rows in `architecture`, `data-integrity`, `privacy` and `security`, and the
+  AREA_INTRO of each of those area-sections links the file.
+- Product report: when the product lens ran, METHOD_NOTE also links its report file (published beside the page), which holds
+  the fresh-clone install log and the error-copy log. The page adds no table for them: their findings are finding-rows in
+  `ops-release` and cite the report section, and the AREA_INTRO of that area-section links the file.
+- Depth and budget: METHOD_NOTE states the depth (`standard` or `quick`), the run's wall time and agent tokens against the
+  budget in SKILL.md (a measure over by more than 50% named, with by how much), and the main-session context size as
+  reported, not budgeted. A `quick` run also names every area that is Not assessed (depth) in OVERALL_TEXT, with its lens
+  ("Depth: quick run, <lens> lens not launched"). A skipped market lens states its reason (the market test, or "standard
+  four-agent cap") in METHOD_NOTE.
 - Run log: METHOD_NOTE links `run-log.md` and `findings.json` (both published beside the page) and names every partial or
   failed lens. A lens that failed with no output: each area it owns is Not assessed with reason "lens failed: reason" in the
   scorecard and Coverage. A partial lens keeps its verdicts; its scorecard top-finding cells, its Coverage reasons, its

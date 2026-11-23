@@ -10,6 +10,8 @@
 
 > **Amended by [ADR 0048](./0048-repo-audit-keeps-isolated-instances-up-and-probes-the-ui.md)** — Stage 2 starts a web UI's isolated instances and probes it with Playwright, and both instances stay up through Stage 3 (replacing the stop-the-server step); the read-only rule and lenses are unchanged.
 
+> **Amended by [ADR 0049](./0049-repo-audit-lens-roster-depth-levels-and-budgets.md)** — five lenses in one launch, at most four at `standard`, each with an agent type, model and tools; Market off for private and single-user repos; `quick` and `standard` depth with stated budgets; the read-only rule and stages are unchanged.
+
 ## Context
 
 `/repo-audit` (3.1.0) ran a leverage hunt: up to five lens seats on the Workflow
