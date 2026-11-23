@@ -468,8 +468,8 @@ Write `findings.json` from the verified findings. Its top-level sections:
   `skipped_methods` holds one `{method, reason}` for each probe dimension that
   did not run (cells, keyboard pass, Lighthouse, the second instance).
 
-Publish `run-log.md`, `findings.json` and, for the architecture and design lenses
-when each ran, its report file beside the page through the Artifact `files` map and link each from the page. The page names every partial or failed
+Publish `run-log.md`, `findings.json` and the report files of the architecture
+and design lenses, each when its lens ran, beside the page through the Artifact `files` map and link each from the page. The page names every partial or failed
 lens and marks the areas that lens owns, as the template header directs. Finish
 the read-only proof and the totals in the log first.
 

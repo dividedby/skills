@@ -172,7 +172,8 @@ services run the repo's code or touch a service, so they share these rules:
      conflict detection, stated in the README, an ADR or a design doc);
      otherwise Not applicable (no persisted user-data store or integrity claim).
      At most 3: one per documented claim first, then the store with the riskiest
-     write path. Each runs on a scratch copy only: copy the second instance's
+     write path; a documented claim past the cap is listed as not run, reason
+     Depth. Each runs on a scratch copy only: copy the second instance's
      data directory before the fault and restore it after, so faults do not
      compound, and never touch the repo's own data folder. Examples:
      - corrupt the store: truncate it or overwrite it with invalid bytes, then
@@ -383,7 +384,7 @@ Check their `rules.md` rows as the shared header directs, then:
      remote user's crash reaches the maintainer; otherwise Not applicable (users
      are not remote).
 
-### Deliverables
+### Architecture deliverables
 
 The **lens report file**, at its named scratchpad path, holds:
 
@@ -510,7 +511,7 @@ reason from that file's not-assessed list.
    with that reason and the flow is read from source and labelled "read, not
    run"; a CLI needs no instance and runs from the scratch build.
 
-### Deliverables
+### Design deliverables
 
 1. **The lens report file**, at its named scratchpad path: the per-screen issues
    with severity, a concrete redesign and the platform APIs to use; app-level
