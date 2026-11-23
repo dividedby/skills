@@ -46,7 +46,7 @@ def fake_token() -> str:
     return "g" + "hp_" + _TOKEN_BODY
 
 
-def _f(text: str, exe: bool = False) -> File:
+def _file(text: str, exe: bool = False) -> File:
     return (text, exe)
 
 
@@ -121,18 +121,18 @@ def _single_script() -> list[Commit]:
     return [
         (
             "Add invoice summary script",
-            {"tool.py": _f(_TOOL_PY, True), "README.md": _f(_SS_README_1)},
+            {"tool.py": _file(_TOOL_PY, True), "README.md": _file(_SS_README_1)},
         ),
         (
             "Add upload settings",
             {
-                "config.ini": _f(
+                "config.ini": _file(
                     f"[upload]\nhost = files.example.invalid\ntoken = {fake_token()}\n"
                 )
             },
         ),
-        ("Document the report command", {"README.md": _f(_SS_README_2)}),
-        ("Keep a copy of the previous script", {"tool.orig.py": _f(_TOOL_PY, True)}),
+        ("Document the report command", {"README.md": _file(_SS_README_2)}),
+        ("Keep a copy of the previous script", {"tool.orig.py": _file(_TOOL_PY, True)}),
     ]
 
 
@@ -188,19 +188,19 @@ def _docs_only() -> list[Commit]:
         (
             "Add handbook pages",
             {
-                "README.md": _f(_DOCS_README.split("## Exports")[0].rstrip() + "\n"),
-                "docs/guide.md": _f(_DOCS_GUIDE),
-                "CONTRIBUTING.md": _f(_DOCS_CONTRIBUTING),
+                "README.md": _file(_DOCS_README.split("## Exports")[0].rstrip() + "\n"),
+                "docs/guide.md": _file(_DOCS_GUIDE),
+                "CONTRIBUTING.md": _file(_DOCS_CONTRIBUTING),
             },
         ),
-        ("Add setup page", {"docs/setup.md": _f(_DOCS_SETUP)}),
+        ("Add setup page", {"docs/setup.md": _file(_DOCS_SETUP)}),
         (
             "Add settings",
             {
-                "config/settings.yaml": _f(
+                "config/settings.yaml": _file(
                     f"upload_host: files.example.invalid\nupload_token: {fake_token()}\n"
                 ),
-                "config/limits.yaml": _f(
+                "config/limits.yaml": _file(
                     "# Partner API quota, per minute. Valid until the date below.\n"
                     "quota_per_minute: 100\n"
                     'quota_valid_until: "2019-12-31"\n'
@@ -209,7 +209,7 @@ def _docs_only() -> list[Commit]:
         ),
         (
             "Document the export command and keep the old setup page",
-            {"README.md": _f(_DOCS_README), "docs/setup-old.md": _f(_DOCS_SETUP)},
+            {"README.md": _file(_DOCS_README), "docs/setup-old.md": _file(_DOCS_SETUP)},
         ),
     ]
 
@@ -269,36 +269,36 @@ def _module(pkg: str, n: int) -> str:
 
 def _workspace() -> list[Commit]:
     skeleton: dict[str, File] = {
-        "pnpm-workspace.yaml": _f("packages:\n  - packages/*\n"),
-        "package.json": _f(
+        "pnpm-workspace.yaml": _file("packages:\n  - packages/*\n"),
+        "package.json": _file(
             '{\n  "name": "ledger-tools",\n  "private": true,\n'
             '  "scripts": {\n    "test": "node --test"\n  }\n}\n'
         ),
-        "README.md": _f(_WS_README_1),
+        "README.md": _file(_WS_README_1),
     }
     modules: dict[str, File] = {}
     for pkg in _PACKAGES:
-        skeleton[f"packages/{pkg}/package.json"] = _f(
+        skeleton[f"packages/{pkg}/package.json"] = _file(
             f'{{\n  "name": "@ledger/{pkg}",\n  "version": "0.1.0",\n'
             f'  "type": "module",\n  "main": "src/index.js"\n}}\n'
         )
         names = [f"m{n:02d}" for n in range(_MODULES_PER_PACKAGE)]
-        skeleton[f"packages/{pkg}/src/index.js"] = _f(
+        skeleton[f"packages/{pkg}/src/index.js"] = _file(
             "".join(f'export * from "./{name}.js";\n' for name in names)
         )
         for n, name in enumerate(names):
-            modules[f"packages/{pkg}/src/{name}.js"] = _f(_module(pkg, n))
+            modules[f"packages/{pkg}/src/{name}.js"] = _file(_module(pkg, n))
     return [
         ("Create the workspace and its packages", skeleton),
         ("Add the package modules", modules),
         (
             "Add settings and rates",
             {
-                "packages/core/src/config.js": _f(
+                "packages/core/src/config.js": _file(
                     f'export const UPLOAD_TOKEN = "{fake_token()}";\n'
                     'export const UPLOAD_HOST = "files.example.invalid";\n'
                 ),
-                "packages/utils/src/rates.js": _f(
+                "packages/utils/src/rates.js": _file(
                     "// Tax rate table for the filing period. Valid until the date below.\n"
                     'export const RATES_VALID_UNTIL = "2019-12-31";\n'
                     "export const RATE_PERCENT = 6.25;\n"
@@ -308,9 +308,9 @@ def _workspace() -> list[Commit]:
         (
             "Share the amount formatter and document the report command",
             {
-                "packages/utils/src/format.js": _f(_FORMAT_JS),
-                "packages/cli/src/format.js": _f(_FORMAT_JS),
-                "README.md": _f(_WS_README_2),
+                "packages/utils/src/format.js": _file(_FORMAT_JS),
+                "packages/cli/src/format.js": _file(_FORMAT_JS),
+                "README.md": _file(_WS_README_2),
             },
         ),
     ]
@@ -429,16 +429,16 @@ def _static_site() -> list[Commit]:
         (
             "Add the home page and styles",
             {
-                "index.html": _f(_INDEX_HTML),
-                "styles.css": _f(_STYLES_CSS),
-                "README.md": _f(_SITE_README_1),
+                "index.html": _file(_INDEX_HTML),
+                "styles.css": _file(_STYLES_CSS),
+                "README.md": _file(_SITE_README_1),
             },
         ),
-        ("Add the price list", {"js/pricing.js": _f(_PRICING_JS)}),
+        ("Add the price list", {"js/pricing.js": _file(_PRICING_JS)}),
         (
             "Add site settings",
             {
-                "js/config.js": _f(
+                "js/config.js": _file(
                     "window.SITE_CONFIG = {\n"
                     '  uploadHost: "files.example.invalid",\n'
                     f'  uploadToken: "{fake_token()}",\n'
@@ -449,9 +449,9 @@ def _static_site() -> list[Commit]:
         (
             "Add the about page, keep the old copy and document the build",
             {
-                "about.html": _f(_ABOUT_HTML),
-                "about-old.html": _f(_ABOUT_HTML),
-                "README.md": _f(_SITE_README_2),
+                "about.html": _file(_ABOUT_HTML),
+                "about-old.html": _file(_ABOUT_HTML),
+                "README.md": _file(_SITE_README_2),
             },
         ),
     ]
@@ -551,25 +551,25 @@ def _unknown_type() -> list[Commit]:
         (
             "Add the ALU and its testbench",
             {
-                "rtl/alu.v": _f(_ALU_V),
-                "tb/alu_tb.v": _f(_ALU_TB_V),
-                "Makefile": _f(_RTL_MAKEFILE),
-                "README.md": _f(_RTL_README_1),
+                "rtl/alu.v": _file(_ALU_V),
+                "tb/alu_tb.v": _file(_ALU_TB_V),
+                "Makefile": _file(_RTL_MAKEFILE),
+                "README.md": _file(_RTL_README_1),
             },
         ),
-        ("Add the counter", {"rtl/counter.v": _f(_COUNTER_V)}),
+        ("Add the counter", {"rtl/counter.v": _file(_COUNTER_V)}),
         (
             "Add clock parameters and flash settings",
             {
-                "rtl/params.vh": _f(_PARAMS_VH),
-                "flash.cfg": _f(
+                "rtl/params.vh": _file(_PARAMS_VH),
+                "flash.cfg": _file(
                     f"[flash]\nhost = files.example.invalid\nupload_token = {fake_token()}\n"
                 ),
             },
         ),
         (
             "Document synthesis and keep the previous ALU",
-            {"rtl/alu_old.v": _f(_ALU_V), "README.md": _f(_RTL_README_2)},
+            {"rtl/alu_old.v": _file(_ALU_V), "README.md": _file(_RTL_README_2)},
         ),
     ]
 

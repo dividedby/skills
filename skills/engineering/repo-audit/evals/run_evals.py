@@ -157,7 +157,18 @@ def summarise_cost(result: dict) -> Cost:
                     tokens += int(_num(model.get(field)))
     status = "ok"
     if result.get("is_error"):
-        status = f"error: {result.get('subtype') or 'unknown'}"
+        # A failed start (auth, API) still reports subtype "success"; the
+        # reason is in terminal_reason and the result text.
+        subtype = result.get("subtype")
+        reason = (
+            subtype
+            if subtype and subtype != "success"
+            else result.get("terminal_reason") or "unknown"
+        )
+        status = f"error: {reason}"
+        text = str(result.get("result") or "").strip()
+        if text and reason != subtype:
+            status += f" ({text[:80]})"
     elif not result:
         status = "no result JSON"
     return Cost(

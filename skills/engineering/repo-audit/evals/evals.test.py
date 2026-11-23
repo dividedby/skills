@@ -524,6 +524,17 @@ class RunnerTests(unittest.TestCase):
             {"is_error": True, "subtype": "error_max_budget_usd", "total_cost_usd": 10}
         )
         self.assertEqual(capped.status, "error: error_max_budget_usd")
+        failed_start = run_evals.summarise_cost(
+            {
+                "is_error": True,
+                "subtype": "success",
+                "terminal_reason": "api_error",
+                "result": "Failed to authenticate",
+            }
+        )
+        self.assertEqual(
+            failed_start.status, "error: api_error (Failed to authenticate)"
+        )
         self.assertEqual(
             run_evals.summarise_cost(run_evals.parse_result("not json")).status,
             "no result JSON",
