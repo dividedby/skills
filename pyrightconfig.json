@@ -4,6 +4,7 @@
   "include": [
     ".claude/hooks",
     "docs/agents",
-    "skills/engineering/mac-activity/scripts"
+    "skills/engineering/mac-activity/scripts",
+    "skills/engineering/repo-audit/evals"
   ]
 }

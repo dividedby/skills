@@ -1,10 +1,10 @@
 <!--
 REPO-AUDIT REPORT TEMPLATE. FILL RULES
 - Clone each repeat block once per item, replace every double-brace token, and delete these comments.
-- Area names, ids, verdicts and reasons come from rubric.md. Section order: Scorecard, Plan, one section per area that has
+- Area names, ids, verdicts and reasons come from rubric.md. Section order: Scorecard, Plan, Since the last run, one section per area that has
   findings (and External facts, Agent readiness and Repo organisation, below), Fleet standards, Rules conformance, Coverage,
   Measurements, Screens, Mockups, Research, What was checked.
-- Optional sections (Measurements, Screens, Mockups, Research, Checked, any area-section): delete the whole h2 block AND its nav
+- Optional sections (Since the last run, Measurements, Screens, Mockups, Research, Checked, any area-section): delete the whole h2 block AND its nav
   link. Scorecard, Coverage, Fleet standards and Rules conformance are not optional. When the fleet checklist could not be read,
   keep its section, put the reason in STANDARDS_INTRO and delete the table. A repo that fails the ownership test keeps the
   section too: STANDARDS_INTRO reads "n/a (not a fleet repo)" with the reason (the ownership test's result), and the table is
@@ -28,6 +28,12 @@ REPO-AUDIT REPORT TEMPLATE. FILL RULES
   Put "Also reported by: lens" under a finding the Stage 4 merge combined; delete that span otherwise. Fold "why it matters"
   into FINDING. A fleet fail stays a row in the Fleet standards table only; the scorecard row of the area it counts toward
   links to its fs- id when it is that area's top finding.
+- Since the last run: only when findings.json has a `diff` (SKILL.md Stage 6); otherwise delete the whole h2 block and its nav
+  link. SINCE_INTRO links the previous run's page and gives the four counts (new, fixed, still open, not re-checked). One
+  since-item per key in the diff, grouped in that order: SINCE_STATE (New, Fixed, Still open, Not re-checked), SINCE_KEY, and
+  SINCE_NOTE (a link to its finding when it is in this run; for a still-open item whose severity changed, both severities; for
+  a not-re-checked item, the area's Not-assessed reason). When the previous run could not be read, keep the h2, put that in
+  SINCE_INTRO and delete the list.
 - Rules conformance: the repo's own rules from rules.md, after Fleet standards. RULES_INTRO names the source files read and gives
   the counts (pass, fail, not assessed) in one or two sentences; with no rules harvested it says so and the tables are deleted.
   Two evidence-tables. First, counts per source file (Source, Rules, Pass, Fail, Not assessed), a source with fails first.
@@ -153,6 +159,7 @@ PLACEHOLDERS
   Tables:     TABLE_CAPTION, HEAD_CELL, CELL; in the Scorecard a verdict cell is a pill: VERDICT_CLASS, VERDICT_LABEL
               (Not ready|Ready with fixes|Ready|Not assessed)
   Plan:       PLAN_INTRO, NOW_WHEN, NEXT_WHEN, LATER_WHEN, ITEM_TEXT, EFFORT (S|M|L), FINDING_ID
+  Since:      SINCE_INTRO, SINCE_STATE, SINCE_KEY, SINCE_NOTE
   Areas:      AREA_ID (the rubric id), AREA_TITLE, AREA_INTRO, FINDING_ID, SEV_CLASS (blocker|hi|med|low), SEVERITY
               (BLOCKER|HIGH|MED|LOW), FINDING, ALSO_REPORTED_BY, EVIDENCE (file:line), FIX, EFFORT
   Standards:  STANDARDS_INTRO (checklist source and commit, how it was read, repo facts, counts per result),
@@ -173,7 +180,7 @@ PLACEHOLDERS
 
 REPEAT BLOCKS (each is wrapped in a repeat comment pair named as below; clone everything between the markers)
   nav-link, blocker-item, evidence-table (contains evidence-head, evidence-row, evidence-cell), plan-item (once inside each of
-  Now/Next/Later), area-section (contains finding-row), finding-row, standard-row (one per checklist row, n/a rows included),
+  Now/Next/Later), since-item, area-section (contains finding-row), finding-row, standard-row (one per checklist row, n/a rows included),
   screenshot, mockup (contains mockup-note), mockup-note, research-source, verified-item, corrected-item, merged-item,
   disputed-item, unverified-item
   FINDING_ID on a plan-item, a blocker-item or a scorecard link must equal the FINDING_ID of a finding-row (id="..." on the
@@ -808,6 +815,7 @@ REPEAT BLOCKS (each is wrapped in a repeat comment pair named as below; clone ev
   <nav class="nav" aria-label="Sections">
     <a href="#scorecard">Scorecard</a>
     <a href="#plan">Plan</a>
+    <a href="#since">Since the last run</a>
     <!-- repeat: nav-link -->
     <a href="#{{NAV_ID}}">{{NAV_LABEL}}</a>
     <!-- /repeat -->
@@ -899,6 +907,16 @@ REPEAT BLOCKS (each is wrapped in a repeat comment pair named as below; clone ev
         <!-- /repeat -->
       </ol>
     </div>
+  </div>
+
+  <h2 id="since">Since the last run</h2>
+  <div class="col">
+    <p>{{SINCE_INTRO}}</p>
+    <ul class="tight">
+      <!-- repeat: since-item -->
+      <li><b>{{SINCE_STATE}}:</b> <code>{{SINCE_KEY}}</code> {{SINCE_NOTE}}</li>
+      <!-- /repeat -->
+    </ul>
   </div>
 
   <!-- repeat: area-section -->

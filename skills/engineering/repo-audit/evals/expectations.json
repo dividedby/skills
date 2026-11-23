@@ -1,0 +1,307 @@
+{
+  "version": 1,
+  "fixtures": {
+    "single-script": {
+      "profile": {
+        "type_regex": "cli|script|command",
+        "fallback": false,
+        "tier": "small"
+      },
+      "areas": {
+        "code-quality": true,
+        "architecture": true,
+        "tech-stack": null,
+        "tests": true,
+        "security": true,
+        "privacy": true,
+        "data-integrity": null,
+        "performance": true,
+        "accessibility": null,
+        "content-branding": null,
+        "usability": null,
+        "feature-completeness": null,
+        "repo-hygiene": true,
+        "ops-release": null,
+        "external-facts": null,
+        "agent-readiness": true
+      },
+      "planted": [
+        {
+          "id": "secret",
+          "areas": ["security"],
+          "check": "secret|token|credential",
+          "paths": ["config.ini"],
+          "checked_at": ["quick", "standard"]
+        },
+        {
+          "id": "stale-constant",
+          "areas": ["external-facts", "code-quality"],
+          "check": "stale|expir|outdated|constant|valid",
+          "paths": ["tool.py", "tool.orig.py"],
+          "checked_at": ["quick", "standard"]
+        },
+        {
+          "id": "duplicate-file",
+          "areas": ["code-quality", "repo-hygiene"],
+          "check": "dup|copy|identical|orig|old",
+          "paths": ["tool.py", "tool.orig.py"],
+          "checked_at": ["quick", "standard"]
+        },
+        {
+          "id": "doc-command-missing",
+          "areas": ["feature-completeness"],
+          "check": "command|doc|readme|missing|undocumented|not-exist|nonexistent|drift",
+          "paths": ["README.md"],
+          "checked_at": ["standard"],
+          "gap_area": "feature-completeness"
+        }
+      ]
+    },
+    "docs-only": {
+      "profile": {
+        "type_regex": "doc|config|data|markdown",
+        "fallback": false,
+        "tier": "small"
+      },
+      "areas": {
+        "code-quality": false,
+        "architecture": false,
+        "tech-stack": false,
+        "tests": false,
+        "security": true,
+        "privacy": true,
+        "data-integrity": null,
+        "performance": false,
+        "accessibility": false,
+        "content-branding": false,
+        "usability": false,
+        "feature-completeness": null,
+        "repo-hygiene": true,
+        "ops-release": null,
+        "external-facts": true,
+        "agent-readiness": true
+      },
+      "planted": [
+        {
+          "id": "secret",
+          "areas": ["security"],
+          "check": "secret|token|credential",
+          "paths": ["config/settings.yaml"],
+          "checked_at": ["quick", "standard"]
+        },
+        {
+          "id": "stale-constant",
+          "areas": ["external-facts", "code-quality"],
+          "check": "stale|expir|outdated|constant|valid",
+          "paths": ["config/limits.yaml"],
+          "checked_at": ["quick", "standard"]
+        },
+        {
+          "id": "duplicate-file",
+          "areas": ["repo-hygiene"],
+          "check": "dup|copy|identical|orig|old",
+          "paths": ["docs/setup.md", "docs/setup-old.md"],
+          "checked_at": ["standard"],
+          "gap_area": "repo-hygiene"
+        },
+        {
+          "id": "doc-command-missing",
+          "areas": ["feature-completeness"],
+          "check": "command|doc|readme|missing|undocumented|not-exist|nonexistent|drift",
+          "paths": ["README.md"],
+          "checked_at": ["standard"],
+          "gap_area": "feature-completeness"
+        }
+      ]
+    },
+    "workspace": {
+      "profile": {
+        "type_regex": "library|monorepo|workspace|package",
+        "fallback": false,
+        "tier": "medium",
+        "packages_min": 3
+      },
+      "areas": {
+        "code-quality": true,
+        "architecture": true,
+        "tech-stack": true,
+        "tests": true,
+        "security": true,
+        "privacy": true,
+        "data-integrity": null,
+        "performance": true,
+        "accessibility": null,
+        "content-branding": null,
+        "usability": null,
+        "feature-completeness": null,
+        "repo-hygiene": true,
+        "ops-release": null,
+        "external-facts": true,
+        "agent-readiness": true
+      },
+      "planted": [
+        {
+          "id": "secret",
+          "areas": ["security"],
+          "check": "secret|token|credential",
+          "paths": ["packages/core/src/config.js"],
+          "checked_at": ["quick", "standard"]
+        },
+        {
+          "id": "stale-constant",
+          "areas": ["external-facts", "code-quality"],
+          "check": "stale|expir|outdated|constant|valid",
+          "paths": ["packages/utils/src/rates.js"],
+          "checked_at": ["quick", "standard"]
+        },
+        {
+          "id": "duplicate-file",
+          "areas": ["code-quality", "repo-hygiene"],
+          "check": "dup|copy|identical|orig|old",
+          "paths": [
+            "packages/utils/src/format.js",
+            "packages/cli/src/format.js"
+          ],
+          "checked_at": ["quick", "standard"]
+        },
+        {
+          "id": "doc-command-missing",
+          "areas": ["feature-completeness"],
+          "check": "command|doc|readme|missing|undocumented|not-exist|nonexistent|drift",
+          "paths": ["README.md"],
+          "checked_at": ["standard"],
+          "gap_area": "feature-completeness"
+        }
+      ]
+    },
+    "static-site": {
+      "profile": {
+        "type_regex": "site|web|html|static",
+        "fallback": false,
+        "tier": "small"
+      },
+      "areas": {
+        "code-quality": true,
+        "architecture": true,
+        "tech-stack": null,
+        "tests": true,
+        "security": true,
+        "privacy": true,
+        "data-integrity": null,
+        "performance": true,
+        "accessibility": true,
+        "content-branding": true,
+        "usability": true,
+        "feature-completeness": null,
+        "repo-hygiene": true,
+        "ops-release": null,
+        "external-facts": true,
+        "agent-readiness": true
+      },
+      "planted": [
+        {
+          "id": "secret",
+          "areas": ["security"],
+          "check": "secret|token|credential",
+          "paths": ["js/config.js"],
+          "checked_at": ["quick", "standard"]
+        },
+        {
+          "id": "stale-constant",
+          "areas": ["external-facts", "code-quality"],
+          "check": "stale|expir|outdated|constant|valid",
+          "paths": ["js/pricing.js"],
+          "checked_at": ["quick", "standard"]
+        },
+        {
+          "id": "duplicate-file",
+          "areas": ["code-quality", "repo-hygiene"],
+          "check": "dup|copy|identical|orig|old",
+          "paths": ["about.html", "about-old.html"],
+          "checked_at": ["standard"],
+          "gap_area": "repo-hygiene"
+        },
+        {
+          "id": "doc-command-missing",
+          "areas": ["feature-completeness"],
+          "check": "command|doc|readme|missing|undocumented|not-exist|nonexistent|drift",
+          "paths": ["README.md"],
+          "checked_at": ["standard"],
+          "gap_area": "feature-completeness"
+        },
+        {
+          "id": "viewport-overflow",
+          "areas": ["accessibility", "usability"],
+          "check": "overflow|reflow|viewport|width|mobile|responsive",
+          "paths": ["styles.css", "index.html"],
+          "checked_at": ["standard"],
+          "gap_area": "accessibility"
+        },
+        {
+          "id": "low-contrast",
+          "areas": ["accessibility"],
+          "check": "contrast",
+          "paths": ["styles.css", "index.html"],
+          "checked_at": ["standard"],
+          "gap_area": "accessibility"
+        }
+      ]
+    },
+    "unknown-type": {
+      "profile": {
+        "type_regex": "fallback",
+        "fallback": true,
+        "tier": "small"
+      },
+      "areas": {
+        "code-quality": true,
+        "architecture": true,
+        "tech-stack": null,
+        "tests": true,
+        "security": true,
+        "privacy": true,
+        "data-integrity": null,
+        "performance": true,
+        "accessibility": false,
+        "content-branding": false,
+        "usability": false,
+        "feature-completeness": null,
+        "repo-hygiene": true,
+        "ops-release": null,
+        "external-facts": true,
+        "agent-readiness": true
+      },
+      "planted": [
+        {
+          "id": "secret",
+          "areas": ["security"],
+          "check": "secret|token|credential",
+          "paths": ["flash.cfg"],
+          "checked_at": ["quick", "standard"]
+        },
+        {
+          "id": "stale-constant",
+          "areas": ["external-facts", "code-quality"],
+          "check": "stale|expir|outdated|constant|valid",
+          "paths": ["rtl/params.vh"],
+          "checked_at": ["quick", "standard"]
+        },
+        {
+          "id": "duplicate-file",
+          "areas": ["code-quality", "repo-hygiene"],
+          "check": "dup|copy|identical|orig|old",
+          "paths": ["rtl/alu.v", "rtl/alu_old.v"],
+          "checked_at": ["quick", "standard"]
+        },
+        {
+          "id": "doc-command-missing",
+          "areas": ["feature-completeness"],
+          "check": "command|doc|readme|missing|undocumented|not-exist|nonexistent|drift",
+          "paths": ["README.md"],
+          "checked_at": ["standard"],
+          "gap_area": "feature-completeness"
+        }
+      ]
+    }
+  }
+}

@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
 ### Added
 
+- `repo-audit`: a second run can be compared with an earlier one. Give the audit the earlier run's page link and it lists each finding as new, fixed or still open, matched on a stable key (the skill now fixes the key names for secret scan, stale constant, missing documented command and duplicate file); a finding whose area was not assessed this time is listed as not re-checked, not fixed. `findings.json` has a published schema and a `diff` field. The skill ships five synthetic fixture repos with expected results, a quick self-test of their generation and of the `findings.json` shape, and an on-demand runner that audits three of them at `quick` depth and reports pass or fail per expectation and the cost of each run.
 - `repo-audit`: checks the repo against the fleet-wide repo standards in `dividedby/claude-config` `docs/standards.md`, read fresh on each run (local checkout as fallback) with the commit it read recorded on the page. Each standard is marked pass, fail, not applicable for the repo's type, or not checked, with evidence; each fail gets a severity and a one-line fix and joins the plan. The report page gains a Fleet standards table and verdict card. The audit still changes nothing in the repo.
 - ADR 0049: `repo-audit` runs a five-lens roster at two depths against stated budgets; amends ADR 0042.
 - ADR 0048: `repo-audit` keeps isolated instances up through Stage 3 and probes the UI; amends ADR 0042.

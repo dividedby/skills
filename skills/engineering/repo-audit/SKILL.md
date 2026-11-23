@@ -32,6 +32,9 @@ Defers:
 - `dividedby/claude-config` `docs/standards.md` (the fleet-standards checklist)
   and `docs/testing.md`, read fresh on each run per
   [`fleet-standards.md`](./fleet-standards.md).
+- [`evals/`](./evals/README.md), a supporting folder (not a skill): synthetic
+  fixture repos with expected results, the `findings.json` schema, and an
+  on-demand runner that costs tokens.
 
 ## When to use
 
@@ -537,7 +540,9 @@ fill rules live there. Embed each screenshot at its original width up to
 keep the page under the Artifact size limit. Preview it locally in the browser
 pane, light and dark, desktop and phone width, before publishing.
 
-Write `findings.json` from the verified findings. Its top-level sections:
+Write `findings.json` from the verified findings; its shape is
+[`evals/findings.schema.json`](./evals/findings.schema.json). Its top-level
+sections:
 
 - `profile`: the Stage 1 table, one `{fact, value, source}` object per row,
   the pinned commit and branch included. The owner, ownership test, trust and
@@ -557,7 +562,11 @@ Write `findings.json` from the verified findings. Its top-level sections:
     The rule id is the fleet row id; otherwise a short name for the check (a
     repo rule too: `rules.md` ids are per run, so they are not keys). For
     example `security:secret-scan:.github/workflows` on a web app or
-    `ops-release:no-rollback:ops/deploy.sh` on an infra repo.
+    `ops-release:no-rollback:ops/deploy.sh` on an infra repo. Use these names
+    when the check applies, so keys match across runs: `secret-scan` (a
+    hard-coded secret), `stale-constant` (a dated value past its date),
+    `doc-command-missing` (a documented command that does not exist),
+    `duplicate-file` (identical files); otherwise a short kebab-case name.
   - `area`: the area id from [`rubric.md`](./rubric.md).
   - `severity`: `blocker`, `high`, `med` or `low`.
   - `title`, `evidence`, `fix`, and `effort` (`S`, `M` or `L`).
@@ -593,6 +602,17 @@ Write `findings.json` from the verified findings. Its top-level sections:
   `usability` and `performance` when probe cells ran for them, and
   `skipped_methods` holds one `{method, reason}` for each probe dimension that
   did not run (cells, keyboard pass, Lighthouse, the second instance).
+- `diff`: only when the prompt gives a previous run's page link; otherwise
+  leave it out. Read that run's `findings.json` from beside its page (the
+  Artifact `files` map or the link). When it cannot be read or does not match
+  the schema, add a Guesses row, set `diff` to `null` and say so on the page.
+  Otherwise `{previous_url, new, fixed, still_open, not_rechecked}`, each a list
+  of `key`s: `new` is in this run only; `still_open` is in both; `fixed` is in
+  the previous run only **and** its area was assessed this run (it applies and
+  its verdict is not `not_assessed`); a previous key whose area is Not assessed
+  now, a depth difference included, is `not_rechecked`, never `fixed`. The page
+  gets a "Since the last run" section ([`template.html`](./template.html)
+  header) and marks a still-open item whose severity changed.
 
 Publish `run-log.md`, `findings.json` and the report files of the architecture,
 product and design lenses, each when its lens ran, beside the page through the Artifact `files` map and link each from the page. The page names every partial or failed
@@ -614,7 +634,8 @@ the top findings, what was verified and what was not, the run's totals (wall tim
 agent tokens, against the budget, with any measure over by more than 50% named
 and by how much, and the main-session context size, reported not budgeted), the
 number of guesses, any partial or failed lens, the areas Not assessed (depth) on
-a `quick` run, and confirmation that the repo is unchanged. When the
+a `quick` run, with a previous run's link the four `diff` counts on one line (new,
+fixed, still open, not re-checked), and confirmation that the repo is unchanged. When the
 run reports to the user, end with **one question** — which part of the plan to
 start on — and offer `/to-tickets` for the plan in one line. When it reports to
 another session, end with the page link and the plan's first item instead.
