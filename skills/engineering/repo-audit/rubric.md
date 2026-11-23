@@ -136,25 +136,45 @@ finding with no evidence is not a finding.
 ### Accessibility
 
 - **Checks:** WCAG 2.2 AA, keyboard-only primary flows, contrast in both themes,
-  target size, reflow.
+  target size, reflow, accessible names, states and reading order.
 - **How:** read the UI source; browse the captures and the running UI; measure
-  contrast and target size.
+  contrast and target size. The probe's axe results and keyboard logs are merged
+  with a manual review of names, states and reading order
+  ([`briefs.md`](./briefs.md) Design, Methods 1); axe is not re-run.
 - **Evidence:** the capture path or `file:line`, and the criterion it fails.
 
 ### Content, copy and branding
 
-- **Checks:** name and icon across surfaces; tokens against literals; type and
-  spacing scale; dark-theme parity; words per screen, longest block, sentence
-  length, jargon, duplicated explanations.
-- **How:** read; browse; measure word counts.
-- **Evidence:** the capture path or `file:line`, and the count.
+- **Checks:** copy density (words per screen, longest block, sentence length,
+  blocks with no structure, the same explanation twice); jargon and tone against
+  the repo's voice guide; the branding inventory (name spelling, icon and favicon
+  across surfaces, colour literals against tokens, type and spacing scale,
+  dark-theme parity).
+- **How:** read; browse; measure with the probe's copy metrics, or by counting
+  the capture or the UI strings where there is no probe cell. The thresholds,
+  the language rule and the inventory's surfaces are in [`briefs.md`](./briefs.md)
+  Design, Methods 2 and 3.
+- **Evidence:** the capture path or `file:line`; for a copy flag the screen or
+  command, the measured value and the threshold; for branding the inventory row
+  and the surfaces that disagree.
+- **Skips:** density thresholds on text in a non-space-delimited script (counts
+  only), "Not applicable (text is not space-delimited)"; an inventory surface the
+  repo lacks is a row reading "none" with its reason, not a finding.
 
 ### Usability and flows
 
-- **Checks:** the primary tasks end to end, first run, empty and error states,
-  recovery. For a product that targets phones, completion at 375 px.
-- **How:** browse; run the flow from the demo or dev build.
-- **Evidence:** the steps taken and where the flow broke, with a capture.
+- **Checks:** the primary tasks end to end (at most 3), first run, dead ends,
+  unclear labels, missing feedback, empty and error states, recovery and undo.
+  For a product that targets phones, completion at 375 px.
+- **How:** browse; run each task on the primary instance, or from the scratch
+  build for a CLI (its documented commands end to end) or a native app, and on the
+  pages a userscript changes ([`briefs.md`](./briefs.md) Design, Methods 4). With
+  no running instance the walkthrough is skipped with the reason from
+  [`probe.md`](./probe.md) section 10, for example "Needs X: an isolated data
+  mode" or "Untrusted not run", and the flow is read from source.
+- **Evidence:** the step log and where the flow broke, with a capture at the
+  problem step (the command's output for a CLI), and the problem's frequency,
+  impact and persistence.
 
 ### Feature completeness vs docs
 

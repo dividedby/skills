@@ -35,9 +35,12 @@ and are illustrations, not a closed list.
   `@connect`; decoders that fail safe (bad input leaves the page alone); the
   store description (such as a `greasyfork-description.md`) kept current. A push to the default branch is a release.
 - **Usually not applicable:** `data-integrity` when the script keeps no storage
-  (Not applicable: no data store).
+  (Not applicable: no data store); the UI areas when it adds nothing visible to
+  the pages (Not applicable: no user-facing UI).
 - **Brief bullets:** Code: decoders and their failure path. Architecture: update
-  URLs, requested grants and connect targets.
+  URLs, requested grants and connect targets. Design (when it adds UI): the pages
+  it changes are its screens and its walkthroughs, and the store description is a
+  branding surface.
 
 ### Library
 
@@ -64,7 +67,9 @@ and are illustrations, not a closed list.
   product, so `accessibility`, `content-branding` and `usability` apply and use
   the probe. A CLI has no screens, so there is nothing to capture.
 - **Brief bullets:** Code: argument handling and exit paths. Design: output
-  width, colour and wording, judged from the probe.
+  width, colour and wording, judged from the probe; copy counts per command from
+  its captured help and output; the walkthroughs are the documented commands end
+  to end, run from the scratch build, with the output as evidence.
 
 #### CLI probe
 
@@ -92,7 +97,9 @@ output piped (non-TTY). Never point the probe at real accounts or data.
 - **Brief bullets:** Code: UI-thread work, actor or thread isolation, swallowed
   failures. Architecture: entitlements, signing, notarization or store path,
   runner availability. Design: menu bar items against the platform's
-  guidelines.
+  guidelines; the walkthroughs run in the scratch build at the window sizes the
+  app supports, and copy counts come from the captures and the UI strings in
+  source.
 
 ### Server or MCP
 

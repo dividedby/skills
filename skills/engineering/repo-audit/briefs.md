@@ -201,33 +201,130 @@ Check their `rules.md` rows as the shared header directs, then:
 
 ## Design (opus)
 
-Runs only with a UI. The reviewer is a senior product designer for the platform;
+Runs only with a UI. With none (an infra repo, a library, a server) the lens does
+not run and its three areas are Not assessed, reason Not applicable (no
+user-facing UI). The reviewer is a senior product designer for the platform;
 the bar is first-class platform-native or top-tier third-party software. Name
-three to six apps in the same category to compare against.
+three to six apps in the same category to compare against. One agent runs all
+three areas, so the walkthroughs and the screens share one session.
 
 - **Inputs.** Every Stage 2 capture (list the paths; read them all), the probe
-  JSON and keyboard logs (paths; [`probe.md`](./probe.md)), icons and other
-  visual assets, and the UI source. Use the probe's measured numbers; do not
-  re-measure them.
+  JSON, summary and keyboard logs (paths; [`probe.md`](./probe.md)), icons and
+  other visual assets, the UI source, and the `rules.md` rows of the UI, brand
+  and content docs. Use the probe's measured numbers; do not re-measure them.
 - **Research.** The platform's current interface guidelines for the patterns
   the product uses: windows and navigation, toolbars, settings, menus,
   onboarding, destructive actions, progress, empty states,
   accessibility.
 - **Per screen.** Information hierarchy, layout and spacing, type scale,
   colour and custom components versus system ones, control choice, toolbar
-  use, empty / loading / error states, copy tone and length, keyboard
-  navigation, screen-reader labels, text scaling, contrast in both
-  appearances (read the code for the appearance not captured).
+  use, empty / loading / error states, text scaling, contrast in both
+  appearances (read the code for the appearance not captured). Copy is judged
+  by Copy density below, not here.
 - **App level.** Navigation structure and what the home screen should be,
   where settings and first-run belong, grouping of secondary tools,
   notifications, how review or editing flows compare with the platform's own
   apps.
-- **Deliverables.** (1) The report: per-screen issues with severity, a concrete
-  redesign and the platform APIs to use; app-level recommendations. (2) A
-  mockup spec for only the two or three screens behind the top findings —
-  layout regions, components, exact copy, states, light and dark colour notes —
-  precise enough to render as HTML without guessing. The spec goes to its own
-  named scratchpad path, beside the report.
+
+### Methods
+
+Each method has a rubric area ([`rubric.md`](./rubric.md)) and an output in
+the lens report file. Where a method cannot run, the report says so with the
+reason from that file's not-assessed list.
+
+1. **Accessibility** (`accessibility`). Merge the probe's axe results and
+   keyboard logs with a manual review of what they cannot judge: accessible
+   names of controls and icon-only buttons, states (expanded, selected, invalid,
+   busy) conveyed in text or markup and not by colour alone, and reading order
+   in the source against visual order. Do not re-run axe or the keyboard pass.
+2. **Copy density** (`content-branding`). Per screen, or per command for a CLI,
+   from the probe cells (state, width and theme named for each figure) report
+   five counts: words on screen (`visibleWords`), the longest block
+   (`longestBlockWords`), sentences over 25 words (`longSentences`), mean
+   sentence length (`meanSentenceWords`) and plain-prose blocks over 60 words
+   with no heading, list item or disclosure (`longUnstructuredBlocks`). With no
+   probe cell (a CLI, a native app, a userscript's page, a screen not probed),
+   count the same five from the captured output or the UI strings in source, and
+   say so. Flag when:
+   - the mean sentence is over 20 words;
+   - any sentence is over 25 words (GOV.UK's limit);
+   - a block is over 60 words on a screen of a primary flow (elsewhere the count
+     is reported, not flagged);
+   - the same explanation appears in two places: `repeatedBlocks` on one screen,
+     and across screens or in source by comparing the copy and the strings.
+
+   Each flag cites the screen or command, the measured value and the threshold,
+   for example "Import dialog (populated, 1280, light): mean sentence 23.4
+   words, over 20" or "`sync --help`: one sentence of 31 words, over 25", and
+   carries a rewrite or a structure fix: split the sentence, turn the run into
+   steps or a list, add a heading, move detail behind a `?` help or a
+   disclosure, or move it out of the screen (a paragraph in `--help` becomes an
+   example and a docs link). A repo voice or content guide (a `UI.md`, a brand
+   or content guide) takes precedence: where it sets limits, flag against them
+   and cite its `file:line`, and judge tone and wording against it before any
+   generic practice. The thresholds apply to space-delimited languages only.
+   Text in other scripts (Chinese, Japanese, Thai: [`types.md`](./types.md)
+   Language) gets counts only, no word or sentence thresholds, unless the voice
+   guide sets limits for it; the probe's `spaceDelimited: false` marks such a
+   screen. A screen with mixed scripts gets thresholds on its spaced text only.
+
+3. **Branding inventory** (`content-branding`). One row per surface, each with
+   the value found and its source (`file:line`, capture path or command), and
+   whether it matches the rest:
+   - the product name's spelling and casing across the README title, the page
+     `<title>`, the in-app header, the package or bundle name, the site, the
+     binary and `--version` banner, and listing text (a store or userscript
+     directory entry);
+   - icon and favicon presence, and that they match the product;
+   - colour literals outside the token file: grep the source, then use the
+     probe's `colours.unmatched` list (computed colours no custom property
+     declares);
+   - font families and type sizes against the documented scale;
+   - dark-theme parity per token: each token has a dark value, or the product
+     states it has one theme.
+
+   A surface the repo does not have is a row reading "none", with the reason
+   (a repo with no listing, a CLI with no icon); it is not a finding.
+
+4. **Task walkthroughs** (`usability`). At most 3, chosen from the primary tasks
+   in the README and docs: the jobs a user opens the product to do. A web app's
+   main create-and-compare flows; for a CLI, the documented commands end to end;
+   for a userscript, the pages it changes; for a native app, its primary tasks
+   in the scratch build. Name the tasks chosen (at most three) and why. Walk each as a first-time
+   user from empty data, on the primary instance ([`SKILL.md`](./SKILL.md) Stage 2)
+   at 1280 px, and at 375 px only when the profile says the product targets small
+   screens. The agent drives the primary instance itself with the scratch
+   Playwright install ([`probe.md`](./probe.md) sections 2 and 3), never the
+   second instance, and changes data only on the throwaway data. Log one row per
+   step: `n | action | what happened | label or text read | feedback shown`. Then
+   list the dead ends, unclear labels, missing feedback, empty and error states
+   met, recovery and undo (can the user back out, and is it said), and the first
+   run. Take screenshots only at problem steps, from this session, and name each
+   path in the log. Rate each problem by how often users meet it (frequency),
+   what it costs them (impact) and whether it recurs or has a workaround
+   (persistence) against the Severity section; a product opinion with no
+   measured user impact is Med at most. Without a running instance (the probe's
+   skip reasons, [`probe.md`](./probe.md) section 10) the walkthrough is skipped
+   with that reason and the flow is read from source and labelled "read, not
+   run"; a CLI needs no instance and runs from the scratch build.
+
+### Deliverables
+
+1. **The lens report file**, at its named scratchpad path: the per-screen issues
+   with severity, a concrete redesign and the platform APIs to use; app-level
+   recommendations; the **copy table** (one row per screen or command: the five
+   counts, each flag with value against threshold, and its fix); the **brand
+   inventory**; and the **walkthrough logs**. The page links this file, published
+   beside the page, and carries only the findings, in its generic evidence
+   table. Every finding cites its place in this file.
+2. **A mockup spec only when a High or Blocker design finding exists**, for up
+   to the number of screens [`SKILL.md`](./SKILL.md) Stage 5 sets, each behind
+   such a finding: layout regions, components, exact copy, states, light and dark
+   colour notes, precise enough to render as HTML without guessing. Where the
+   finding is about copy, the mockup shows the rewritten copy in place, never
+   placeholder text. The spec goes to its own named scratchpad path, beside the
+   report. With no such finding there is no spec, and the report says "No
+   mockups: no High or Blocker design finding".
 
 ## Market and research (sonnet)
 

@@ -13,7 +13,7 @@ performance, design, architecture/repo/docs, and the outside world — checks
 the repo against the fleet-wide repo standards, checks every claim that matters
 against the source, and ends in **one report page**:
 a readiness scorecard with a verdict per area, a phased plan, evidenced findings,
-screenshots, mockups, and an honest list of what was and was not verified. The
+screenshots, mockups when a design finding is High or worse, and an honest list of what was and was not verified. The
 areas, severity scale and verdict rules are in [`rubric.md`](./rubric.md).
 
 Defers:
@@ -36,8 +36,8 @@ Defers:
 
 - You want a full, evidenced picture of a repo: what is slow, what is fragile,
   what looks unfinished, what the docs lack, and where it stands against others.
-- You want a design bar check ("does this look first-class?") with concrete
-  mockups, not adjectives.
+- You want a design bar check ("does this look first-class?") with counts,
+  task walkthroughs and, for serious findings, concrete mockups, not adjectives.
 - You want a plan to pick from, not tickets filed for you.
 
 ## When not to use
@@ -331,8 +331,10 @@ output, the type entries and the tier's reading rule, the `rules.md` rows for th
 [`briefs.md`](./briefs.md): the brief's heading names the lens's model, its body
 says what the lens finds, and the shared header sets the severity scale, the areas the lens
 owns, the shape of a finding and how to use the profile and those results. Each writes its report (and the
-design lens its mockup spec) to a named scratchpad path and returns a short
-summary.
+design lens, when it has a High or Blocker finding, its mockup spec) to a named scratchpad path and returns a short
+summary. The design lens is one agent: its copy table, brand inventory and
+walkthrough logs go in its report file, and its walkthrough screenshots come from
+its own session on the primary instance.
 
 Each lens has a wall-time and token ceiling derived from the depth budget.
 Until a depth budget is set, no ceiling is enforced: log each lens's wall time
@@ -402,12 +404,16 @@ Turn verified findings into a **Now / Next / Later** plan:
 Each plan item links to its finding. Keep the plan short enough to read in a
 minute; the tables hold the detail.
 
-Render the two or three screens behind the top findings, the only ones the
-design lens specs, as HTML inside the page, in the template's mockup frame,
+Mockups exist only when the design lens reports a High or Blocker finding. Render
+up to three screens, each behind such a finding and the only ones the design
+lens specs, as HTML inside the page, in the template's mockup frame,
 following the theme toggle. Mockups are hand-written HTML and CSS that match the
-platform's look; they are not screenshots of code. The template ships a browser
+platform's look; they are not screenshots of code, and they show the rewritten
+copy, never placeholder text. The template ships a browser
 frame, and its header says when to copy a desktop-window, phone or terminal
-frame from [`snippets.html`](./snippets.html).
+frame from [`snippets.html`](./snippets.html). With no such finding, or no design
+lens, render none and say why on the page ([`template.html`](./template.html)
+header, Mockups).
 
 ## Stage 6 — Publish
 
@@ -462,8 +468,8 @@ Write `findings.json` from the verified findings. Its top-level sections:
   `skipped_methods` holds one `{method, reason}` for each probe dimension that
   did not run (cells, keyboard pass, Lighthouse, the second instance).
 
-Publish `run-log.md` and `findings.json` beside the page through the Artifact
-`files` map and link both from the page. The page names every partial or failed
+Publish `run-log.md`, `findings.json` and, when the design lens ran, its report
+file beside the page through the Artifact `files` map and link each from the page. The page names every partial or failed
 lens and marks the areas that lens owns, as the template header directs. Finish
 the read-only proof and the totals in the log first.
 

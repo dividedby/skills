@@ -61,6 +61,40 @@ function copyMetrics(blocks, longAt = 25) {
   };
 }
 
+// Scripts written without spaces between words: a space-delimited word or
+// sentence count means nothing for them. Hangul is space-delimited, so it is
+// not listed.
+const UNSPACED =
+  /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Thai}\p{Script=Lao}\p{Script=Khmer}\p{Script=Myanmar}]/gu;
+
+// False when more than half the letters on the screen are in an unspaced
+// script; the word and sentence thresholds do not apply to that text.
+function isSpaceDelimited(text) {
+  const letters = (text.match(/\p{L}/gu) ?? []).length;
+  if (!letters) return true;
+  return (text.match(UNSPACED) ?? []).length / letters <= 0.5;
+}
+
+// blocks: [{text, structured}]; structured marks a block inside a heading, list
+// item or disclosure. Counts plain-prose blocks over `longAt` words, and the
+// distinct blocks of `minRepeat` words or more that appear more than once (the
+// same explanation twice on one screen). Block text is compared, never stored.
+function blockFlags(blocks, { longAt = 60, minRepeat = 8 } = {}) {
+  const seen = new Map();
+  for (const b of blocks) {
+    if (countWords(b.text) < minRepeat) continue;
+    const key = b.text.toLowerCase().replace(/\s+/g, " ").trim();
+    seen.set(key, (seen.get(key) ?? 0) + 1);
+  }
+  return {
+    longUnstructuredBlocks: blocks.filter(
+      (b) => !b.structured && countWords(b.text) > longAt,
+    ).length,
+    repeatedBlocks: [...seen.values()].filter((n) => n > 1).length,
+    spaceDelimited: isSpaceDelimited(blocks.map((b) => b.text).join(" ")),
+  };
+}
+
 function hslToRgb(h, s, l) {
   const k = (n) => (n + h / 30) % 12;
   const a = s * Math.min(l, 1 - l);
@@ -231,6 +265,8 @@ const capList = (list, truncated, key) => {
 
 // Failing checks of one cell, for the totals and failing-cell tables.
 function summariseCell(cell) {
+  // Word and sentence counts mean nothing for unspaced scripts: not a flag.
+  const spaced = cell.copy.spaceDelimited !== false;
   const counts = {
     axe: cell.axe.length,
     overflow: cell.overflow.present
@@ -240,10 +276,16 @@ function summariseCell(cell) {
     belowRepoMin: cell.targets.belowRepoMin.length,
     console: cell.console.length,
     failedRequests: cell.failedRequests.length,
-    longSentences: cell.copy.longSentences,
+    longSentences: spaced ? cell.copy.longSentences : 0,
+    longUnstructuredBlocks: spaced
+      ? (cell.copy.longUnstructuredBlocks ?? 0)
+      : 0,
+    repeatedBlocks: cell.copy.repeatedBlocks ?? 0,
   };
+  // The probe cannot know the main path, so long unstructured blocks are
+  // counted but never fail a cell; the design lens flags them on primary flows.
   const failing = Object.entries(counts)
-    .filter(([, n]) => n > 0)
+    .filter(([k, n]) => n > 0 && k !== "longUnstructuredBlocks")
     .map(([k]) => k);
   return {
     screen: cell.screen,
@@ -266,15 +308,25 @@ function summariseScreens(cells) {
       failingCells: 0,
       totals: {},
       longestBlockWords: 0,
+      maxMeanSentenceWords: 0,
+      spaceDelimited: true,
     };
     row.cells++;
     if (s.failing.length) row.failingCells++;
     for (const [k, n] of Object.entries(s.counts))
       row.totals[k] = (row.totals[k] ?? 0) + n;
-    row.longestBlockWords = Math.max(
-      row.longestBlockWords,
-      cell.copy.longestBlockWords,
-    );
+    // Word figures mean nothing for unspaced scripts: leave them out.
+    if (cell.copy.spaceDelimited === false) row.spaceDelimited = false;
+    else {
+      row.longestBlockWords = Math.max(
+        row.longestBlockWords,
+        cell.copy.longestBlockWords,
+      );
+      row.maxMeanSentenceWords = Math.max(
+        row.maxMeanSentenceWords,
+        cell.copy.meanSentenceWords ?? 0,
+      );
+    }
     screens.set(s.screen, row);
   }
   const rows = [...screens.values()].sort(
@@ -348,6 +400,9 @@ function pageCollect() {
       b = b.parentElement;
     blocks.set(b, ((blocks.get(b) ?? "") + " " + t).trim());
   }
+  // A block is structured when a heading, list item or disclosure holds it.
+  const structuredSel =
+    "h1,h2,h3,h4,h5,h6,[role=heading],li,dd,dt,[role=listitem],details,summary";
 
   const targetSel =
     'a[href],button,input:not([type=hidden]),select,textarea,summary,[role=button],[role=link],[role=checkbox],[role=radio],[role=tab],[role=menuitem],[role=switch],[tabindex]:not([tabindex="-1"])';
@@ -472,7 +527,10 @@ function pageCollect() {
   }).length;
 
   return {
-    blocks: [...blocks.values()],
+    blocks: [...blocks].map(([el, text]) => ({
+      text,
+      structured: !!el.closest(structuredSel),
+    })),
     targets,
     rects,
     colours,
@@ -714,7 +772,10 @@ async function runCell(args, tools) {
       targets,
       console: capList(consoleErrors, truncated, "console"),
       failedRequests: capList(failed, truncated, "failedRequests"),
-      copy: copyMetrics(raw.blocks),
+      copy: {
+        ...copyMetrics(raw.blocks.map((b) => b.text)),
+        ...blockFlags(raw.blocks),
+      },
       colours,
       screenshot: args.screenshot ?? null,
       truncated,
@@ -805,6 +866,8 @@ module.exports = {
   countWords,
   splitSentences,
   copyMetrics,
+  isSpaceDelimited,
+  blockFlags,
   normaliseColour,
   matchesDeclared,
   undeclaredColours,

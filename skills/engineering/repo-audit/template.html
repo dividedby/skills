@@ -76,7 +76,9 @@ REPO-AUDIT REPORT TEMPLATE. FILL RULES
   widths, themes, cells), and that every figure is a lab or probe measurement on throwaway data, not user data. Tables, in
   order:
   1. Totals per screen (class "wide"): Screen, Cells run, Cells failing, Axe violations, Overflow, Small targets, Console and
-     failed requests, Copy flags (sentences over 25 words, longest block in words). One row per main screen, failing screens first.
+     failed requests, Copy flags (sentences over 25 words, longest block in words, highest mean sentence length, plain-prose blocks over 60
+     words, repeated blocks; the summary row's `spaceDelimited` false means no word figures; long unstructured blocks are counted but
+     never make a cell fail, the design lens flags them on primary flows). One row per main screen, failing screens first.
   2. Failing cells (class "wide"): Screen, Cell (state, width, theme), Check, Detail (the rule and impact and count, the
      offending selector, the measured size), Link (the finding's id, or an em dash). At most 30 rows, worst first; when more
      fail, the last row reads "N more in the probe JSON" with em dashes. Passing cells are counts in table 1, never rows.
@@ -87,6 +89,10 @@ REPO-AUDIT REPORT TEMPLATE. FILL RULES
   `content-branding`, Lighthouse in `performance`, keyboard failures in `usability`; the Link cell carries its id. Coverage
   ticks Measured and Browsed for the areas the probe ran for, and its Reason lists each dimension not run. SCREENS_INTRO says
   which cells were captured and why (every failing cell, the first cell per screen).
+- Design report: when the design lens ran, METHOD_NOTE also links its report file (published beside the page), which holds the
+  copy table, the brand inventory and the walkthrough logs. The page adds no table for them: their findings are finding-rows in
+  `accessibility`, `content-branding` and `usability` and cite the report section, and the AREA_INTRO of each of those
+  area-sections links the file.
 - Run log: METHOD_NOTE links `run-log.md` and `findings.json` (both published beside the page) and names every partial or
   failed lens. A lens that failed with no output: each area it owns is Not assessed with reason "lens failed: reason" in the
   scorecard and Coverage. A partial lens keeps its verdicts; its scorecard top-finding cells, its Coverage reasons, its
@@ -109,7 +115,9 @@ REPO-AUDIT REPORT TEMPLATE. FILL RULES
   in parentheses below.
 - Market output is context, not an area: it appears in Research and as evidence in External facts and Tech stack findings. A plan
   item that rests on it links to #research.
-- Mockups: the sample is a browser window. For a desktop-app window, a phone or a terminal, copy that frame from
+- Mockups: only when the design lens reported a High or Blocker finding, at most three, each behind one and showing its
+  rewritten copy. Otherwise delete the whole h2 block and its nav link, and write "No mockups: <reason>" (no High or Blocker design
+  finding, or the design lens did not run) in SCREENS_INTRO, or in METHOD_NOTE when the Screens section is deleted. The sample is a browser window. For a desktop-app window, a phone or a terminal, copy that frame from
   snippets.html: its CSS into this file's <style>, its markup in place of the sample inside .mk, and any --mk-* token it
   lists that this file lacks (light value in :root, dark value in both dark blocks). Use only --mk-* colours so the
   mockup follows the theme.
