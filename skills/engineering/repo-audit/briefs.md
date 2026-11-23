@@ -83,7 +83,14 @@ Focus on cost at realistic scale and on correctness risk:
     trivial code; assertion-free and sleep-based tests; mock-heavy tests;
     near-duplicate clusters, as parametrise candidates; one behaviour tested at
     several layers; skipped and flaky tests; risky paths with no test and
-    missing scale tests.
+    missing scale tests; tautological expectations (the expected value is
+    computed the same way as the code under test); mocks of the repo's own
+    modules (mock only at system boundaries: the network, the clock, the
+    filesystem, a third-party service); tests that bypass the module's interface
+    and reach into internals (private helpers, internal state, a deep import
+    path). A bypassing test is also evidence for **Module depth** in the
+    Architecture lens, which looks for it itself; the merge by `file:line`
+    joins the two.
   - **End with a prune-and-split list.** Each item names the safe-deletion
     check to run first: the lower-level test that covers the behaviour, or a
     coverage or mutation run.
@@ -123,6 +130,86 @@ The brief names the fleet-standards results file: add only what a row could not 
    Report the facts as a table (fact, `file:line`, source URL, date read,
    result). Each mismatch is also a finding, and a missing update path is one.
    Repair nothing.
+
+5. **Module depth.** The area `architecture`; [`rubric.md`](./rubric.md) holds
+   the checks and the skips, this is the order of work and the evidence each
+   flag needs. A deep module hides a
+   lot of behaviour behind a small interface; a web of shallow ones makes a
+   reader open every file to change one thing. Depth is leverage at the
+   interface, not a line ratio: a short module that hides a hard decision is
+   deep, and a long one that only forwards calls is shallow. Folder structure
+   and top-level layout are item 7 of Product and docs conformance, and tooling
+   that enforces import boundaries is out of scope, so no check is done twice.
+   - **Applies** on Medium and Large tiers, to code with a commit in the last
+     year only. The skips and their reasons are in [`rubric.md`](./rubric.md)
+     Architecture; record each in `coverage.skipped_methods` with the method
+     name `module depth`. Check for a shallow clone with
+     `git rev-parse --is-shallow-repository`.
+   - **Candidates.** The baseline digest's churn hotspots (its top 10; cite them,
+     do not re-run `git log`), then the entry points from the Stage 1 profile.
+     When the digest's churn row states a window wider than one year, run the
+     digest's churn command once with `--since="1 year ago"` and take the
+     hotspots from that list instead. Keep an entry point only if its path has
+     a commit in the last year (`git log -1 --since="1 year ago" -- <path>`). A
+     candidate is the file or the folder that acts as one module. At most 10
+     candidates, hotspots first; the coverage line says how many were left out.
+   - **Per candidate**, three facts and a written test:
+     - **Interface size:** the exported or public symbols (functions, classes,
+       constants, a manifest's exposed variables and outputs), counted from the
+       source.
+     - **Caller count:** distinct files outside the module that import or call
+       it, from `git grep` of its import path and its public names. Say how it
+       was counted; a test file counts apart.
+     - **Deletion test:** one or two sentences. Delete the module. If its
+       complexity reappears in its callers, it earns its keep. If it vanishes,
+       the module was a pass-through.
+   - **Flags**, each with `file:line`:
+     - **pass-through:** it forwards calls and adds no decision, validation or
+       translation;
+     - **scattered concept:** one concept spread across several shallow files, so
+       a change to it touches all of them;
+     - **test-only extraction:** code pulled out of a module only so a test can
+       reach it, with no second caller;
+     - **one-adapter seam:** an interface or port with one non-test
+       implementation. Low by default.
+
+     A test that reaches past a candidate's interface (it imports a private
+     helper or an internal path) is cited on the candidate's row; it counts as
+     evidence for a test-only extraction and does not set a badge on its own.
+     Examples: in a web app, a `services/` wrapper whose methods only forward
+     to one API client is a pass-through; in an infra repo, a Terraform module that
+     re-exports one resource's variables and outputs unchanged is a pass-through,
+     and so is a CLI command layer that only parses flags and calls one function
+     per command. A web app's `OrderRepository` interface with a single
+     production class, or one provider module with a single backend, is a
+     one-adapter seam.
+
+   - **Evidence per flag.** Each flag has its own evidence:
+     - pass-through: the deletion test says the complexity vanishes, and the
+       interface is about as large as what it forwards to;
+     - scattered concept: the number of shallow files the concept spans, and
+       callers that must touch several of them for one change;
+     - test-only extraction: its only callers are tests, and a test reaches
+       past the interface of the module it came from;
+     - one-adapter seam: one non-test implementation counted from the source,
+       and no second one planned in a doc or an open issue.
+
+     A piece of evidence is unclear when the count could go either way (a
+     second caller that is only a script or an example, an implementation that
+     may be a stub).
+
+   - **Badge** each candidate with exactly one, by the strength of the case for
+     deepening it. Judge only the flags raised on it: those whose definition
+     above is met or unclear. Give the candidate the strongest badge any raised
+     flag earns and name that flag on its row:
+     - **Strong:** all of the flag's evidence holds.
+     - **Worth exploring:** the rest, where some or all of the evidence is
+       unclear or against it.
+     - **Speculative:** no flag is raised.
+
+     A Strong or Worth exploring candidate is a finding, rated on the Severity
+     scale with its caps. A Speculative one stays in the table and is no finding
+     on its own; it may back another finding.
 
 ### Security, privacy and data
 
@@ -395,6 +482,9 @@ The **lens report file**, at its named scratchpad path, holds:
 - the **outbound-call table**: host, `file:line`, what is sent (personal data
   yes or no), timeout, retries and backoff, caching, key handling, behaviour
   when down or slow, exercised or "read, not run";
+- the **module depth table**: candidate, path, interface size, caller count,
+  deletion test, flag, badge, tests that reach past the interface; or the skip
+  reason, from [`rubric.md`](./rubric.md) Architecture;
 - the fault log, the Host and Origin request log (request, status, data
   changed), the fresh-clone install log and the error-copy log.
 
