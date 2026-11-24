@@ -15,35 +15,117 @@ profile.
 
 ## Setup
 
-Everything the baseline writes goes under one scratchpad folder, `$B`:
+Everything the baseline writes goes under one scratchpad folder, `$B`
+(the one exception is a short symlink to `$B/tmp`, see the `TMPDIR` bullet):
 `tools/` (binaries and venvs), `raw/` (raw output, one file per command), `cache/`,
 `home/`, `tmp/`, `clone/` (a scratch clone, only when needed) and `digest.md`,
 `commands.md` (below).
 
 - **Install only into `$B/tools`.** A scratch venv (`uv venv $B/tools/venv`, then
   `uv pip install --python $B/tools/venv/bin/python <tool>`; `python -m venv` and
-  `pip` also work), `pnpm dlx <tool>`, or a release binary
+  `pip` also work), `pnpm dlx <tool>`, `go install` (see Go), or a release binary
   (`gh release download -R <owner>/<repo> -p <asset> -D $B/dl/<tool>`, each
   download in its own empty directory; verify the checksum when the release
   publishes one; copy the binary to `$B/tools/bin`). Never install into the
   repo, and never into a global location: pass `--no-bin` to `uv python install`
-  and set `UV_PYTHON_INSTALL_DIR`, `GOBIN` and the like to `$B/tools`. Pin the
+  and set `UV_PYTHON_INSTALL_DIR` (`$B/tools/python`), `GOBIN` and the like under `$B/tools`. Pin the
   version the repo's CI pins; otherwise record the version used.
-- **Run the repo's code under the scrubbed environment**, with a timeout:
+- **A refused or unavailable install.** The session's permission layer can
+  refuse a release download. Take the next route, in this order: the tool
+  already on the host from a package manager (used as is, nothing installed,
+  version recorded); `pnpm dlx` or `uv` (`uvx <tool>`, or
+  `UV_TOOL_DIR=$B/tools/uv UV_TOOL_BIN_DIR=$B/tools/bin uv tool install <tool>`);
+  `go install` into `$B/tools/bin`; otherwise "Tool unavailable: name" in the
+  Not run table, with the refusal noted in the detail. A refusal is not routed
+  around any other way.
+- **Redirect every cache, store and output path into `$B`.** The list is set
+  once, in the wrapper below, and applies to the baseline's own installs as well
+  as the repo's code, since `uv`, pnpm and `go install` write global caches by
+  default:
+  - package caches and stores (paths as in the wrapper): `UV_CACHE_DIR=$B/cache/uv`,
+    `UV_PYTHON_INSTALL_DIR=$B/tools/python`, `PIP_CACHE_DIR=$B/cache/pip`,
+    `pnpm_config_store_dir=$B/cache/pnpm-store` and
+    `pnpm_config_cache_dir=$B/cache/pnpm` (pnpm 11 reads only these names; set
+    `npm_config_store_dir` and `npm_config_cache` too for pnpm 10 and older, and
+    check with `pnpm store path`; pnpm otherwise picks its store by volume, which can be a folder in the repo's
+    volume root; a direct `pnpm install` or `pnpm add` also takes
+    `--store-dir $B/cache/pnpm-store`), `GOPATH`, `GOMODCACHE`, `GOCACHE` and
+    `GOBIN`, and `CARGO_HOME`, `RUSTUP_HOME` and `CARGO_TARGET_DIR` for Rust (a
+    stack with no section here still gets its package manager's redirect);
+  - coverage output, which instrumented binaries write to the working directory
+    by default: `LLVM_PROFILE_FILE=$B/cache/profraw/%p-%m.profraw` (Swift, Clang
+    and Rust builds: an instrumented binary otherwise writes `default.profraw`
+    where it runs), `GOCOVERDIR=$B/cache/gocov` (Go binaries built with
+    `-cover`) and `NODE_V8_COVERAGE=$B/cache/v8`;
+  - `HOME`, `TMPDIR`, `XDG_CACHE_HOME` and `PYTHONPYCACHEPREFIX`.
+
+  Create the directories first (`mkdir -p`). The stack sections add the
+  tool-specific flags this list does not cover.
+
+- **Run the repo's code through the wrapper `$B/run`**, which is what "the
+  scrubbed environment" means everywhere in this skill: a POSIX `sh` script written
+  once at setup with the values expanded (`chmod +x "$B/run"`), and a timeout:
 
   ```sh
-  env -i PATH="$B/tools/bin:$B/tools/venv/bin:<the host's tool directories>" \
-    HOME="$B/home" TMPDIR="$B/tmp" XDG_CACHE_HOME="$B/cache" \
-    PYTHONPYCACHEPREFIX="$B/cache/pyc" <demo variables from the profile> \
-    timeout 600 <command>
+  #!/bin/sh
+  exec env -i PATH="$B/tools/bin:$B/tools/venv/bin:<the host's tool directories>" \
+    HOME="$B/home" TMPDIR="$T" XDG_CACHE_HOME="$B/cache" \
+    PYTHONPYCACHEPREFIX="$B/cache/pyc" \
+    UV_CACHE_DIR="$B/cache/uv" UV_PYTHON_INSTALL_DIR="$B/tools/python" \
+    PIP_CACHE_DIR="$B/cache/pip" \
+    pnpm_config_store_dir="$B/cache/pnpm-store" pnpm_config_cache_dir="$B/cache/pnpm" \
+    npm_config_store_dir="$B/cache/pnpm-store" npm_config_cache="$B/cache/pnpm" \
+    GOPATH="$B/go" GOMODCACHE="$B/go/pkg/mod" GOCACHE="$B/cache/go" GOBIN="$B/tools/bin" \
+    CARGO_HOME="$B/cache/cargo" RUSTUP_HOME="$B/tools/rustup" CARGO_TARGET_DIR="$B/cache/cargo-target" \
+    LLVM_PROFILE_FILE="$B/cache/profraw/%p-%m.profraw" \
+    GOCOVERDIR="$B/cache/gocov" NODE_V8_COVERAGE="$B/cache/v8" \
+    <demo variables from the profile> "$@"
   ```
 
-  The host's tool directories are wherever `git`, the toolchains and the
+  `$T` is the short temp path from the `TMPDIR` bullet below; the script carries
+  every redirect in the list above, so drop only the lines for a stack the repo
+  does not use. Every repo-code command is `$B/run timeout 600 <command>`. The environment is
+  built inside the script, not in a shell variable: zsh does not word-split a
+  string variable, so an `env -i $ENV <command>` line breaks there. The host's
+  tool directories are wherever `git`, the toolchains and the
   package managers live (for example `/usr/bin:/bin`, plus Homebrew's or the
   version manager's directory). `HOME` in the scratchpad also redirects most
   tools' caches and stores. Tools
   the baseline installs and reads (`osv-scanner`, `gitleaks`, `scc`, `git log`)
-  scan files; they do not run the repo's code and need no scrubbing.
+  scan files; they do not run the repo's code and need no scrubbing. The
+  wrapper holds no host credential, so `gh release download` runs outside it,
+  with the same redirects set as plain variables.
+
+- **`TMPDIR` is short.** macOS limits a Unix socket path to 104 bytes, and Go
+  plugin tools (`tofu`, `terraform`) put a socket under `TMPDIR`, so a long
+  scratchpad path breaks them. When `$B/tmp` is longer than about 60 bytes, `$T`
+  is a short symlink to it (`T=$(mktemp -u /tmp/ra.XXXXXX); ln -s "$B/tmp" "$T"`);
+  otherwise `$T` is `$B/tmp`. Only the path is short: every byte written still
+  lands in `$B/tmp`, and the symlink is the one thing outside `$B`. The first
+  row of `commands.md` records which, and the run removes the symlink (not
+  `$B/tmp`) after the last command that ran repo code.
+- **Built binaries never run with the repo as the working directory.** A test
+  binary, a CLI probe build or a demo run (anything the run built, not the
+  repo's own gate runner) starts from `$B/tmp` or the scratch clone, by absolute
+  path. Instrumented and debug binaries write to the working directory (a
+  profile, a database, a log). A gate runner that picks its own directory
+  (`swift test`, `go test`) starts in the repo's package folder; the redirects
+  above and the check below cover it, and one that still writes there runs in
+  the scratch clone.
+- **Check the repo after each gate or scan that runs repo code**, not only at
+  Stage 6: `git --no-optional-locks status --porcelain --ignored` against the
+  previous check's saved output, and `find <repo> -path <repo>/.git -prune -o -newer <marker> -print`
+  against the previous check's marker; the first check compares with the Stage 1
+  snapshot and marker ([`SKILL.md`](./SKILL.md#execution-boundary)). After each
+  check, save its status output and `touch` a fresh marker (`$B/marker-<gate>`,
+  never overwriting the Stage 1 snapshot and marker) before the next gate runs,
+  so a breach is blamed on one gate and not on every later one. Stage 6 still
+  compares with Stage 1. A new difference is a breach caused by that gate. Record the gate and each path in
+  that gate's `commands.md` row and as a row in the run log's read-only proof,
+  and rerun that tool, if at all, in the scratch clone. The run does not delete
+  or revert the file: it left the repo changed, which
+  [`SKILL.md`](./SKILL.md#failure-conditions) counts as a failed run, so the
+  closing message names the path for the maintainer to remove.
 
 - **Untrusted repo.** The execute answer from Stage 1
   ([`SKILL.md`](./SKILL.md) Ownership and trust) decides what runs. With No,
@@ -55,7 +137,13 @@ Everything the baseline writes goes under one scratchpad folder, `$B`:
 - **Time-box:** 10 minutes per gate or scan by default (`timeout 600`; `gtimeout`
   from coreutils on macOS, or `perl -e 'alarm 600; exec @ARGV' -- <command>`). A
   timed-out command is stopped, keeps its partial output and is reported as "not
-  completed (time-box)", reason Depth.
+  completed (time-box)", reason Depth. For a suite that cannot finish in the
+  time-box, the fallback is CI's latest result for the same check on the pinned
+  commit, or on the default branch when that commit has none
+  (`gh api repos/$GH/actions/runs?head_sha=<commit>` or `?branch=<default>`, then
+  the run's jobs): the conclusion and duration, cited with the run URL and
+  labelled as CI's, not measured here, reason Depth. With no such run, or no
+  GitHub remote, it stays "not completed (time-box)".
 - **Never run bare `pip-audit`, `npm ls` or the like where the tool inspects
   the environment it runs in**: it audits the scratch venv, not the repo. Give
   it the repo's manifest.
@@ -150,7 +238,12 @@ format check, typecheck, tests, build, schema or link check.
 2. **Run each once**, sequentially, under the [setup](#setup) rules and the
    stack's redirect flags below, with the repo's own flags (add a flag only to
    keep output out of the repo, and record the addition). Record pass or fail,
-   counts (tests, files checked, errors) and wall time. Do not retry a failure.
+   counts (tests, files checked, errors) and wall time. Do not retry a failure the
+   repo causes (a test, lint or type error). A failure the environment causes
+   (a socket path over the length limit, a macOS BSD tool given a GNU flag, a
+   cache or output path the redirects missed) is fixed in the environment, then
+   the gate runs once more; both runs get a row in `commands.md`, and the digest
+   reports the second, naming the fix.
 3. **Record documented versus actual** for every gate, one of:
    - ran as written;
    - ran with a change (say what: a tool taken from the scratch venv instead of
@@ -258,8 +351,9 @@ file. A floor that cannot be installed is "not run (tool unavailable: version)".
 - **Redirects:** any runner that writes into `node_modules` or the repo (Vitest
   and Vite, Jest, bundlers, `.turbo`, `.nx`, `node_modules/.cache`) either has
   its cache redirected as above (`TURBO_CACHE_DIR`, `NX_CACHE_DIRECTORY` and
-  similar variables for monorepo runners) or runs in the scratch clone. `HOME` and
-  `XDG_CACHE_HOME` in `$B` cover pnpm's store and dlx cache. TypeScript:
+  similar variables for monorepo runners) or runs in the scratch clone. `HOME`,
+  `XDG_CACHE_HOME` and `pnpm_config_store_dir` in `$B` cover pnpm's store and dlx
+  cache. TypeScript:
   `tsc --noEmit --incremental false`, or `--tsBuildInfoFile $B/cache/tsbuildinfo`
   for a `composite` project (which rejects `--incremental false`). ESLint and
   Prettier write no cache unless `--cache` is passed.
@@ -296,8 +390,11 @@ loaded by `<script src>` from HTML. The Node rows do not apply, so run these:
 
 ### Swift
 
-- **Toolchain:** the installed one; no install. Point build output at the
-  scratchpad: `swift build --scratch-path $B/cache/swift` and
+- **Toolchain:** the installed one; no install. A coverage-instrumented binary
+  (`--enable-code-coverage`) writes `default.profraw` into its working directory
+  unless `LLVM_PROFILE_FILE` points into `$B` (the wrapper sets it), and a built
+  binary never runs with the repo as its working directory. Point build output at
+  the scratchpad: `swift build --scratch-path $B/cache/swift` and
   `swift test --scratch-path $B/cache/swift --enable-code-coverage`
   (`swift test --show-codecov-path` prints the profile path);
   `xcodebuild -derivedDataPath $B/cache/dd -clonedSourcePackagesDirPath $B/cache/spm`
@@ -340,8 +437,8 @@ loaded by `<script src>` from HTML. The Node rows do not apply, so run these:
 - **Durations and coverage:** `go test -count=1 -json -cover -coverprofile=$B/cache/cover.out ./...`;
   sort the `elapsed` of each `pass` event for the 10 slowest;
   `go tool cover -func=$B/cache/cover.out | tail -1` for the total.
-- **Redirects:** `GOCACHE`, `GOMODCACHE`, `GOPATH`, `-coverprofile`, and `-o` for
-  any `go build` output.
+- **Redirects:** `GOCACHE`, `GOMODCACHE`, `GOPATH`, `GOCOVERDIR` (a binary built
+  with `-cover`), `-coverprofile`, and `-o` for any `go build` output.
 
 ### Terraform and OpenTofu
 
@@ -350,12 +447,24 @@ loaded by `<script src>` from HTML. The Node rows do not apply, so run these:
 
 - **Validate:** `terraform fmt -check -recursive -diff`, then
   `terraform init -backend=false -lockfile=readonly` and `terraform validate`
-  (`tofu` for OpenTofu), both under the scrubbed environment with
+  (`tofu` for OpenTofu), both through `$B/run` with
   `TF_DATA_DIR=$B/cache/tf` and `TF_PLUGIN_CACHE_DIR=$B/cache/tf-plugins` added to
   its variables (`validate` reads the same data directory), so no `TF_VAR_*` or
-  provider credential is visible. `init` downloads
+  provider credential is visible. Both need the short `TMPDIR` from
+  [Setup](#setup). `init` downloads
   providers (network allowed); if it needs to write `.terraform.lock.hcl`, run it
   in a scratch copy of the module (`git archive <commit> <dir> | tar -x -C $B/clone`).
+- **OpenTofu state encryption:** a config with an `encryption` block inside
+  the top-level `terraform {}` block (`git grep -nE '^[[:space:]]*encryption[[:space:]]*\{'`
+  finds candidates; read each hit's context, since a nested block of that name
+  elsewhere, such as in a `resource`, does not count), or encryption set
+  through the `TF_ENCRYPTION` environment variable, which leaves no block in any
+  file (`git grep -n TF_ENCRYPTION` over the CI config, docs, `.env*` files and
+  scripts), needs a key or passphrase for `init` and `validate` to evaluate it,
+  and a key provider can reach a KMS or run an external program. No key is
+  supplied and no demo passphrase is tried:
+  `init` and `validate` are "not run (needs X: state encryption key)", while
+  `fmt -check` still runs because it reads no key.
 - **State files:** `git ls-files | grep -E '\.tfstate'` and
   `git check-ignore -v` on any found path; report the path and whether it is
   tracked, never its contents.
@@ -365,6 +474,12 @@ loaded by `<script src>` from HTML. The Node rows do not apply, so run these:
 - **Currency:** the providers and versions in `.terraform.lock.hcl` and
   `required_providers` against the registry's latest, read from the registry's
   page; `required_version` against the vendor's support page.
+- **Provider vulnerabilities are not scanned.** `osv-scanner` does not read
+  `.terraform.lock.hcl`, so the pinned providers have no vulnerability check
+  from [Universal tools](#1-universal-tools). The digest says so in the Not run
+  table: tool "osv-scanner (Terraform providers)", area `tech-stack`, reason
+  "Tool unavailable: no osv-scanner support for Terraform providers", with
+  the currency check above as the only provider check.
 
 ### Shell
 
@@ -373,8 +488,15 @@ loaded by `<script src>` from HTML. The Node rows do not apply, so run these:
 - **Lint:** `shellcheck -f json $(git ls-files '*.sh')` plus files with a shell
   shebang (`git grep -lE '^#!.*(/|env )(ba|da|k)?sh( |$)'`); `-s sh` for a POSIX
   shebang. `shellcheck` does not support zsh: a zsh script is "not run (tool
-  unavailable: no zsh support in shellcheck)". `shfmt -d` shows the format diff and never rewrites (`-w` is not
-  used).
+  unavailable: no zsh support in shellcheck)".
+- **Format:** run `shfmt` the way the repo runs it: find the invocation in the CI
+  config, `Makefile`, pre-commit config and docs (`git grep -n shfmt`), use its
+  flags and file list, and swap any write mode (`-w`) for `-d`, which shows the
+  diff and never rewrites. When the repo has an `.editorconfig` that sets shell
+  style, `shfmt` reads it, so pass no style flags (`-i`, `-ci`, `-bn`) of ours.
+  Bare `shfmt -d` over the tracked shell files, with shfmt's defaults, is only
+  for a repo that documents no invocation and has no `.editorconfig`; the digest
+  says which case applied.
 - **Tests:** a `bats` suite runs with `bats --timing --tap <dir>` and
   `BATS_TMPDIR=$B/tmp` under the scrubbed environment; a script-style test is
   run per file with its wall time recorded.

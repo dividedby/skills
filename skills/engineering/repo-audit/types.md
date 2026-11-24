@@ -77,7 +77,9 @@ and are illustrations, not a closed list.
 
 #### CLI probe
 
-Build into the scratchpad ([execution boundary](./SKILL.md#execution-boundary)), then run: `--help`, a bad argument, a missing
+Build into the scratchpad ([execution boundary](./SKILL.md#execution-boundary)), then run
+the built binary by absolute path from `$B/tmp`, never with the repo as the
+working directory ([`baseline.md`](./baseline.md#setup)): `--help`, a bad argument, a missing
 argument, the exit code of each, output at 80 columns, `NO_COLOR` set, and
 output piped (non-TTY). Never point the probe at real accounts or data.
 
@@ -95,7 +97,9 @@ output piped (non-TTY). Never point the probe at real accounts or data.
 - **Capture:** screenshots plus source. Build and run a separate copy from a
   clone in the scratchpad, with its own identity (bundle id or equivalent), so
   the user's real install and data are untouched; any change needed for that
-  happens in the clone, never in the repo.
+  happens in the clone, never in the repo. The built app and any binary it
+  builds start from the scratchpad, never with the repo as the working
+  directory ([`baseline.md`](./baseline.md#setup)).
 - **Never:** install to a real device, use the signing identity, or touch the
   user's real install or data.
 - **Brief bullets:** Code: UI-thread work, actor or thread isolation, swallowed

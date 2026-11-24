@@ -70,14 +70,19 @@ made.
 
 One `process started` row per instance Stage 2 starts: its role, port, PID and
 data directory (in the scratchpad), and when it was stopped. Stage 6's preview
-server is one more row: its port, PID and the publish folder it serves.
+server is one more row: its port, PID and the publish folder it serves. One
+`after gate` row per gate or scan that runs the repo's code, from the per-gate
+check in [`baseline.md`](./baseline.md#setup): equal to the previous check, or
+the breach with the path. The Stage 1 and Stage 6 rows compare with Stage 1. A
+breach file is left in place and named in the closing message.
 
 ```text
-check                           | before           | after
+check                           | before (compared with)   | after
 git status --short              | clean            | clean
-git status --porcelain --ignored| saved snapshot   | equal to before
+git status --porcelain --ignored| Stage 1 snapshot  | equal to Stage 1
 HEAD                            | 41d7e60          | 41d7e60
-files newer than the marker     | (marker made)    | none
+files newer than the marker     | Stage 1 marker   | none
+after gate: swift test          | previous check   | breach: default.profraw (repo root), left in place
 process started                 | primary :8080 pid 4121 data $B/data/a | stopped 21:20
 process started                 | second :8081 pid 4130 data $B/data/b | stopped 21:20, before Stage 4
 process started                 | preview :52814 pid 5230 serving $B/publish | stopped 22:41, before publish
