@@ -260,9 +260,8 @@ def build_rules(ctx: Context) -> list[Rule]:
         pattern: str,
         group: int = 0,
         accept: Accept | None = None,
-        flags: int = 0,
     ):
-        rules.append(Rule(cat, re.compile(pattern, flags), group, accept))
+        rules.append(Rule(cat, re.compile(pattern), group, accept))
 
     # token. PEM first so its body is not read as anything else.
     pem = "-----BEGIN [A-Z ]*PRIVATE KEY-----"
