@@ -519,7 +519,10 @@ The lens reports are claims. Before anything reaches the page:
    - **Reuse previous keys.** With a previous run, match each finding to a
      previous one that cites the same file and the same defect, whatever its
      area or check name (`code-quality:null-body` re-raised as
-     `security:null-body`), and give it the previous key. Each reuse is a "key
+     `security:null-body`), or that breaks the same rule (a fleet row or a
+     repo rule's text) or makes the same repo-wide claim with a different
+     example path (`tests:untested-risky-path` on another script), and give it
+     the previous key. Each reuse is a "key
      reused" line in the correction list. Do this before the diff.
 2. Re-check every **Blocker** and every **High** finding, every area marked
    **Not ready**, and any finding the plan's "Now" column rests on, at its cited
@@ -643,8 +646,9 @@ sections:
 - `diff`: only when the prompt gives a previous run's page link; otherwise
   leave it out. Use the `findings.json` Stage 1 read. When it cannot be read or
   fails the diff-input check (not the full schema), add a Guesses row, set
-  `diff` to `null` and say so on the page. Otherwise `{previous_url, new, fixed,
-still_open, not_rechecked, not_reraised}`, each a list of `key`s, by the rules
+  `diff` to `null` and say so on the page. Otherwise
+  `{previous_url, new, fixed, still_open, not_rechecked, not_reraised}`, each a
+  list of `key`s, by the rules
   in `diff_runs` in [`evals/findings_check.py`](./evals/findings_check.py): `new`
   is in this run only; `still_open` is in both; a key in the previous run only is
   `not_rechecked` when its area is Not assessed now (a depth difference
