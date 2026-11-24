@@ -74,7 +74,7 @@ Everything the baseline writes goes under one scratchpad folder, `$B`
 
   **Self-test, right after writing the wrapper and before any repo code runs:**
   for each variable the profile names, `$B/run env | grep "^<VAR>="` must print
-  it with a value under `$B`. A missing one stops the run from starting any repo
+  it with its scratch value (a path under `$B` for a data folder). A missing one stops the run from starting any repo
   binary until the wrapper is fixed. The result is a `commands.md` row.
 
   A variable goes after the wrapper, `$B/run env VAR=value <command>`, never
