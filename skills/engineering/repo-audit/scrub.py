@@ -47,8 +47,11 @@ Categories, each deliberately narrow so the floor has few false positives:
                 (at, near, nearby, around, located, location, pin, map, gps,
                 address, coordinates, place, home, office, site, city, ...)
                 no more than two words before it: `pin at 41.8781, -87.6298`.
-                A unit after the pair (ms, s, px, %, kb, mb, x, ...) means a
-                measurement and it stays, as do pairs inside SVG paths and
+                A unit right after the pair (ms, s, px, %, kb, mb, x, ...)
+                means a measurement and it stays; a short unit counts only
+                when no word follows (`x marks`, `min walk` do not), and a
+                third number (`0.95, 0.87, 0.77`) is not a pair. Pairs inside
+                SVG paths and
                 points, CSS functions, JSON arrays and sentences with no cue
                 (`time 12.3456, 78.9012 seconds`). Phone numbers are not
                 scanned: no rule was precise enough.
@@ -146,8 +149,10 @@ _VERSION_MARK = re.compile(
 # A browser user-agent product token right before the number: `Chrome/131.0.0.0`.
 # Named products only; a generic `word/` would also spare `https://host/1.2.3.4`.
 _UA_PRODUCT = re.compile(
-    r"(?i)\b(?:Chrome|Chromium|CriOS|Firefox|FxiOS|Safari|AppleWebKit|Version"
-    r"|Edg|Edge|OPR|Mozilla|HeadlessChrome)/$"
+    # The token starts the text or follows whitespace, `(` or `;`, so a
+    # `/chrome/` path segment does not count.
+    r"(?i)(?<![^\s(;])(?:Chrome|Chromium|CriOS|Firefox|FxiOS|Safari|AppleWebKit"
+    r"|Version|Edg|Edge|OPR|Mozilla|HeadlessChrome)/$"
 )
 
 # Geo in running text: a location word, up to two words, then the pair. A unit
@@ -156,15 +161,22 @@ _GEO_CUES = (
     "at|near|nearby|around|located|location|pin|pinned|map|gps|address"
     "|coordinates|coordinate|coords|place|home|office|hq|headquarters|site|city"
 )
-# Matched case-insensitively; `µ` is the micro sign, `μ` the Greek mu.
+# Matched case-insensitively; `µ` is the micro sign, `μ` the Greek mu. A unit
+# counts only when whitespace, the end of the text or `.,;:!?)` follows it.
 _GEO_UNITS = (
-    "ms|msec|msecs|millisecond|milliseconds|s|sec|secs|second|seconds"
-    "|us|usec|usecs|µs|μs|microsecond|microseconds"
-    "|ns|nsec|nsecs|nanosecond|nanoseconds"
-    "|min|mins|minute|minutes|h|hr|hrs|hour|hours|d|day|days"
-    "|px|pt|em|rem|dp|dpi|deg|x|fps|hz|khz|mhz|ghz"
-    "|b|byte|bytes|kb|mb|gb|tb|pb|kib|mib|gib|tib"
-    "|bps|kbps|mbps|gbps"
+    "ms|msec|msecs|millisecond|milliseconds|usec|usecs|µs|μs|microsecond"
+    "|microseconds|nsec|nsecs|nanosecond|nanoseconds|second|seconds|minute"
+    "|minutes|hour|hours|day|days|px|dpi|fps|hz|khz|mhz|ghz|byte|bytes|kb|mb|gb"
+    "|tb|pb|kib|mib|gib|tib|bps|kbps|mbps|gbps"
+)
+# Short or word-like units: also must not be followed by a word (`x marks`,
+# `min walk`, `pt Reyes`, `em dash`), which would make them part of a sentence.
+_GEO_UNITS_SHORT = "s|sec|secs|us|ns|min|mins|h|hr|hrs|x|b|pt|em|rem|dp|deg"
+_UNIT_END = r"(?=\s|$|[.,;:!?)])"
+# After the pair: `%`, or a unit as above.
+_GEO_UNIT_AFTER = (
+    rf"(?![ \t]*(?:%|(?:{_GEO_UNITS}){_UNIT_END}"
+    rf"|(?:{_GEO_UNITS_SHORT}){_UNIT_END}(?![.,;:!?)]*[ \t]*[A-Za-z])))"
 )
 
 
@@ -398,7 +410,8 @@ def build_rules(ctx: Context) -> list[Rule]:
     add(
         "geo",
         rf"(?i)(?<![\w-])(?:{_GEO_CUES})(?![\w-])(?:[ \t]+[A-Za-z']+){{0,2}}(?:[ \t]+|[ \t]*[:=][ \t]*){pair}"
-        rf"(?![ \t]*(?:%|(?:{_GEO_UNITS})(?![A-Za-z0-9])))"
+        rf"{_GEO_UNIT_AFTER}"
+        r"(?![ \t]*,[ \t]*-?\d)"  # a third number: not a lat, lng pair
         r"(?![ \t]+-?\d+(?:\.\d+)?[ \t]*,)",  # not the start of an SVG points list
         group=1,
     )
