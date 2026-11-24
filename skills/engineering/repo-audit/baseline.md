@@ -21,15 +21,19 @@ Everything the baseline writes goes under one scratchpad folder, `$B`
 `home/`, `tmp/`, `clone/` (a scratch clone, only when needed) and `digest.md`,
 `commands.md` (below).
 
+### Installs
+
 - **Install only into `$B/tools`.** A scratch venv (`uv venv $B/tools/venv`, then
   `uv pip install --python $B/tools/venv/bin/python <tool>`; `python -m venv` and
   `pip` also work), `pnpm dlx <tool>`, `go install` (see Go), or a release binary
   (`gh release download -R <owner>/<repo> -p <asset> -D $B/dl/<tool>`, each
   download in its own empty directory; verify the checksum when the release
   publishes one; copy the binary to `$B/tools/bin`). Never install into the
-  repo, and never into a global location: pass `--no-bin` to `uv python install`
-  and set `UV_PYTHON_INSTALL_DIR` (`$B/tools/python`), `GOBIN` and the like under `$B/tools`. Pin the
-  version the repo's CI pins; otherwise record the version used.
+  repo, and never into a global location: pass `--no-bin` to
+  `uv python install`, and set the wrapper's redirects below as plain variables
+  for the install too, since `uv`, pnpm and `go install` write global caches by
+  default. Pin the version the repo's CI pins; otherwise record the version
+  used.
 - **A refused or unavailable install.** The session's permission layer can
   refuse a release download. Take the next route, in this order: the tool
   already on the host from a package manager (used as is, nothing installed,
@@ -38,33 +42,14 @@ Everything the baseline writes goes under one scratchpad folder, `$B`
   `go install` into `$B/tools/bin`; otherwise "Tool unavailable: name" in the
   Not run table, with the refusal noted in the detail. A refusal is not routed
   around any other way.
-- **Redirect every cache, store and output path into `$B`.** The list is set
-  once, in the wrapper below, and applies to the baseline's own installs as well
-  as the repo's code, since `uv`, pnpm and `go install` write global caches by
-  default:
-  - package caches and stores (paths as in the wrapper): `UV_CACHE_DIR=$B/cache/uv`,
-    `UV_PYTHON_INSTALL_DIR=$B/tools/python`, `PIP_CACHE_DIR=$B/cache/pip`,
-    `pnpm_config_store_dir=$B/cache/pnpm-store` and
-    `pnpm_config_cache_dir=$B/cache/pnpm` (pnpm 11 reads only these names; set
-    `npm_config_store_dir` and `npm_config_cache` too for pnpm 10 and older, and
-    check with `pnpm store path`; pnpm otherwise picks its store by volume, which can be a folder in the repo's
-    volume root; a direct `pnpm install` or `pnpm add` also takes
-    `--store-dir $B/cache/pnpm-store`), `GOPATH`, `GOMODCACHE`, `GOCACHE` and
-    `GOBIN`, and `CARGO_HOME`, `RUSTUP_HOME` and `CARGO_TARGET_DIR` for Rust (a
-    stack with no section here still gets its package manager's redirect);
-  - coverage output, which instrumented binaries write to the working directory
-    by default: `LLVM_PROFILE_FILE=$B/cache/profraw/%p-%m.profraw` (Swift, Clang
-    and Rust builds: an instrumented binary otherwise writes `default.profraw`
-    where it runs), `GOCOVERDIR=$B/cache/gocov` (Go binaries built with
-    `-cover`) and `NODE_V8_COVERAGE=$B/cache/v8`;
-  - `HOME`, `TMPDIR`, `XDG_CACHE_HOME` and `PYTHONPYCACHEPREFIX`.
 
-  Create the directories first (`mkdir -p`). The stack sections add the
-  tool-specific flags this list does not cover.
+### Environment
 
 - **Run the repo's code through the wrapper `$B/run`**, which is what "the
-  scrubbed environment" means everywhere in this skill: a POSIX `sh` script written
-  once at setup with the values expanded (`chmod +x "$B/run"`), and a timeout:
+  scrubbed environment" means everywhere in this skill. It is a POSIX `sh`
+  script written once at setup with the values expanded
+  (`chmod +x "$B/run"`; `mkdir -p` the directories it names), and it is the one
+  home of the redirect list:
 
   ```sh
   #!/bin/sh
@@ -82,19 +67,35 @@ Everything the baseline writes goes under one scratchpad folder, `$B`
     <demo variables from the profile> "$@"
   ```
 
-  `$T` is the short temp path from the `TMPDIR` bullet below; the script carries
-  every redirect in the list above, so drop only the lines for a stack the repo
-  does not use. Every repo-code command is `$B/run timeout 600 <command>`. The environment is
-  built inside the script, not in a shell variable: zsh does not word-split a
-  string variable, so an `env -i $ENV <command>` line breaks there. The host's
-  tool directories are wherever `git`, the toolchains and the
-  package managers live (for example `/usr/bin:/bin`, plus Homebrew's or the
-  version manager's directory). `HOME` in the scratchpad also redirects most
-  tools' caches and stores. Tools
-  the baseline installs and reads (`osv-scanner`, `gitleaks`, `scc`, `git log`)
-  scan files; they do not run the repo's code and need no scrubbing. The
-  wrapper holds no host credential, so `gh release download` runs outside it,
-  with the same redirects set as plain variables.
+  `$T` is the short temp path from the `TMPDIR` bullet below. Drop only the
+  lines for a stack the repo does not use; a stack with no
+  section here still gets its package manager's redirect, and the stack
+  sections add the tool-specific flags. Every repo-code command is
+  `$B/run timeout 600 <command>`; macOS ships no `timeout`, so use `gtimeout`
+  from coreutils or the `perl` form in [Time-box](#run-rules) there, and check
+  that the one you use is on the wrapper's `PATH`.
+
+  What the less obvious lines are for:
+  - **pnpm:** pnpm 11 reads only the `pnpm_config_*` names, and pnpm 10 and older
+    only the `npm_config_*` ones; check with `$B/run pnpm store path`.
+    Otherwise pnpm picks its store by volume, which can be a folder at the
+    repo's volume root. A direct `pnpm install` or `pnpm add` also takes
+    `--store-dir $B/cache/pnpm-store`.
+  - **Coverage:** an instrumented binary writes its profile to the working
+    directory by default: `default.profraw` from Swift, Clang and Rust builds,
+    and Go binaries built with `-cover` write to `GOCOVERDIR`.
+  - **The environment is built inside the script**, not in a shell variable:
+    zsh does not word-split a string variable, so an `env -i $ENV <command>`
+    line breaks there.
+  - **The host's tool directories** are wherever `git`, the toolchains and the
+    package managers live (for example `/usr/bin:/bin`, plus Homebrew's or the
+    version manager's directory). `HOME` in the scratchpad also redirects most
+    tools' caches and stores.
+
+  Tools the baseline installs and reads (`osv-scanner`, `gitleaks`, `scc`,
+  `git log`) scan files; they do not run the repo's code and need no
+  scrubbing. The wrapper holds no host credential, so `gh release download`
+  runs outside it, with the same redirects set as plain variables.
 
 - **`TMPDIR` is short.** macOS limits a Unix socket path to 104 bytes, and Go
   plugin tools (`tofu`, `terraform`) put a socket under `TMPDIR`, so a long
@@ -109,23 +110,45 @@ Everything the baseline writes goes under one scratchpad folder, `$B`
   repo's own gate runner) starts from `$B/tmp` or the scratch clone, by absolute
   path. Instrumented and debug binaries write to the working directory (a
   profile, a database, a log). A gate runner that picks its own directory
-  (`swift test`, `go test`) starts in the repo's package folder; the redirects
-  above and the check below cover it, and one that still writes there runs in
-  the scratch clone.
+  (`swift test`, `go test`) starts in the repo's package folder; the wrapper's
+  redirects and the [check after each gate](#keeping-the-repo-unchanged) cover
+  it, and one that still writes there runs in the scratch clone.
+
+### Keeping the repo unchanged
+
 - **Check the repo after each gate or scan that runs repo code**, not only at
-  Stage 6: `git --no-optional-locks status --porcelain --ignored` against the
-  previous check's saved output, and `find <repo> -path <repo>/.git -prune -o -newer <marker> -print`
-  against the previous check's marker; the first check compares with the Stage 1
-  snapshot and marker ([`SKILL.md`](./SKILL.md#execution-boundary)). After each
-  check, save its status output and `touch` a fresh marker (`$B/marker-<gate>`,
-  never overwriting the Stage 1 snapshot and marker) before the next gate runs,
-  so a breach is blamed on one gate and not on every later one. Stage 6 still
-  compares with Stage 1. A new difference is a breach caused by that gate. Record the gate and each path in
-  that gate's `commands.md` row and as a row in the run log's read-only proof,
-  and rerun that tool, if at all, in the scratch clone. The run does not delete
-  or revert the file: it left the repo changed, which
+  Stage 6. Compare `git --no-optional-locks status --porcelain --ignored` with
+  the previous check's saved output, and run
+  `find <repo> -path <repo>/.git -prune -o -newer <marker> -print` against the
+  previous check's marker. The first check compares with the Stage 1 snapshot
+  and marker ([`SKILL.md`](./SKILL.md#execution-boundary)). After each check,
+  save its status output and `touch` a fresh marker (`$B/marker-<gate>`, never
+  overwriting the Stage 1 snapshot and marker) before the next gate runs, so a
+  breach is blamed on one gate and not on every later one. Stage 6 still
+  compares with Stage 1.
+- **A new difference is a breach caused by that gate.** Record the gate and each
+  path in that gate's `commands.md` row and as a row in the run log's read-only
+  proof, and rerun that tool, if at all, in the scratch clone. The run does not
+  delete or revert the file: it left the repo changed, which
   [`SKILL.md`](./SKILL.md#failure-conditions) counts as a failed run, so the
   closing message names the path for the maintainer to remove.
+- **A command that would write tracked files** (a formatter's write mode, a
+  generator, a test that rewrites snapshots), or a gate that needs the repo's
+  dependencies installed when its checkout has none, runs in a scratch clone of
+  the pinned commit (`git clone --no-hardlinks <repo> $B/clone`, then
+  `git -C $B/clone checkout --detach <commit>`), not in the repo. Say "ran in
+  scratch clone" in the digest. A clone has none of the repo's ignored files, so
+  a gate that needs one is "not run (needs X)".
+- **In-repo caches.** Many tools write a cache or state file into the repo
+  folder or its `node_modules` by default (`.pytest_cache`, `__pycache__`,
+  `.ruff_cache`, `.mypy_cache`, `.hypothesis`, a default `.coverage`,
+  `node_modules/.vite` and `node_modules/.cache`, Jest's cache, `.eslintcache`,
+  `*.tsbuildinfo`, `.turbo`, `.nx`, `.build`, `.terraform`). Each stack section
+  below lists the redirect for the tools it names. A tool with no redirect, or
+  one this file does not name, runs in the scratch clone, and the check after
+  each gate confirms nothing in the repo changed.
+
+### Run rules
 
 - **Untrusted repo.** The execute answer from Stage 1
   ([`SKILL.md`](./SKILL.md) Ownership and trust) decides what runs. With No,
@@ -147,20 +170,6 @@ Everything the baseline writes goes under one scratchpad folder, `$B`
 - **Never run bare `pip-audit`, `npm ls` or the like where the tool inspects
   the environment it runs in**: it audits the scratch venv, not the repo. Give
   it the repo's manifest.
-- **A command that would write tracked files** (a formatter's write mode, a
-  generator, a test that rewrites snapshots), or a gate that needs the repo's
-  dependencies installed when its checkout has none, runs in a scratch clone of
-  the pinned commit (`git clone --no-hardlinks <repo> $B/clone`, then
-  `git -C $B/clone checkout --detach <commit>`), not in the repo. Say "ran in scratch clone" in the digest. A clone has none of the
-  repo's ignored files, so a gate that needs one is "not run (needs X)".
-- **In-repo caches.** Many tools write a cache or state file into the repo
-  folder or its `node_modules` by default (`.pytest_cache`, `__pycache__`,
-  `.ruff_cache`, `.mypy_cache`, `.hypothesis`, a default `.coverage`,
-  `node_modules/.vite` and `node_modules/.cache`, Jest's cache, `.eslintcache`,
-  `*.tsbuildinfo`, `.turbo`, `.nx`, `.build`, `.terraform`). Each stack section
-  below lists the redirect for the tools it names. A tool with no redirect, or
-  one this file does not name, runs in the scratch clone; check with the
-  Stage 1 marker (see the Execution boundary) that nothing in the repo changed.
 - **`commands.md`:** one row per command: the command as run, exit code and wall
   time. The run log keeps only the rows `SKILL.md` names (failed or over 30 s).
 - **A tool or gate that did not run** gets one reason from the closed list in

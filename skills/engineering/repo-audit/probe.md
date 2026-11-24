@@ -54,7 +54,7 @@ beyond the app.
   (a listing with mtimes before and after). Unverified isolation is "not probed",
   never run.
 - **Environment.** Start each instance through `$B/run` from
-  [`baseline.md`](./baseline.md#setup) with `timeout`, record its PID, port and
+  [`baseline.md`](./baseline.md#environment) with `timeout`, record its PID, port and
   data path in the run log, and stop it by PID, never by name.
 
 ## 4. Run one cell
