@@ -52,7 +52,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
 ### Fixed
 
-- `repo-audit`: the baseline no longer writes into the audited repo on real repos, and everything but a short-lived symlink stays in the scratchpad (#658). Coverage output (`default.profraw` from a Swift test binary, Go and Node coverage) is redirected into the scratchpad, built binaries never run with the repo as their working directory, and the repo is checked after each gate that runs its code, so a breach names the gate and path and the file is left for you to remove. Repo code now runs through a `sh` wrapper instead of an `env -i` line that broke under zsh; `uv` and pnpm caches stay in the scratchpad; a long scratchpad path gets a short symlink to its temp folder so `tofu` works; a refused tool download falls back to another install route; and a failure the environment caused is rerun once after the fix. A suite past the 10-minute time-box reports CI's latest result, `shfmt` runs the way the repo runs it, and OpenTofu state encryption and unscanned Terraform providers are recorded as stated skips.
+- `repo-audit`: an audit no longer leaves files in the repo it audits (#658). A Swift coverage run used to drop `default.profraw` there; coverage and build output now go to the scratchpad, the repo is checked after each gate, and a gate that still writes into it is named in the run log and closing message, with the path for you to remove.
+- `repo-audit`: baseline gates that used to fail on real repos now run: commands that broke under zsh, `tofu` on a long scratchpad path, a tool whose download was refused, and test suites past the 10-minute limit (which now report CI's latest result). `uv` and pnpm caches stay in the scratchpad, `shfmt` checks format the way the repo's own CI does, and OpenTofu state encryption and Terraform providers are listed as not checked, with the reason.
 
 ## [3.1.0] - 2026-10-12
 

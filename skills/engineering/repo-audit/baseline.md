@@ -62,7 +62,8 @@ Everything the baseline writes goes under one scratchpad folder, `$B`
   Create the directories first (`mkdir -p`). The stack sections add the
   tool-specific flags this list does not cover.
 
-- **Run the repo's code through the wrapper `$B/run`**, a POSIX `sh` script written
+- **Run the repo's code through the wrapper `$B/run`**, which is what "the
+  scrubbed environment" means everywhere in this skill: a POSIX `sh` script written
   once at setup with the values expanded (`chmod +x "$B/run"`), and a timeout:
 
   ```sh
