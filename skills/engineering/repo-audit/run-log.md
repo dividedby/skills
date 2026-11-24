@@ -69,10 +69,12 @@ made.
 ## Read-only proof
 
 One `process started` row per instance Stage 2 starts: its role, port, PID and
-data directory (in the scratchpad), and when it was stopped. One `after gate`
-row per gate or scan that runs the repo's code, from the per-gate check in
-[`baseline.md`](./baseline.md#setup): equal to the previous check, or the breach
-with the path. The Stage 1 and Stage 6 rows compare with Stage 1. A breach file is left in place and named in the closing message.
+data directory (in the scratchpad), and when it was stopped. Stage 6's preview
+server is one more row: its port, PID and the publish folder it serves. One
+`after gate` row per gate or scan that runs the repo's code, from the per-gate
+check in [`baseline.md`](./baseline.md#setup): equal to the previous check, or
+the breach with the path. The Stage 1 and Stage 6 rows compare with Stage 1. A
+breach file is left in place and named in the closing message.
 
 ```text
 check                           | before (compared with)   | after
@@ -83,6 +85,28 @@ files newer than the marker     | Stage 1 marker   | none
 after gate: swift test          | previous check   | breach: default.profraw (repo root), left in place
 process started                 | primary :8080 pid 4121 data $B/data/a | stopped 21:20
 process started                 | second :8081 pid 4130 data $B/data/b | stopped 21:20, before Stage 4
+process started                 | preview :52814 pid 5230 serving $B/publish | stopped 22:41, before publish
+```
+
+## Scrub
+
+One row per published file, from `scrub.py`'s own summary: what the scrub
+removed, by category, and what was still there afterwards. Counts and category
+names only; a value is never logged. The `run-log.md` row counts what the scrub
+removed before this section was written. The `demo data read` row is the
+Stage 6 read of demo, fixture and seed data for personal and real-location
+facts: what it replaced or retook, by kind. The last row is the result of the
+final `--check` over the same files.
+
+```text
+file               | removed | remaining | by category
+page.html          | 4       | 0         | home-path 3, geo 1
+findings.json      | 0       | 0         | none
+run-log.md         | 2       | 0         | scratch-path 2
+architecture.md    | 1       | 0         | token 1
+total              | 7       | 0         |
+demo data read     | page text and captions read for personal or real-location data: none found
+final check        | pass
 ```
 
 ## State
