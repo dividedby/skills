@@ -1,4 +1,4 @@
-"""Generate the repo-audit eval fixtures: five small synthetic git repos.
+"""Generate the repo-audit eval fixtures: five small synthetic git repos and one large.
 
 Each fixture plants the same four defects (a hard-coded secret, a stale dated
 constant, a README command that does not exist, a duplicate file); the shapes
@@ -19,7 +19,14 @@ import sys
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
-FIXTURES = ["single-script", "docs-only", "workspace", "static-site", "unknown-type"]
+FIXTURES = [
+    "single-script",
+    "docs-only",
+    "workspace",
+    "static-site",
+    "unknown-type",
+    "large-workspace",
+]
 MARKER = ".eval-fixture-root"
 
 # A file is its text and whether it is executable.
@@ -574,12 +581,198 @@ def _unknown_type() -> list[Commit]:
     ]
 
 
+# ------------------------------------------------------------- large-workspace
+# A pnpm workspace of six packages and about 113k lines of generated JS, over
+# types.md's Large threshold (about 50k lines after exclusions). Nothing in it
+# is excluded by the tier rule: no vendored, generated, fixture or minified
+# paths. The planted files are placed where a Large-tier sample is bound to
+# reach them: the secret anywhere (the baseline scans the whole repo), the stale
+# constant in a package entry point, the duplicate pair as the two largest files,
+# the README always.
+
+_LARGE_PACKAGES = ["core", "utils", "cli", "api", "billing", "store"]
+_LARGE_MODULES_PER_PACKAGE = 100
+_LARGE_FUNCTIONS_PER_MODULE = 18
+
+
+def _js_arith(name: str, a: int, b: int) -> list[str]:
+    return [
+        f"export function {name}(a, b) {{",
+        f"  const x = a * {a} + b;",
+        f"  if (x % {b} === 0) {{",
+        f"    return x / {b};",
+        "  }",
+        f"  return x - {a + b};",
+        "}",
+    ]
+
+
+def _js_string(name: str, a: int, b: int) -> list[str]:
+    return [
+        f"export function {name}(text) {{",
+        '  const parts = String(text).trim().split(" ");',
+        "  const out = [];",
+        "  for (const part of parts) {",
+        f"    if (part.length > {b}) {{",
+        f"      out.push(part.slice(0, {a}));",
+        "    }",
+        "  }",
+        '  return out.join("-");',
+        "}",
+    ]
+
+
+def _js_reduce(name: str, a: int, b: int) -> list[str]:
+    return [
+        f"export function {name}(items) {{",
+        f"  return items.reduce((sum, item) => sum + item * {a}, {b});",
+        "}",
+    ]
+
+
+def _js_class(name: str, a: int, b: int) -> list[str]:
+    return [
+        f"export class {name[0].upper() + name[1:]} {{",
+        "  constructor(start) {",
+        "    this.value = start;",
+        "  }",
+        "",
+        "  bump(step) {",
+        f"    this.value += step * {a};",
+        "    return this.value;",
+        "  }",
+        "",
+        "  reset() {",
+        f"    this.value = {b};",
+        "  }",
+        "}",
+    ]
+
+
+def _js_switch(name: str, a: int, b: int) -> list[str]:
+    return [
+        f"export function {name}(kind) {{",
+        "  switch (kind) {",
+        '    case "a":',
+        f"      return {a};",
+        '    case "b":',
+        f"      return {b};",
+        '    case "c":',
+        f"      return {a + b};",
+        "    default:",
+        "      return 0;",
+        "  }",
+        "}",
+    ]
+
+
+_JS_TEMPLATES = [_js_arith, _js_string, _js_reduce, _js_class, _js_switch]
+
+
+def _large_module(p: int, pkg: str, n: int) -> str:
+    lines = [f"// {pkg} module {n:03d}"]
+    for k in range(_LARGE_FUNCTIONS_PER_MODULE):
+        template = _JS_TEMPLATES[(p + n + k) % len(_JS_TEMPLATES)]
+        lines += [""] + template(f"{pkg}{n:03d}_{k}", n + k + 2, (p + k) % 7 + 2)
+    return "\n".join(lines) + "\n"
+
+
+# The two largest tracked files in the repo, byte-identical in two packages.
+_LARGE_FORMAT_JS = _FORMAT_JS + "".join(
+    "\n"
+    + "\n".join(
+        _JS_TEMPLATES[k % len(_JS_TEMPLATES)](f"formatStep{k:03d}", k + 3, k % 5 + 2)
+    )
+    + "\n"
+    for k in range(80)
+)
+
+_LARGE_README_1 = """\
+# ledger-platform
+
+A pnpm workspace with six packages under `packages/`: `core`, `utils`, `cli`,
+`api`, `billing` and `store`.
+
+## Development
+
+    pnpm install
+    pnpm -r test
+"""
+
+_LARGE_README_2 = (
+    _LARGE_README_1
+    + """
+## Reports
+
+Run `pnpm run report` to build the monthly report.
+"""
+)
+
+
+def _large_index(names: list[str], extra: str = "") -> str:
+    return "".join(f'export * from "./{name}.js";\n' for name in names) + extra
+
+
+def _large_workspace() -> list[Commit]:
+    names = [f"m{n:03d}" for n in range(_LARGE_MODULES_PER_PACKAGE)]
+    skeleton: dict[str, File] = {
+        "pnpm-workspace.yaml": _file("packages:\n  - packages/*\n"),
+        "package.json": _file(
+            '{\n  "name": "ledger-platform",\n  "private": true,\n'
+            '  "scripts": {\n    "test": "node --test"\n  }\n}\n'
+        ),
+        "README.md": _file(_LARGE_README_1),
+    }
+    modules: dict[str, File] = {}
+    for p, pkg in enumerate(_LARGE_PACKAGES):
+        skeleton[f"packages/{pkg}/package.json"] = _file(
+            f'{{\n  "name": "@ledger/{pkg}",\n  "version": "0.1.0",\n'
+            f'  "type": "module",\n  "main": "src/index.js"\n}}\n'
+        )
+        skeleton[f"packages/{pkg}/src/index.js"] = _file(_large_index(names))
+        for n, name in enumerate(names):
+            modules[f"packages/{pkg}/src/{name}.js"] = _file(_large_module(p, pkg, n))
+    rates = (
+        "\n// Tax rate table for the filing period. Valid until the date below.\n"
+        'export const RATES_VALID_UNTIL = "2019-12-31";\n'
+        "export const RATE_PERCENT = 6.25;\n"
+    )
+    format_export = 'export * from "./format.js";\n'
+    return [
+        ("Create the workspace and its packages", skeleton),
+        ("Add the package modules", modules),
+        (
+            "Add settings and rates",
+            {
+                "packages/api/src/config.js": _file(
+                    f'export const UPLOAD_TOKEN = "{fake_token()}";\n'
+                    'export const UPLOAD_HOST = "files.example.invalid";\n'
+                ),
+                "packages/billing/src/index.js": _file(_large_index(names, rates)),
+            },
+        ),
+        (
+            "Share the amount formatter and document the report command",
+            {
+                "packages/utils/src/format.js": _file(_LARGE_FORMAT_JS),
+                "packages/cli/src/format.js": _file(_LARGE_FORMAT_JS),
+                "packages/utils/src/index.js": _file(
+                    _large_index(names, format_export)
+                ),
+                "packages/cli/src/index.js": _file(_large_index(names, format_export)),
+                "README.md": _file(_LARGE_README_2),
+            },
+        ),
+    ]
+
+
 _BUILDERS = {
     "single-script": _single_script,
     "docs-only": _docs_only,
     "workspace": _workspace,
     "static-site": _static_site,
     "unknown-type": _unknown_type,
+    "large-workspace": _large_workspace,
 }
 
 

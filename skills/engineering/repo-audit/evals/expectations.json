@@ -302,6 +302,69 @@
           "gap_area": "feature-completeness"
         }
       ]
+    },
+    "large-workspace": {
+      "profile": {
+        "type_regex": "library|monorepo|workspace|package",
+        "fallback": false,
+        "tier": "large",
+        "packages_min": 6
+      },
+      "lens_coverage": {
+        "regex": "sampl|random|churn|largest|entry"
+      },
+      "areas": {
+        "code-quality": true,
+        "architecture": true,
+        "tech-stack": true,
+        "tests": true,
+        "security": true,
+        "privacy": true,
+        "data-integrity": null,
+        "performance": true,
+        "accessibility": null,
+        "content-branding": null,
+        "usability": null,
+        "feature-completeness": null,
+        "repo-hygiene": true,
+        "ops-release": null,
+        "external-facts": true,
+        "agent-readiness": true
+      },
+      "planted": [
+        {
+          "id": "secret",
+          "areas": ["security"],
+          "check": "secret|token|credential",
+          "paths": ["packages/api/src/config.js"],
+          "checked_at": ["quick", "standard"]
+        },
+        {
+          "id": "stale-constant",
+          "areas": ["external-facts", "code-quality"],
+          "check": "stale|expir|outdated|constant|valid",
+          "paths": ["packages/billing/src/index.js"],
+          "checked_at": ["quick", "standard"]
+        },
+        {
+          "id": "duplicate-file",
+          "areas": ["code-quality", "repo-hygiene"],
+          "check": "dup|copy|identical|orig|old",
+          "paths": [
+            "packages/utils/src/format.js",
+            "packages/cli/src/format.js"
+          ],
+          "checked_at": ["quick", "standard"]
+        },
+        {
+          "id": "doc-command-missing",
+          "areas": ["feature-completeness"],
+          "check": "command|doc|readme|missing|undocumented|not-exist|nonexistent|drift",
+          "paths": ["README.md"],
+          "checked_at": ["standard"],
+          "gap_area": "feature-completeness"
+        }
+      ]
     }
   }
 }

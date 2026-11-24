@@ -219,6 +219,29 @@ def _check_profile(doc: dict, exp: dict) -> list[Result]:
     return results
 
 
+def _check_lens_coverage(doc: dict, spec: dict) -> Result:
+    """Every lens's coverage line says how it sampled (types.md, Size tiers)."""
+    rows = _dicts(doc.get("lens_coverage"))
+    if not rows:
+        return Result("lens coverage", False, "no lens_coverage rows")
+    unsampled = [
+        str(row.get("lens"))
+        for row in rows
+        if not re.search(
+            spec["regex"],
+            f"{row.get('read')} {row.get('chosen_by')}",
+            re.IGNORECASE,
+        )
+    ]
+    if unsampled:
+        return Result(
+            "lens coverage",
+            False,
+            f"no sampling stated for: {', '.join(unsampled)}; expected /{spec['regex']}/",
+        )
+    return Result("lens coverage", True, f"{len(rows)} lens rows state their sample")
+
+
 def _scorecard_areas(doc: dict) -> dict[str, dict]:
     card = doc.get("scorecard")
     rows = _dicts(card.get("areas")) if isinstance(card, dict) else []
@@ -356,6 +379,8 @@ def check_expectations(doc: Any, exp: dict, depth: str) -> list[Result]:
     if not isinstance(doc, dict):
         return [Result("findings.json", False, "not a JSON object")]
     results = _check_profile(doc, exp.get("profile", {}))
+    if "lens_coverage" in exp:
+        results.append(_check_lens_coverage(doc, exp["lens_coverage"]))
     results.append(_check_areas(doc, exp.get("areas", {})))
     results += check_coverage(doc, depth)
     results += [_check_planted(doc, p, depth) for p in exp.get("planted", [])]

@@ -7,7 +7,7 @@ an on-demand runner. Not a skill: [`SKILL.md`](../SKILL.md) links here.
 
 | File                   | Purpose                                                                                                      |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `fixtures.py`          | Generates the five fixtures as git repos into a folder you name. Deterministic: same commit SHAs each run    |
+| `fixtures.py`          | Generates the six fixtures as git repos into a folder you name. Deterministic: same commit SHAs each run     |
 | `expectations.json`    | Per fixture: type, tier, applicable areas, and the planted findings to match by `key`                        |
 | `findings.schema.json` | The shape of `findings.json` (SKILL.md Stage 6)                                                              |
 | `findings_check.py`    | Schema validator, expectation checks, the cross-run `diff_runs` rule and its input check, all pure functions |
@@ -25,24 +25,32 @@ secret, a stale dated constant (`2019-12-31`), a README command that does not
 exist, and a duplicate file. The secret is a fake token assembled at runtime, so
 no committed file holds it. Nothing is real; emails are `@example.invalid`.
 
-| Fixture         | Shape                                                                | Tier   | Used by the runner |
-| --------------- | -------------------------------------------------------------------- | ------ | ------------------ |
-| `single-script` | One Python script, config, README, a copy of the script              | Small  | yes                |
-| `docs-only`     | Markdown and YAML, no tracked source                                 | Small  | yes                |
-| `unknown-type`  | A Verilog design; matches no `types.md` entry, so a fallback profile | Small  | yes                |
-| `workspace`     | pnpm workspace, 3 packages, about 3.5k source lines                  | Medium | no                 |
-| `static-site`   | Static HTML and CSS with an overflow and a low-contrast pair         | Small  | no                 |
+| Fixture           | Shape                                                                      | Tier   | Used by the runner |
+| ----------------- | -------------------------------------------------------------------------- | ------ | ------------------ |
+| `single-script`   | One Python script, config, README, a copy of the script                    | Small  | yes                |
+| `docs-only`       | Markdown and YAML, no tracked source                                       | Small  | yes                |
+| `unknown-type`    | A Verilog design; matches no `types.md` entry, so a fallback profile       | Small  | yes                |
+| `workspace`       | pnpm workspace, 3 packages, about 3.5k source lines                        | Medium | no                 |
+| `static-site`     | Static HTML and CSS with an overflow and a low-contrast pair               | Small  | no                 |
+| `large-workspace` | pnpm workspace, 6 packages, about 113k generated source lines in 618 files | Large  | no, on demand      |
 
-The Large tier has no fixture: the tier is set by line count after exclusions,
-and the large path is covered by manual runs on real repos. The runner skips
+`large-workspace` is generated, not checked in. Its source is cheap and varied
+JS (five function shapes rotated by package and module) with nothing the tier
+rule excludes, so `types.md` sets the Large tier. Its defects sit where a
+Large-tier sample is bound to reach them: the token is found by the whole-repo
+secret scan, the stale constant is in a package entry point (`index.js`), the
+duplicate pair are the two largest tracked files, and the README is always read.
+The runner skips it by default (a Large audit costs far more than the three
+default fixtures; run it with `--fixtures large-workspace`), and skips
 `workspace` (about twice the tokens) and `static-site` (it needs the design
-lens, which `quick` does not launch); the self-test still generates both.
+lens, which `quick` does not launch). The self-test generates all six.
 
 ## Expectations
 
 Read from `findings.json`, never from prose:
 
 - **type and tier:** the profile's `type` and `tier` rows (`type_regex`, `fallback`, `tier`; `packages_min` counts the scorecard's package rows).
+- **lens coverage:** a fixture with a `lens_coverage` regex (`large-workspace`) fails unless the findings have `lens_coverage` rows and each row's `read` and `chosen_by` text matches it (a sample, random, churn, largest or entry-point statement). Other tiers read everything, so they set no regex.
 - **applicable areas:** `areas` maps an area id to `true` or `false` (checked against the scorecard's `applies`), or `null` when the rubric leaves it to judgement (not asserted).
 - **planted findings:** a finding matches on its `key`, split into `<area>:<check>:<path>`: the key's area is in the expectation's `areas`, its path is in `paths`, and its check name matches the `check` regex (case-insensitive). The finding's own `area` field is not used. Area and path follow from the fixture; the check name is the model's wording, so the regex is loose and `SKILL.md` fixes the canonical names. A failure prints the nearest finding.
 - **depth gaps:** `quick` launches only the `code` and `architecture` lenses. A planted finding whose owner lens did not run (`checked_at` lacks `quick`) is checked as a depth gap instead: its `gap_area` is Not assessed with a reason starting `Depth`. The README command, the docs-only duplicate and the static-site findings are asserted as findings only with `--depth standard`.
