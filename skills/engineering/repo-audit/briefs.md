@@ -18,6 +18,17 @@ carries the shared header below.
 - Whether the lens may run the repo's code: the execute answer from Stage 1.
   With No, the lens runs none of it and marks each such check "Untrusted not
   run".
+- A lens that runs the repo's code (benchmark, faults, fresh-clone build, focused
+  test, CLI walkthrough) runs the check in
+  [`baseline.md`](./baseline.md#keeping-the-repo-unchanged) after each such
+  command. Before its first such command it saves status and the path list and
+  touches its own marker under `$B/proof/<lens>/`; its first check compares with
+  that baseline, not with Stage 1. Lenses run at the same time, so a lens's own
+  row can include writes by another lens running then. If `HEAD` moves, it stops
+  its repo-code commands and reports it; the main session re-pins. It ends its
+  report with a "Repo checks" list: one line per command and its result (equal,
+  `mtime only`, or a breach with the path). It never deletes or reverts a breach
+  path.
 - The size facts: lines per area after exclusions, the largest files, test
   count and run time.
 - The profile's types, with their `types.md` brief bullets pasted, and the
