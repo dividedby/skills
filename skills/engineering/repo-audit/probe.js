@@ -49,6 +49,7 @@ function splitSentences(text) {
   return out.filter((s) => countWords(s) > 0);
 }
 
+// The 25-word sentence limit defaults to the policy in briefs.md Copy density.
 function copyMetrics(blocks, longAt = 25) {
   const counts = blocks.map(countWords);
   const sentences = blocks.flatMap(splitSentences).map(countWords);
@@ -79,6 +80,8 @@ function isSpaceDelimited(text) {
 // item or disclosure. Counts plain-prose blocks over `longAt` words, and the
 // distinct blocks of `minRepeat` words or more that appear more than once (the
 // same explanation twice on one screen). Block text is compared, never stored.
+// The 60-word block limit defaults to the policy in briefs.md Copy density; the
+// 8-word repeat minimum is the probe's own.
 function blockFlags(blocks, { longAt = 60, minRepeat = 8 } = {}) {
   const seen = new Map();
   for (const b of blocks) {

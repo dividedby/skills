@@ -7,7 +7,7 @@ that checklist is one rule, the repos it applies to, a read-only check and the
 document it comes from. This file says how to read it, run it and report it.
 The checklist owns the rules; nothing here restates them. The rows are house
 rules, so the section applies only to a repo that passes the ownership test
-([`SKILL.md`](./SKILL.md) Stage 1); section 2 says what a repo that fails, or
+([`SKILL.md`](./SKILL.md) Stage 1); [Pin the repo facts](#2-pin-the-repo-facts) says what a repo that fails, or
 has no remote, gets.
 
 ## 1. Read the checklist fresh
@@ -88,7 +88,7 @@ JS, a userscript) is not Node, and its Node rows are n/a ("no `package.json`").
 Set `$R` to the repo path and `$GH` to its `owner/name`.
 
 **No GitHub remote.** A repo with no remote never reaches this section
-(section 2). A repo that passes through the index but is hosted outside GitHub
+([Pin the repo facts](#2-pin-the-repo-facts)). A repo that passes through the index but is hosted outside GitHub
 has no `$GH`. Every row whose check uses `gh api` is **not checked (no GitHub
 remote)**; every other row runs. A row that asks for CI means any CI config, not
 only `.github/workflows`: a check that greps that path is a proxy, so read the
@@ -138,14 +138,14 @@ pattern missed files (for example a case-sensitive glob that skips Swift
 `Tests/`): report both numbers in the evidence, judge the row on the profile's
 count, and name what the check missed. When a row's check names another document
 as its reference (the `labels` row's CORE tables in `dividedby/skills`
-`docs/agents/labels.md`), read that document at a pinned commit as section 1
+`docs/agents/labels.md`), read that document at a pinned commit as [Read the checklist fresh](#1-read-the-checklist-fresh)
 reads the checklist, and record its commit in the row's evidence. Each row gets
 one result:
 
 - **pass** — the requirement holds.
 - **fail** — it does not. A missing file the check needs is a fail, not an
   error.
-- **n/a** — the row does not apply (section 2).
+- **n/a** — the row does not apply ([Pin the repo facts](#2-pin-the-repo-facts)).
 - **not checked (reason)** — nothing could be read: an API call refused or
   returned nothing that settles it, no GitHub remote, or the check is not
   read-only.
@@ -204,7 +204,7 @@ workflow, config, label or setting.
 
 ## 5. Results and handoff
 
-The section has no verdict of its own (see section 4). The page and the closing message give the count per result and the checklist
+The section has no verdict of its own (see [Rate and write the fix line](#4-rate-and-write-the-fix-line)). The page and the closing message give the count per result and the checklist
 commit. Report-only flags are not fails. Rows marked **not checked** are listed
 under "Unverified" in the page's "What was checked" section, each with its
 reason.

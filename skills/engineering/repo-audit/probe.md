@@ -17,7 +17,7 @@ where a step differs. `$B` is the scratchpad folder of
 The probe starts the app and loads its pages in a browser, so it is the repo's
 code running. It runs only when the conditions in `SKILL.md` Stage 2 hold, inside
 the [Execution boundary](./SKILL.md#execution-boundary) and the answer in
-[Ownership and trust](./SKILL.md#stage-1--scope). Skipped: see section 10.
+[Ownership and trust](./SKILL.md#stage-1--scope). Skipped: see [Skipped dimensions](#10-skipped-dimensions).
 
 ## 2. Scratch install
 
@@ -134,17 +134,21 @@ measuring.
 | `overflow` | `present` (the page scrolls sideways), `scrollWidth`, `clientWidth`, `elements` (the ones that start the overflow, not their children), and `inner`: open dialogs and sideways scrollers whose content is wider than the box (`selector`, `scrollWidth`, `clientWidth`, `dialog`) |
 | `targets`  | `small`: under 24×24 CSS px (WCAG 2.2 SC 2.5.8); `belowRepoMin`: under the repo's documented minimum from `--min-target`, else `repoMin: null`; `pointer` (the cell's), `repoMinApplies` (false when `--min-target-pointer coarse` meets a fine cell)                             |
 | `console`  | console errors and uncaught page errors; `failedRequests`: failed requests and responses of 400 or more, with no query string or body                                                                                                                                             |
-| `copy`     | `visibleWords`, `longestBlockWords`, `longSentences` (over 25 words), `meanSentenceWords`, `longUnstructuredBlocks` (plain-prose blocks over 60 words), `repeatedBlocks` (distinct blocks of 8 words or more that appear more than once), `spaceDelimited`                        |
+| `copy`     | `visibleWords`, `longestBlockWords`, `longSentences` (over the sentence limit), `meanSentenceWords`, `longUnstructuredBlocks` (plain-prose blocks over the block limit), `repeatedBlocks` (distinct blocks of 8 words or more that appear more than once), `spaceDelimited`       |
 | `colours`  | `unmatched`: computed colours in use that match no declared CSS custom property (either theme), `declared`: how many distinct colours the custom properties hold, `unparsed`                                                                                                      |
 | `keyboard` | only with `--keyboard`: `focusable`, `steps`, `trap`, `orderJumps`                                                                                                                                                                                                                |
 | `notes`    | lines the actions module added                                                                                                                                                                                                                                                    |
 | other      | `url` (no query), `screen`, `state`, `width`, `theme`, `pointer`, `probe` (Playwright and axe versions), `screenshot`, `truncated`                                                                                                                                                |
 
+The sentence and block limits behind `longSentences` and `longUnstructuredBlocks`
+are those of [`briefs.md`](./briefs.md#methods) **Copy density**; the 8-word
+minimum for `repeatedBlocks` is the probe's own.
+
 Read them with their limits:
 
 - axe-core finds about a third to a half of WCAG issues
   ([Deque](https://www.deque.com/automated-accessibility-coverage-report/)). A
-  clean axe result is a minimum, not a pass; the keyboard pass (section 9) and
+  clean axe result is a minimum, not a pass; the keyboard pass ([Keyboard-only pass](#9-keyboard-only-pass)) and
   the design lens cover the rest.
 - The 24 px check does not model the spacing exception (an undersized target
   with enough clear space around it passes). It exempts disabled controls and

@@ -268,7 +268,8 @@ Stage 1 counts tracked source lines from `git ls-files` with `wc -l`, or
   with the exclusions. When test lines alone pass the Large threshold, the code
   lens samples the tests as the Large tier does. This Stage 1 test-line count is
   the one the fleet `test-size` row's numbers are compared against
-  ([`fleet-standards.md`](./fleet-standards.md) section 3).
+  ([`fleet-standards.md`](./fleet-standards.md#3-run-each-applicable-row)
+  Run each applicable row).
 - **Exclusions.** Vendored files (third-party directories, tracked dependency
   trees), generated files (lockfiles, minified files, build output, files with a
   generated marker), fixtures (test data, snapshots, recorded responses) and
@@ -281,7 +282,7 @@ Stage 1 counts tracked source lines from `git ls-files` with `wc -l`, or
     feasible.
   - **Large:** over about 50k lines. Each lens samples: the entry points, the
     largest files, churn hotspots (the baseline digest's churn row,
-    [`baseline.md`](./baseline.md) section 1), the code behind each documented
+    [`baseline.md`](./baseline.md#1-universal-tools) Universal tools), the code behind each documented
     feature, and a random sample.
 - **Coverage line.** Each lens ends its report with one line: what it read and how
   it chose. Example: "read 60 of 1,900 files: entry points, top 20 by churn, 20
@@ -300,7 +301,8 @@ Detected from a `pnpm-workspace.yaml`, a `package.json` `workspaces` field, a
 - The scorecard gets a verdict per package as well as overall; the overall
   verdict is the worst. A package's verdict comes from the findings in it.
 - Fleet rows that apply per package are checked per package
-  ([`fleet-standards.md`](./fleet-standards.md) section 3).
+  ([`fleet-standards.md`](./fleet-standards.md#3-run-each-applicable-row)
+  Run each applicable row).
 - A large monorepo with no packages named is audited in full at large-tier
   sampling. When the user names packages, only those are audited; the rest are
   Not assessed with the reason Not selected and listed on the page.

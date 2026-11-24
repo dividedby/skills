@@ -2,6 +2,8 @@
 
 > **Status: Accepted** — maintainer decision (2026-11-19). **Amends [ADR 0042](./0042-repo-audit-becomes-a-read-only-report.md).**
 
+> **Amended by [ADR 0047](./0047-repo-audit-asks-once-before-running-untrusted-code.md)** (2026-11-23, [dividedby/skills#666](https://github.com/dividedby/skills/issues/666)) — the fleet-standards section applies only to a repo that passes the ownership test: a repo with no remote gets "Not assessed (Needs X: a remote)" and a repo that fails it, such as a third-party fork not in the index, gets "n/a (not a fleet repo)".
+
 ## Context
 
 ADR 0042 made `repo-audit` a read-only audit with four lenses and one report

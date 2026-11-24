@@ -1,7 +1,7 @@
 ---
 name: repo-audit
 description: >
-  User-invoked, read-only audit of a repo's code, design, repo hygiene and docs, fleet standards, and market — parallel lens agents, every high finding verified at its source, published as one private report page with screenshots, mockups and a Now/Next/Later plan.
+  User-invoked, read-only audit of a repo's code, design, repo hygiene and docs, fleet standards, and market — parallel lens agents, every high finding verified at its source, published as one private report page with screenshots, mockups (only when a design finding is High or worse) and a Now/Next/Later plan.
 disable-model-invocation: true
 ---
 
@@ -280,8 +280,8 @@ how its data can be isolated (a variable, flag, demo mode or temp profile, or
 none, and where it was found), the ports its docs reserve, the widths and themes
 it supports, the minimum target size its docs set, whether it is a hosted site,
 the private literals the repo's own rules name, and the repo facts the
-fleet-standards check adds ([`fleet-standards.md`](./fleet-standards.md)
-section 2). Write the profile as a table of `fact | value | source`. A part or
+fleet-standards check adds ([`fleet-standards.md`](./fleet-standards.md#2-pin-the-repo-facts)
+Pin the repo facts). Write the profile as a table of `fact | value | source`. A part or
 package that matches no type, or a repo with none, follows the fallback in
 [`types.md`](./types.md). In a large monorepo, ask once which packages to audit
 when the run can ask.
@@ -313,7 +313,8 @@ execute repo code  | no (asked 21:03 CT, no answer by 21:05 CT) | the question
     this leg only when its source repo's owner also passes it).
   - **Index leg:** its `owner/name` is listed in `dividedby/claude-config`
     `docs/repos.md`, read at a pinned commit the way
-    [`fleet-standards.md`](./fleet-standards.md) section 1 reads the checklist
+    [`fleet-standards.md`](./fleet-standards.md#1-read-the-checklist-fresh)
+    **Read the checklist fresh** reads the checklist
     (when the file cannot be read, that leg is skipped and the profile says
     so). It is the only way a third-party fork passes.
 
@@ -323,7 +324,8 @@ execute repo code  | no (asked 21:03 CT, no answer by 21:05 CT) | the question
 - **Trust.** A repo is trusted when it passes the ownership test, when the
   result is no remote, or when the user's prompt says it is trusted or its code
   may run. Otherwise it is untrusted. Fleet standards follow the ownership
-  result alone ([`fleet-standards.md`](./fleet-standards.md) section 2); a
+  result alone ([`fleet-standards.md`](./fleet-standards.md#2-pin-the-repo-facts)
+  Pin the repo facts); a
   prompt override trusts the repo for running its code only and never changes
   that.
 - **Untrusted: ask once.** Before anything in Stage 2 runs, the main session
@@ -531,8 +533,8 @@ its report (and the design lens, when it has a High or Blocker finding, its
 mockup spec) to a named scratchpad path and returns a short summary. A CLI,
 native, infra or library repo has no instance: the hand-over gives the scratch
 build path and the wrapper command to run it (or "none: static only"), and a
-method that needs an instance takes its reason from [`probe.md`](./probe.md)
-section 10 or the type's entry. The design lens is one agent: its copy table, brand inventory and
+method that needs an instance takes its reason from [`probe.md`](./probe.md#10-skipped-dimensions)
+Skipped dimensions or the type's entry. The design lens is one agent: its copy table, brand inventory and
 walkthrough logs go in its report file, and its walkthrough screenshots come from
 its own session on the primary instance.
 
@@ -639,14 +641,15 @@ anything reaches the page:
    review, which the product lens ran without it.
 6. Fill the go-public minutes-saved line. The architecture and product lenses
    run together, so the architecture report leaves it as "from the CI cost
-   table": copy the repo's total billable minutes a month from the product
-   lens's CI cost table into it, labelled measured or estimated as that table
-   labels it ([`briefs.md`](./briefs.md) Security, privacy and data, Method 5).
-   With no product lens or no figure, write that table's reason instead.
+   table": fill it from the product lens's CI cost table as
+   [`briefs.md`](./briefs.md#security-privacy-and-data)
+   **Minutes saved** says, labelled measured or estimated as that table labels
+   it. With no product lens or no figure, write that table's reason instead.
 7. A finding the main session sees itself (while verifying, filling the page or
-   reading for the scrub) enters with its evidence, goes through step 1 (merge
+   reading for the scrub) enters with its evidence, goes through **Route, re-area, then
+   merge, before any re-check** (merge
    and key reuse) and is re-checked like a lens finding, sits in the area that
-   owns it, the verdicts are set again (step 8), and it gets an "added (main session)"
+   owns it, the verdicts are set again (the "Set each area's verdict" step), and it gets an "added (main session)"
    line in the correction list. A hard-coded home ZIP default seen in the Stage
    6 demo-data read goes back here as a `privacy` finding.
 8. Set each area's verdict and the overall verdict from the corrected findings,
@@ -725,7 +728,8 @@ sections:
 - `go_public`: the go-public feasibility result of a private repo, an object
   `{verdict, minutes_saved_per_month, basis, basis_reason, items}`: `verdict` is
   `ready`, `ready_after_cleanup` or `keep_private`; `minutes_saved_per_month` is
-  a number, or `null`; `basis` is `measured` or `estimated` (`null` when the
+  the [`briefs.md`](./briefs.md#security-privacy-and-data) **Minutes saved**
+  figure, a number, or `null`; `basis` is `measured` or `estimated` (`null` when the
   minutes are `null`); `basis_reason` is the Needs X or other reason from the CI
   cost table when the minutes are `null`, else `null`; `items` is one `{row, result, needs_history_rewrite}` object per
   checklist row that is not clear. `null` when the check did not run, with the
@@ -776,7 +780,7 @@ included, takes the same five steps:
 1. **Finish the files.** The page, `findings.json`, each lens report and any
    other file bound for the `files` map are final, and the log has its
    read-only proof and its totals. The preview row and the Scrub section come at
-   step 5.
+   **Record, check, publish**.
 2. **Read the demo data.** Demo, sample, fixture and seed data is untrusted: a
    repo's demo can hold a real address, a real person's name or a location. Read
    the page's text and captions, and the lens reports, for the kinds the Privacy
@@ -811,19 +815,20 @@ included, takes the same five steps:
    start `python3 -m http.server <port> --bind 127.0.0.1 --directory <publish>`
    in the background, open `http://127.0.0.1:<port>/<page file>` in the browser
    pane through its url option, and look at light and dark, desktop and phone
-   width. Stop the server before step 5. A fix to the page goes back to step 2
-   with the new page. With no browser pane, skip the server: publish privately
-   at step 5, read the page back with the Artifact read action, check it there,
-   and republish through steps 2 to 5 if it needs a fix.
+   width. Stop the server before **Record, check, publish**. A fix to the page goes back
+   to **Read the demo data** with the new page. With no browser pane, skip the
+   server: publish privately at **Record, check, publish**, read the page back
+   with the Artifact read action, check it there, and republish from **Read the
+   demo data** through **Record, check, publish** if it needs a fix.
 5. **Record, check, publish.** In the log's publish copy and in the scratchpad
    original, add the preview server as a `process started` row and write the
-   `## Scrub` section from step 3's summary. The `run-log.md` row counts what
+   `## Scrub` section from the **Scrub** summary. The `run-log.md` row counts what
    the scrub removed from the log before this section existed; the section holds
    only counts and names, so it adds nothing for the check to find. Then run
    `python3 <skill folder>/scrub.py --check <publish>/*` with the same `--literal` and
-   `--hostname` flags as step 3. It must exit 0 over every file, the
+   `--hostname` flags as **Scrub**. It must exit 0 over every file, the
    log included, before anything is published; on exit 1, fix the cause and
-   repeat from step 3.
+   repeat from **Scrub**.
 
 Publish as a **private** Artifact, from the publish folder. If the Artifact tool
 offers a `quickstart`, run it (it is read-only), then keep this skill's template,
