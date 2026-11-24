@@ -72,7 +72,7 @@ One `process started` row per instance Stage 2 starts: its role, port, PID and
 data directory (in the scratchpad), and when it was stopped. Stage 6's preview
 server is one more row: its port, PID and the publish folder it serves. One
 `after gate` row per gate or scan that runs the repo's code, from the per-gate
-check in [`baseline.md`](./baseline.md#setup): equal to the previous check, or
+check in [`baseline.md`](./baseline.md#keeping-the-repo-unchanged): equal to the previous check, or
 the breach with the path. The Stage 1 and Stage 6 rows compare with Stage 1. A
 breach file is left in place and named in the closing message.
 
