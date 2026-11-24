@@ -14,6 +14,7 @@ import json
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -130,6 +131,95 @@ CAUGHT = [
     ("ip in a url path", "https://host/93.184.216.34", "ip"),
     ("private ip after a slash", "see http://nas/192.168.1.5/x", "ip"),
     ("ip after a non-browser name and slash", "Server/93.184.216.34", "ip"),
+    ("team id after TeamIdentifier", "TeamIdentifier ABCDE12345", "apple-id"),
+    ("team id in a build setting", "DEVELOPMENT_TEAM = ABCDE12345;", "apple-id"),
+    ("team id after a flag", "xcodebuild --team-id 7AGMPUPP64", "apple-id"),
+    ("team id in json", '{"teamID": "ABCDE12345"}', "apple-id"),
+    (
+        "team id in a plist entitlement",
+        "<key>com.apple.developer.team-identifier</key>\n<string>ABCDE12345</string>",
+        "apple-id",
+    ),
+    (
+        "team id in a plist array",
+        "<key>TeamIdentifier</key><array><string>ABCDE12345</string></array>",
+        "apple-id",
+    ),
+    (
+        "team id in a signing identity",
+        "Apple Development: Jane Doe (ABCDE12345)",
+        "apple-id",
+    ),
+    (
+        "team id in a code tag",
+        "<p>TeamIdentifier <code>ABCDE12345</code></p>",
+        "apple-id",
+    ),
+    ("team id in backticks", "TeamIdentifier: `ABCDE12345`", "apple-id"),
+    (
+        "team id in table cells",
+        "<td>TeamIdentifier</td><td>ABCDE12345</td>",
+        "apple-id",
+    ),
+    (
+        "team id in html entities",
+        "DEVELOPMENT_TEAM = &quot;ABCDE12345&quot;",
+        "apple-id",
+    ),
+    ("team id in bold", "team ID **ABCDE12345**", "apple-id"),
+    (
+        "team id in an xcconfig condition",
+        "DEVELOPMENT_TEAM[sdk=iphoneos*] = ABCDE12345",
+        "apple-id",
+    ),
+    (
+        "device id in a code tag",
+        "--device <code>123e4567-e89b-12d3-a456-426614174000</code>",
+        "apple-id",
+    ),
+    ("team id in a markdown row", "| TeamIdentifier | ABCDE12345 |", "apple-id"),
+    (
+        "device id in a markdown row",
+        "| Device ID | 123e4567-e89b-12d3-a456-426614174000 |",
+        "apple-id",
+    ),
+    ("25-character udid", "device 00008110-001A2B3C4D5E801E", "apple-id"),
+    ("25-character udid alone", "00008110-001A2B3C4D5E801E", "apple-id"),
+    (
+        "40-hex udid after a label",
+        "UDID: " + "0123456789abcdef" * 2 + "01234567",
+        "apple-id",
+    ),
+    (
+        "40-hex after --device",
+        "--device " + "0123456789abcdef" * 2 + "01234567",
+        "apple-id",
+    ),
+    (
+        "coredevice id after --device",
+        "devicectl --device 123E4567-E89B-12D3-A456-426614174000 info",
+        "apple-id",
+    ),
+    (
+        "coredevice id after coreDevice",
+        "coreDevice: 123e4567-e89b-12d3-a456-426614174000",
+        "apple-id",
+    ),
+    (
+        "device id key",
+        '"deviceID": "123e4567-e89b-12d3-a456-426614174000"',
+        "apple-id",
+    ),
+    (
+        "xcodebuild destination with a udid",
+        "-destination 'platform=iOS,id=00008110-001A2B3C4D5E801E'",
+        "apple-id",
+    ),
+    (
+        "xcodebuild destination with a uuid",
+        "-destination 'platform=iOS Simulator,id=123e4567-e89b-12d3-a456-426614174000'",
+        "apple-id",
+    ),
 ]
 
 KEPT = [
@@ -204,6 +294,29 @@ KEPT = [
     ("ci home path", "/home/runner/work/repo/repo/x.py"),
     ("short names", "root cause of the user error"),
     ("plain prose with a long hyphenated word", "sk-circle-fade-in-animation-class"),
+    ("git sha with no device cue", "commit 3f2a9c1b7d4e5f60812a3b4c5d6e7f8091a2b3c4"),
+    (
+        "full sha after a short one",
+        "at 157d9e4 (" + "157d9e4" + "0123456789abcdef0123456789abcdef0)",
+    ),
+    ("bare uuid", "request 123e4567-e89b-12d3-a456-426614174000"),
+    ("ten-character token with no team cue", "token ABCDE12345"),
+    ("teams is not a team cue", "teams ABCDE12345"),
+    ("steam is not a team cue", "steam ABCDE12345"),
+    ("lowercase value after team", "team abcde12345"),
+    ("all-letter value after team", "team ABCDEFGHIJ"),
+    ("all-digit value after team", "team 1234567890"),
+    ("version near the word device", "device 1.2.3 and devices 12.3456"),
+    ("svg number near the word device", 'device <rect width="12.3456"/>'),
+    ("short hex alone", "id 0123456789abcdef and 0123abcd"),
+    ("block tags end the phrase", "team </p><p>MIGRATION1"),
+    ("team, then a blank line", "the team\n\nABCDE12345 shipped"),
+    ("a line break ends the phrase", "team<br>X1Y2Z3W4V5"),
+    ("a list item ends the phrase", "<li>team</li><li>MIGRATION1</li>"),
+    (
+        "table header cue over an unrelated sha",
+        "| Device |\n|---|\n| " + "0123456789abcdef" * 2 + "01234567 |",
+    ),
 ]
 
 
@@ -227,6 +340,30 @@ class DetectionTests(unittest.TestCase):
         self.assertEqual(
             cleaned, "t=[redacted:token];arn:aws:iam::[redacted:account-id]:role/x"
         )
+
+    def test_a_long_run_of_signing_identity_openers_scans_in_linear_time(self):
+        # An unbounded gap took about 60 s on this input; a bounded one well
+        # under a second. Only the signing-identity rule is timed, so a slow
+        # runner's other rules cannot push it past the wide ceiling.
+        rule = next(
+            r
+            for r in scrub.build_rules(scrub.Context())
+            if "Distribution" in r.regex.pattern
+        )
+        text = ("Apple Development: " + "(" * 100) * 5000
+        start = time.monotonic()
+        rule.regex.findall(text)
+        self.assertLess(time.monotonic() - start, 10)
+
+    def test_apple_ids_are_scrubbed_with_no_literals(self):
+        page = "<p>TeamIdentifier ABCDE12345 on 00008110-001A2B3C4D5E801E</p>"
+        cleaned, counts = scrub.scrub_text(page, scrub.Context())
+        self.assertEqual(
+            cleaned,
+            "<p>TeamIdentifier [redacted:apple-id] on [redacted:apple-id]</p>",
+        )
+        self.assertEqual(counts, {"apple-id": 2})
+        self.assertEqual(scrub.scan_text(cleaned, scrub.Context()), {})
 
     def test_data_uris_are_skipped_whole(self):
         uri = "data:image/png;base64,iVBORw0KGgo/Users/jdoe/" + "A" * 200
@@ -292,6 +429,19 @@ class FileTests(unittest.TestCase):
         self.assertEqual(self.cli(str(page), str(log))[0], 0)
         self.assertEqual(self.cli("--check", str(page), str(log))[0], 0)
         self.assertEqual((page.read_bytes(), log.read_bytes()), before)
+
+    def test_literal_takes_any_private_string_and_reports_it_as_literal(self):
+        page = self.write("page.html", "Home: round rock 78701, id 1787012\n")
+        code, out = self.cli(
+            "--json", "--literal", "Round Rock", "--literal", "78701", str(page)
+        )
+        self.assertEqual(code, 0)
+        self.assertEqual(json.loads(out)["files"][0]["removed"], {"literal": 2})
+        self.assertEqual(
+            page.read_text(),
+            "Home: [redacted:literal] [redacted:literal], id 1787012\n",
+        )
+        self.assertNotIn("78701", out)
 
     def test_check_reports_without_writing_and_fails_on_any_match(self):
         page = self.write("page.html", "at /Users/jdoe/x\n")
