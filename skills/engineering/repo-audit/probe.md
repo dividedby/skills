@@ -65,17 +65,23 @@ env -i PATH="$PATH" HOME="$B/home" PROBE_MODULES="$B/pw" timeout 120 \
   --screen <name> --state <state> --width <px> --theme light|dark \
   --out $B/probe/cells/<screen>--<state>--<width>--<theme>.json \
   [--screenshot $B/probe/shots/<same name>.png] [--min-target <px>] \
+  [--pointer fine|coarse] [--min-target-pointer any|coarse] \
   [--actions <file.mjs>] [--delay-ms <ms> --delay-match '<glob>'] [--keyboard <n>]
 ```
 
 Exit code 0 means a cell was written, findings or not; 2 means the probe failed
 (bad argument, Playwright or Chromium missing, navigation error). Dark mode is
 Playwright's colour-scheme emulation, so the product's own `prefers-color-scheme`
-styles apply. Each cell opens a fresh browser, so cells do not share state.
+styles apply. `--pointer coarse` opens the context as a touch device
+(Playwright `hasTouch: true`), which is enough for Chromium: a check in a browser
+showed `matchMedia('(pointer: coarse)')` and `(any-pointer: coarse)` match and
+`(pointer: fine)` does not, so the product's `@media (pointer: coarse)` styles
+apply. `isMobile` is not set, and `(hover: none)` still does not match. Each
+cell opens a fresh browser, so cells do not share state.
 
 `node probe.js --summarise $B/probe/cells --out $B/probe/summary.json` totals
 the cells per screen, failing screens first, and lists every failing cell with
-its failing checks. Long unstructured blocks are counted, never failing: the probe cannot know the main path. A screen row carries `spaceDelimited`, false when any cell is not, and leaves word figures out of that row. The page's tables come from it.
+its failing checks. Long unstructured blocks are counted, never failing: the probe cannot know the main path. A screen row carries `spaceDelimited`, false when any cell is not, and leaves word figures out of that row. It also lists `distinct`: the failing checks grouped by signature (the check, plus the axe rule id, or the first offending selector for `overflow`), each with the number of cells it shows in and the `first` cell (screen, state, width, theme, screenshot; the first captured cell when any was), biggest group first. A site-wide rule on 40 cells is one group. The page's tables come from it.
 
 ## 5. The matrix
 
@@ -99,7 +105,9 @@ populated) × the widths it supports × the themes it supports.
 
 Reach a state by scripted interaction, in a small ES module given to
 `--actions` that exports `default async (page, ctx)`; `ctx.note(text)` adds a
-line to the cell's `notes`. The module runs after the page settles and before
+line to the cell's `notes`, and `ctx.focus()` returns where focus is now, in the
+shape of a keyboard step (`tag`, `selector`, `name`, `focusVisible`,
+`container`, `x`, `y`). The module runs after the page settles and before
 measuring.
 
 - **Dialogs and panels:** click the control that opens each, then measure.
@@ -120,17 +128,17 @@ measuring.
 `schema: 1`. Every list is capped at 20 entries; a capped list is named in
 `truncated`.
 
-| Field      | Content                                                                                                                                                                                                                                                    |
-| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `axe`      | one entry per violated rule: `rule`, `impact`, `selector` (first node), `count` (nodes)                                                                                                                                                                    |
-| `overflow` | `present` (the page scrolls sideways), `scrollWidth`, `clientWidth`, and `elements` (the ones that start the overflow, not their children)                                                                                                                 |
-| `targets`  | `small`: under 24×24 CSS px (WCAG 2.2 SC 2.5.8); `belowRepoMin`: under the repo's documented minimum from `--min-target`, else `repoMin: null`                                                                                                             |
-| `console`  | console errors and uncaught page errors; `failedRequests`: failed requests and responses of 400 or more, with no query string or body                                                                                                                      |
-| `copy`     | `visibleWords`, `longestBlockWords`, `longSentences` (over 25 words), `meanSentenceWords`, `longUnstructuredBlocks` (plain-prose blocks over 60 words), `repeatedBlocks` (distinct blocks of 8 words or more that appear more than once), `spaceDelimited` |
-| `colours`  | `unmatched`: computed colours in use that match no declared CSS custom property (either theme), `declared`: how many distinct colours the custom properties hold, `unparsed`                                                                               |
-| `keyboard` | only with `--keyboard`: `focusable`, `steps`, `trap`, `orderJumps`                                                                                                                                                                                         |
-| `notes`    | lines the actions module added                                                                                                                                                                                                                             |
-| other      | `url` (no query), `screen`, `state`, `width`, `theme`, `probe` (Playwright and axe versions), `screenshot`, `truncated`                                                                                                                                    |
+| Field      | Content                                                                                                                                                                                                                                                                           |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `axe`      | one entry per violated rule: `rule`, `impact`, `selector` (first node), `count` (nodes)                                                                                                                                                                                           |
+| `overflow` | `present` (the page scrolls sideways), `scrollWidth`, `clientWidth`, `elements` (the ones that start the overflow, not their children), and `inner`: open dialogs and sideways scrollers whose content is wider than the box (`selector`, `scrollWidth`, `clientWidth`, `dialog`) |
+| `targets`  | `small`: under 24×24 CSS px (WCAG 2.2 SC 2.5.8); `belowRepoMin`: under the repo's documented minimum from `--min-target`, else `repoMin: null`; `pointer` (the cell's), `repoMinApplies` (false when `--min-target-pointer coarse` meets a fine cell)                             |
+| `console`  | console errors and uncaught page errors; `failedRequests`: failed requests and responses of 400 or more, with no query string or body                                                                                                                                             |
+| `copy`     | `visibleWords`, `longestBlockWords`, `longSentences` (over 25 words), `meanSentenceWords`, `longUnstructuredBlocks` (plain-prose blocks over 60 words), `repeatedBlocks` (distinct blocks of 8 words or more that appear more than once), `spaceDelimited`                        |
+| `colours`  | `unmatched`: computed colours in use that match no declared CSS custom property (either theme), `declared`: how many distinct colours the custom properties hold, `unparsed`                                                                                                      |
+| `keyboard` | only with `--keyboard`: `focusable`, `steps`, `trap`, `orderJumps`                                                                                                                                                                                                                |
+| `notes`    | lines the actions module added                                                                                                                                                                                                                                                    |
+| other      | `url` (no query), `screen`, `state`, `width`, `theme`, `pointer`, `probe` (Playwright and axe versions), `screenshot`, `truncated`                                                                                                                                                |
 
 Read them with their limits:
 
@@ -141,7 +149,16 @@ Read them with their limits:
 - The 24 px check does not model the spacing exception (an undersized target
   with enough clear space around it passes). It exempts disabled controls and
   links inside running text. A repo minimum is read from its UI doc or a
-  `rules.md` row, else `null`.
+  `rules.md` row, else `null`. A minimum that the repo ties to touch (a
+  `@media (pointer: coarse)` rule, "44 px on phones") runs on the 375-width
+  cells as `--pointer coarse --min-target <px> --min-target-pointer coarse`; in
+  a fine-pointer cell `belowRepoMin` is then empty and `repoMinApplies` false.
+- `overflow.inner` is not the page scrolling: a dialog wider than itself, or a
+  scroller (`overflow-x: auto` or `scroll`) with content wider than its box,
+  clips content with no page scrollbar. A scroller around a `table` or `pre` is
+  an intended wrapper and is left out; a dialog is always listed. Any entry
+  fails the cell's `overflow` check. An intentional carousel is listed too:
+  judge it from the screenshot.
 - With 0 declared colours, every colour is unmatched: report it as "no design
   tokens", not as a hundred misses. Browser defaults (a button's grey) appear as
   unmatched; the design lens judges which matter.
@@ -196,7 +213,16 @@ For each primary flow (named in the README or UI doc; five at most):
    a screenshot when it matters), its container and position.
 2. Walk the controls with the actions module: Enter and Space on each control,
    Esc on each dialog and menu, then check where focus is after the update the
-   action caused. Add a `ctx.note` per step.
+   action caused. This step is manual, written per flow, and no generic walker
+   does it: activating every control fires the product's own actions (submit,
+   delete, navigate away, open a dialog that changes the tab order), which a
+   probe cannot sequence or undo. `ctx.focus()` makes each check one line, and
+   `ctx.note` records it:
+   ```js
+   await page.keyboard.press("Escape");
+   const f = await ctx.focus();
+   ctx.note(`Esc on the edit dialog: focus on ${f.selector} (${f.name})`);
+   ```
 3. Checks: tab order follows visual order (`orderJumps` lists upward jumps; the
    wrap to the start is expected once); focus is visible on every stop; every
    control works from the keyboard; focus stays or moves somewhere sensible after
@@ -236,8 +262,10 @@ Each skip is a reason from [`rubric.md`](./rubric.md)'s list, never silence.
 Everything goes under `$B/probe/`: `matrix.md`, `cells/*.json`, `summary.json`,
 `shots/`, `keyboard-*.md`, `lh-*.json`. Raw JSON stays there for the design lens;
 the page carries the totals and failing cells ([`template.html`](./template.html)
-header). Screenshots are embedded under the size rule in `SKILL.md` Stage 6; keep
-every failing cell's and the first cell per screen. Real user data never enters
+header). Screenshots are embedded under the size rule in `SKILL.md` Stage 6; keep the
+first cell per screen and one capture per distinct failure (each `distinct`
+group's `first` cell in `summary.json`), not every failing cell. When both
+rules pick the same cell, it is one image. Real user data never enters
 the folder: the instances run on throwaway data, and URLs lose their query strings
 before they are written.
 
@@ -253,3 +281,12 @@ shows in the cell (`overflow`, `targets.small`, `axe` rule `image-alt`,
 sentence in two elements and an 80-word list item: the cell shows
 `copy.longUnstructuredBlocks: 1` (the list item is structured) and
 `copy.repeatedBlocks: 1`.
+
+Add an open `dialog` 300 px wide holding a 500 px non-table child: at 375 the
+cell shows it in `overflow.inner` with `dialog: true`, and a `table` inside a
+scroller of its own does not appear. Add a button 30 px wide with a
+`@media (pointer: coarse)` rule that makes it 40 px: with
+`--min-target 44 --min-target-pointer coarse`, `targets.belowRepoMin` is empty
+and `repoMinApplies` false at `--pointer fine`, and lists the button at
+`--pointer coarse`. Run `--summarise` on cells that share one failing rule: the
+rule is one entry in `distinct`.

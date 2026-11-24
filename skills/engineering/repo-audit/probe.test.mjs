@@ -227,6 +227,70 @@ test("filterTargets uses 24 px as the limit and exempts disabled and inline", as
     assert.equal(got.repoMin, 44);
     assert.equal(probe.filterTargets(rects).repoMin, null);
   });
+  await t.test("a coarse-only repo minimum", async (t) => {
+    const rects = [{ selector: "button", w: 30, h: 30 }];
+    const cases = [
+      ["coarse rule skipped on a fine cell", "coarse", "fine", 0, false],
+      ["coarse rule applied on a coarse cell", "coarse", "coarse", 1, true],
+      ["any applies on a fine cell", "any", "fine", 1, true],
+      ["any applies on a coarse cell", "any", "coarse", 1, true],
+    ];
+    for (const [name, repoMinPointer, pointer, count, applies] of cases) {
+      await t.test(name, () => {
+        const got = probe.filterTargets(rects, {
+          repoMin: 44,
+          repoMinPointer,
+          pointer,
+        });
+        assert.equal(got.belowRepoMin.length, count);
+        assert.equal(got.repoMinApplies, applies);
+        assert.equal(got.pointer, pointer);
+        assert.equal(got.repoMin, 44);
+      });
+    }
+    await t.test("no repo minimum never applies", () => {
+      const got = probe.filterTargets(rects, { pointer: "coarse" });
+      assert.equal(got.repoMinApplies, false);
+      assert.deepEqual(got.belowRepoMin, []);
+    });
+  });
+});
+
+test("findInnerOverflow", async (t) => {
+  const box = (over) => ({
+    selector: "div",
+    scrollWidth: 500,
+    clientWidth: 300,
+    dialog: false,
+    wrapsTable: false,
+    ...over,
+  });
+  const cases = [
+    ["a dialog wider than itself is reported", [box({ dialog: true })], 1],
+    ["a fitting dialog is not", [box({ dialog: true, scrollWidth: 301 })], 0],
+    ["a plain scroller is reported", [box()], 1],
+    ["a table or code wrapper is not", [box({ wrapsTable: true })], 0],
+    [
+      "a dialog holding a table is still reported",
+      [box({ dialog: true, wrapsTable: true })],
+      1,
+    ],
+  ];
+  for (const [name, boxes, want] of cases) {
+    await t.test(name, () =>
+      assert.equal(probe.findInnerOverflow(boxes).length, want),
+    );
+  }
+  await t.test("widest excess first, with only the reported fields", () => {
+    const got = probe.findInnerOverflow([
+      box({ selector: "a", scrollWidth: 400 }),
+      box({ selector: "b", scrollWidth: 900, dialog: true, wrapsTable: true }),
+    ]);
+    assert.deepEqual(got, [
+      { selector: "b", scrollWidth: 900, clientWidth: 300, dialog: true },
+      { selector: "a", scrollWidth: 400, clientWidth: 300, dialog: false },
+    ]);
+  });
 });
 
 test("findOverflow names the origin, not its children", () => {
@@ -345,6 +409,27 @@ test("summariseCell lists the failing checks", () => {
   assert.equal(probe.summariseCell(cell()).failing.length, 0);
 });
 
+test("summariseCell fails a cell whose only overflow is inside a dialog", () => {
+  const inner = [
+    { selector: "dialog", scrollWidth: 500, clientWidth: 300, dialog: true },
+  ];
+  const got = probe.summariseCell(
+    cell({ overflow: { present: false, elements: [], inner } }),
+  );
+  assert.deepEqual(got.failing, ["overflow"]);
+  assert.equal(got.counts.overflow, 1);
+  const both = probe.summariseCell(
+    cell({
+      overflow: {
+        present: true,
+        elements: [{ selector: "div", right: 900 }],
+        inner,
+      },
+    }),
+  );
+  assert.equal(both.counts.overflow, 2);
+});
+
 test("summariseCell counts copy flags, and ignores word counts for unspaced text", () => {
   const copy = {
     longSentences: 2,
@@ -410,6 +495,81 @@ test("summariseScreens puts failing screens first and totals per screen", () => 
   assert.equal(got.failingCells, 1);
 });
 
+test("distinctFailures groups a repeated failure into one capture", async (t) => {
+  const axe = (rule) => [{ rule, impact: "serious", selector: "x", count: 1 }];
+  const shot = (name) => ({ screenshot: `shots/${name}.png` });
+  await t.test("a site-wide axe rule on 3 cells is one group", () => {
+    const got = probe.distinctFailures([
+      cell({ screen: "a", axe: axe("color-contrast"), ...shot("a") }),
+      cell({ screen: "b", axe: axe("color-contrast"), ...shot("b") }),
+      cell({ screen: "c", axe: axe("color-contrast"), ...shot("c") }),
+    ]);
+    assert.equal(got.length, 1);
+    assert.equal(got[0].check, "axe");
+    assert.equal(got[0].key, "color-contrast");
+    assert.equal(got[0].cells, 3);
+    assert.deepEqual(got[0].first, {
+      screen: "a",
+      state: "default",
+      width: 375,
+      theme: "dark",
+      screenshot: "shots/a.png",
+    });
+  });
+  await t.test("different rules, selectors and checks are separate", () => {
+    const got = probe.distinctFailures([
+      cell({
+        axe: [...axe("image-alt"), ...axe("label")],
+        overflow: {
+          present: true,
+          elements: [{ selector: "div.wide", right: 900 }],
+          inner: [
+            {
+              selector: "dialog",
+              scrollWidth: 500,
+              clientWidth: 300,
+              dialog: true,
+            },
+          ],
+        },
+        console: [{ type: "error", text: "x" }],
+      }),
+      cell({
+        screen: "b",
+        overflow: {
+          present: true,
+          elements: [{ selector: "div.wide", right: 900 }],
+        },
+      }),
+    ]);
+    assert.deepEqual(
+      got.map((g) => [g.check, g.key, g.cells]),
+      [
+        ["overflow", "div.wide", 2],
+        ["axe", "image-alt", 1],
+        ["axe", "label", 1],
+        ["overflow", "dialog", 1],
+        ["console", "console", 1],
+      ],
+    );
+  });
+  await t.test("passing cells and a missing screenshot", () => {
+    assert.deepEqual(probe.distinctFailures([cell()]), []);
+    const got = probe.distinctFailures([
+      cell({ console: [{ type: "error", text: "x" }] }),
+    ]);
+    assert.equal(got[0].first.screenshot, null);
+  });
+  await t.test("the first captured cell names the image", () => {
+    const got = probe.distinctFailures([
+      cell({ screen: "a", axe: axe("label") }),
+      cell({ screen: "b", axe: axe("label"), ...shot("b") }),
+    ]);
+    assert.equal(got[0].first.screen, "b");
+    assert.equal(got[0].first.screenshot, "shots/b.png");
+  });
+});
+
 test("parseArgs", async (t) => {
   const bad = [
     ["unknown flag", ["--widht", "375"]],
@@ -430,11 +590,17 @@ test("parseArgs", async (t) => {
       "375",
       "--min-target",
       "44",
+      "--pointer",
+      "coarse",
+      "--min-target-pointer",
+      "coarse",
     ]);
     assert.deepEqual(got, {
       url: "http://x/",
       width: "375",
       "min-target": "44",
+      pointer: "coarse",
+      "min-target-pointer": "coarse",
     });
   });
 });
