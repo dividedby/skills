@@ -33,6 +33,10 @@ by path first, then its own section of this file by path and heading
   report with a "Repo checks" list: one line per command and its result (equal,
   `mtime only`, or a breach with the path). It never deletes or reverts a breach
   path.
+- A lens runs repo code only through `$B/run`. An extra variable goes after the
+  wrapper (`$B/run env VAR=... <cmd>`), never before it, since the wrapper
+  starts from an empty environment
+  ([`baseline.md`](./baseline.md#environment)).
 - The size facts: lines per area after exclusions, the largest files, test
   count and run time.
 - The profile's types, with their `types.md` brief bullets (in the prompt's

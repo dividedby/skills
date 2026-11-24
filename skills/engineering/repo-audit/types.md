@@ -86,7 +86,11 @@ Build into the scratchpad ([execution boundary](./SKILL.md#execution-boundary)),
 the built binary by absolute path from `$B/tmp`, never with the repo as the
 working directory ([`baseline.md`](./baseline.md#environment)): `--help`, a bad argument, a missing
 argument, the exit code of each, output at 80 columns, `NO_COLOR` set, and
-output piped (non-TTY). Never point the probe at real accounts or data.
+output piped (non-TTY). Before the first run of the built binary, the wrapper
+self-test ([`baseline.md`](./baseline.md#environment)) shows each data-folder
+variable the profile names; a CLI with a data folder and no such variable is
+not probed ("Needs X: an isolated data mode"). Never point the probe at real
+accounts or data.
 
 ### Native app
 
