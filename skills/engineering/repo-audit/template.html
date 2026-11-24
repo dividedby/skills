@@ -8,8 +8,9 @@ REPO-AUDIT REPORT TEMPLATE. FILL RULES
   link. Scorecard, Coverage, Fleet standards and Rules conformance are not optional. When the fleet checklist could not be read,
   keep its section, put the reason in STANDARDS_INTRO and delete the table. A repo that fails the ownership test keeps the
   section too: STANDARDS_INTRO reads "n/a (not a fleet repo)" with the reason (the ownership test's result), and the table is
+  deleted. A repo with no remote keeps it as well: STANDARDS_INTRO reads "Not assessed (Needs X: a remote)" and the table is
   deleted.
-- Trust: METHOD_NOTE states how the run treated the repo's code: "trusted" (with the ownership leg that passed, or the prompt),
+- Trust: METHOD_NOTE states how the run treated the repo's code: "trusted" (with the ownership leg that passed, the no-remote result, or the prompt),
   "untrusted, run allowed (answered HH:MM CT)" or "untrusted, not run (answered no HH:MM CT, no answer by HH:MM CT, or not asked: reason)". OVERALL_TEXT
   names every area that lost a method or was Not assessed because of it, with the reason Untrusted not run; the Coverage reasons
   and one UNVERIFIED_ITEM per skipped method carry the same reason. A trusted repo adds nothing more.
