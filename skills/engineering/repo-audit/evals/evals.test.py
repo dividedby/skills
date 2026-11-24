@@ -244,6 +244,7 @@ class SchemaTests(unittest.TestCase):
             "fixed": [],
             "still_open": [],
             "not_rechecked": [],
+            "not_reraised": [],
         }
         self.assertEqual(self.mutated(lambda d: d.update(diff=full)), [])
 
@@ -400,33 +401,109 @@ class DiffTests(unittest.TestCase):
         )
         cur = self.run_doc(["security:secret-scan:a", "usability:dead-end:d"])
         self.assertEqual(
-            fc.diff_runs(prev, cur),
+            fc.diff_runs(prev, cur, changed=["b", "d/x.py"]),
             {
                 "new": ["usability:dead-end:d"],
-                "fixed": ["tests:no-test:b", "privacy:log:c"],
+                "fixed": ["tests:no-test:b"],
                 "still_open": ["security:secret-scan:a"],
                 "not_rechecked": [],
+                "not_reraised": ["privacy:log:c"],
             },
         )
+
+    def test_a_vanished_key_is_fixed_only_with_a_change_under_its_path(self):
+        file_key, dir_key = "tests:no-test:src/a.py", "tests:no-test:lib"
+        prev = self.run_doc([file_key, dir_key])
+        cases = {
+            "unchanged commit": ([], [], [file_key, dir_key]),
+            "change under the file": (["src/a.py"], [file_key], [dir_key]),
+            "change elsewhere": (["docs/x.md"], [], [file_key, dir_key]),
+            "file under a directory path": (["lib/m.py"], [dir_key], [file_key]),
+            "sibling sharing a prefix": (["library/m.py"], [], [file_key, dir_key]),
+            "commits not comparable": (None, [], [file_key, dir_key]),
+        }
+        for label, (changed, fixed, not_reraised) in cases.items():
+            with self.subTest(label):
+                out = fc.diff_runs(prev, self.run_doc([]), changed=changed)
+                self.assertEqual(out["fixed"], fixed)
+                self.assertEqual(out["not_reraised"], not_reraised)
+
+    def test_a_repo_wide_key_is_covered_by_any_change(self):
+        prev = self.run_doc(["repo-hygiene:no-license:."])
+        cur = self.run_doc([])
+        self.assertEqual(
+            fc.diff_runs(prev, cur, changed=["anything.py"])["fixed"],
+            ["repo-hygiene:no-license:."],
+        )
+        self.assertEqual(fc.diff_runs(prev, cur, changed=[])["fixed"], [])
+
+    def test_a_key_a_lens_did_not_recheck_is_not_fixed(self):
+        prev = self.run_doc(["tests:no-test:b", "tests:no-test:c"])
+        out = fc.diff_runs(
+            prev,
+            self.run_doc([]),
+            not_rechecked=["tests:no-test:b"],
+            changed=["b", "c"],
+        )
+        self.assertEqual(out["not_rechecked"], ["tests:no-test:b"])
+        self.assertEqual(out["fixed"], ["tests:no-test:c"])
+
+    def test_a_not_rechecked_key_that_came_back_stays_open(self):
+        prev = self.run_doc(["tests:no-test:b"])
+        cur = self.run_doc(["tests:no-test:b"])
+        out = fc.diff_runs(prev, cur, not_rechecked=["tests:no-test:b"], changed=[])
+        self.assertEqual(out["still_open"], ["tests:no-test:b"])
+        self.assertEqual(out["not_rechecked"], [])
 
     def test_a_finding_in_an_area_not_assessed_now_is_not_rechecked_not_fixed(self):
         prev = self.run_doc(
             ["feature-completeness:doc-command-missing:README.md", "tests:no-test:b"]
         )
         cur = self.run_doc([], not_assessed=("feature-completeness",))
-        out = fc.diff_runs(prev, cur)
+        out = fc.diff_runs(prev, cur, changed=["README.md", "b"])
         self.assertEqual(
             out["not_rechecked"], ["feature-completeness:doc-command-missing:README.md"]
         )
         self.assertEqual(out["fixed"], ["tests:no-test:b"])
 
+    def test_the_previous_findings_area_field_beats_the_key_prefix(self):
+        prev = self.run_doc(["code-quality:null-body:a.py"])
+        prev["findings"][0]["area"] = "feature-completeness"
+        cur = self.run_doc([], not_assessed=("feature-completeness",))
+        out = fc.diff_runs(prev, cur, changed=["a.py"])
+        self.assertEqual(out["not_rechecked"], ["code-quality:null-body:a.py"])
+
     def test_a_key_in_an_unknown_area_is_not_rechecked(self):
-        out = fc.diff_runs(self.run_doc(["bogus:x:y"]), self.run_doc([]))
+        out = fc.diff_runs(self.run_doc(["bogus:x:y"]), self.run_doc([]), changed=["y"])
         self.assertEqual(out["not_rechecked"], ["bogus:x:y"])
 
     def test_duplicate_keys_count_once(self):
         out = fc.diff_runs(self.run_doc([]), self.run_doc(["tests:a:b", "tests:a:b"]))
         self.assertEqual(out["new"], ["tests:a:b"])
+
+    def test_an_older_schema_baseline_is_usable_for_the_diff(self):
+        old = {
+            "findings": [
+                {"key": "security:secret-scan:a", "area": "security", "lens": "legacy"}
+            ],
+            "scorecard": {"overall": "retired-verdict"},
+        }
+        self.assertEqual(fc.diff_input_errors(old), [])
+
+    def test_a_baseline_the_diff_cannot_read_is_reported(self):
+        cases = {
+            "not an object": [],
+            "no findings": {},
+            "findings not a list": {"findings": {}},
+            "finding not an object": {"findings": ["x"]},
+            "finding without a key": {"findings": [{"area": "tests"}]},
+            "key not a string": {"findings": [{"key": 3}]},
+            "malformed key": {"findings": [{"key": "no-colons"}]},
+            "area not a string": {"findings": [{"key": "a:b:c", "area": 1}]},
+        }
+        for label, doc in cases.items():
+            with self.subTest(label):
+                self.assertTrue(fc.diff_input_errors(doc), label)
 
     def test_parse_key_splits_on_the_first_two_colons(self):
         self.assertEqual(

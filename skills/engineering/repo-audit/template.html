@@ -29,10 +29,11 @@ REPO-AUDIT REPORT TEMPLATE. FILL RULES
   into FINDING. A fleet fail stays a row in the Fleet standards table only; the scorecard row of the area it counts toward
   links to its fs- id when it is that area's top finding.
 - Since the last run: only when findings.json has a `diff` (SKILL.md Stage 6); otherwise delete the whole h2 block and its nav
-  link. SINCE_INTRO links the previous run's page and gives the four counts (new, fixed, still open, not re-checked). One
-  since-item per key in the diff, grouped in that order: SINCE_STATE (New, Fixed, Still open, Not re-checked), SINCE_KEY, and
+  link. SINCE_INTRO links the previous run's page and gives the five counts (new, fixed, still open, not re-checked, not re-raised). One
+  since-item per key in the diff, grouped in that order: SINCE_STATE (New, Fixed, Still open, Not re-checked, Not re-raised), SINCE_KEY, and
   SINCE_NOTE (a link to its finding when it is in this run; for a still-open item whose severity changed, both severities; for
-  a not-re-checked item, the area's Not-assessed reason). When the previous run could not be read, keep the h2, put that in
+  a not-re-checked item, the area's Not-assessed reason or the lens's reason; for a not-re-raised item, that nothing changed under its
+  path since the previous commit, or that the commits could not be compared). When the previous run could not be read, keep the h2, put that in
   SINCE_INTRO and delete the list.
 - Rules conformance: the repo's own rules from rules.md, after Fleet standards. RULES_INTRO names the source files read and gives
   the counts (pass, fail, not assessed) in one or two sentences; with no rules harvested it says so and the tables are deleted.

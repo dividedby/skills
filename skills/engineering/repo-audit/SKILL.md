@@ -328,6 +328,16 @@ skips `product`, `design` and `market`.
 Read the user's prompt for a focus ("design only", "perf first") and weight the
 briefs toward it.
 
+**Read the previous run, when the prompt gives its page link.** Read its
+`findings.json` now (the Artifact `files` map or the link) and check it as Stage
+6's `diff` bullet directs: the diff reads only `findings[].key`, and `area` and
+`severity` when present, so a schema mismatch elsewhere does not matter. Keep
+its findings (key, area, title, evidence path) for Stage 3 and Stage 4, and its
+pinned commit (the profile's `commit` row). Compute the changed paths read-only:
+`git diff --name-only --no-renames <previous commit> <pinned commit>`, empty when
+the commits are equal. When the previous commit is missing or not in the clone,
+the changed paths are unknown: add a Guesses row and carry on.
+
 **Check the profile's facts before any brief is written.** Every fact a brief
 will rely on (a date, version, tracked or ignored file, count, port or command)
 gets a source: a `file:line`, a command and its output, or a URL. A fact with
@@ -462,6 +472,12 @@ summary. The design lens is one agent: its copy table, brand inventory and
 walkthrough logs go in its report file, and its walkthrough screenshots come from
 its own session on the primary instance.
 
+With a previous run, each lens also gets that run's findings in the areas it
+owns (key, area, title, evidence path). Its report ends with a "Previous keys"
+line: each such key it re-raised, with its new finding, and each it did not
+re-check, with why (sampled out, not read). A key it names there is never
+`fixed`.
+
 Each lens has a wall-time and token ceiling: 1.5 times its row in the [budget
 table](#lenses-depth-and-budgets) for the run's depth and tier. Log each lens's
 wall time and tokens against its row.
@@ -500,6 +516,11 @@ The lens reports are claims. Before anything reaches the page:
    - Keep the highest severity that survives verification.
    - A finding that restates a fleet-standards row is folded into that row.
    - Each merge is a "merged" line in the correction list.
+   - **Reuse previous keys.** With a previous run, match each finding to a
+     previous one that cites the same file and the same defect, whatever its
+     area or check name (`code-quality:null-body` re-raised as
+     `security:null-body`), and give it the previous key. Each reuse is a "key
+     reused" line in the correction list. Do this before the diff.
 2. Re-check every **Blocker** and every **High** finding, every area marked
    **Not ready**, and any finding the plan's "Now" column rests on, at its cited
    source. Read the line; rerun the command. This includes fleet-standards
@@ -575,7 +596,8 @@ sections:
   - `id`: the page anchor: `fs-<row id>` for a fleet fail, otherwise
     `<area id>-<n>`.
   - `key`: stable across runs: `<area id>:<rule id or check>:<primary path>`.
-    The rule id is the fleet row id; otherwise a short name for the check (a
+    A key reused from the previous run (Stage 4) keeps its old area id and
+    check name, even when the finding's `area` now differs. The rule id is the fleet row id; otherwise a short name for the check (a
     repo rule too: `rules.md` ids are per run, so they are not keys). For
     example `security:secret-scan:.github/workflows` on a web app or
     `ops-release:no-rollback:ops/deploy.sh` on an infra repo. Use these names
@@ -619,16 +641,19 @@ sections:
   `skipped_methods` holds one `{method, reason}` for each probe dimension that
   did not run (cells, keyboard pass, Lighthouse, the second instance).
 - `diff`: only when the prompt gives a previous run's page link; otherwise
-  leave it out. Read that run's `findings.json` from beside its page (the
-  Artifact `files` map or the link). When it cannot be read or does not match
-  the schema, add a Guesses row, set `diff` to `null` and say so on the page.
-  Otherwise `{previous_url, new, fixed, still_open, not_rechecked}`, each a list
-  of `key`s: `new` is in this run only; `still_open` is in both; `fixed` is in
-  the previous run only **and** its area was assessed this run (it applies and
-  its verdict is not `not_assessed`); a previous key whose area is Not assessed
-  now, a depth difference included, is `not_rechecked`, never `fixed`. The page
-  gets a "Since the last run" section ([`template.html`](./template.html)
-  header) and marks a still-open item whose severity changed.
+  leave it out. Use the `findings.json` Stage 1 read. When it cannot be read or
+  fails the diff-input check (not the full schema), add a Guesses row, set
+  `diff` to `null` and say so on the page. Otherwise `{previous_url, new, fixed,
+still_open, not_rechecked, not_reraised}`, each a list of `key`s, by the rules
+  in `diff_runs` in [`evals/findings_check.py`](./evals/findings_check.py): `new`
+  is in this run only; `still_open` is in both; a key in the previous run only is
+  `not_rechecked` when its area is Not assessed now (a depth difference
+  included) or a lens named it in its "Previous keys" line as not re-checked;
+  `not_reraised` when the code did not change under its path between the two
+  pinned commits (or the commits could not be compared); else `fixed`. The same
+  commit never gives a `fixed`. The page gets a "Since the last run" section
+  ([`template.html`](./template.html) header) and marks a still-open item whose
+  severity changed.
 
 The page ships with `run-log.md`, `findings.json` and the report files of the
 architecture, product and design lenses, each when its lens ran, beside it
@@ -696,8 +721,8 @@ the top findings, what was verified and what was not, the run's totals (wall tim
 agent tokens, against the budget, with any measure over by more than 50% named
 and by how much, and the main-session context size, reported not budgeted), the
 number of guesses, any partial or failed lens, the areas Not assessed (depth) on
-a `quick` run, with a previous run's link the four `diff` counts on one line (new,
-fixed, still open, not re-checked), and confirmation that the repo is unchanged, or each breach found (gate and path) for the maintainer to remove. When the
+a `quick` run, with a previous run's link the five `diff` counts on one line (new,
+fixed, still open, not re-checked, not re-raised), and confirmation that the repo is unchanged, or each breach found (gate and path) for the maintainer to remove. When the
 run reports to the user, end with **one question** — which part of the plan to
 start on — and offer `/to-tickets` for the plan in one line. When it reports to
 another session, end with the page link and the plan's first item instead.
