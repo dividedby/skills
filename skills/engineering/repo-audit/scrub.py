@@ -156,9 +156,15 @@ _GEO_CUES = (
     "at|near|nearby|around|located|location|pin|pinned|map|gps|address"
     "|coordinates|coordinate|coords|place|home|office|hq|headquarters|site|city"
 )
+# Matched case-insensitively; `µ` is the micro sign, `μ` the Greek mu.
 _GEO_UNITS = (
-    "ms|s|sec|secs|seconds|min|mins|minutes|h|hr|hrs|hours|px|pt|em|rem|kb|mb|gb|tb"
-    "|kib|mib|gib|hz|khz|mhz|ghz|fps|x|deg|dpi|ns|us|µs"
+    "ms|msec|msecs|millisecond|milliseconds|s|sec|secs|second|seconds"
+    "|us|usec|usecs|µs|μs|microsecond|microseconds"
+    "|ns|nsec|nsecs|nanosecond|nanoseconds"
+    "|min|mins|minute|minutes|h|hr|hrs|hour|hours|d|day|days"
+    "|px|pt|em|rem|dp|dpi|deg|x|fps|hz|khz|mhz|ghz"
+    "|b|byte|bytes|kb|mb|gb|tb|pb|kib|mib|gib|tib"
+    "|bps|kbps|mbps|gbps"
 )
 
 

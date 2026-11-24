@@ -129,6 +129,13 @@ KEPT = [
     ("pair inside a sentence", "time 12.3456, 78.9012 seconds"),
     ("cued pair with a unit", "measured at 12.3456, 78.9012 ms"),
     ("cued pair with a unit, short", "p95 at 0.1234, 0.5678 s"),
+    ("cued pair, unit milliseconds", "Measured at 12.3456, 78.9012 milliseconds"),
+    ("cued pair, unit msec", "at 1.2345, 2.3456 msec"),
+    ("cued pair, unit bytes", "at 12.3456, 78.9012 bytes"),
+    ("cued pair, unit B", "at 1.2345,2.3456 B"),
+    ("cued pair, unit Greek mu s", "near 1.2345, 2.3456 μs"),
+    ("cued pair, unit micro sign s", "near 1.2345, 2.3456 µs"),
+    ("cued pair, unit Mbps", "at 1.2345, 2.3456 Mbps"),
     ("cued pair with a percent", "load near 12.3456, 78.9012%"),
     ("cued svg points", '<polygon points="at 10.1234,20.1234 30.1234,40.1234"/>'),
     (
