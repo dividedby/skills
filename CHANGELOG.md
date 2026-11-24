@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- `repo-audit` evals: the planted `doc-command-missing` expectations now accept the `agent-readiness` area as well as `feature-completeness`, since the rubric files a documented command that fails under agent readiness. The `static-site` standard run found the defect there (#669).
+
 ## [4.0.0] - 2026-11-24
 
 Rebuilds `repo-audit` as a read-only production-readiness audit (epic #611). It changes nothing in the repo and files no issues. It runs up to five parallel lenses, re-checks every high finding at its source, scrubs everything it publishes, and publishes one private report page with a Now/Next/Later plan. The 2026-11-23 QA runs' fixes are included.
