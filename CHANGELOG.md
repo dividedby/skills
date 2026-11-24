@@ -50,6 +50,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
 - `repo-audit`: **Breaking:** backlog reconciliation, epics, the ordered roadmap, the go-ahead step before GitHub changes, and the hand-off to `to-tickets`. The old skill is at the 3.1.0 release commit, `d95ab6f`.
 
+### Fixed
+
+- `repo-audit`: every file the audit publishes now goes through one scrub before it leaves the scratchpad, not just the report page. Lens reports, `findings.json` and `run-log.md` had been published beside the page carrying local home and scratchpad paths. A new `scrub.py` (standard library only) rewrites each file in place, replacing home and scratch paths, the current user and host names, private host names, IP addresses (loopback and documentation ranges and version strings excepted), account ids, tokens and keys, emails (noreply and example addresses excepted) and precise coordinates with `[redacted:<category>]`, skips the page's embedded images, then re-scans and fails if anything is left. The run log gains a Scrub section with counts per file and category, never values, and the audit publishes only after a final `--check` passes over every file, the log included. Demo, sample and fixture data is no longer assumed safe to publish: the audit reads the page text, captions and reports for personal and real-location data, and replaces it or retakes or crops the screenshot. A published file that skipped the scrub, or a matched value in the run log, now fails the audit.
+- `repo-audit`: the local preview works in the desktop app. The browser pane would not open a `file://` page from the scratchpad and the dev-server preview needs a project config, so the audit now serves the scrubbed publish folder from a short-lived local server on a free port bound to `127.0.0.1`, opens it in the browser pane, checks light and dark at desktop and phone width, and stops it before publishing; the run log records the server. With no browser pane it publishes privately and reads the page back instead. The report template also gains the missing `charset` and `viewport` meta tags.
+
 ## [3.1.0] - 2026-10-12
 
 Slims both remaining skills: `council` drops its peer-rank round and `repo-audit` its cross-review round, roughly halving agents per run; `repo-audit` now asks before any GitHub change.
