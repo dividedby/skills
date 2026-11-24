@@ -35,6 +35,7 @@ SAMPLE = json.loads((HERE / "sample-findings.json").read_text())
 
 # Assembled here so this file holds no literal a secret scanner would flag.
 SECRET_RE = re.compile("g" + "hp_[0-9A-Za-z]{36}")
+LARGE = "large-workspace"
 
 
 def tracked(repo: Path) -> list[str]:
@@ -54,13 +55,19 @@ class FixtureTests(unittest.TestCase):
         cls.addClassCleanup(cls.tmp.cleanup)
         root = Path(cls.tmp.name)
         cls.first = fixtures.generate(root / "first")
-        cls.second = fixtures.generate(root / "second")
+        # The second build skips the Large fixture to keep the self-test fast;
+        # its determinism is checked on the fast-import stream instead.
+        cls.second = fixtures.generate(
+            root / "second", only=[n for n in fixtures.FIXTURES if n != LARGE]
+        )
         cls.root = root
 
     def test_generation_is_idempotent(self):
-        for name in fixtures.FIXTURES:
+        for name in self.second:
             with self.subTest(name):
                 self.assertEqual(head(self.first[name]), head(self.second[name]))
+        build = fixtures._BUILDERS[LARGE]
+        self.assertEqual(fixtures._stream(build()), fixtures._stream(build()))
 
     def test_regenerating_over_an_existing_folder_gives_the_same_commits(self):
         again = fixtures.generate(
@@ -183,8 +190,8 @@ class FixtureTests(unittest.TestCase):
     def test_large_workspace_is_large_and_its_planted_files_are_where_a_sample_looks(
         self,
     ):
-        repo = self.first["large-workspace"]
-        exp = EXPECTATIONS["fixtures"]["large-workspace"]
+        repo = self.first[LARGE]
+        exp = EXPECTATIONS["fixtures"][LARGE]
         names = tracked(repo)
         lines = sum(
             len((repo / rel).read_text().splitlines())
@@ -418,7 +425,7 @@ LARGE_KEYS = {
 class LargeExpectationTests(unittest.TestCase):
     """The Large-tier expectations, checked against a synthetic sampled run."""
 
-    EXP = EXPECTATIONS["fixtures"]["large-workspace"]
+    EXP = EXPECTATIONS["fixtures"][LARGE]
 
     @classmethod
     def large_sample(cls) -> dict:

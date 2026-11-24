@@ -12,7 +12,7 @@ an on-demand runner. Not a skill: [`SKILL.md`](../SKILL.md) links here.
 | `findings.schema.json` | The shape of `findings.json` (SKILL.md Stage 6)                                                              |
 | `findings_check.py`    | Schema validator, expectation checks, the cross-run `diff_runs` rule and its input check, all pure functions |
 | `sample-findings.json` | A schema-valid sample that passes `single-script` at `quick`; the self-test's input                          |
-| `evals.test.py`        | CI self-test: no `claude` call, stdlib and `git` only, about 3 s                                             |
+| `evals.test.py`        | CI self-test: no `claude` call, stdlib and `git` only, about 3-5 s                                           |
 | `run_evals.py`         | The paid runner                                                                                              |
 
 Run the self-test: `python3 -B skills/engineering/repo-audit/evals/evals.test.py`.
