@@ -80,6 +80,18 @@ CAUGHT = [
     ("pair in its own parentheses", "Home (41.8781, -87.6298) is near", "geo"),
     ("pair under a coords key", '"coords": [41.8781, -87.6298]', "geo"),
     ("pair under a location key", "location: 41.8781,-87.6298 and more", "geo"),
+    ("pair after a pin cue", "pin at 41.8781, -87.6298 today", "geo"),
+    (
+        "pair after a cue, mid-sentence",
+        "the office is near 51.5072, -0.1276 in London",
+        "geo",
+    ),
+    ("cued pair ending a sentence", "the house is at 41.8781, -87.6298.", "geo"),
+    ("standalone pair with a period", "41.8781, -87.6298.", "geo"),
+    ("pair after a GPS label", "GPS: 41.8781, -87.6298", "geo"),
+    ("ip in a url path", "https://host/93.184.216.34", "ip"),
+    ("private ip after a slash", "see http://nas/192.168.1.5/x", "ip"),
+    ("ip after a non-browser name and slash", "Server/93.184.216.34", "ip"),
 ]
 
 KEPT = [
@@ -115,6 +127,18 @@ KEPT = [
     ("css bezier", "transition: cubic-bezier(0.4000, 0.0000, 0.2000, 1.0000)"),
     ("css matrix", "transform: matrix(1.0000, 0.0000, 0.0000, 1.0000, 0, 0)"),
     ("pair inside a sentence", "time 12.3456, 78.9012 seconds"),
+    ("cued pair with a unit", "measured at 12.3456, 78.9012 ms"),
+    ("cued pair with a unit, short", "p95 at 0.1234, 0.5678 s"),
+    ("cued pair with a percent", "load near 12.3456, 78.9012%"),
+    ("cued svg points", '<polygon points="at 10.1234,20.1234 30.1234,40.1234"/>'),
+    (
+        "chrome user agent",
+        (
+            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/131.0.0.0 Safari/537.36 Edg/131.0.2903.51"
+        ),
+    ),
+    ("private-range version after a ua token", "Firefox/10.0.0.1 Version/17.0.0.0"),
     ("json number array", "[0.1234, 0.5678]"),
     ("json array of arrays", "[[0.1234, 0.5678], [12.3456, 45.6789]]"),
     ("software and oid numbers", "Python 3.12.1.0, OID 1.3.6.1 and OpenSSL 1.1.1.9"),
@@ -152,13 +176,16 @@ class DetectionTests(unittest.TestCase):
         self.assertIn(uri, cleaned)
         self.assertEqual(counts, {"home-path": 1})
 
+    def auto_context(self, env: dict[str, str], user: str, host: str) -> scrub.Context:
+        # ExitStack: a parenthesised multi-item `with` is not valid on Python 3.9.
+        with contextlib.ExitStack() as stack:
+            stack.enter_context(mock.patch("getpass.getuser", return_value=user))
+            stack.enter_context(mock.patch("socket.gethostname", return_value=host))
+            return scrub.auto_context(env)
+
     def test_environment_values_are_picked_up(self):
         env = {"HOME": "/opt/h/zed", "TMPDIR": "/opt/t/x/", "USER": "zedfoo"}
-        with (
-            mock.patch("getpass.getuser", return_value="zedfoo"),
-            mock.patch("socket.gethostname", return_value="zed-box.example.com"),
-        ):
-            ctx = scrub.auto_context(env)
+        ctx = self.auto_context(env, "zedfoo", "zed-box.example.com")
         text = "in /opt/h/zed/proj, cache /opt/t/x/c, by zedfoo on zed-box"
         cleaned, counts = scrub.scrub_text(text, ctx)
         self.assertEqual(
@@ -167,13 +194,8 @@ class DetectionTests(unittest.TestCase):
         self.assertNotIn("zed", cleaned.replace("[redacted:", ""))
 
     def test_generic_environment_names_are_not_literals(self):
-        with (
-            mock.patch("getpass.getuser", return_value="root"),
-            mock.patch("socket.gethostname", return_value="localhost"),
-        ):
-            ctx = scrub.auto_context(
-                {"HOME": "/root", "TMPDIR": "/tmp", "USER": "root"}
-            )
+        env = {"HOME": "/root", "TMPDIR": "/tmp", "USER": "root"}
+        ctx = self.auto_context(env, "root", "localhost")
         self.assertEqual((ctx.usernames, ctx.hostnames, ctx.tmp), ([], [], []))
 
 
@@ -189,10 +211,8 @@ class FileTests(unittest.TestCase):
         return path
 
     def cli(self, *args: str) -> tuple[int, str]:
-        out = io.StringIO()
-        with contextlib.redirect_stdout(out):
-            code = scrub.main([*args, "--no-auto", "--literal", "zelda"])
-        return code, out.getvalue()
+        code, out, _ = self.cli_err(*args)
+        return code, out
 
     def cli_err(self, *args: str) -> tuple[int, str, str]:
         out, err = io.StringIO(), io.StringIO()
