@@ -28,7 +28,11 @@ Categories, each deliberately narrow so the floor has few false positives:
                 a version marker (v, version, ==, >=, <=, ~=, ^, or python,
                 oid, openssl, java, ruby, php, chrome, firefox, safari
                 and a space) comes right before it, so `v1.2.3.4` survives
-                and `1.2.3.4` alone does not.
+                and `1.2.3.4` alone does not. A dotted quad right after a
+                browser user-agent product and a slash (Chrome, Chromium,
+                CriOS, Firefox, FxiOS, Safari, AppleWebKit, Version, Edg,
+                Edge, OPR, Mozilla, HeadlessChrome) is a version and stays,
+                private range included; `https://host/1.2.3.4` does not.
   account-id    the 12 digits of an AWS ARN; the value of an account_id-style
                 key (12 to 14 digits or 32 hex).
   token         GitHub, GitLab, Anthropic, OpenAI-style, Stripe live, npm,
@@ -39,9 +43,25 @@ Categories, each deliberately narrow so the floor has few false positives:
                 longitude key, a latitude, longitude pair (in range) under a
                 coords/location/geo-style key, or such a pair standing alone
                 (the whole line or cell, backticked, quoted or in brackets
-                of its own). Pairs inside SVG paths, CSS functions, JSON
-                arrays and sentences stay. Phone numbers are not scanned: no
-                rule was precise enough.
+                of its own), or a pair in running text with a location word
+                (at, near, nearby, around, located, location, pin, map, gps,
+                address, coordinates, lat/lng, place, home, office, site,
+                city, ...) no more than two words before it:
+                `pin at 41.8781, -87.6298`. Pairs chained to a cued pair with
+                `,`, `;`, and, to or or are cued too. Degree notation with
+                hemisphere letters (`41.8781° N, 87.6298° W`) is caught
+                anywhere. A unit right after a cued pair (ms, s, px, %, kb,
+                mb, x, ...) means a measurement and the pair stays; a short
+                unit counts only when no word follows (`x marks`, `min walk`
+                do not), and a third number (`0.95, 0.87, 0.77`) is not a
+                pair. Pairs inside SVG paths and points, CSS functions, JSON
+                arrays and sentences with no cue stay
+                (`time 12.3456, 78.9012 seconds`). Phone numbers are not
+                scanned: no rule was precise enough.
+
+This is a floor. It matches shapes, so prose with no cue (a place named in a
+sentence, a coordinate with no location word) passes it; the Stage 6 demo-data
+read in SKILL.md is what covers those.
 
 `data:` URIs (the page's embedded screenshots) are skipped whole.
 """
@@ -58,7 +78,7 @@ import re
 import socket
 import sys
 from collections.abc import Iterable
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Callable
 
@@ -100,7 +120,12 @@ _GENERIC_HOME_NAMES = {
     "runner",
 }
 
-_PATH_TAIL = r"""(?:/[^\s"'<>`)\]},;|*?\\]*)?"""
+# Characters that end a path: whitespace, quotes, brackets, separators, globs.
+_PATH_STOP = r"""\s"'<>`)\]},;|*?\\"""
+_PATH_REST = rf"[^{_PATH_STOP}]*"  # the rest of a path after its root
+_PATH_TAIL = rf"(?:/{_PATH_REST})?"  # an optional /... after a known root
+_WIN_FIRST = rf"[^{_PATH_STOP}/:]+"  # first Windows segment: also stops at / and :
+_WIN_NEXT = rf"[^{_PATH_STOP}]+"
 _SEP = r"""[\s"'<>`()\[\]{},;|]"""
 
 _DATA_URI = re.compile(r"""(?<![A-Za-z0-9])(data:[A-Za-z0-9/+.;=_-]*,[^\s"'()<>]*)""")
@@ -126,6 +151,41 @@ _VERSION_MARK = re.compile(
     r"|\b(?:python|oid|openssl|java|ruby|php|chrome|firefox|safari)\s"
     r"|==|>=|<=|~=|\^)"
     r"\s*:?\s*$"
+)
+
+# A browser user-agent product token right before the number: `Chrome/131.0.0.0`.
+# Named products only; a generic `word/` would also spare `https://host/1.2.3.4`.
+_UA_PRODUCT = re.compile(
+    # The token starts the text or follows whitespace, `(` or `;`, so a
+    # `/chrome/` path segment does not count.
+    r"(?i)(?<![^\s(;])(?:Chrome|Chromium|CriOS|Firefox|FxiOS|Safari|AppleWebKit"
+    r"|Version|Edg|Edge|OPR|Mozilla|HeadlessChrome)/$"
+)
+
+# Geo in running text: a location word, up to two words, then the pair. A unit
+# after the pair means it is a measurement (`12.3456, 78.9012 ms`), not a place.
+_GEO_CUES = (
+    "at|near|nearby|around|located|location|pin|pinned|map|gps|address"
+    "|coordinates|coordinate|coords|place|home|office|hq|headquarters|site|city"
+    "|(?:lat|latitude)/(?:lng|lon|long|longitude)|lat|lng|lon|latitude|longitude"
+    "|latlng|latlon"
+)
+# Matched case-insensitively; `µ` is the micro sign, `μ` the Greek mu. A unit
+# counts only when whitespace, the end of the text or `.,;:!?)` follows it.
+_GEO_UNITS = (
+    "ms|msec|msecs|millisecond|milliseconds|usec|usecs|µs|μs|microsecond"
+    "|microseconds|nsec|nsecs|nanosecond|nanoseconds|second|seconds|minute"
+    "|minutes|hour|hours|day|days|px|dpi|fps|hz|khz|mhz|ghz|byte|bytes|kb|mb|gb"
+    "|tb|pb|kib|mib|gib|tib|bps|kbps|mbps|gbps"
+)
+# Short or word-like units: also must not be followed by a word (`x marks`,
+# `min walk`, `pt Reyes`, `em dash`), which would make them part of a sentence.
+_GEO_UNITS_SHORT = "s|sec|secs|us|ns|min|mins|h|hr|hrs|x|b|pt|em|rem|dp|deg"
+_UNIT_END = r"(?=\s|$|[.,;:!?)])"
+# After the pair: `%`, or a unit as above.
+_GEO_UNIT_AFTER = (
+    rf"(?![ \t]*(?:%|(?:{_GEO_UNITS}){_UNIT_END}"
+    rf"|(?:{_GEO_UNITS_SHORT}){_UNIT_END}(?![.,;:!?)]*[ \t]*[A-Za-z])))"
 )
 
 
@@ -208,6 +268,8 @@ def _ipv4_ok(m: re.Match[str]) -> bool:
     if ip.is_loopback or ip.is_unspecified or ip.is_multicast or ip.is_reserved:
         return False
     if any(ip in n for n in _DOC_V4):
+        return False
+    if _UA_PRODUCT.search(m.string[max(0, m.start(1) - 20) : m.start(1)]):
         return False
     if any(ip in n for n in _PRIVATE_V4):
         return True
@@ -316,7 +378,7 @@ def build_rules(ctx: Context) -> list[Rule]:
     )
     add(
         "home-path",
-        r"""(?<![A-Za-z0-9])[A-Za-z]:\\{1,2}Users\\{1,2}[^\s"'<>`)\]},;|\\/*?:]+(?:\\{1,2}[^\s"'<>`)\]},;|\\*?]+)*""",
+        rf"(?<![A-Za-z0-9])[A-Za-z]:\\{{1,2}}Users\\{{1,2}}{_WIN_FIRST}(?:\\{{1,2}}{_WIN_NEXT})*",
     )
     if home_alt:
         add(
@@ -327,11 +389,8 @@ def build_rules(ctx: Context) -> list[Rule]:
     # scratch-path
     tmp_alt = _alt(ctx.tmp)
     add("scratch-path", rf"(?<![\w.-])/private/tmp(?![A-Za-z0-9_.-]){_PATH_TAIL}")
-    add("scratch-path", r"(?<![\w.-])/tmp/claude-[^\s\"'<>`)\]},;|*?\\]*")
-    add(
-        "scratch-path",
-        r"(?<![\w.-])(?:/private)?/var/folders/[^\s\"'<>`)\]},;|*?\\]*",
-    )
+    add("scratch-path", rf"(?<![\w.-])/tmp/claude-{_PATH_REST}")
+    add("scratch-path", rf"(?<![\w.-])(?:/private)?/var/folders/{_PATH_REST}")
     if tmp_alt:
         add(
             "scratch-path",
@@ -345,14 +404,37 @@ def build_rules(ctx: Context) -> list[Rule]:
     # geo
     lat = r"-?(?:90|[1-8]?\d)\.\d{4,}"
     lon = r"-?(?:180|1[0-7]\d|[1-9]?\d)\.\d{4,}"
-    pair = rf"(?<![\d.])({lat}\s*,\s*{lon})(?![\d.])"
-    keys = r"coords?|coordinates|geo|geopoint|latlng|latlon|location|position|centre|center|marker"
+    core = rf"{lat}\s*,\s*{lon}"
+    pair = rf"(?<![\d.])({core})(?!\d|\.\d)"
+    # A pair, then any number of further pairs joined by `,`, `;`, and, to or or.
+    chain = (
+        rf"(?<![\d.])({core}(?:(?:\s*[,;]\s*|\s+(?:and|to|or)\s+){core})*)(?!\d|\.\d)"
+    )
+    keys = r"coords?|coordinates|geo|geopoint|gps|latlng|latlon|location|position|centre|center|marker"
     add("geo", rf"""(?i)\b(?:{keys})\b["']?\s*[:=]\s*[\[({{]?\s*{pair}""", group=1)
     # Standing alone: the line or cell holds the pair and nothing else.
     add(
         "geo",
         rf"""(?m)(?:^[ \t]*|(?<=[`"'>|])[ \t]*|(?<![\w\])\-.])\([ \t]*){pair}"""
         r"""(?=[ \t]*(?:[`"'<|)]|[.,;:!?]*[ \t]*$))""",
+        group=1,
+    )
+    # In a sentence: a location cue, at most two words, then the pair. A `:` or
+    # `=` may follow the cue directly (`GPS: ...`).
+    add(
+        "geo",
+        rf"(?i)(?<![\w-])(?:{_GEO_CUES})(?![\w-])(?:[ \t]+[A-Za-z']+){{0,2}}(?:[ \t]+|[ \t]*[:=][ \t]*){chain}"
+        rf"{_GEO_UNIT_AFTER}"
+        r"(?![ \t]*,[ \t]*-?\d)"  # a third number: not a lat, lng pair
+        r"(?![ \t]+-?\d+(?:\.\d+)?[ \t]*,)",  # not the start of an SVG points list
+        group=1,
+    )
+    # Degree notation with hemisphere letters needs no cue: `41.8781° N, 87.6298° W`.
+    lat_d = r"(?:90|[1-8]?\d)\.\d{2,}"
+    lon_d = r"(?:180|1[0-7]\d|[1-9]?\d)\.\d{2,}"
+    add(
+        "geo",
+        rf"(?<![\d.])({lat_d}[ ]?°?[ ]?[NS](?![A-Za-z])[ ]?,?[ ]?{lon_d}[ ]?°?[ ]?[EW](?![A-Za-z]))",
         group=1,
     )
     add(
@@ -380,25 +462,31 @@ def _placeholder(category: str) -> str:
 
 
 def _apply(rule: Rule, text: str, counts: dict[str, int]) -> str:
-    ph = _placeholder(rule.category)
+    placeholder = _placeholder(rule.category)
 
     def repl(m: re.Match[str]) -> str:
         if rule.accept is not None and not rule.accept(m):
             return m.group(0)
         counts[rule.category] = counts.get(rule.category, 0) + 1
         if rule.group == 0:
-            return ph
-        base = m.start(0)
-        s, e = m.start(rule.group) - base, m.end(rule.group) - base
-        whole = m.group(0)
-        return whole[:s] + ph + whole[e:]
+            return placeholder
+        match_start = m.start(0)
+        group_start = m.start(rule.group) - match_start
+        group_end = m.end(rule.group) - match_start
+        matched = m.group(0)
+        return matched[:group_start] + placeholder + matched[group_end:]
 
     return rule.regex.sub(repl, text)
 
 
-def scrub_text(text: str, ctx: Context) -> tuple[str, dict[str, int]]:
-    """Return the scrubbed text and the count removed per category."""
-    rules = build_rules(ctx)
+def scrub_text(
+    text: str, ctx: Context, rules: list[Rule] | None = None
+) -> tuple[str, dict[str, int]]:
+    """Return the scrubbed text and the count removed per category.
+
+    `rules` is `build_rules(ctx)`; pass it to reuse one build across calls."""
+    if rules is None:
+        rules = build_rules(ctx)
     counts: dict[str, int] = {}
     parts = _DATA_URI.split(text)  # odd indexes are data: URIs, left as they are
     for i in range(0, len(parts), 2):
@@ -409,9 +497,11 @@ def scrub_text(text: str, ctx: Context) -> tuple[str, dict[str, int]]:
     return "".join(parts), counts
 
 
-def scan_text(text: str, ctx: Context) -> dict[str, int]:
+def scan_text(
+    text: str, ctx: Context, rules: list[Rule] | None = None
+) -> dict[str, int]:
     """Count what a scrub would remove, without changing anything."""
-    return scrub_text(text, ctx)[1]
+    return scrub_text(text, ctx, rules)[1]
 
 
 # --- CLI -------------------------------------------------------------------
@@ -430,35 +520,58 @@ def _read(path: Path) -> str:
         raise InputError(f"{path.name}: {exc.strerror}") from None
 
 
-def run(paths: list[Path], ctx: Context, check_only: bool) -> dict:
+@dataclass
+class FileResult:
+    file: str  # relative to the folder the files share
+    removed: dict[str, int]
+    remaining: dict[str, int]
+
+
+@dataclass
+class RunResult:
+    mode: str  # "check" or "scrub"
+    files: list[FileResult]
+
+    @property
+    def removed(self) -> int:
+        return sum(sum(f.removed.values()) for f in self.files)
+
+    @property
+    def remaining(self) -> int:
+        return sum(sum(f.remaining.values()) for f in self.files)
+
+    @property
+    def check(self) -> str:
+        return "pass" if self.remaining == 0 else "fail"
+
+    def to_json(self) -> dict:
+        return {
+            "mode": self.mode,
+            "files": [asdict(f) for f in self.files],
+            "removed": self.removed,
+            "remaining": self.remaining,
+            "check": self.check,
+        }
+
+
+def run(paths: list[Path], ctx: Context, check_only: bool) -> RunResult:
     base = Path(os.path.commonpath([str(p.resolve().parent) for p in paths]))
-    files = []
+    rules = build_rules(ctx)
+    files: list[FileResult] = []
     texts = [_read(path) for path in paths]  # every file is readable before any write
     for path, text in zip(paths, texts):
         if check_only:
             removed: dict[str, int] = {}
-            remaining = scan_text(text, ctx)
+            remaining = scan_text(text, ctx, rules)
         else:
-            new, removed = scrub_text(text, ctx)
+            new, removed = scrub_text(text, ctx, rules)
             if new != text:
                 path.write_bytes(new.encode("utf-8"))
-            remaining = scan_text(_read(path), ctx)
+            remaining = scan_text(_read(path), ctx, rules)
         files.append(
-            {
-                "file": str(path.resolve().relative_to(base)),
-                "removed": removed,
-                "remaining": remaining,
-            }
+            FileResult(str(path.resolve().relative_to(base)), removed, remaining)
         )
-    n_removed = sum(sum(f["removed"].values()) for f in files)
-    n_remaining = sum(sum(f["remaining"].values()) for f in files)
-    return {
-        "mode": "check" if check_only else "scrub",
-        "files": files,
-        "removed": n_removed,
-        "remaining": n_remaining,
-        "check": "pass" if n_remaining == 0 else "fail",
-    }
+    return RunResult("check" if check_only else "scrub", files)
 
 
 def _by_category(counts: dict[str, int]) -> str:
@@ -466,26 +579,26 @@ def _by_category(counts: dict[str, int]) -> str:
     return ", ".join(items) if items else "none"
 
 
-def format_text(result: dict) -> str:
+def format_text(result: RunResult) -> str:
     """Run-log shaped rows: categories list what was removed (what was found
     in check mode)."""
     rows = [("file", "removed", "remaining", "by category")]
-    for f in result["files"]:
-        shown = f["removed"] or f["remaining"]
+    for f in result.files:
+        shown = f.removed or f.remaining
         rows.append(
             (
-                f["file"],
-                str(sum(f["removed"].values())),
-                str(sum(f["remaining"].values())),
+                f.file,
+                str(sum(f.removed.values())),
+                str(sum(f.remaining.values())),
                 _by_category(shown),
             )
         )
-    rows.append(("total", str(result["removed"]), str(result["remaining"]), ""))
+    rows.append(("total", str(result.removed), str(result.remaining), ""))
     widths = [max(len(r[i]) for r in rows) for i in range(3)]
     lines = [
         " | ".join(r[i].ljust(widths[i]) for i in range(3)) + " | " + r[3] for r in rows
     ]
-    lines.append(f"check | {result['check']}")
+    lines.append(f"check | {result.check}")
     return "\n".join(line.rstrip() for line in lines)
 
 
@@ -525,8 +638,8 @@ def main(argv: list[str] | None = None) -> int:
     except InputError as exc:
         print(f"scrub: {exc}", file=sys.stderr)
         return 2
-    print(json.dumps(result, indent=2) if args.json else format_text(result))
-    return 0 if result["check"] == "pass" else 1
+    print(json.dumps(result.to_json(), indent=2) if args.json else format_text(result))
+    return 0 if result.check == "pass" else 1
 
 
 if __name__ == "__main__":
