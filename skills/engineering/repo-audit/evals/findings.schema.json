@@ -185,14 +185,16 @@
         "new",
         "fixed",
         "still_open",
-        "not_rechecked"
+        "not_rechecked",
+        "not_reraised"
       ],
       "properties": {
         "previous_url": { "type": "string" },
         "new": { "type": "array", "items": { "type": "string" } },
         "fixed": { "type": "array", "items": { "type": "string" } },
         "still_open": { "type": "array", "items": { "type": "string" } },
-        "not_rechecked": { "type": "array", "items": { "type": "string" } }
+        "not_rechecked": { "type": "array", "items": { "type": "string" } },
+        "not_reraised": { "type": "array", "items": { "type": "string" } }
       }
     }
   },

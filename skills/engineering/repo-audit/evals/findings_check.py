@@ -7,6 +7,7 @@ just the keywords findings.schema.json uses.
 from __future__ import annotations
 
 import re
+from collections.abc import Iterable
 from typing import Any, NamedTuple
 
 AREAS = [
@@ -373,32 +374,100 @@ def _keys(doc: dict) -> list[str]:
     return seen
 
 
-def diff_runs(prev: dict, cur: dict) -> dict[str, list[str]]:
+def diff_input_errors(doc: Any) -> list[str]:
+    """Why a previous findings.json cannot be diffed, empty when it can.
+
+    Checks only what the diff reads, not the full schema: a baseline from an older
+    schema (no `go_public`, retired lens names) still diffs. `area` and `severity`
+    are optional; a string when present.
+    """
+    if not isinstance(doc, dict):
+        return ["not a JSON object"]
+    findings = doc.get("findings")
+    if not isinstance(findings, list):
+        return ["`findings` is not a list"]
+    errors: list[str] = []
+    for i, f in enumerate(findings):
+        if not isinstance(f, dict):
+            errors.append(f"findings[{i}]: not an object")
+            continue
+        key = f.get("key")
+        if not isinstance(key, str):
+            errors.append(f"findings[{i}]: `key` is not a string")
+        elif parse_key(key) is None:
+            errors.append(f"findings[{i}]: malformed key {key!r}")
+        for name in ("area", "severity"):
+            if name in f and not isinstance(f[name], str):
+                errors.append(f"findings[{i}]: `{name}` is not a string")
+    return errors
+
+
+def changed_paths_cover(path: str, changed: list[str]) -> bool:
+    """Whether a change touches a key's path: a file or a directory; `.` is the whole repo."""
+    path = _norm_path(path).rstrip("/")
+    if path in ("", "."):
+        return bool(changed)
+    return any(c == path or c.startswith(path + "/") for c in map(_norm_path, changed))
+
+
+def _areas_by_key(doc: dict) -> dict[str, str]:
+    out: dict[str, str] = {}
+    for f in _dicts(doc.get("findings")):
+        key, area = f.get("key"), f.get("area")
+        if isinstance(key, str) and isinstance(area, str):
+            out.setdefault(key, area)
+    return out
+
+
+def diff_runs(
+    prev: dict,
+    cur: dict,
+    *,
+    not_rechecked: Iterable[str] = (),
+    changed: list[str] | None = None,
+) -> dict[str, list[str]]:
     """Compare two runs on `key`.
 
-    new: only in cur. still_open: in both. fixed: in prev only and its area was
-    assessed in cur. not_rechecked: in prev only and its area was not assessed in
-    cur (a depth difference, say), so absence proves nothing.
+    new: only in cur. still_open: in both. A key in prev only is:
+    - not_rechecked: its area (the prev finding's `area`, else the key's prefix) was
+      not assessed in cur, or a lens named it in `not_rechecked` (sampled out, not
+      read). Absence proves nothing.
+    - not_reraised: the code did not change under its path, or the commits could not
+      be compared (`changed` is None). Absence is noise, not a fix.
+    - fixed: re-checked, and a changed file lies under its path.
+
+    changed is the files changed between the two pinned commits (`git diff
+    --name-only --no-renames <prev>..<cur>`), [] when the commits are equal. A key
+    named in `not_rechecked` that is still in cur stays still_open.
     """
     before, after = _keys(prev), _keys(cur)
     areas = _scorecard_areas(cur)
+    prev_area = _areas_by_key(prev)
+    named = set(not_rechecked)
     out: dict[str, list[str]] = {
-        "new": [],
+        "new": [k for k in after if k not in before],
         "fixed": [],
-        "still_open": [],
+        "still_open": [k for k in before if k in after],
         "not_rechecked": [],
+        "not_reraised": [],
     }
-    out["new"] = [k for k in after if k not in before]
-    out["still_open"] = [k for k in before if k in after]
     for key in before:
         if key in after:
             continue
         parsed = parse_key(key)
-        row = areas.get(parsed[0]) if parsed else None
+        area = prev_area.get(key) or (parsed[0] if parsed else "")
+        row = areas.get(area)
         assessed = (
             row is not None
             and row.get("applies") is True
             and row.get("verdict") != "not_assessed"
         )
-        out["fixed" if assessed else "not_rechecked"].append(key)
+        if not assessed or key in named:
+            out["not_rechecked"].append(key)
+        elif changed is None or not (
+            parsed and changed_paths_cover(parsed[2], changed)
+        ):
+            out["not_reraised"].append(key)
+        else:
+            out["fixed"].append(key)
     return out
