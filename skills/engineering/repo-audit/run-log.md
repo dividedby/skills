@@ -29,10 +29,10 @@ session's context size when the stage ended. The harness does not report
 main-session tokens per stage, so none are recorded.
 
 ```text
-stage        | start | end   | agent tokens  | main context at end
-1 Scope      | 21:02 | 21:09 | 146k (helper) | 92k
-2 Capture    | 21:09 | 21:21 | 0             | 160k
-3 Lenses     | 21:21 | 21:40 | 219k          | 240k
+stage        | start | end   | agent tokens | main context at end
+1 Scope      | 21:02 | 21:09 | 146k         | 92k
+2 Capture    | 21:09 | 21:21 | 0            | 160k
+3 Lenses     | 21:21 | 21:40 | 219k         | 240k
 ```
 
 ## Agents
