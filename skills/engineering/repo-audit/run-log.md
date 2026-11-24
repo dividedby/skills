@@ -37,10 +37,11 @@ stage        | start | end   | agent tokens | main context at end
 
 ## Agents
 
-One row per agent: each lens, and the rules-harvest helper when Stage 1 used
-one (it is not a lens). Findings are Blocker / High / Med / Low. A lens not
-launched has no row here; State names it and why. Status is `running`, `running (retry)`, `done`, `partial (reason)` or
-`failed (reason)`. `partial` keeps some output; `failed` left nothing usable, so
+One row per agent: each lens, and each helper the run used (`rules-harvest`,
+`fleet-check`, `findings-extract`; a helper is not a lens). Findings are Blocker
+/ High / Med / Low. A lens not launched has no row here; State names it and why.
+Status is `running`, `running (retry)`, `done`, `done (not progressive)`,
+`partial (reason)` or `failed (reason)`. `partial` keeps some output; `failed` left nothing usable, so
 its areas are Not assessed.
 
 ```text
@@ -73,7 +74,8 @@ made.
 
 ## Read-only proof
 
-One `process started` row per instance Stage 2 starts: its role, port, PID and
+One `process started` row per instance Stage 2 starts (a `process restarted` row
+when the architecture lens restarts the second one, with the old and new PID): its role, port, PID and
 data directory (in the scratchpad), and when it was stopped. Stage 6's preview
 server is one more row: its port, PID and the publish folder it serves. One
 `after gate` row per gate or scan that runs the repo's code, and one per lens
@@ -108,7 +110,8 @@ Stage 6: path list              | Stage 1 snapshot (8c02d19) | differs: default.
 Stage 6: HEAD                   | 8c02d19          | 8c02d19
 Stage 6: files newer than the marker | Stage 1 marker | default.profraw (breach), and <repo root>, which holds it
 process started                 | primary :8080 pid 4121 data $B/data/a | stopped 21:20
-process started                 | second :8081 pid 4130 data $B/data/b | stopped 21:20, before Stage 4
+process started                 | second :8081 pid 4130 data $B/data/b | stopped 21:31 (restarted below)
+process restarted               | second :8081 pid 4130 -> 4188 (down-service test) | old pid stopped 21:31; pid 4188 stopped 21:50, before Stage 4
 process started                 | preview :52814 pid 5230 serving $B/publish | stopped 22:41, before publish
 ```
 
@@ -154,7 +157,7 @@ market        | not launched (standard four-agent cap)
 ## Totals against budget
 
 The budget is the row in [`SKILL.md`](./SKILL.md#lenses-depth-and-budgets) for the
-run's depth and tier. Agent tokens include the rules-harvest helper. A measure
+run's depth and tier. Agent tokens include every helper. A measure
 over its budget by more than 50% is marked in `over` with by how much, and the
 page and the closing message say so. Main-session context is reported, not
 budgeted.

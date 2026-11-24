@@ -1,7 +1,8 @@
 # Repo Audit — Fleet Standards Check
 
-The main session checks the audited repo against the fleet-wide repo standards:
-the checklist in `dividedby/claude-config` at `docs/standards.md`. Each row of
+The main session checks the audited repo against the fleet-wide repo standards
+(it may hand the check to the `fleet-check (helper)`, [`SKILL.md`](./SKILL.md)
+Lenses, depth and budgets): the checklist in `dividedby/claude-config` at `docs/standards.md`. Each row of
 that checklist is one rule, the repos it applies to, a read-only check and the
 document it comes from. This file says how to read it, run it and report it.
 The checklist owns the rules; nothing here restates them. The rows are house
