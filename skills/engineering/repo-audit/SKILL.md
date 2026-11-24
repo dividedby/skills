@@ -333,7 +333,7 @@ briefs toward it.
 6's `diff` bullet directs: the diff reads only `findings[].key`, and `area` and
 `severity` when present, so a schema mismatch elsewhere does not matter. Keep
 its findings (key, area, title, evidence path) for Stage 3 and Stage 4, and its
-pinned commit (the profile's `commit` row). Compute the changed paths read-only:
+pinned commit (the `profile` row whose `fact` is `commit`). Compute the changed paths read-only:
 `git diff --name-only --no-renames <previous commit> <pinned commit>`, empty when
 the commits are equal. When the previous commit is missing or not in the clone,
 the changed paths are unknown: add a Guesses row and carry on.
@@ -599,15 +599,16 @@ sections:
   - `id`: the page anchor: `fs-<row id>` for a fleet fail, otherwise
     `<area id>-<n>`.
   - `key`: stable across runs: `<area id>:<rule id or check>:<primary path>`.
-    A key reused from the previous run (Stage 4) keeps its old area id and
-    check name, even when the finding's `area` now differs. The rule id is the fleet row id; otherwise a short name for the check (a
+    The rule id is the fleet row id; otherwise a short name for the check (a
     repo rule too: `rules.md` ids are per run, so they are not keys). For
     example `security:secret-scan:.github/workflows` on a web app or
     `ops-release:no-rollback:ops/deploy.sh` on an infra repo. Use these names
     when the check applies, so keys match across runs: `secret-scan` (a
     hard-coded secret), `stale-constant` (a dated value past its date),
     `doc-command-missing` (a documented command that does not exist),
-    `duplicate-file` (identical files); otherwise a short kebab-case name.
+    `duplicate-file` (identical files); otherwise a short kebab-case name. A
+    key reused from the previous run (Stage 4) keeps its old area id and check
+    name, even when the finding's `area` now differs.
   - `area`: the area id from [`rubric.md`](./rubric.md).
   - `severity`: `blocker`, `high`, `med` or `low`.
   - `title`, `evidence`, `fix`, and `effort` (`S`, `M` or `L`).
