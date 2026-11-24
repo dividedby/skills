@@ -101,6 +101,11 @@ CAUGHT = [
     ),
     ("cued pair, then a bare x", "pin at 41.8781, -87.6298 x", "geo"),
     ("pair with one value below 1", "at 0.3365, 6.7273", "geo"),
+    (
+        "chain where a later pair reaches 1",
+        "at 0.5123, 0.7456 and 41.8781, -87.6298",
+        "geo",
+    ),
     ("single lat value below 1", '"lat": 0.5123', "geo"),
     ("cued pair, then x marks", "located at 41.8781, -87.6298 x marks", "geo"),
     ("cued pair, then pt Reyes", "office at 41.8781, -87.6298 pt Reyes", "geo"),
