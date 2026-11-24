@@ -192,18 +192,46 @@ function undeclaredColours(entries, declared) {
 // rects: [{selector, w, h, disabled, inline}]. Disabled controls and links
 // inside running text are exempt (WCAG 2.2 SC 2.5.8). The spacing exception
 // (an undersized target with enough clear space around it passes) is NOT
-// modelled, so the probe can over-report.
-function filterTargets(rects, { min = 24, repoMin = null } = {}) {
+// modelled, so the probe can over-report. A repo minimum that its UI doc ties
+// to touch (repoMinPointer "coarse") applies only in a cell run with a coarse
+// pointer; "any" applies in every cell.
+function filterTargets(
+  rects,
+  { min = 24, repoMin = null, repoMinPointer = "any", pointer = "fine" } = {},
+) {
   const live = rects.filter((r) => !r.disabled && !r.inline);
   const under = (limit) =>
     live
       .filter((r) => r.w < limit || r.h < limit)
       .map(({ selector, w, h }) => ({ selector, w, h }));
+  const repoMinApplies =
+    !!repoMin && (repoMinPointer === "any" || pointer === "coarse");
   return {
     small: under(min),
-    belowRepoMin: repoMin ? under(repoMin) : [],
+    belowRepoMin: repoMinApplies ? under(repoMin) : [],
     repoMin: repoMin ?? null,
+    pointer,
+    repoMinApplies,
   };
+}
+
+// boxes: [{selector, scrollWidth, clientWidth, dialog, wrapsTable}] from open
+// dialogs and sideways scrollers. A box that scrolls or clips sideways inside
+// itself is reported, except a scroller around a table or code block (an
+// intended wrapper); a dialog is always reported. Widest excess first.
+function findInnerOverflow(boxes) {
+  return boxes
+    .filter((b) => b.scrollWidth > b.clientWidth + 1)
+    .filter((b) => b.dialog || !b.wrapsTable)
+    .sort(
+      (a, b) => b.scrollWidth - b.clientWidth - (a.scrollWidth - a.clientWidth),
+    )
+    .map(({ selector, scrollWidth, clientWidth, dialog }) => ({
+      selector,
+      scrollWidth,
+      clientWidth,
+      dialog: !!dialog,
+    }));
 }
 
 // rects: [{selector, left, right, parentRight}]. Reports an element only when
@@ -281,9 +309,11 @@ function summariseCell(cell) {
   const spaced = cell.copy.spaceDelimited !== false;
   const counts = {
     axe: cell.axe.length,
-    overflow: cell.overflow.present
-      ? Math.max(cell.overflow.elements.length, 1)
-      : 0,
+    // The page scrolling sideways, plus boxes that overflow inside themselves
+    // (a cell from before `inner` existed has none).
+    overflow:
+      (cell.overflow.present ? Math.max(cell.overflow.elements.length, 1) : 0) +
+      (cell.overflow.inner?.length ?? 0),
     smallTargets: cell.targets.small.length,
     belowRepoMin: cell.targets.belowRepoMin.length,
     console: cell.console.length,
@@ -349,6 +379,49 @@ function summariseScreens(cells) {
     cells: cells.length,
     failingCells: rows.reduce((n, r) => n + r.failingCells, 0),
   };
+}
+
+// cells: parsed cell JSON. Failing checks grouped by signature, so a failure
+// that repeats across cells (a site-wide axe rule) is one group with a count
+// and the first cell that showed it, which gets the capture. Signature: the
+// check name, plus the rule id for axe and the first offending selector for
+// overflow (page and inner are separate). Biggest groups first.
+function distinctFailures(cells) {
+  const groups = new Map();
+  for (const cell of cells) {
+    const keys = new Map();
+    for (const check of summariseCell(cell).failing) {
+      if (check === "axe") {
+        for (const v of cell.axe) keys.set("axe\0" + v.rule, [check, v.rule]);
+      } else if (check === "overflow") {
+        const page = cell.overflow.present
+          ? (cell.overflow.elements[0]?.selector ?? "page")
+          : null;
+        const inner = cell.overflow.inner?.[0]?.selector ?? null;
+        for (const key of [page, inner])
+          if (key !== null) keys.set("overflow\0" + key, [check, key]);
+      } else {
+        keys.set(check, [check, check]);
+      }
+    }
+    for (const [id, [check, key]] of keys) {
+      const g = groups.get(id) ?? {
+        check,
+        key,
+        cells: 0,
+        first: {
+          screen: cell.screen,
+          state: cell.state,
+          width: cell.width,
+          theme: cell.theme,
+          screenshot: cell.screenshot ?? null,
+        },
+      };
+      g.cells++;
+      groups.set(id, g);
+    }
+  }
+  return [...groups.values()].sort((a, b) => b.cells - a.cells);
 }
 
 // ---------- page code (runs in the browser; collects raw data only) ----------
@@ -459,6 +532,30 @@ function pageCollect() {
     });
   }
 
+  // Boxes that scroll or clip sideways inside themselves: open dialogs, and
+  // visible elements whose overflow-x is auto or scroll. The page itself does
+  // not scroll for these, so the page-level check misses them.
+  const dialogs = new Set(
+    document.querySelectorAll(
+      "dialog[open],[role=dialog],[role=alertdialog],[aria-modal=true]",
+    ),
+  );
+  const innerBoxes = [];
+  for (const el of new Set([...dialogs, ...all])) {
+    const isDialog = dialogs.has(el);
+    // Width first: it is cheaper than a computed style on every element.
+    if (el.scrollWidth <= el.clientWidth + 1 || !visible(el)) continue;
+    if (!isDialog && !/^(auto|scroll)$/.test(getComputedStyle(el).overflowX))
+      continue;
+    innerBoxes.push({
+      selector: sel(el),
+      scrollWidth: el.scrollWidth,
+      clientWidth: el.clientWidth,
+      dialog: isDialog,
+      wrapsTable: !!el.querySelector("table,pre"),
+    });
+  }
+
   // colours in use, and the colours declared as custom properties
   const colours = [];
   for (const el of all.slice(0, 4000)) {
@@ -545,6 +642,7 @@ function pageCollect() {
     })),
     targets,
     rects,
+    innerBoxes,
     colours,
     declared,
     focusable,
@@ -638,6 +736,8 @@ const FLAGS = {
   "delay-match": "string",
   "delay-ms": "number",
   "min-target": "number",
+  "min-target-pointer": "string",
+  pointer: "string",
   keyboard: "number",
 };
 
@@ -680,11 +780,14 @@ async function runCell(args, tools) {
   const theme = args.theme;
   const minTarget = args["min-target"] ? Number(args["min-target"]) : null;
   const delay = args["delay-ms"] ? Number(args["delay-ms"]) : 0;
+  const pointer = args.pointer ?? "fine";
   const browser = await tools.playwright.chromium.launch();
   try {
     const context = await browser.newContext({
       colorScheme: theme,
       viewport: { width, height: 800 },
+      // A touch device is what makes the product's (pointer: coarse) styles apply.
+      hasTouch: pointer === "coarse",
     });
     const page = await context.newPage();
     const consoleErrors = [];
@@ -740,6 +843,8 @@ async function runCell(args, tools) {
         theme,
         url: args.url,
         note: (s) => notes.push(String(s)),
+        // Where focus is now, in the shape of a keyboard step.
+        focus: () => page.evaluate(describeFocus),
       });
       await page.waitForTimeout(200);
     }
@@ -762,7 +867,17 @@ async function runCell(args, tools) {
     }));
     const overflow = findOverflow(raw.rects, raw.clientWidth, raw.scrollWidth);
     overflow.elements = capList(overflow.elements, truncated, "overflow");
-    const targets = filterTargets(raw.targets, { min: 24, repoMin: minTarget });
+    overflow.inner = capList(
+      findInnerOverflow(raw.innerBoxes),
+      truncated,
+      "overflow.inner",
+    );
+    const targets = filterTargets(raw.targets, {
+      min: 24,
+      repoMin: minTarget,
+      repoMinPointer: args["min-target-pointer"] ?? "any",
+      pointer,
+    });
     targets.small = capList(targets.small, truncated, "targets.small");
     targets.belowRepoMin = capList(
       targets.belowRepoMin,
@@ -778,6 +893,7 @@ async function runCell(args, tools) {
       state: args.state ?? "default",
       width,
       theme,
+      pointer,
       probe: tools.versions,
       axe: capList(axe, truncated, "axe"),
       overflow,
@@ -817,7 +933,12 @@ function summariseDir(dir) {
     .filter((f) => f.endsWith(".json") && f !== "summary.json")
     .map((f) => JSON.parse(fs.readFileSync(path.join(dir, f), "utf8")));
   const failing = cells.map(summariseCell).filter((c) => c.failing.length);
-  return { schema: 1, ...summariseScreens(cells), failing };
+  return {
+    schema: 1,
+    ...summariseScreens(cells),
+    failing,
+    distinct: distinctFailures(cells),
+  };
 }
 
 async function main() {
@@ -832,6 +953,15 @@ async function main() {
     if (!args[k]) throw new Error("missing --" + k);
   if (!["light", "dark"].includes(args.theme))
     throw new Error("--theme is light or dark");
+  if (args.pointer && !["fine", "coarse"].includes(args.pointer))
+    throw new Error("--pointer is fine or coarse");
+  if (
+    args["min-target-pointer"] &&
+    !["any", "coarse"].includes(args["min-target-pointer"])
+  )
+    throw new Error("--min-target-pointer is any or coarse");
+  if (args["min-target-pointer"] && !args["min-target"])
+    throw new Error("--min-target-pointer needs --min-target");
   if (!(Number(args.width) > 0))
     throw new Error("--width is a number of CSS px");
   if (
@@ -883,12 +1013,14 @@ module.exports = {
   undeclaredColours,
   filterTargets,
   findOverflow,
+  findInnerOverflow,
   detectTrap,
   parseArgs,
   tabOrderJumps,
   stripQuery,
   summariseCell,
   summariseScreens,
+  distinctFailures,
 };
 
 if (require.main === module) {

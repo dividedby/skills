@@ -97,7 +97,8 @@ REPO-AUDIT REPORT TEMPLATE. FILL RULES
   A failing check that matters is also a finding in its area: axe, targets and overflow in `accessibility`, copy metrics in
   `content-branding`, Lighthouse in `performance`, keyboard failures in `usability`; the Link cell carries its id. Coverage
   ticks Measured and Browsed for the areas the probe ran for, and its Reason lists each dimension not run. SCREENS_INTRO says
-  which cells were captured and why (every failing cell, the first cell per screen).
+  which cells were captured and why (the first cell per screen, and one cell per distinct failure in `summary.json`
+  `distinct`, not every failing cell).
 - Design report: when the design lens ran, METHOD_NOTE also links its report file (published beside the page), which holds the
   copy table, the brand inventory and the walkthrough logs. The page adds no table for them: their findings are finding-rows in
   `accessibility`, `content-branding` and `usability` and cite the report section, and the AREA_INTRO of each of those
@@ -143,6 +144,12 @@ REPO-AUDIT REPORT TEMPLATE. FILL RULES
   never new markup. Keep tables inside .tablewrap so the page never scrolls sideways.
 - Each screenshot's src is {{IMG_NAME}}: replace it with that image's data: URI. Class tokens take only the values listed
   in parentheses below.
+- No captures: when no screen has a capture (no UI, every capture dropped for privacy, or a `quick` run), delete the Screens
+  h2 block and its nav link, and write "No captures: <reason>" in METHOD_NOTE.
+- Colours: inline HTML in a cell or mockup uses only the page's custom properties, never a literal colour, so both themes hold.
+  Cells: `--bg --surface --ink --ink-2 --ink-3 --rule --accent --accent-soft --hi --hi-bg --blocker --blocker-bg --med --med-bg
+  --low --low-bg --good --good-bg`. Mockups: only `--mk-desk --mk-win --mk-bar --mk-label --mk-2 --mk-3 --mk-sep --mk-ft
+  --mk-accent --mk-green --mk-shadow`.
 - Market output is context, not an area: it appears in Research and as evidence in External facts and Tech stack findings. A plan
   item that rests on it links to #research.
 - Mockups: only when the design lens reported a High or Blocker finding, at most three, each behind one and showing its
