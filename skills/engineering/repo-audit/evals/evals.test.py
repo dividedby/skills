@@ -35,6 +35,7 @@ SAMPLE = json.loads((HERE / "sample-findings.json").read_text())
 
 # Assembled here so this file holds no literal a secret scanner would flag.
 SECRET_RE = re.compile("g" + "hp_[0-9A-Za-z]{36}")
+LARGE = "large-workspace"
 
 
 def tracked(repo: Path) -> list[str]:
@@ -54,13 +55,19 @@ class FixtureTests(unittest.TestCase):
         cls.addClassCleanup(cls.tmp.cleanup)
         root = Path(cls.tmp.name)
         cls.first = fixtures.generate(root / "first")
-        cls.second = fixtures.generate(root / "second")
+        # The second build skips the Large fixture to keep the self-test fast;
+        # its determinism is checked on the fast-import stream instead.
+        cls.second = fixtures.generate(
+            root / "second", only=[n for n in fixtures.FIXTURES if n != LARGE]
+        )
         cls.root = root
 
     def test_generation_is_idempotent(self):
-        for name in fixtures.FIXTURES:
+        for name in self.second:
             with self.subTest(name):
                 self.assertEqual(head(self.first[name]), head(self.second[name]))
+        build = fixtures._BUILDERS[LARGE]
+        self.assertEqual(fixtures._stream(build()), fixtures._stream(build()))
 
     def test_regenerating_over_an_existing_folder_gives_the_same_commits(self):
         again = fixtures.generate(
@@ -122,7 +129,9 @@ class FixtureTests(unittest.TestCase):
         elif "make synth" in text:
             self.assertNotRegex((repo / "Makefile").read_text(), r"(?m)^synth:")
         elif "pnpm run report" in text:
-            self.assertNotIn('"report"', (repo / "package.json").read_text())
+            for name in names:
+                if name.endswith("package.json"):
+                    self.assertNotIn('"report"', (repo / name).read_text(), name)
         elif "./bin/export" in text:
             self.assertFalse(any(n.startswith("bin/") for n in names))
         elif "npm run build" in text:
@@ -177,6 +186,34 @@ class FixtureTests(unittest.TestCase):
             n for n in tracked(repo) if re.fullmatch(r"packages/[^/]+/package\.json", n)
         ]
         self.assertEqual(len(manifests), 3)
+
+    def test_large_workspace_is_large_and_its_planted_files_are_where_a_sample_looks(
+        self,
+    ):
+        repo = self.first[LARGE]
+        exp = EXPECTATIONS["fixtures"][LARGE]
+        names = tracked(repo)
+        lines = sum(
+            len((repo / rel).read_text().splitlines())
+            for rel in names
+            if rel.endswith(".js")
+        )
+        self.assertGreater(lines, 100000)
+        manifests = [
+            n for n in names if re.fullmatch(r"packages/[^/]+/package\.json", n)
+        ]
+        self.assertGreaterEqual(len(manifests), exp["profile"]["packages_min"])
+        # Nothing the tier rule's exclusions (types.md) would drop from the count.
+        excluded = (
+            r"(^|/)(vendor|dist|node_modules|fixtures?|__snapshots__)/|\.min\.|\.lock$"
+        )
+        self.assertEqual([n for n in names if re.search(excluded, n)], [])
+        planted = {p["id"]: p["paths"] for p in exp["planted"]}
+        self.assertRegex(
+            planted["stale-constant"][0], r"^packages/[^/]+/src/index\.js$"
+        )
+        largest = sorted(names, key=lambda n: (repo / n).stat().st_size, reverse=True)
+        self.assertEqual(sorted(largest[:2]), sorted(planted["duplicate-file"]))
 
     def test_unknown_type_matches_no_type_detection(self):
         # types.md Detect lines: userscript, library manifest, CLI, native app, server,
@@ -375,6 +412,106 @@ class ExpectationTests(unittest.TestCase):
     def test_malformed_document_fails_without_raising(self):
         self.assertEqual(self.failed({}, "quick")[:1], ["type"])
         self.assertFalse(fc.check_expectations([], self.EXP, "quick")[0].ok)
+
+
+# The sample's findings, re-keyed to the large fixture's planted paths.
+LARGE_KEYS = {
+    "security-1": "security:secret-scan:packages/api/src/config.js",
+    "external-facts-1": "external-facts:stale-constant:packages/billing/src/index.js",
+    "code-quality-1": "code-quality:duplicate-file:packages/cli/src/format.js",
+}
+
+
+class LargeExpectationTests(unittest.TestCase):
+    """The Large-tier expectations, checked against a synthetic sampled run."""
+
+    EXP = EXPECTATIONS["fixtures"][LARGE]
+
+    @classmethod
+    def large_sample(cls) -> dict:
+        doc = copy.deepcopy(SAMPLE)
+        fact = {r["fact"]: r for r in doc["profile"]}
+        fact["type"].update(
+            value="Monorepo (pnpm workspace)", source="pnpm-workspace.yaml"
+        )
+        fact["tier"].update(value="Large", source="git ls-files | wc -l: 113k lines")
+        doc["lens_coverage"] = [
+            {
+                "lens": lens,
+                "read": "read 60 of 618 files",
+                "chosen_by": "Large tier: entry points, 20 largest, top 20 by churn, 20 random",
+            }
+            for lens in ("code", "architecture")
+        ]
+        for finding in doc["findings"]:
+            finding["key"] = LARGE_KEYS[finding["id"]]
+        for card in doc["scorecard"]["areas"]:
+            want = cls.EXP["areas"][card["area"]]
+            if want is not None:
+                card["applies"] = want
+        tech = next(a for a in doc["scorecard"]["areas"] if a["area"] == "tech-stack")
+        tech.update(verdict="ready", not_assessed_reason=None)
+        doc["scorecard"]["packages"] = [
+            {
+                "package": f"@ledger/{pkg}",
+                "type": "library",
+                "verdict": "ready",
+                "not_assessed_reason": None,
+                "top_finding": None,
+            }
+            for pkg in ("core", "utils", "cli", "api", "billing", "store")
+        ]
+        return doc
+
+    def failed(self, doc: dict) -> list[str]:
+        return [
+            r.name for r in fc.check_expectations(doc, self.EXP, "quick") if not r.ok
+        ]
+
+    def test_the_synthetic_sample_is_valid_and_passes_at_quick(self):
+        doc = self.large_sample()
+        self.assertEqual(fc.validate(doc, SCHEMA), [])
+        self.assertEqual(self.failed(doc), [])
+
+    def test_a_lens_that_does_not_state_its_sample_fails_lens_coverage(self):
+        unsampled = {"read": "read everything", "chosen_by": "every file"}
+        cases = {
+            "one lens reads everything": lambda d: d["lens_coverage"][1].update(
+                unsampled
+            ),
+            "no lens_coverage rows": lambda d: d.update(lens_coverage=[]),
+            "no lens_coverage field": lambda d: d.pop("lens_coverage"),
+        }
+        for label, change in cases.items():
+            doc = self.large_sample()
+            change(doc)
+            with self.subTest(label):
+                self.assertEqual(self.failed(doc), ["lens coverage"])
+
+    def test_the_failure_names_the_lens_that_did_not_sample(self):
+        doc = self.large_sample()
+        doc["lens_coverage"][1].update(read="read everything", chosen_by="every file")
+        detail = next(
+            r.detail
+            for r in fc.check_expectations(doc, self.EXP, "quick")
+            if r.name == "lens coverage"
+        )
+        self.assertIn("architecture", detail)
+        self.assertNotIn("code,", detail)
+
+    def test_a_medium_tier_or_too_few_packages_fails(self):
+        doc = self.large_sample()
+        next(r for r in doc["profile"] if r["fact"] == "tier")["value"] = "Medium"
+        self.assertEqual(self.failed(doc), ["tier"])
+        doc = self.large_sample()
+        doc["scorecard"]["packages"].pop()
+        self.assertEqual(self.failed(doc), ["packages"])
+
+    def test_small_fixtures_do_not_expect_lens_coverage_to_sample(self):
+        results = fc.check_expectations(
+            SAMPLE, EXPECTATIONS["fixtures"]["single-script"], "quick"
+        )
+        self.assertNotIn("lens coverage", [r.name for r in results])
 
 
 class DiffTests(unittest.TestCase):
