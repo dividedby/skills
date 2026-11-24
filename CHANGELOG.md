@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
 ## [Unreleased]
 
+## [4.0.0] - 2026-11-24
+
+Rebuilds `repo-audit` as a read-only production-readiness audit (epic #611). It changes nothing in the repo and files no issues. It runs up to five parallel lenses, re-checks every high finding at its source, scrubs everything it publishes, and publishes one private report page with a Now/Next/Later plan. The 2026-11-23 QA runs' fixes are included.
+
 ### Added
 
 - `repo-audit`: the UI probe measures more. It lists dialogs and scrollers whose content is wider than the box (a dialog that clips at phone width has no page scrollbar, so it used to pass); such a cell now fails its overflow check, except a scroller around a table or code block. `--pointer coarse` runs a cell as a touch device so the product's `(pointer: coarse)` styles apply, and `--min-target-pointer coarse` applies the repo's touch-target minimum only in those cells. `ctx.focus()` in an actions module reports where focus is after a key press. The keyboard pass says why activating every control stays a manual step. The summary groups failures by signature, so a site-wide failure is captured once instead of once per failing cell, and the report template says what to do with zero captures and which colour tokens inline HTML may use.
