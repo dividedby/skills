@@ -48,4 +48,4 @@ leaves no lens able to walk a task or send a request.
   rest.
 - Lighthouse numbers are lab figures from a local build, labelled as such: total
   blocking time stands in for INP, and localhost leaves out network latency.
-- The `gate` job now sets up Node (the version `gate.yml` pins).
+- The `gate` job now sets up Node 22.
