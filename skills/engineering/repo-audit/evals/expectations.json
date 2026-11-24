@@ -49,7 +49,7 @@
         },
         {
           "id": "doc-command-missing",
-          "areas": ["feature-completeness"],
+          "areas": ["feature-completeness", "agent-readiness"],
           "check": "command|doc|readme|missing|undocumented|not-exist|nonexistent|drift",
           "paths": ["README.md"],
           "checked_at": ["standard"],
@@ -106,7 +106,7 @@
         },
         {
           "id": "doc-command-missing",
-          "areas": ["feature-completeness"],
+          "areas": ["feature-completeness", "agent-readiness"],
           "check": "command|doc|readme|missing|undocumented|not-exist|nonexistent|drift",
           "paths": ["README.md"],
           "checked_at": ["standard"],
@@ -166,7 +166,7 @@
         },
         {
           "id": "doc-command-missing",
-          "areas": ["feature-completeness"],
+          "areas": ["feature-completeness", "agent-readiness"],
           "check": "command|doc|readme|missing|undocumented|not-exist|nonexistent|drift",
           "paths": ["README.md"],
           "checked_at": ["standard"],
@@ -223,7 +223,7 @@
         },
         {
           "id": "doc-command-missing",
-          "areas": ["feature-completeness"],
+          "areas": ["feature-completeness", "agent-readiness"],
           "check": "command|doc|readme|missing|undocumented|not-exist|nonexistent|drift",
           "paths": ["README.md"],
           "checked_at": ["standard"],
@@ -295,7 +295,7 @@
         },
         {
           "id": "doc-command-missing",
-          "areas": ["feature-completeness"],
+          "areas": ["feature-completeness", "agent-readiness"],
           "check": "command|doc|readme|missing|undocumented|not-exist|nonexistent|drift",
           "paths": ["README.md"],
           "checked_at": ["standard"],
@@ -358,7 +358,7 @@
         },
         {
           "id": "doc-command-missing",
-          "areas": ["feature-completeness"],
+          "areas": ["feature-completeness", "agent-readiness"],
           "check": "command|doc|readme|missing|undocumented|not-exist|nonexistent|drift",
           "paths": ["README.md"],
           "checked_at": ["standard"],
