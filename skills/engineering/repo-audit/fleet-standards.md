@@ -6,14 +6,15 @@ that checklist is one rule, the repos it applies to, a read-only check and the
 document it comes from. This file says how to read it, run it and report it.
 The checklist owns the rules; nothing here restates them. The rows are house
 rules, so the section applies only to a repo that passes the ownership test
-([`SKILL.md`](./SKILL.md) Stage 1); section 2 says what a repo that fails gets.
+([`SKILL.md`](./SKILL.md) Stage 1); section 2 says what a repo that fails, or
+has no remote, gets.
 
 ## 1. Read the checklist fresh
 
-Skipped for a repo that fails the ownership test; `docs/testing.md` below is
-still read, since the test-suite review uses it on any repo. Otherwise read the
-checklist on every run; never reuse a copy from an earlier run or a vendored
-one.
+Skipped for a repo that fails the ownership test or has no remote;
+`docs/testing.md` below is still read, since the test-suite review uses it on
+any repo. Otherwise read the checklist on every run; never reuse a copy from an
+earlier run or a vendored one.
 `dividedby/claude-config` is private: a user with no read access and no local
 checkout lands in case 3, and the rest of the audit runs as normal.
 
@@ -52,8 +53,11 @@ remembered list of ids.
 
 **Ownership first.** A repo that fails the ownership test is "n/a (not a fleet
 repo)": the whole section is n/a, no row runs, and the page and the closing
-message say so. A prompt that trusts the repo does not change this: it lets the
-run execute the repo's code, and it does not make the repo a fleet repo.
+message say so. A repo with no remote is **Not assessed (Needs X: a remote)**:
+the whole section is Not assessed, no row runs, and the page and the closing
+message say so. A prompt that trusts the repo does not change either result:
+it lets the run execute the repo's code, and it does not make the repo a fleet
+repo.
 
 The `applies to` column names repo types and traits. Decide these facts once,
 in Stage 1, from the files (not from the repo's own claims). The Stage 1
@@ -73,12 +77,18 @@ applies to every repo). When the column uses a word this table and the
 profile do not cover, read it plainly, decide, and write the reading into
 that row's evidence. A row that does not apply is **n/a** with the reason ("no Swift").
 
+A language or stack word (Python, Go, Swift, shell) applies when the profile
+lists that language with tracked source. **Node** means the repo has a
+`package.json` that belongs to it; JavaScript or TypeScript with none (browser
+JS, a userscript) is not Node, and its Node rows are n/a ("no `package.json`").
+
 ## 3. Run each applicable row
 
 Set `$R` to the repo path and `$GH` to its `owner/name`.
 
-**No GitHub remote.** A repo that is local only, or on another host, has no
-`$GH`. Every row whose check uses `gh api` is **not checked (no GitHub
+**No GitHub remote.** A repo with no remote never reaches this section
+(section 2). A repo that passes through the index but is hosted outside GitHub
+has no `$GH`. Every row whose check uses `gh api` is **not checked (no GitHub
 remote)**; every other row runs. A row that asks for CI means any CI config, not
 only `.github/workflows`: a check that greps that path is a proxy, so read the
 other provider's config before failing the row. In a monorepo, a row whose
@@ -120,8 +130,16 @@ check at the repo's real user data, and keep recursive searches to the paths
 the check names.
 
 Then judge the output against the row's requirement, reading the matched file
-when the check is a proxy (a `grep` hit can be a comment). Each row gets one
-result:
+when the check is a proxy (a `grep` hit can be a comment). When a check measures
+something the Stage 1 profile also counted (test lines, source lines, file
+counts), compare the two. When they differ by more than about 2x, the check's
+pattern missed files (for example a case-sensitive glob that skips Swift
+`Tests/`): report both numbers in the evidence, judge the row on the profile's
+count, and name what the check missed. When a row's check names another document
+as its reference (the `labels` row's CORE tables in `dividedby/skills`
+`docs/agents/labels.md`), read that document at a pinned commit as section 1
+reads the checklist, and record its commit in the row's evidence. Each row gets
+one result:
 
 - **pass** — the requirement holds.
 - **fail** — it does not. A missing file the check needs is a fail, not an

@@ -283,19 +283,28 @@ execute repo code  | no (asked 21:03 CT, no answer by 21:05 CT) | the question
 ```
 
 - **Ownership test.** The maintainer owns the repo or the fleet includes it. It
-  passes when any leg holds: the remote is on GitHub and its owner is the
-  authenticated user or an org that user belongs to (`gh api user --jq .login`,
-  `gh api user/orgs --jq '.[].login'`); its `owner/name` is listed in
-  `dividedby/claude-config` `docs/repos.md`, read at a pinned commit the way
-  [`fleet-standards.md`](./fleet-standards.md) section 1 reads the checklist
-  (when the file cannot be read, that leg is skipped and the profile says so);
-  or it has no remote (local only). Anything else fails: another host, another
-  GitHub owner, or a `gh` that cannot say who the user is.
-- **Trust.** A repo is trusted when it passes the ownership test, or when the
-  user's prompt says it is trusted or its code may run. Otherwise it is
-  untrusted. A prompt override trusts the repo for running its code only; it
-  does not make it a fleet repo, so the fleet-standards section follows the
-  ownership test alone ([`fleet-standards.md`](./fleet-standards.md) section 2).
+  has three results: **pass**, **fail** and **no remote**. A repo with no remote
+  (local only) gets **no remote**. Otherwise it passes when either leg holds.
+  - **Owner leg:** the remote is on GitHub, its owner is the authenticated user
+    or an org that user belongs to (`gh api user --jq .login`,
+    `gh api user/orgs --jq '.[].login'`), and it is not a fork of a third-party
+    repo (`gh api repos/$GH --jq '.fork, .source.owner.login'`; a fork passes
+    this leg only when its source repo's owner also passes it).
+  - **Index leg:** its `owner/name` is listed in `dividedby/claude-config`
+    `docs/repos.md`, read at a pinned commit the way
+    [`fleet-standards.md`](./fleet-standards.md) section 1 reads the checklist
+    (when the file cannot be read, that leg is skipped and the profile says
+    so). It is the only way a third-party fork passes.
+
+  Anything else fails: another host, another GitHub owner, a third-party fork
+  not in the index, or a `gh` that cannot say who the user is.
+
+- **Trust.** A repo is trusted when it passes the ownership test, when the
+  result is no remote, or when the user's prompt says it is trusted or its code
+  may run. Otherwise it is untrusted. Fleet standards follow the ownership
+  result alone ([`fleet-standards.md`](./fleet-standards.md) section 2); a
+  prompt override trusts the repo for running its code only and never changes
+  that.
 - **Untrusted: ask once.** Before anything in Stage 2 runs, the main session
   asks the user one question: may this run execute the repo's code? It lists
   what would run: tests, builds, the app or dev server, the repo's gate
@@ -458,8 +467,8 @@ the repo's code follows the execute answer from Stage 1:
   the all-refs secret scan the go-public feasibility check reads.
 - **Fleet standards.** When the repo passes the ownership test, the main session
   runs the check in [`fleet-standards.md`](./fleet-standards.md) and fixes
-  nothing it finds; otherwise the section is "n/a (not a fleet repo)" and no row
-  runs.
+  nothing it finds; a repo with no remote is "Not assessed (Needs X: a remote)";
+  otherwise the section is "n/a (not a fleet repo)". Neither runs a row.
 
 **Done when:** each main screen has a capture (or the reason it has none), the
 captures sit in the scratchpad, a web UI has a probe cell set per main screen and
@@ -739,8 +748,8 @@ files.
 Close with a short message: the link, the overall verdict with any Blockers
 by name, one line per area (its verdict, or its Not-assessed reason), a line
 for the fleet-standards section (counts per result and the checklist commit, or
-"n/a (not a fleet repo)"), a trust line (the ownership result and the execute
-answer, with the areas it cost), a
+"n/a (not a fleet repo)", or "Not assessed (Needs X: a remote)"), a trust line
+(the ownership result and the execute answer, with the areas it cost), a
 line for Rules conformance (pass, fail and not-assessed counts),
 the top findings, what was verified and what was not, the run's totals (wall time and
 agent tokens, against the budget, with any measure over by more than 50% named

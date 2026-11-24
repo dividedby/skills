@@ -30,7 +30,8 @@ skipped with a reason.
 
 Fleet standards are a section, not an area, and are not in the table. They apply
 to fleet repos, as the ownership test in [`SKILL.md`](./SKILL.md) Stage 1
-decides. A repo that fails it gets "n/a (not a fleet repo)".
+decides. A repo that fails it gets "n/a (not a fleet repo)"; a repo with no
+remote gets "Not assessed (Needs X: a remote)".
 
 ## Areas
 
@@ -453,8 +454,8 @@ the fact, tool or need in the reason.
 - **Untrusted not run:** it needs code from an untrusted repo and the run was
   not allowed to execute it: the answer was No, or nobody answered
   ([`SKILL.md`](./SKILL.md) Stage 1, Ownership and trust).
-- **Needs X:** credentials, a service or a device the run does not have (for
-  example a GitHub remote). Name X.
+- **Needs X:** an input the run does not have: credentials, a service, a
+  device, a GitHub remote, or full git history (a shallow clone). Name X.
 - **Not selected:** the user limited the run to named packages. Name them.
 - **Lens failed:** the owning lens failed. Give its reason.
 - **Tool unavailable:** a scanner or browser the check needs is missing. Name it.

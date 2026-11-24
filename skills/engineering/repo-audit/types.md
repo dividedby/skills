@@ -122,6 +122,28 @@ output piped (non-TTY). Never point the probe at real accounts or data.
 - **Brief bullets:** Code: blocking calls on the request path. Architecture:
   read-only guarantees, redaction. Product: health and restart behaviour.
 
+### Serverless function or Worker
+
+- **Detect:** `wrangler.toml` or `wrangler.json(c)`, `serverless.yml`, a SAM or
+  CloudFormation template with `AWS::Serverless::Function` or
+  `AWS::Lambda::Function`, `netlify/functions/`, `api/` functions with a
+  `vercel.json`. Often a part inside an infra or web repo; profile it as its own
+  part.
+- **Added checks:** secrets come from the platform's secret store or bindings,
+  not plaintext config `vars`; a pinned compatibility date or runtime version;
+  routes, triggers and bindings match the docs; least-privilege role or
+  bindings; timeouts, memory and payload limits handled; no state assumed
+  between invocations.
+- **Commands:** a local build or bundle only (for example
+  `wrangler deploy --dry-run --outdir <scratchpad>`), inside the execution
+  boundary.
+- **Never:** deploy, `wrangler dev --remote`, `tail`, `sam deploy`, or anything
+  that contacts the provider or uses real credentials.
+- **Usually not applicable:** UI areas when it serves no UI (Not applicable: no
+  user-facing UI).
+- **Brief bullets:** Architecture: bindings, secrets, role scope. Product:
+  deploy path and blast radius. Code: cold-start and limit handling.
+
 ### Infra or ops
 
 - **Detect:** `*.tf` or `*.tofu`, `compose.yaml`, systemd units, Ansible, an
@@ -223,12 +245,26 @@ The page carries no separate list of "not assessed" rows.
 Stage 1 counts tracked source lines from `git ls-files` with `wc -l`, or
 `scc` or `tokei` when installed, and sets a tier.
 
+- **Counts.** Tracked source is code in any language; scripts, including an
+  extensionless file whose first line is a shebang; and config that is code: IaC
+  (`*.tf`, `*.tofu`), systemd units, Ansible, Dockerfiles and compose files, CI
+  workflows and build files. Prose and data (Markdown, plain text, CSV, JSON or
+  YAML data) do not count, except in a Docs, config or data repo, whose tier
+  comes from its main files.
+- **Test code** is counted separately and does not set the tier. A test file is
+  one under a directory named `test`, `tests`, `spec` or `__tests__` (any
+  case, at any depth), or matching `*.test.*`, `*.spec.*`, `test_*`,
+  `*_test.*`, `*Tests.swift`, `*-test.sh` or `*.bats`. Fixtures and snapshots go
+  with the exclusions. When test lines alone pass the Large threshold, the code
+  lens samples the tests as the Large tier does. This Stage 1 test-line count is
+  the one the fleet `test-size` row's numbers are compared against
+  ([`fleet-standards.md`](./fleet-standards.md) section 3).
 - **Exclusions.** Vendored files (third-party directories, tracked dependency
   trees), generated files (lockfiles, minified files, build output, files with a
   generated marker), fixtures (test data, snapshots, recorded responses) and
   binary or data blobs. The profile lists each exclusion with its line count and
-  counts test lines separately.
-- **Tiers**, from the lines left after exclusions. The thresholds are
+  the test lines separately.
+- **Tiers**, from the non-test source lines left after exclusions. The thresholds are
   approximate; more than about 1,000 tracked source files raises the tier by one.
   - **Small:** under about 2k lines. The main session reads everything.
   - **Medium:** up to about 50k lines. Each lens reads its areas in full where
