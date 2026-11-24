@@ -266,11 +266,19 @@ below), the names of the environment variables the demo or sample mode needs
 how its data can be isolated (a variable, flag, demo mode or temp profile, or
 none, and where it was found), the ports its docs reserve, the widths and themes
 it supports, the minimum target size its docs set, whether it is a hosted site,
-and the repo facts the fleet-standards check adds
-([`fleet-standards.md`](./fleet-standards.md) section 2). Write the profile as a
-table of `fact | value | source`. A part or package that matches no type, or a
-repo with none, follows the fallback in [`types.md`](./types.md). In a large
-monorepo, ask once which packages to audit when the run can ask.
+the private literals the repo's own rules name, and the repo facts the
+fleet-standards check adds ([`fleet-standards.md`](./fleet-standards.md)
+section 2). Write the profile as a table of `fact | value | source`. A part or
+package that matches no type, or a repo with none, follows the fallback in
+[`types.md`](./types.md). In a large monorepo, ask once which packages to audit
+when the run can ask.
+
+**Private literals.** A private string the repo's own rules name (an agent
+file's hard rule about a household ZIP, a town or a person's name) is listed in
+the profile by kind with its source file and line, never its value. The values go
+to `<scratchpad>/private-literals.txt`, one per line, which never goes in the
+publish folder. A lens that reports a hard-coded private value (a Privacy
+finding such as an app default) adds it to the file too.
 
 **Ownership and trust.** Two results, each recorded in the profile with its
 source:
@@ -689,9 +697,9 @@ sections:
   ([`template.html`](./template.html) header) and marks a still-open item whose
   severity changed.
 
-The page ships with `run-log.md`, `findings.json` and the report files of the
-architecture, product and design lenses, each when its lens ran, beside it
-through the Artifact `files` map, each linked from the page. The page names
+The page ships with `run-log.md`, `findings.json` and the report file of every
+lens that ran (code, architecture, product, design, market), beside it through
+the Artifact `files` map, each linked from the page. The page names
 every partial or failed lens and marks the areas that lens owns, as the template
 header directs. Every file that leaves the scratchpad, those side files
 included, takes the same five steps:
@@ -704,18 +712,25 @@ included, takes the same five steps:
    repo's demo can hold a real address, a real person's name or a location. Read
    the page's text and captions, and the lens reports, for the kinds the Privacy
    method's personal-data table names ([`briefs.md`](./briefs.md)), plus real
-   places, and replace each with made-up text. A screenshot that shows one is
-   retaken from clean data or cropped. The scrub is a floor, not a substitute:
+   places, and replace each with made-up text. Check the empty and first-run
+   captures, and the report text that quotes them, for values the app fills in
+   by default (a default ZIP, city or name); `private-literals.txt` lists what
+   to look for. A screenshot that shows one is retaken from clean data or
+   cropped. The scrub is a floor, not a substitute:
    it matches shapes, cannot tell a real name or address from a made-up one,
    and skips the page's embedded `data:` images.
 3. **Scrub.** Copy every file into one folder, `<scratchpad>/publish/`, the
    page and the log included, and run `python3 <skill folder>/scrub.py <publish>/*`
-   on all of them (add `--literal <name>` and `--hostname <name>` for a user or host name
-   the run knows is private and the machine's own names do not cover). It
+   on all of them, adding `--literal <value>` for each line of
+   `<scratchpad>/private-literals.txt` and for any user name the machine's own
+   names do not cover, and `--hostname <name>` for a host name. `--literal`
+   takes any private string: a name, a place, a ZIP, an account or device id.
+   The log records how many literals were passed, never their values. It
    rewrites each file in place, putting a `[redacted:<category>]` placeholder in
    place of each match, and prints counts per file and category, never values.
    The categories are home and scratch paths, user and host names, IP
-   addresses, account ids, tokens and keys, emails and coordinates; the
+   addresses, account ids, Apple team and device ids, tokens and keys, emails,
+   coordinates and the literals passed; the
    script's header lists each rule and what it leaves alone. No published file
    is skipped, and a file that is not text stops the run. From here on, the
    preview and the publish read this folder.
@@ -735,7 +750,8 @@ included, takes the same five steps:
    `## Scrub` section from step 3's summary. The `run-log.md` row counts what
    the scrub removed from the log before this section existed; the section holds
    only counts and names, so it adds nothing for the check to find. Then run
-   `python3 <skill folder>/scrub.py --check <publish>/*`. It must exit 0 over every file, the
+   `python3 <skill folder>/scrub.py --check <publish>/*` with the same `--literal` and
+   `--hostname` flags as step 3. It must exit 0 over every file, the
    log included, before anything is published; on exit 1, fix the cause and
    repeat from step 3.
 

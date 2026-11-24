@@ -120,7 +120,8 @@ names only; a value is never logged. The `run-log.md` row counts what the scrub
 removed before this section was written. The `demo data read` row is the
 Stage 6 read of demo, fixture and seed data for personal and real-location
 facts: what it replaced or retook, by kind. The last row is the result of the
-final `--check` over the same files.
+final `--check` over the same files. `literals passed` counts the `--literal`
+values given, by kind, never the values.
 
 ```text
 file               | removed | remaining | by category
@@ -129,6 +130,7 @@ findings.json      | 0       | 0         | none
 run-log.md         | 2       | 0         | scratch-path 2
 architecture.md    | 1       | 0         | token 1
 total              | 7       | 0         |
+literals passed    | 2 (ZIP, town; from rules.md)
 demo data read     | page text and captions read for personal or real-location data: none found
 final check        | pass
 ```

@@ -1,6 +1,6 @@
 """Scrub the files a repo-audit run publishes of local and personal details.
 
-    scrub.py [--check] [--json] [--literal NAME] [--hostname NAME] [--no-auto] FILE...
+    scrub.py [--check] [--json] [--literal TEXT] [--hostname NAME] [--no-auto] FILE...
 
 Every file is read as UTF-8 text and rewritten in place: each match becomes a
 category placeholder such as `[redacted:home-path]`, then the file is scanned
@@ -18,7 +18,21 @@ Categories, each deliberately narrow so the floor has few false positives:
   scratch-path  /private/tmp/..., /tmp/claude-..., /var/folders/..., the
                 $TMPDIR value. A bare /tmp/x is left alone: it is too common
                 in docs to be a signal.
-  username      the current user and any --literal name, whole word, any case.
+  apple-id      an Apple team ID (10 characters of A-Z and 0-9, with a digit
+                and a letter) right after a team cue (team, Team ID,
+                TeamIdentifier, DEVELOPMENT_TEAM, --team-id), or in the
+                parentheses of a signing identity (`Apple Development: Jane
+                (ABCDE12345)`); a device UDID in either shape (25 characters
+                `XXXXXXXX-XXXXXXXXXXXXXXXX`, anywhere; 40 hex after a cue); a
+                CoreDevice ID (a UUID after a cue). The device cues are udid,
+                device, deviceID, coreDevice, --device and xcodebuild's
+                `-destination ...id=`. Stays: a 40-hex git SHA, a bare UUID,
+                a 10-character token with no team cue, `teams ABCDE12345`,
+                `steam ABCDE12345`, a lowercase or all-letter or all-digit
+                value after `team`.
+  username      the current user only (from the environment).
+  literal       any --literal string (a name, a place, a ZIP, an id), whole
+                word, any case.
   hostname      this machine's name and any --hostname name, plus private
                 suffixes (.local, .lan, .internal, .home.arpa, .corp).
   ip            IPv4 and IPv6 except loopback, unspecified, multicast,
@@ -95,12 +109,14 @@ CATEGORIES = [
     "token",
     "email",
     "account-id",
+    "apple-id",
     "home-path",
     "scratch-path",
     "ip",
     "geo",
     "hostname",
     "username",
+    "literal",
 ]
 
 # Auto-detected names this generic would redact ordinary prose.
@@ -206,6 +222,8 @@ class Context:
     tmp: list[str] = field(default_factory=list)
     usernames: list[str] = field(default_factory=list)
     hostnames: list[str] = field(default_factory=list)
+    # Any private string, from --literal.
+    literals: list[str] = field(default_factory=list)
 
 
 def auto_context(env: dict[str, str] | None = None) -> Context:
@@ -333,6 +351,35 @@ def _has_digit(m: re.Match[str]) -> bool:
     return any(c.isdigit() for c in m.group("body"))
 
 
+def _team_id_ok(m: re.Match[str]) -> bool:
+    # A real team ID mixes letters and digits; a word or a number is not one.
+    value = m.group("id")
+    return any(c.isdigit() for c in value) and any(c.isalpha() for c in value)
+
+
+# Between a cue and its value: spaces and one line break (a blank line ends
+# the phrase), quotes (also as HTML entities), `:` or `=`, `|` (a markdown
+# table), markdown marks, an inline or cell tag (`<code class="x">`, `<td>`)
+# and an xcconfig condition (`[sdk=iphoneos*]`).
+# Block and line-break tags (`<p>`, `<br>`, `<div>`, `<li>`, `<tr>`) are left
+# out: they end the phrase the cue sits in.
+_INLINE_TAGS = "code|kbd|samp|tt|pre|span|a|b|i|u|em|strong|mark|td|th|key|string|array"
+_APPLE_SEP = (
+    r"""(?:[ \t\r"':=`*|]|\n(?![ \t\r]*\n)|&quot;|&#39;|&#x27;"""
+    rf"""|</?(?i:{_INLINE_TAGS})(?:\s[^<>\n]{{0,40}})?>"""
+    r"""|\[[^\]\n]{1,30}\]){1,10}"""
+)
+# A cue starts at a word start or after `_`, `-` or `.` (`DEVELOPMENT_TEAM`,
+# `--team-id`), so `steam` and `teams` do not cue.
+_TEAM_CUE = r"(?<![A-Za-z])(?i:team(?:[-_ ]?(?:id|identifier))?)"
+_DEVICE_CUE = r"(?<![A-Za-z])(?i:udid|coredevice|devices?(?:[-_ ]?(?:id|identifier))?)"
+_DEVICE_ID = (
+    r"(?P<id>[0-9A-Fa-f]{40}"
+    r"|[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12})"
+    r"(?![0-9A-Za-z])"
+)
+
+
 # --- rules -----------------------------------------------------------------
 
 
@@ -388,6 +435,25 @@ def build_rules(ctx: Context) -> list[Rule]:
     add(
         "account-id",
         r"""(?i)\b(?:aws[_-]?)?account[_-]?id\b["']?\s*[:=]\s*["']?(\d{12,14}|[0-9a-f]{32})\b""",
+        group=1,
+    )
+
+    # apple-id
+    team_id = r"(?<![A-Za-z0-9])(?P<id>[A-Z0-9]{10})(?![A-Za-z0-9])"
+    add("apple-id", rf"{_TEAM_CUE}{_APPLE_SEP}{team_id}", group=1, accept=_team_id_ok)
+    add(
+        "apple-id",
+        r"\b(?:(?:Apple|iPhone|Mac) (?:Development|Distribution)"
+        rf"|Developer ID (?:Application|Installer))\b[^\n()]{{0,80}}?\({team_id}\)",
+        group=1,
+        accept=_team_id_ok,
+    )
+    add("apple-id", r"(?<![0-9A-Za-z-])[0-9A-Fa-f]{8}-[0-9A-Fa-f]{16}(?![0-9A-Za-z-])")
+    add("apple-id", rf"{_DEVICE_CUE}{_APPLE_SEP}{_DEVICE_ID}", group=1)
+    # xcodebuild: -destination 'platform=iOS,id=<value>'
+    add(
+        "apple-id",
+        rf"(?i:destination)[^\n]{{0,60}}?(?<![A-Za-z])id={_DEVICE_ID}",
         group=1,
     )
 
@@ -484,6 +550,9 @@ def build_rules(ctx: Context) -> list[Rule]:
     user_alt = _alt(ctx.usernames)
     if user_alt:
         add("username", rf"(?i)(?<![A-Za-z0-9])(?:{user_alt})(?![A-Za-z0-9])")
+    literal_alt = _alt(ctx.literals)
+    if literal_alt:
+        add("literal", rf"(?i)(?<![A-Za-z0-9])(?:{literal_alt})(?![A-Za-z0-9])")
     return rules
 
 
@@ -643,8 +712,8 @@ def main(argv: list[str] | None = None) -> int:
         "--literal",
         action="append",
         default=[],
-        metavar="NAME",
-        help="extra username to redact",
+        metavar="TEXT",
+        help="any private string to redact (a name, place, ZIP, id)",
     )
     ap.add_argument(
         "--hostname",
@@ -661,7 +730,7 @@ def main(argv: list[str] | None = None) -> int:
     args = ap.parse_args(argv)
 
     ctx = Context() if args.no_auto else auto_context()
-    ctx.usernames += [n for n in args.literal if n]
+    ctx.literals += [n for n in args.literal if n]
     ctx.hostnames += [n for n in args.hostname if n]
     try:
         result = run(args.files, ctx, args.check)
