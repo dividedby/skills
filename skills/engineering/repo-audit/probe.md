@@ -53,7 +53,7 @@ beyond the app.
   scratch data folder after a run, and the repo's real data folder is unchanged
   (a listing with mtimes before and after). Unverified isolation is "not probed",
   never run.
-- **Environment.** Start each instance under the scrubbed environment in
+- **Environment.** Start each instance through `$B/run` from
   [`baseline.md`](./baseline.md#setup) with `timeout`, record its PID, port and
   data path in the run log, and stop it by PID, never by name.
 

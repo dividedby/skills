@@ -50,6 +50,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
 - `repo-audit`: **Breaking:** backlog reconciliation, epics, the ordered roadmap, the go-ahead step before GitHub changes, and the hand-off to `to-tickets`. The old skill is at the 3.1.0 release commit, `d95ab6f`.
 
+### Fixed
+
+- `repo-audit`: the baseline no longer writes into the audited repo on real repos, and everything but a short-lived symlink stays in the scratchpad (#658). Coverage output (`default.profraw` from a Swift test binary, Go and Node coverage) is redirected into the scratchpad, built binaries never run with the repo as their working directory, and the repo is checked after each gate that runs its code, so a breach names the gate and path and the file is left for you to remove. Repo code now runs through a `sh` wrapper instead of an `env -i` line that broke under zsh; `uv` and pnpm caches stay in the scratchpad; a long scratchpad path gets a short symlink to its temp folder so `tofu` works; a refused tool download falls back to another install route; and a failure the environment caused is rerun once after the fix. A suite past the 10-minute time-box reports CI's latest result, `shfmt` runs the way the repo runs it, and OpenTofu state encryption and unscanned Terraform providers are recorded as stated skips.
+
 ## [3.1.0] - 2026-10-12
 
 Slims both remaining skills: `council` drops its peer-rank round and `repo-audit` its cross-review round, roughly halving agents per run; `repo-audit` now asks before any GitHub change.
