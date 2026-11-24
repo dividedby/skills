@@ -22,8 +22,10 @@ Defers:
 - Agent tool (lens agents run in parallel); the Artifact tool to publish the page.
 - Playwright in a scratch install ([`probe.md`](./probe.md), a supporting file,
   not a skill) for web-app capture and the UI probe; the project's own run
-  tooling for other types; the built-in browser pane only to preview the page in
-  Stage 6.
+  tooling for other types; the built-in browser pane, opened on a short-lived
+  local server, only to preview the page in Stage 6.
+- [`scrub.py`](./scrub.py), a supporting script (not a skill): the Stage 6 scrub
+  every published file goes through. Python standard library only.
 - `/to-tickets` — only if the user later asks for the plan as issues.
 - [`types.md`](./types.md), a supporting file (not a skill): the repo types,
   size tiers and monorepo rule Stage 1 applies.
@@ -62,6 +64,8 @@ ends with `git status` showing nothing new.
 
 Real user data never enters the report: screenshots come from a demo, sample or
 dev build, and secrets found in history are reported as present, never printed.
+A demo build's data is not assumed clean: Stage 6 reads and scrubs it like
+everything else that is published.
 
 ## Execution boundary
 
@@ -115,7 +119,10 @@ apply the resume rule in Stage 3.
   contradictory: one row with the choice made. Never batch them to the end.
 - **Read-only proof:** `git status` and `HEAD` at Stage 1 and again at Stage 6,
   with untracked and ignored files and the ignored files' mtimes checked, and any
-  process started and stopped.
+  process started and stopped (Stage 6's preview server included).
+- **Scrub:** at Stage 6, one row per published file from `scrub.py`'s summary,
+  and the result of the final check. Counts and category names only, never a
+  value.
 - **State:** rewritten at every stage boundary and every agent return.
 - **Totals against budget:** updated at each stage end, closed at Stage 6.
 
@@ -537,8 +544,7 @@ header, Mockups).
 Fill [`template.html`](./template.html) as its header comment directs; the
 fill rules live there. Embed each screenshot at its original width up to
 1,280 px, downscale only above that, never upscale, as JPEG at about q70, and
-keep the page under the Artifact size limit. Preview it locally in the browser
-pane, light and dark, desktop and phone width, before publishing.
+keep the page under the Artifact size limit.
 
 Write `findings.json` from the verified findings; its shape is
 [`evals/findings.schema.json`](./evals/findings.schema.json). Its top-level
@@ -614,15 +620,61 @@ sections:
   gets a "Since the last run" section ([`template.html`](./template.html)
   header) and marks a still-open item whose severity changed.
 
-Publish `run-log.md`, `findings.json` and the report files of the architecture,
-product and design lenses, each when its lens ran, beside the page through the Artifact `files` map and link each from the page. The page names every partial or failed
-lens and marks the areas that lens owns, as the template header directs. Finish
-the read-only proof and the totals in the log first.
+The page ships with `run-log.md`, `findings.json` and the report files of the
+architecture, product and design lenses, each when its lens ran, beside it
+through the Artifact `files` map, each linked from the page. The page names
+every partial or failed lens and marks the areas that lens owns, as the template
+header directs. Every file that leaves the scratchpad, those side files
+included, takes the same five steps:
 
-Publish as a **private** Artifact. If the Artifact tool offers a `quickstart`,
-run it (it is read-only), then keep this skill's template, which already meets
-the page contract. Where the Artifact tool is unavailable, save the page in the
-scratchpad and send it, `run-log.md` and `findings.json` to the user as files.
+1. **Finish the files.** The page, `findings.json`, each lens report and any
+   other file bound for the `files` map are final, and the log has its
+   read-only proof and its totals. The preview row and the Scrub section come at
+   step 5.
+2. **Read the demo data.** Demo, sample, fixture and seed data is untrusted: a
+   repo's demo can hold a real address, a real person's name or a location. Read
+   the page's text and captions, and the lens reports, for the kinds the Privacy
+   method's personal-data table names ([`briefs.md`](./briefs.md)), plus real
+   places, and replace each with made-up text. A screenshot that shows one is
+   retaken from clean data or cropped. The scrub is a floor, not a substitute:
+   it matches shapes, cannot tell a real name or address from a made-up one,
+   and skips the page's embedded `data:` images.
+3. **Scrub.** Copy every file into one folder, `<scratchpad>/publish/`, the
+   page and the log included, and run `python3 <skill folder>/scrub.py <publish>/*`
+   on all of them (add `--literal <name>` and `--hostname <name>` for a user or host name
+   the run knows is private and the machine's own names do not cover). It
+   rewrites each file in place, putting a `[redacted:<category>]` placeholder in
+   place of each match, and prints counts per file and category, never values.
+   The categories are home and scratch paths, user and host names, IP
+   addresses, account ids, tokens and keys, emails and coordinates; the
+   script's header lists each rule and what it leaves alone. No published file
+   is skipped, and a file that is not text stops the run. From here on, the
+   preview and the publish read this folder.
+4. **Preview.** Serve the folder; do not open a `file://` page, which the
+   browser pane refuses for a scratchpad file, and do not use the dev-server
+   preview, which needs a project config the scratchpad lacks. Pick a free port
+   (`python3 -c 'import socket; s = socket.socket(); s.bind(("127.0.0.1", 0)); print(s.getsockname()[1])'`),
+   start `python3 -m http.server <port> --bind 127.0.0.1 --directory <publish>`
+   in the background, open `http://127.0.0.1:<port>/<page file>` in the browser
+   pane through its url option, and look at light and dark, desktop and phone
+   width. Stop the server before step 5. A fix to the page goes back to step 2
+   with the new page. With no browser pane, skip the server: publish privately
+   at step 5, read the page back with the Artifact read action, check it there,
+   and republish through steps 2 to 5 if it needs a fix.
+5. **Record, check, publish.** In the log's publish copy and in the scratchpad
+   original, add the preview server as a `process started` row and write the
+   `## Scrub` section from step 3's summary. The `run-log.md` row counts what
+   the scrub removed from the log before this section existed; the section holds
+   only counts and names, so it adds nothing for the check to find. Then run
+   `python3 <skill folder>/scrub.py --check <publish>/*`. It must exit 0 over every file, the
+   log included, before anything is published; on exit 1, fix the cause and
+   repeat from step 3.
+
+Publish as a **private** Artifact, from the publish folder. If the Artifact tool
+offers a `quickstart`, run it (it is read-only), then keep this skill's template,
+which already meets the page contract. Where the Artifact tool is unavailable,
+send the publish folder's page, `run-log.md` and `findings.json` to the user as
+files.
 
 Close with a short message: the link, the overall verdict with any Blockers
 by name, one line per area (its verdict, or its Not-assessed reason), a line
@@ -641,8 +693,9 @@ start on — and offer `/to-tickets` for the plan in one line. When it reports t
 another session, end with the page link and the plan's first item instead.
 
 **Done when:** the page is published (or sent) with the run log and
-`findings.json` beside it, the repo shows no changes, and the closing message names what is unverified and any
-partial or failed lens.
+`findings.json` beside it, every published file went through the scrub and the
+final check passed, the repo shows no changes, and the closing message names
+what is unverified and any partial or failed lens.
 
 ---
 
@@ -670,4 +723,7 @@ partial or failed lens.
 - A Blocker or High finding on the page that was not re-checked in Stage 4.
 - An applicable area with no verdict and no Not-assessed reason.
 - A projection presented as a measurement.
-- Real personal data or a secret value in a screenshot or on the page.
+- Real personal data or a secret value in a screenshot, on the page or in any
+  published file (a lens report, `findings.json` or the run log included).
+- A published file that did not go through the scrub, a final `--check` that
+  did not exit 0 before publishing, or a matched value written to the run log.

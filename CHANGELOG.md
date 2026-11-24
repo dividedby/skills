@@ -50,6 +50,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
 - `repo-audit`: **Breaking:** backlog reconciliation, epics, the ordered roadmap, the go-ahead step before GitHub changes, and the hand-off to `to-tickets`. The old skill is at the 3.1.0 release commit, `d95ab6f`.
 
+### Fixed
+
+- `repo-audit`: every published file (the page, lens reports, `findings.json` and `run-log.md`) now goes through one scrub before publishing; the side files had carried local home and scratchpad paths. A new `scrub.py` replaces paths, user and host names, IPs, account ids, tokens, emails and coordinates with `[redacted:<category>]`, and the run log records the counts per file, never the values. Demo and fixture data is no longer assumed safe: the audit reads it for personal and real-location facts before publishing.
+- `repo-audit`: the local preview works in the desktop app. The browser pane would not open a `file://` page from the scratchpad and the dev-server preview needs a project config, so the audit now serves the scrubbed publish folder from a short-lived local server on a free port bound to `127.0.0.1`, opens it in the browser pane, checks light and dark at desktop and phone width, and stops it before publishing; the run log records the server. With no browser pane it publishes privately and reads the page back instead. The report template also gains the missing `charset` and `viewport` meta tags.
+
 ## [3.1.0] - 2026-10-12
 
 Slims both remaining skills: `council` drops its peer-rank round and `repo-audit` its cross-review round, roughly halving agents per run; `repo-audit` now asks before any GitHub change.
