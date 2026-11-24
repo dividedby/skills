@@ -661,10 +661,13 @@ their `rules.md` rows. Check those rows as the shared header directs, then:
        thresholds, the included minutes and the public-repo cap are set there,
        not here. Paste that section into this lens's brief beside the Severity
        section. Evidence per finding: the workflow `file:line`, billable
-       minutes a month (measured or estimated), and the saving.
+       minutes a month (measured or estimated), and the saving, labelled
+       measured, estimated or projected ([`rubric.md`](./rubric.md) says which
+       count toward the waste).
      - **Output:** the CI cost table (workflow, triggers, runner OS and
        multiplier, matrix, median duration, runs a month, billable minutes a
-       month with measured or estimated, cut, minutes saved) and the sample
+       month with measured or estimated, cut, minutes saved with measured,
+       estimated or projected) and the sample
        statement, in the product lens report file. The repo's total billable
        minutes a month is the figure the go-public verdict uses.
 9. **Documentation** (`repo-hygiene`). Outlines for what is missing (README,

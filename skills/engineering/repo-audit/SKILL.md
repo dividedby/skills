@@ -45,6 +45,11 @@ Defers:
 - You want a design bar check ("does this look first-class?") with counts,
   task walkthroughs and, for serious findings, concrete mockups, not adjectives.
 - You want a plan to pick from, not tickets filed for you.
+- Only a typed `/repo-audit` starts a run. The frontmatter's
+  `disable-model-invocation: true` stops a model, or a session another session
+  started, from invoking it, because a run costs about 0.5 to 1M tokens. To
+  delegate a run, start the side session with the brief and have the maintainer
+  type `/repo-audit` in it.
 
 ## When not to use
 
@@ -113,7 +118,9 @@ apply the resume rule in Stage 3.
 - **Run** (skill commit, subject commit, ownership test, trust, execute answer):
   at Stage 1, once the commit is pinned; the execute answer and its time are
   added when the question is answered, or when the run decides it cannot ask.
-- **Stages:** the start time when a stage begins, the end time when it ends.
+- **Stages:** the start time when a stage begins, the end time when it ends,
+  with the end entry also recording the stage's agent tokens and the main
+  session's context size at that moment.
 - **Agents:** a row when the agent is launched (`running`; a retry sets
   `running (retry)`), updated when it returns with its wall time, tokens, tool
   uses, findings by severity and status.

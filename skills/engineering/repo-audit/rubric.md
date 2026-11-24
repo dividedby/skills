@@ -518,7 +518,12 @@ and the OS multiplier are defined in [`briefs.md`](./briefs.md) item 8.
 - **Med at least:** a private repo's CI uses more than **10%** of the included
   minutes.
 - **High:** the **waste**, the billable minutes a month the recommended cuts
-  would save, is more than **5%** of the included minutes.
+  would save, is more than **5%** of the included minutes. The waste counts only
+  cuts whose minutes are measured (billing usage) or estimated from run and job
+  durations. A projection, a saving that rests on an assumed change the run data
+  does not show (how long a folded job would take, how many runs a cancel would
+  stop), is listed beside the waste with its figure, labelled projected, and does
+  not count toward the 5%.
 - **Public repo:** standard-runner minutes are free, so the minutes are listed
   and the finding caps at **Low**. The exception is a job on a larger runner,
   which is billed on a public repo too and is rated as a private repo's. The
