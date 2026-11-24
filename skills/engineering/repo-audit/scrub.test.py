@@ -341,19 +341,26 @@ class DetectionTests(unittest.TestCase):
             cleaned, "t=[redacted:token];arn:aws:iam::[redacted:account-id]:role/x"
         )
 
-    def test_a_long_run_of_signing_identity_openers_scans_in_linear_time(self):
-        # An unbounded gap took about 60 s on this input; a bounded one well
-        # under a second. Only the signing-identity rule is timed, so a slow
-        # runner's other rules cannot push it past the wide ceiling.
-        rule = next(
-            r
-            for r in scrub.build_rules(scrub.Context())
-            if "Distribution" in r.regex.pattern
-        )
-        text = ("Apple Development: " + "(" * 100) * 5000
-        start = time.monotonic()
-        rule.regex.findall(text)
-        self.assertLess(time.monotonic() - start, 10)
+    def test_apple_id_rules_stay_fast_on_long_adversarial_lines(self):
+        # An unbounded gap in the signing-identity rule took about 60 s on the
+        # first input. Each rule is timed alone against a wide ceiling, so a
+        # slow runner's other rules cannot push it over.
+        rules = [
+            r for r in scrub.build_rules(scrub.Context()) if r.category == "apple-id"
+        ]
+        inputs = [
+            ("Apple Development: " + "(" * 100) * 5000,
+            "team " + "<a " * 200_000,
+            ("team " + "| [x] " * 10) * 20_000,
+            "device " * 100_000,
+            ("destination " + "id=" * 20) * 10_000,
+        ]
+        for rule in rules:
+            for text in inputs:
+                with self.subTest(pattern=rule.regex.pattern[:40], text=text[:20]):
+                    start = time.monotonic()
+                    rule.regex.findall(text)
+                    self.assertLess(time.monotonic() - start, 10)
 
     def test_apple_ids_are_scrubbed_with_no_literals(self):
         page = "<p>TeamIdentifier ABCDE12345 on 00008110-001A2B3C4D5E801E</p>"

@@ -741,7 +741,8 @@ included, takes the same five steps:
    `## Scrub` section from step 3's summary. The `run-log.md` row counts what
    the scrub removed from the log before this section existed; the section holds
    only counts and names, so it adds nothing for the check to find. Then run
-   `python3 <skill folder>/scrub.py --check <publish>/*`. It must exit 0 over every file, the
+   `python3 <skill folder>/scrub.py --check <publish>/*` with the same `--literal` and
+   `--hostname` flags as step 3. It must exit 0 over every file, the
    log included, before anything is published; on exit 1, fix the cause and
    repeat from step 3.
 
