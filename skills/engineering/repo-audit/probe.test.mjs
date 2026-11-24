@@ -560,6 +560,14 @@ test("distinctFailures groups a repeated failure into one capture", async (t) =>
     ]);
     assert.equal(got[0].first.screenshot, null);
   });
+  await t.test("the first captured cell names the image", () => {
+    const got = probe.distinctFailures([
+      cell({ screen: "a", axe: axe("label") }),
+      cell({ screen: "b", axe: axe("label"), ...shot("b") }),
+    ]);
+    assert.equal(got[0].first.screen, "b");
+    assert.equal(got[0].first.screenshot, "shots/b.png");
+  });
 });
 
 test("parseArgs", async (t) => {

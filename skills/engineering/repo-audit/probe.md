@@ -81,7 +81,7 @@ cell opens a fresh browser, so cells do not share state.
 
 `node probe.js --summarise $B/probe/cells --out $B/probe/summary.json` totals
 the cells per screen, failing screens first, and lists every failing cell with
-its failing checks. Long unstructured blocks are counted, never failing: the probe cannot know the main path. A screen row carries `spaceDelimited`, false when any cell is not, and leaves word figures out of that row. It also lists `distinct`: the failing checks grouped by signature (the check, plus the axe rule id, or the first offending selector for `overflow`), each with the number of cells it shows in and the `first` cell (screen, state, width, theme, screenshot), biggest group first. A site-wide rule on 40 cells is one group. The page's tables come from it.
+its failing checks. Long unstructured blocks are counted, never failing: the probe cannot know the main path. A screen row carries `spaceDelimited`, false when any cell is not, and leaves word figures out of that row. It also lists `distinct`: the failing checks grouped by signature (the check, plus the axe rule id, or the first offending selector for `overflow`), each with the number of cells it shows in and the `first` cell (screen, state, width, theme, screenshot; the first captured cell when any was), biggest group first. A site-wide rule on 40 cells is one group. The page's tables come from it.
 
 ## 5. The matrix
 

@@ -383,10 +383,18 @@ function summariseScreens(cells) {
 
 // cells: parsed cell JSON. Failing checks grouped by signature, so a failure
 // that repeats across cells (a site-wide axe rule) is one group with a count
-// and the first cell that showed it, which gets the capture. Signature: the
+// and the first cell that showed it (the first captured one, when any was),
+// which gets the capture. Signature: the
 // check name, plus the rule id for axe and the first offending selector for
 // overflow (page and inner are separate). Biggest groups first.
 function distinctFailures(cells) {
+  const firstOf = (c) => ({
+    screen: c.screen,
+    state: c.state,
+    width: c.width,
+    theme: c.theme,
+    screenshot: c.screenshot ?? null,
+  });
   const groups = new Map();
   for (const cell of cells) {
     const keys = new Map();
@@ -409,15 +417,11 @@ function distinctFailures(cells) {
         check,
         key,
         cells: 0,
-        first: {
-          screen: cell.screen,
-          state: cell.state,
-          width: cell.width,
-          theme: cell.theme,
-          screenshot: cell.screenshot ?? null,
-        },
+        first: firstOf(cell),
       };
       g.cells++;
+      // Prefer a cell that was captured, so the group names an image to keep.
+      if (!g.first.screenshot && cell.screenshot) g.first = firstOf(cell);
       groups.set(id, g);
     }
   }
