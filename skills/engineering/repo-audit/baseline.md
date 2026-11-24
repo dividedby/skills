@@ -42,7 +42,7 @@ Everything the baseline writes goes under one scratchpad folder, `$B`
   once, in the wrapper below, and applies to the baseline's own installs as well
   as the repo's code, since `uv`, pnpm and `go install` write global caches by
   default:
-  - package caches and stores: `UV_CACHE_DIR=$B/cache/uv`,
+  - package caches and stores (paths as in the wrapper): `UV_CACHE_DIR=$B/cache/uv`,
     `UV_PYTHON_INSTALL_DIR=$B/tools/python`, `PIP_CACHE_DIR=$B/cache/pip`,
     `pnpm_config_store_dir=$B/cache/pnpm-store` and
     `pnpm_config_cache_dir=$B/cache/pnpm` (pnpm 11 reads only these names; set
@@ -69,12 +69,21 @@ Everything the baseline writes goes under one scratchpad folder, `$B`
   #!/bin/sh
   exec env -i PATH="$B/tools/bin:$B/tools/venv/bin:<the host's tool directories>" \
     HOME="$B/home" TMPDIR="$T" XDG_CACHE_HOME="$B/cache" \
-    PYTHONPYCACHEPREFIX="$B/cache/pyc" UV_CACHE_DIR="$B/cache/uv" \
-    LLVM_PROFILE_FILE="$B/cache/profraw/%p-%m.profraw" <the other redirects> \
+    PYTHONPYCACHEPREFIX="$B/cache/pyc" \
+    UV_CACHE_DIR="$B/cache/uv" UV_PYTHON_INSTALL_DIR="$B/tools/python" \
+    PIP_CACHE_DIR="$B/cache/pip" \
+    pnpm_config_store_dir="$B/cache/pnpm-store" pnpm_config_cache_dir="$B/cache/pnpm" \
+    npm_config_store_dir="$B/cache/pnpm-store" npm_config_cache="$B/cache/pnpm" \
+    GOPATH="$B/go" GOMODCACHE="$B/go/pkg/mod" GOCACHE="$B/cache/go" GOBIN="$B/tools/bin" \
+    CARGO_HOME="$B/cache/cargo" RUSTUP_HOME="$B/tools/rustup" CARGO_TARGET_DIR="$B/cache/cargo-target" \
+    LLVM_PROFILE_FILE="$B/cache/profraw/%p-%m.profraw" \
+    GOCOVERDIR="$B/cache/gocov" NODE_V8_COVERAGE="$B/cache/v8" \
     <demo variables from the profile> "$@"
   ```
 
-  Every repo-code command is `$B/run timeout 600 <command>`. The environment is
+  `$T` is the short temp path from the `TMPDIR` bullet below; the script carries
+  every redirect in the list above, so drop only the lines for a stack the repo
+  does not use. Every repo-code command is `$B/run timeout 600 <command>`. The environment is
   built inside the script, not in a shell variable: zsh does not word-split a
   string variable, so an `env -i $ENV <command>` line breaks there. The host's
   tool directories are wherever `git`, the toolchains and the
