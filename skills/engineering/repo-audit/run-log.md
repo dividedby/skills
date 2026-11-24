@@ -76,18 +76,37 @@ made.
 One `process started` row per instance Stage 2 starts: its role, port, PID and
 data directory (in the scratchpad), and when it was stopped. Stage 6's preview
 server is one more row: its port, PID and the publish folder it serves. One
-`after gate` row per gate or scan that runs the repo's code, from the per-gate
-check in [`baseline.md`](./baseline.md#keeping-the-repo-unchanged): equal to the previous check, or
-the breach with the path. The Stage 1 and Stage 6 rows compare with Stage 1. A
-breach file is left in place and named in the closing message.
+`after gate` row per gate or scan that runs the repo's code, and one per lens
+command that runs it, from the per-gate check in
+[`baseline.md`](./baseline.md#keeping-the-repo-unchanged): equal to the previous
+check, `mtime only` (a directory whose mtime moved with the same status, the same
+paths and no newer file: not a change, with the command named), or the breach with
+the path. A main-session probe that runs in the repo folder gets the same check
+and a `probe` row. Every check compares `HEAD` and saves the path list with the
+status; a check's row names the commit it compared with, and a moved `HEAD` gets
+its own row. A `nested worktrees excluded` row names the other checkouts left
+out of the check. A `HEAD moved` row records an outside change (old and new
+commit, time, the check that saw it) and the Stage 1 restart; the rows above it
+belong to the abandoned pin, and the rows after it compare with the new Stage 1
+snapshot, so the Stage 6 `HEAD` row ends at the new commit. The Stage 6 rows
+compare with Stage 1, so a breach found earlier shows there again, along with
+the directory that holds it. A breach file is left in place and named in the
+closing message.
 
 ```text
 check                           | before (compared with)   | after
-git status --short              | clean            | clean
-git status --porcelain --ignored| Stage 1 snapshot  | equal to Stage 1
-HEAD                            | 41d7e60          | 41d7e60
-files newer than the marker     | Stage 1 marker   | none
+nested worktrees excluded       | Stage 1          | .claude/worktrees/qa-fix-b (another session's), .claude/worktrees/docs-pass
+after gate: pnpm lint           | Stage 1 snapshot (41d7e60) | equal (abandoned, redone after the move)
+HEAD moved                      | 41d7e60 (Stage 1) | 8c02d19, seen at 21:14 after pnpm lint; paths in git diff --name-only --no-renames 41d7e60 8c02d19 not counted; re-pinned, Stage 1 restarted
+after gate: pnpm lint           | Stage 1 snapshot (8c02d19) | equal
+after gate: pnpm test           | previous check   | equal
+probe: pnpm store path          | previous check   | mtime only: <repo root> (run from the repo; not a change, run from $B/tmp next time)
 after gate: swift test          | previous check   | breach: default.profraw (repo root), left in place
+after gate: code lens: startup benchmark | lens baseline | equal
+Stage 6: git status --porcelain --ignored | Stage 1 snapshot (8c02d19) | differs: default.profraw (the swift test breach)
+Stage 6: path list              | Stage 1 snapshot (8c02d19) | differs: default.profraw (the swift test breach)
+Stage 6: HEAD                   | 8c02d19          | 8c02d19
+Stage 6: files newer than the marker | Stage 1 marker | default.profraw (breach), and <repo root>, which holds it
 process started                 | primary :8080 pid 4121 data $B/data/a | stopped 21:20
 process started                 | second :8081 pid 4130 data $B/data/b | stopped 21:20, before Stage 4
 process started                 | preview :52814 pid 5230 serving $B/publish | stopped 22:41, before publish

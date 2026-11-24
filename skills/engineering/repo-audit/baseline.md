@@ -77,8 +77,11 @@ Everything the baseline writes goes under one scratchpad folder, `$B`
 
   What the less obvious lines are for:
   - **pnpm:** pnpm 11 reads only the `pnpm_config_*` names, and pnpm 10 and older
-    only the `npm_config_*` ones; check with `$B/run pnpm store path`.
-    Otherwise pnpm picks its store by volume, which can be a folder at the
+    only the `npm_config_*` ones; check with `$B/run pnpm store path` and
+    `$B/run uv cache dir`, **run from `$B/tmp`**, never the repo folder: pnpm
+    creates and removes a probe file in its working directory, which moves that
+    folder's mtime. The same goes for any main-session probe command that is not
+    a gate. Otherwise pnpm picks its store by volume, which can be a folder at the
     repo's volume root. A direct `pnpm install` or `pnpm add` also takes
     `--store-dir $B/cache/pnpm-store`.
   - **Coverage:** an instrumented binary writes its profile to the working
@@ -116,17 +119,78 @@ Everything the baseline writes goes under one scratchpad folder, `$B`
 
 ### Keeping the repo unchanged
 
+- **Stage 1 saves the baseline of the check** in `$B/proof/`: `HEAD`
+  (`git rev-parse HEAD`), `status-stage1.txt`
+  (`git --no-optional-locks status --porcelain --ignored`), `marker`,
+  `paths-stage1.txt` (every path in the repo, `.git` and nested worktrees
+  pruned, from `find … -print | sort`) and `worktrees.txt` (the nested
+  worktrees: the paths in `git -C <repo> worktree list --porcelain` that lie
+  inside the repo folder, other than the audited checkout itself; compare them
+  with the repo path resolved by `pwd -P`, since on macOS `/tmp` is really
+  `/private/tmp`). Every marker
+  lives in `$B/proof/`: `marker` (Stage 1's), `marker-<gate>` (one per check),
+  `marker-return-<lens>` (the main session's check at a lens's return) and
+  `<lens>/marker-<n>` (a lens's own).
 - **Check the repo after each gate or scan that runs repo code**, not only at
-  Stage 6. Compare `git --no-optional-locks status --porcelain --ignored` with
-  the previous check's saved output, and run
-  `find <repo> -path <repo>/.git -prune -o -newer <marker> -print` against the
-  previous check's marker. The first check compares with the Stage 1 snapshot
-  and marker ([`SKILL.md`](./SKILL.md#execution-boundary)). After each check,
-  save its status output and `touch` a fresh marker (`$B/marker-<gate>`, never
-  overwriting the Stage 1 snapshot and marker) before the next gate runs, so a
-  breach is blamed on one gate and not on every later one. Stage 6 still
-  compares with Stage 1.
-- **A new difference is a breach caused by that gate.** Record the gate and each
+  Stage 6. Each check does, in order:
+  1. **HEAD** equals the pin. The run never moves it, so a different `HEAD` is
+     an outside change (for example a `git pull` in another terminal). Still run
+     steps 2 to 5 against the previous check before re-snapshotting. Only the
+     paths in `git diff --name-only --no-renames <old> <new>` (the outside
+     change) are not a
+     breach of the gate that just ran; any other difference is. Then log a
+     `HEAD moved` row (old and new commit, the time, the check that saw it) and
+     a Stages row, re-pin to the new `HEAD`, take a fresh Stage 1 snapshot
+     (every item above) and restart Stage 1. Work done against the old commit is
+     redone. The new snapshot replaces the Stage 1 files in `$B/proof/`; the old
+     ones are kept as `<name>-<oldsha>`. Stage 1 compares `HEAD` once more at its
+     end, with the pin taken at its start.
+  2. **Worktrees.** Re-read `git worktree list --porcelain`. Each nested
+     worktree is pruned from the `find`
+     (`find <repo> \( -path <repo>/.git -o -path <worktree> … \) -prune -o …`),
+     and the proof names each one in a `nested worktrees excluded` row,
+     updated when the list changes. Writes inside them belong to another
+     session, not to this run.
+  3. **Status** equals the previous check's saved output.
+  4. **Paths and times.** The path list equals the previous check's, and
+     `find <repo> … ! -type d -newer <marker> -print` lists nothing. An added,
+     removed or newer non-directory path is a breach.
+  5. **Directory mtime only.** A directory newer than the marker
+     (`find <repo> … -type d -newer <marker> -print`), when steps 3
+     and 4 found nothing (same status, same path list, no newer file), is
+     reported apart as `mtime only: <dir>`, with the gate. It is not a changed
+     repo and not a failure: no path was added, removed or written, and a tool
+     made and removed a temporary entry. There is nothing for the maintainer to
+     remove. The row names the command, so the next run starts it from `$B/tmp`.
+
+  A main-session probe that runs in the repo folder (anything that is not a gate
+  and is not run from `$B/tmp`) gets the same check. The first check compares
+  with the Stage 1 snapshot and marker
+  ([`SKILL.md`](./SKILL.md#execution-boundary)). After each check, save its
+  status output and path list and `touch` a fresh marker
+  (`$B/proof/marker-<gate>`, never overwriting the Stage 1 snapshot and marker,
+  except by a re-pin) before the next command runs, so a breach is blamed on one
+  gate and not on every later one. Stage 6
+  still compares with Stage 1.
+
+- **One gate per check.** A check runs after each gate, never after a batch of
+  gates: run the gates one per command. A check after a group does not count as
+  each gate's row.
+- **Lenses.** A lens that runs repo code does the same check after each such
+  command. Before its first repo-code command it saves status and the path list
+  and touches its own marker under `$B/proof/<lens>/`, and its first check
+  compares with that baseline, not with Stage 1. It lists each check in its
+  report ([`briefs.md`](./briefs.md) shared header). The
+  main session also runs the check at each lens's return, against its own
+  previous main-session check, as a backstop, and copies the lens's checks into
+  the proof as `after gate: <lens>: <command>` rows. The backstop check's marker
+  is `$B/proof/marker-return-<lens>`. A lens that sees `HEAD` move stops its
+  repo-code commands and reports it; the main session re-pins and restarts.
+  Lenses run concurrently, so a breach first seen by the backstop names every
+  lens that ran since the previous check, and a lens's own row can include
+  writes by another lens running at the same time.
+- **A new difference is a breach caused by that gate.** (`mtime only` and
+  nested-worktree rows are not breaches.) Record the gate and each
   path in that gate's `commands.md` row and as a row in the run log's read-only
   proof, and rerun that tool, if at all, in the scratch clone. The run does not
   delete or revert the file: it left the repo changed, which
@@ -194,6 +258,15 @@ Everything the baseline writes goes under one scratchpad folder, `$B`
 ## 1. Universal tools
 
 Run on every repo, whatever the stack. Each result is a file in `$B/raw/`.
+
+**Nested worktrees.** The paths in `worktrees.txt` (see
+[Keeping the repo unchanged](#keeping-the-repo-unchanged)) are other checkouts
+of the same repo, often on another branch, and a recursive scan reads them as
+extra copies. A tool with an exclude flag skips them. Otherwise the digest
+counts only the hits outside them and lists the hits inside them apart, one line
+per worktree with its count: `osv-scanner` lockfiles, `gitleaks dir` hits, and
+`scc` too when it reads them. The split in the digest is the rule that holds,
+whichever flag the installed version has.
 
 - **Dependency vulnerabilities, all ecosystems:**
   `osv-scanner scan source --recursive --format json --output-file $B/raw/osv.json <repo>`
@@ -605,6 +678,7 @@ gitleaks      | tree N, history M: rule | path:line | commit | still tracked
 gitleaks (all refs) | private repo only: N hits: rule | path:line | commit | on HEAD or other ref; or the skip reason
 size          | lines per language (scc)                  | raw/scc.json
 churn         | window (since <date or "1 year ago">), top 10: count | path
+nested worktrees | one line each: path, osv lockfiles N, gitleaks hits M (not in the counts above)
 
 ## Gates (documented vs actual)
 gate | documented at (file:line) | in CI | as written? | result | counts | time
