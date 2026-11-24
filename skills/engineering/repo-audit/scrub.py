@@ -45,16 +45,23 @@ Categories, each deliberately narrow so the floor has few false positives:
                 (the whole line or cell, backticked, quoted or in brackets
                 of its own), or a pair in running text with a location word
                 (at, near, nearby, around, located, location, pin, map, gps,
-                address, coordinates, place, home, office, site, city, ...)
-                no more than two words before it: `pin at 41.8781, -87.6298`.
-                A unit right after the pair (ms, s, px, %, kb, mb, x, ...)
-                means a measurement and it stays; a short unit counts only
-                when no word follows (`x marks`, `min walk` do not), and a
-                third number (`0.95, 0.87, 0.77`) is not a pair. Pairs inside
-                SVG paths and
-                points, CSS functions, JSON arrays and sentences with no cue
+                address, coordinates, lat/lng, place, home, office, site,
+                city, ...) no more than two words before it:
+                `pin at 41.8781, -87.6298`. Pairs chained to a cued pair with
+                `,`, `;`, and, to or or are cued too. Degree notation with
+                hemisphere letters (`41.8781° N, 87.6298° W`) is caught
+                anywhere. A unit right after a cued pair (ms, s, px, %, kb,
+                mb, x, ...) means a measurement and the pair stays; a short
+                unit counts only when no word follows (`x marks`, `min walk`
+                do not), and a third number (`0.95, 0.87, 0.77`) is not a
+                pair. Pairs inside SVG paths and points, CSS functions, JSON
+                arrays and sentences with no cue stay
                 (`time 12.3456, 78.9012 seconds`). Phone numbers are not
                 scanned: no rule was precise enough.
+
+This is a floor. It matches shapes, so prose with no cue (a place named in a
+sentence, a coordinate with no location word) passes it; the Stage 6 demo-data
+read in SKILL.md is what covers those.
 
 `data:` URIs (the page's embedded screenshots) are skipped whole.
 """
@@ -160,6 +167,8 @@ _UA_PRODUCT = re.compile(
 _GEO_CUES = (
     "at|near|nearby|around|located|location|pin|pinned|map|gps|address"
     "|coordinates|coordinate|coords|place|home|office|hq|headquarters|site|city"
+    "|(?:lat|latitude)/(?:lng|lon|long|longitude)|lat|lng|lon|latitude|longitude"
+    "|latlng|latlon"
 )
 # Matched case-insensitively; `µ` is the micro sign, `μ` the Greek mu. A unit
 # counts only when whitespace, the end of the text or `.,;:!?)` follows it.
@@ -395,7 +404,12 @@ def build_rules(ctx: Context) -> list[Rule]:
     # geo
     lat = r"-?(?:90|[1-8]?\d)\.\d{4,}"
     lon = r"-?(?:180|1[0-7]\d|[1-9]?\d)\.\d{4,}"
-    pair = rf"(?<![\d.])({lat}\s*,\s*{lon})(?!\d|\.\d)"
+    core = rf"{lat}\s*,\s*{lon}"
+    pair = rf"(?<![\d.])({core})(?!\d|\.\d)"
+    # A pair, then any number of further pairs joined by `,`, `;`, and, to or or.
+    chain = (
+        rf"(?<![\d.])({core}(?:(?:\s*[,;]\s*|\s+(?:and|to|or)\s+){core})*)(?!\d|\.\d)"
+    )
     keys = r"coords?|coordinates|geo|geopoint|gps|latlng|latlon|location|position|centre|center|marker"
     add("geo", rf"""(?i)\b(?:{keys})\b["']?\s*[:=]\s*[\[({{]?\s*{pair}""", group=1)
     # Standing alone: the line or cell holds the pair and nothing else.
@@ -409,10 +423,18 @@ def build_rules(ctx: Context) -> list[Rule]:
     # `=` may follow the cue directly (`GPS: ...`).
     add(
         "geo",
-        rf"(?i)(?<![\w-])(?:{_GEO_CUES})(?![\w-])(?:[ \t]+[A-Za-z']+){{0,2}}(?:[ \t]+|[ \t]*[:=][ \t]*){pair}"
+        rf"(?i)(?<![\w-])(?:{_GEO_CUES})(?![\w-])(?:[ \t]+[A-Za-z']+){{0,2}}(?:[ \t]+|[ \t]*[:=][ \t]*){chain}"
         rf"{_GEO_UNIT_AFTER}"
         r"(?![ \t]*,[ \t]*-?\d)"  # a third number: not a lat, lng pair
         r"(?![ \t]+-?\d+(?:\.\d+)?[ \t]*,)",  # not the start of an SVG points list
+        group=1,
+    )
+    # Degree notation with hemisphere letters needs no cue: `41.8781° N, 87.6298° W`.
+    lat_d = r"(?:90|[1-8]?\d)\.\d{2,}"
+    lon_d = r"(?:180|1[0-7]\d|[1-9]?\d)\.\d{2,}"
+    add(
+        "geo",
+        rf"(?<![\d.])({lat_d}[ ]?°?[ ]?[NS](?![A-Za-z])[ ]?,?[ ]?{lon_d}[ ]?°?[ ]?[EW](?![A-Za-z]))",
         group=1,
     )
     add(
