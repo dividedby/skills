@@ -48,16 +48,25 @@ Categories, each deliberately narrow so the floor has few false positives:
                 address, coordinates, lat/lng, place, home, office, site,
                 city, ...) no more than two words before it:
                 `pin at 41.8781, -87.6298`. Pairs chained to a cued pair with
-                `,`, `;`, and, to or or are cued too. Degree notation with
-                hemisphere letters (`41.8781° N, 87.6298° W`) is caught
-                anywhere. A unit right after a cued pair (ms, s, px, %, kb,
-                mb, x, ...) means a measurement and the pair stays; a short
-                unit counts only when no word follows (`x marks`, `min walk`
-                do not), and a third number (`0.95, 0.87, 0.77`) is not a
-                pair. Pairs inside SVG paths and points, CSS functions, JSON
-                arrays and sentences with no cue stay
-                (`time 12.3456, 78.9012 seconds`). Phone numbers are not
-                scanned: no rule was precise enough.
+                `,`, `;`, and, to or or are cued too, and a chain is judged
+                whole. Degree notation with hemisphere letters
+                (`41.8781° N, 87.6298° W`) is caught anywhere. Stays:
+                - a cued pair or chain followed by a unit (ms, s, px, %, kb,
+                  mb, ...), which makes it a measurement; a short unit counts
+                  only when no word follows (`min walk` does not). A bare x
+                  is no unit: a multiplier is written attached, `1.5x`;
+                - a cued pair followed by a third number
+                  (`0.95, 0.87, 0.77`);
+                - a pair, or a whole chain, whose values are all below 1 in
+                  absolute value (`CLS at 0.0012, 0.0034`): that square is
+                  open ocean around 0, 0 with no land or address. Applies to
+                  every pair rule, not to a single `lat: 0.5` value. A pair
+                  with one value of 1 or more is still caught
+                  (`at 0.3365, 6.7273`);
+                - pairs inside SVG paths and points, CSS functions, JSON
+                  arrays, and sentences with no cue
+                  (`time 12.3456, 78.9012 seconds`).
+                Phone numbers are not scanned: no rule was precise enough.
 
 This is a floor. It matches shapes, so prose with no cue (a place named in a
 sentence, a coordinate with no location word) passes it; the Stage 6 demo-data
@@ -180,7 +189,7 @@ _GEO_UNITS = (
 )
 # Short or word-like units: also must not be followed by a word (`x marks`,
 # `min walk`, `pt Reyes`, `em dash`), which would make them part of a sentence.
-_GEO_UNITS_SHORT = "s|sec|secs|us|ns|min|mins|h|hr|hrs|x|b|pt|em|rem|dp|deg"
+_GEO_UNITS_SHORT = "s|sec|secs|us|ns|min|mins|h|hr|hrs|b|pt|em|rem|dp|deg"
 _UNIT_END = r"(?=\s|$|[.,;:!?)])"
 # After the pair: `%`, or a unit as above.
 _GEO_UNIT_AFTER = (
@@ -307,6 +316,19 @@ def _email_ok(m: re.Match[str]) -> bool:
     return not re.match(r"\d+x\.", domain)  # icon@2x.png
 
 
+def _not_null_island(group: int) -> Accept:
+    """Accept a run of lat, lng pairs only if one pair has a value of 1 or more.
+
+    A pair with both values below 1 in absolute value is open ocean around
+    0, 0 (no land, no address), and in practice a pair of metrics or scores."""
+
+    def accept(m: re.Match[str]) -> bool:
+        nums = [abs(float(n)) for n in re.findall(r"\d+(?:\.\d+)?", m.group(group))]
+        return any(a >= 1 or b >= 1 for a, b in zip(nums[::2], nums[1::2]))
+
+    return accept
+
+
 def _has_digit(m: re.Match[str]) -> bool:
     return any(c.isdigit() for c in m.group("body"))
 
@@ -407,17 +429,23 @@ def build_rules(ctx: Context) -> list[Rule]:
     core = rf"{lat}\s*,\s*{lon}"
     pair = rf"(?<![\d.])({core})(?!\d|\.\d)"
     # A pair, then any number of further pairs joined by `,`, `;`, and, to or or.
-    chain = (
-        rf"(?<![\d.])({core}(?:(?:\s*[,;]\s*|\s+(?:and|to|or)\s+){core})*)(?!\d|\.\d)"
-    )
+    # The chain is maximal, so a unit after its last pair cannot cut it short.
+    sep = r"(?:\s*[,;]\s*|\s+(?:and|to|or)\s+)"
+    chain = rf"(?<![\d.])({core}(?:{sep}{core})*)(?!\d|\.\d)(?!{sep}{core})"
     keys = r"coords?|coordinates|geo|geopoint|gps|latlng|latlon|location|position|centre|center|marker"
-    add("geo", rf"""(?i)\b(?:{keys})\b["']?\s*[:=]\s*[\[({{]?\s*{pair}""", group=1)
+    add(
+        "geo",
+        rf"""(?i)\b(?:{keys})\b["']?\s*[:=]\s*[\[({{]?\s*{pair}""",
+        group=1,
+        accept=_not_null_island(1),
+    )
     # Standing alone: the line or cell holds the pair and nothing else.
     add(
         "geo",
         rf"""(?m)(?:^[ \t]*|(?<=[`"'>|])[ \t]*|(?<![\w\])\-.])\([ \t]*){pair}"""
         r"""(?=[ \t]*(?:[`"'<|)]|[.,;:!?]*[ \t]*$))""",
         group=1,
+        accept=_not_null_island(1),
     )
     # In a sentence: a location cue, at most two words, then the pair. A `:` or
     # `=` may follow the cue directly (`GPS: ...`).
@@ -428,6 +456,7 @@ def build_rules(ctx: Context) -> list[Rule]:
         r"(?![ \t]*,[ \t]*-?\d)"  # a third number: not a lat, lng pair
         r"(?![ \t]+-?\d+(?:\.\d+)?[ \t]*,)",  # not the start of an SVG points list
         group=1,
+        accept=_not_null_island(1),
     )
     # Degree notation with hemisphere letters needs no cue: `41.8781° N, 87.6298° W`.
     lat_d = r"(?:90|[1-8]?\d)\.\d{2,}"
@@ -436,6 +465,7 @@ def build_rules(ctx: Context) -> list[Rule]:
         "geo",
         rf"(?<![\d.])({lat_d}[ ]?°?[ ]?[NS](?![A-Za-z])[ ]?,?[ ]?{lon_d}[ ]?°?[ ]?[EW](?![A-Za-z]))",
         group=1,
+        accept=_not_null_island(1),
     )
     add(
         "geo",
