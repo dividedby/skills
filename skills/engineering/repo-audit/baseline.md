@@ -67,6 +67,19 @@ Everything the baseline writes goes under one scratchpad folder, `$B`
     <demo variables from the profile> "$@"
   ```
 
+  The `<demo variables from the profile>` slot is mandatory. Every demo or
+  data-folder variable the Stage 1 profile names (the "environment variables the
+  demo or sample mode needs" row) is written into the wrapper with a scratch
+  value under `$B`, for example `<APP>_HOME="$B/data"`.
+
+  **Self-test, right after writing the wrapper and before any repo code runs:**
+  for each variable the profile names, `$B/run env | grep "^<VAR>="` must print
+  it with a value under `$B`. A missing one stops the run from starting any repo
+  binary until the wrapper is fixed. The result is a `commands.md` row.
+
+  A variable goes after the wrapper, `$B/run env VAR=value <command>`, never
+  before it (`VAR=value $B/run …`), because `env -i` strips it.
+
   `$T` is the short temp path from the `TMPDIR` bullet below. Drop only the
   lines for a stack the repo does not use; a stack with no
   section here still gets its package manager's redirect, and the stack
@@ -94,6 +107,11 @@ Everything the baseline writes goes under one scratchpad folder, `$B`
     package managers live (for example `/usr/bin:/bin`, plus Homebrew's or the
     version manager's directory). `HOME` in the scratchpad also redirects most
     tools' caches and stores.
+  - **`HOME` does not redirect a native binary's home lookup:** macOS
+    `NSHomeDirectory()` and `getpwuid` ignore `$HOME`. A CLI or native app with a
+    data folder needs its own variable in the wrapper (or a scratch user) before
+    any probe or lens runs it. With neither, it is not run, reason "Needs X: an
+    isolated data mode".
 
   Tools the baseline installs and reads (`osv-scanner`, `gitleaks`, `scc`,
   `git log`) scan files; they do not run the repo's code and need no
@@ -272,7 +290,13 @@ whichever flag the installed version has.
   `osv-scanner scan source --recursive --format json --output-file $B/raw/osv.json <repo>`
   (reads lockfiles and manifests; exit 1 means vulnerabilities were found, not
   that the tool failed). A repo with no lockfile reports "0 packages found",
-  which the digest says in those words.
+  which the digest says in those words. When it reports 0 packages but the repo
+  tracks a lockfile (`git ls-files` shows `pnpm-lock.yaml`, `package-lock.json`,
+  `Package.resolved`, `uv.lock` and the like), the lockfile was not parsed (for
+  example pnpm 11's `pnpm-lock.yaml`). The digest does not say "0 packages
+  found": it adds a Not run row "Tool unavailable: osv-scanner does not parse
+  `<lockfile and format>`" (area `tech-stack`), and the stack's own audit (Node:
+  `pnpm audit`, see [Node and pnpm](#node-and-pnpm)) covers that ecosystem.
 - **Secrets, tree and history:**
   `gitleaks dir --no-banner --redact --report-format json --report-path $B/raw/gitleaks-tree.json <repo>`
   and `gitleaks git --no-banner --redact --report-format json --report-path $B/raw/gitleaks-history.json <repo>`
@@ -322,10 +346,21 @@ format check, typecheck, tests, build, schema or link check.
    keep output out of the repo, and record the addition). Record pass or fail,
    counts (tests, files checked, errors) and wall time. Do not retry a failure the
    repo causes (a test, lint or type error). A failure the environment causes
-   (a socket path over the length limit, a macOS BSD tool given a GNU flag, a
-   cache or output path the redirects missed) is fixed in the environment, then
-   the gate runs once more; both runs get a row in `commands.md`, and the digest
-   reports the second, naming the fix.
+   is fixed in the environment, then the gate runs once more; both runs get a
+   row in `commands.md`, and the digest reports the second, naming the fix.
+   Environment causes include:
+   - a socket path over the length limit;
+   - a macOS BSD tool given a GNU flag;
+   - a cache or output path the redirects missed;
+   - an ignored file the CI checkout does not have, such as a formatter or
+     linter walking `node_modules`: rerun in the scratch clone, which has none;
+   - a test that finds a built product at the default output path (see
+     [Swift](#swift)).
+
+   When the gate cannot run twice within the time-box, rerun only the parts that
+   failed for the environment reason (the stack's filter flag), with both runs
+   in `commands.md`.
+
 3. **Record documented versus actual** for every gate, one of:
    - ran as written;
    - ran with a change (say what: a tool taken from the scratch venv instead of
@@ -411,7 +446,8 @@ file. A floor that cannot be installed is "not run (tool unavailable: version)".
 
 - **Vulnerabilities:** the repo's own manager's audit, read-only: `pnpm audit --prod`
   and `pnpm audit` for dev dependencies (`npm audit --omit=dev` or
-  `yarn npm audit` for the others); `osv-scanner` covers the lockfile.
+  `yarn npm audit` for the others); `osv-scanner` covers the lockfile when it
+  parses it (see [Universal tools](#1-universal-tools)).
 - **Currency:** `pnpm outdated` (exit 1 means something is outdated); runtime
   end of life against `engines.node`, `.nvmrc` and the CI `node-version`.
 - **Minimum runtime:** `pnpm dlx node@<floor> <script>` runs a script on that
@@ -487,6 +523,14 @@ loaded by `<script src>` from HTML. The Node rows do not apply, so run these:
   the clone); otherwise run in a scratch clone. Build only:
   [`types.md`](./types.md)'s native-app "Never" list stands (no device install,
   no signing identity).
+- **Tests that find the built product under `.build`** (next to the `.xctest`
+  bundle, or at `<repo>/.build/debug/<name>`) fail under `--scratch-path` for an
+  environment reason. Fix: run the gate in the scratch clone with `.build`
+  symlinked to the scratch path (`ln -s $B/cache/swift $B/clone/.build`). When
+  the full suite cannot run twice inside the 600 s time-box, rerun only the
+  suites that failed for that reason (`swift test --filter <suite>`), with both
+  runs as rows in `commands.md`; the digest reports the first run's result for
+  the rest and the filtered rerun for those suites, naming the fix.
 - **Vulnerabilities and currency:** `osv-scanner` reads `Package.resolved`;
   compare each pin with its latest tag (`git ls-remote --tags <url>`). Floor:
   `swift-tools-version` and the `platforms:` deployment target against the CI
@@ -578,7 +622,10 @@ loaded by `<script src>` from HTML. The Node rows do not apply, so run these:
   style, `shfmt` reads it, so pass no style flags (`-i`, `-ci`, `-bn`) of ours.
   Bare `shfmt -d` over the tracked shell files, with shfmt's defaults, is only
   for a repo that documents no invocation and has no `.editorconfig`; the digest
-  says which case applied.
+  says which case applied. CI often runs `shfmt` before installing dependencies,
+  so locally an ignored `node_modules` is diffed (its `.bin` shims); that is an
+  environment failure per [step 2](#2-the-repos-own-gates): rerun in the scratch
+  clone.
 - **Tests:** a `bats` suite runs with `bats --timing --tap <dir>` and
   `BATS_TMPDIR=$B/tmp` under the scrubbed environment; a script-style test is
   run per file with its wall time recorded.

@@ -76,6 +76,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 - `repo-audit`: every lens that ran now has its report published and linked from the page; the code lens's report was left out (#677).
 - `repo-audit`: the private strings the repo's own rules name (a household ZIP, a town, a name) are listed in the profile by kind and source, never by value, and the publish scrub and its final check run with them, so they no longer depend on a hand read. `--literal` on `scrub.py` takes any private string (a name, a place, a ZIP, an id) and reports it as `literal` (#677).
 - `repo-audit`: the demo-data read before publishing now checks empty and first-run captures for values the app fills in by default (#677).
+- `repo-audit`: a CLI or native app with a data folder no longer touches your real one (#678). Setting `HOME` does not redirect a macOS binary's home lookup, so the audit writes every demo or data-folder variable the profile names into the scratch environment, checks that each one is set before any repo binary starts, and puts a variable you add after the wrapper, never before it. With no isolated data mode, the app is not run ("Needs X: an isolated data mode").
+- `repo-audit`: a dependency scan that finds 0 packages in a repo that tracks a lockfile (such as pnpm 11's `pnpm-lock.yaml`) no longer reports "0 packages found". It lists the scanner as unable to parse that lockfile, and the stack's own audit covers it (#685).
+- `repo-audit`: gate failures the environment causes are now told apart from the repo's. A Swift test that looks for its built product under `.build` fails under the scratch build path, and a `shfmt` or lint run that walks an ignored `node_modules` fails where CI's checkout has none. The audit reruns in a scratch clone (with `.build` linked to the scratch path for Swift), and when the suite cannot run twice in the time-box, reruns only the affected parts (#685, #688).
 
 ## [3.1.0] - 2026-10-12
 
