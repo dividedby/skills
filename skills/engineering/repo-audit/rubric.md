@@ -454,6 +454,9 @@ the fact, tool or need in the reason.
 - **Untrusted not run:** it needs code from an untrusted repo and the run was
   not allowed to execute it: the answer was No, or nobody answered
   ([`SKILL.md`](./SKILL.md) Stage 1, Ownership and trust).
+- **Refused:** the session's permission layer refused the command, or a repo
+  rule forbids the method. Name the command and the refusal, or cite the rule's
+  `file:line`.
 - **Needs X:** an input the run does not have: credentials, a service, a
   device, a GitHub remote, or full git history (a shallow clone). Name X.
 - **Not selected:** the user limited the run to named packages. Name them.
@@ -543,6 +546,13 @@ Each applicable area gets one verdict:
 The overall verdict is the worst verdict among the applicable areas that have
 one, and Blockers are listed by name. Applicable areas that are Not assessed are
 listed beside it, so a Ready overall never hides an area nobody looked at.
+
+An area's verdict counts every verified finding filed in it after Stage 4's
+routing, wherever the evidence came from: another lens's note, the market
+lens's evidence or the main session. A market source showing a hard-coded quota
+is out of date is an `external-facts` finding; a code-lens note that the
+documented test command fails is an `agent-readiness` finding. The market lens
+rates nothing itself.
 
 ## Fleet standards and the areas
 

@@ -19,6 +19,11 @@ Stage 1 detects the types from the files present, records them as the profile's
   is the one [`rubric.md`](./rubric.md)'s "Applies when" gives, naming that
   fact.
 
+A repo's own rule wins over a type's capture or probe method. Where an agent
+file or doc forbids the method (an `AGENTS.md` that forbids agents running the
+built menu-bar app), skip it with the reason Refused (the rule's `file:line`) and
+work from source.
+
 Types are additive. A repo can carry several; its applicable areas are the union
 of what each type needs. A directory that is a different type from the rest
 (a userscript folder in a docs repo) is profiled as its own part, as a package
@@ -172,13 +177,14 @@ output piped (non-TTY). Never point the probe at real accounts or data.
   lens ([`briefs.md`](./briefs.md) Security, privacy and data, Security). `$PORT`
   is its port, `<read>` a path that returns data, `<write>` a path and `<method>` the method
   that changes data (from the routes or the docs) and `<body>` the smallest body it
-  accepts. Checksum the instance's data directory before and after. A server
+  accepts, and `<type>` the content type the write route accepts (from the route
+  or handler). Checksum the instance's data directory before and after. A server
   with no write path skips requests 2 and 3, Not applicable (no write path).
   1. Forged `Host`:
      `curl -si -H 'Host: attacker.example' http://127.0.0.1:$PORT/<read>`.
      Expect a refusal (4xx) with no data in the body.
   2. Cross-origin write:
-     `curl -si -X <method> -H 'Origin: http://attacker.example' -H 'Content-Type: application/json' --data '<body>' http://127.0.0.1:$PORT/<write>`.
+     `curl -si -X <method> -H 'Origin: http://attacker.example' -H 'Content-Type: <type>' --data '<body>' http://127.0.0.1:$PORT/<write>`.
      Expect a refusal and an unchanged data directory.
   3. Write with no `Origin` header: request 2 without the `Origin` header. Expect a
      refusal when the repo's docs or code require an `Origin` on writes; otherwise

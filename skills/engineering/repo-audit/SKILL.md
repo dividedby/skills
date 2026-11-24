@@ -174,8 +174,16 @@ Each lens also gets the `rules.md` rows of the areas it owns.
   lenses are `code`, `architecture`, `product` and, with a UI, `design`; `market`
   launches only when fewer than four core lenses do. Otherwise it is skipped with
   the reason "standard four-agent cap", and no prompt overrides the cap. `market`
-  owns no area, so no verdict is lost. The rules-harvest helper (Stage 1) is not
-  a lens and does not count.
+  owns no area, so no verdict is lost. The helpers below are not lenses and do
+  not count.
+- **Helpers.** Three optional `general-purpose` sonnet agents take bulk reading
+  off the main session: `rules-harvest` (Stage 1), `fleet-check` (Stage 2) and
+  `findings-extract` (Stage 4). None is a lens: not one of the four, not in
+  `lens_coverage`. Each has its own row in the run log's Agents table (named
+  `<name> (helper)`) and its own budget row, and its tokens count in the agent
+  total. A helper decides nothing: the main session reads its output file and
+  keeps every decision. `fleet-check` is allowed at both depths; `rules-harvest`
+  and `findings-extract` at `standard` only.
 - **Depth.** Two levels: `standard` and `quick`. The prompt sets it ("quick",
   "quick audit"); with no word it is `standard`. It is a profile row, `depth`.
   The baseline (Stage 2's gates and 10-minute time-box) is the same at both,
@@ -183,14 +191,14 @@ Each lens also gets the `rules.md` rows of the areas it owns.
   only.
   - **`standard`:** every method under the tier's reading rule, the four-agent
     rule, a probe matrix of at most 60 cells (provisional), `rules.md` from every
-    source (a helper allowed), External facts under its 30-candidate rule.
+    source (a rules-harvest helper allowed), External facts under its 30-candidate rule.
   - **`quick`:** only `code` and `architecture`, from static reading, the
     baseline digest and the fleet check. No instances, probe, benchmarks, faults,
     fresh-clone install or walkthroughs; module depth review skipped; go-public
     feasibility skipped, reason "Depth: quick run, go-public feasibility not
     run" (it needs `gh` calls and a full-history scan); `rules.md`
     harvested from agent files, coding standards, accepted ADRs and `VERIFY`
-    markers only, with no helper; External facts checks the `VERIFY`-marked
+    markers only, with no rules-harvest helper; External facts checks the `VERIFY`-marked
     values first, then at most 10 more, and lists the rest as not checked with
     the count.
   - **Skipped areas.** Each area a lens not launched at `quick` owns reads "Not
@@ -208,25 +216,30 @@ skills repo's `docs/adr/`. Main-session context (327k to 415k tokens, up to 83%
 of a 500k window, in the runs that recorded it) is not in the agent totals: the
 run reports it in the run log and the closing message and does not budget it.
 
-| Row                  | Standard, Medium and Large | Standard, Small           | Quick, Medium and Large | Quick, Small |
-| -------------------- | -------------------------- | ------------------------- | ----------------------- | ------------ |
-| `code`               | 300k / 15 min              | 150k / 8 min              | 180k / 9 min            | 90k / 5 min  |
-| `architecture`       | 200k / 10 min              | 100k / 6 min              | 120k / 6 min            | 60k / 4 min  |
-| `product`            | 150k / 8 min               | 75k / 5 min               | not launched            | not launched |
-| `design`             | 320k / 15 min              | 160k / 8 min              | not launched            | not launched |
-| `market`             | 120k / 3 min               | 60k / 2 min               | not launched            | not launched |
-| rules-harvest helper | 150k / 3 min               | 150k / 3 min              | not allowed             | not allowed  |
-| Lenses total, UI     | 970k                       | 485k                      | 300k                    | 150k         |
-| Lenses total, no UI  | 650k (770k with `market`)  | 325k (385k with `market`) | 300k                    | 150k         |
+| Row                     | Standard, Medium and Large | Standard, Small           | Quick, Medium and Large | Quick, Small |
+| ----------------------- | -------------------------- | ------------------------- | ----------------------- | ------------ |
+| `code`                  | 300k / 15 min              | 150k / 8 min              | 180k / 9 min            | 90k / 5 min  |
+| `architecture`          | 200k / 10 min              | 100k / 6 min              | 120k / 6 min            | 60k / 4 min  |
+| `product`               | 150k / 8 min               | 75k / 5 min               | not launched            | not launched |
+| `design`                | 320k / 15 min              | 160k / 8 min              | not launched            | not launched |
+| `market`                | 120k / 3 min               | 60k / 2 min               | not launched            | not launched |
+| rules-harvest helper    | 150k / 3 min               | 150k / 3 min              | not allowed             | not allowed  |
+| fleet-check helper      | 100k / 3 min               | 100k / 3 min              | 100k / 3 min            | 100k / 3 min |
+| findings-extract helper | 150k / 4 min               | 150k / 4 min              | not allowed             | not allowed  |
+| Lenses total, UI        | 970k                       | 485k                      | 300k                    | 150k         |
+| Lenses total, no UI     | 650k (770k with `market`)  | 325k (385k with `market`) | 300k                    | 150k         |
 
 Whole run, Stages 1 to 6: Medium 45 min with a UI and 35 without; Large 40 min;
 Small 25 min with a UI and 20 without; `quick` 20 min (Medium and Large) or 12
-min (Small). The helper's tokens add to the lens total when it runs.
+min (Small). A helper's tokens add to the lens total when it runs. The helpers
+exist to keep main-session context down.
 
 Provisional until the audit's fixture runs confirm them: the `architecture` and
 `product` rows (the old single architecture agent was split in two, so the pair
-costs about 100k more), every Small and `quick` figure, the 60-cell probe cap and
-the helper's size threshold.
+costs about 100k more), every Small and `quick` figure, the 60-cell probe cap,
+the rules-harvest helper's size threshold and the `fleet-check` and
+`findings-extract` rows (from one marketplace run: 85.5k tokens in 1.5 min and
+132.4k in 3.2 min).
 
 - **Ceiling.** A lens's ceiling is 1.5 times its budget row, in wall time and in
   tokens.
@@ -406,14 +419,18 @@ Keep **rule-like sentences** only:
 - A statement that something must, never or always be so, or an imperative
   about the product or the tree, that a file, command or behaviour at the pinned
   commit could break; every README feature and documented command.
-- A decision in an accepted ADR, from its Decision section. Read the status
-  line and every banner: superseded, rejected and proposed ADRs give no rows, a
+- A decision in an accepted ADR, from its Decision section. With no Decision
+  heading, take it from the body before the first `##` heading and from each
+  dated Update or Amendment. Read the status line and every banner: superseded, rejected and proposed ADRs give no rows, a
   partly superseded one gives only the decisions its banner says stand, and one
   with no status or banner counts as accepted.
 - A marker is a note left for later: the token begins a comment or list item or
   is followed by `:` or `(`, and "not built" is a status for a planned or
   missing item. A sentence that mentions the word is not a marker. List every
-  marker; they are not filtered further.
+  marker; they are not filtered further. When the repo defines its own markers
+  (a documented `grep` or a stated syntax, such as a `CLAUDE.md` that says
+  "`grep -rn VERIFY`"), that definition wins for that token; cite its `file:line`
+  in the rows.
 
 Drop rationale, history, rejected alternatives, and process advice to the agent
 that leaves nothing in the tree to check. A rule stated in several sources is
@@ -428,7 +445,7 @@ above) run past about 1,000 lines (provisional), the main session may hand
 The helper is not a lens: it is not one of the four, not in `lens_coverage`, has
 its own row in the run log's Agents table (`rules-harvest (helper)`) and its own
 budget row, and its tokens count in the agent total. The main session still
-checks that every row has a source `file:line`. No helper at `quick`.
+checks that every row has a source `file:line`. No rules-harvest helper at `quick`.
 
 **Done when:** the commit is pinned, the profile is written down with a source
 per fact (types, tier, exclusions and package list included), the ownership test
@@ -464,7 +481,8 @@ the repo's code follows the execute answer from Stage 1:
   site, Lighthouse. Screenshots come from the same run. Raw JSON stays in the
   scratchpad. Every skipped dimension records its reason.
 - **Other UI types** (CLI, native app, userscript): capture as the type's entry
-  in [`types.md`](./types.md) directs.
+  in [`types.md`](./types.md) directs, unless a repo rule forbids the method
+  (see its How to use).
 - **Lifetime.** Both instances stay up through Stage 3. The main session stops
   both before Stage 4 and logs it; none is left running at publish.
 - **Baseline.** The main session runs [`baseline.md`](./baseline.md) before the
@@ -476,7 +494,10 @@ the repo's code follows the execute answer from Stage 1:
 - **Fleet standards.** When the repo passes the ownership test, the main session
   runs the check in [`fleet-standards.md`](./fleet-standards.md) and fixes
   nothing it finds; a repo with no remote is "Not assessed (Needs X: a remote)";
-  otherwise the section is "n/a (not a fleet repo)". Neither runs a row.
+  otherwise the section is "n/a (not a fleet repo)". Neither runs a row. The
+  main session may hand the check to one `fleet-check (helper)`: it stays
+  read-only, writes its results to a scratchpad file, and the main session reads
+  that file, not the raw output.
 
 **Done when:** each main screen has a capture (or the reason it has none), the
 captures sit in the scratchpad, a web UI has a probe cell set per main screen and
@@ -488,18 +509,30 @@ a reason for every tool or gate that did not run.
 
 ## Stage 3 — Lenses (parallel)
 
-Launch the applicable lens agents (at most four at `standard`) in one message so they run concurrently. Each
-gets the pinned commit, the profile, the read-only rule, the relevant captures,
-the fleet-standards results, the execute answer, the baseline digest, the probe
-output paths and the running instances' addresses (the primary for every lens,
-the second for the architecture lens, with its data directory and PID) and the path of its raw
-output, the type entries and the tier's reading rule, the `rules.md` rows for the areas it owns, and its brief from
-[`briefs.md`](./briefs.md): the [lens table](#lenses-depth-and-budgets) sets the
-lens's agent type, model and tools (launch with that agent type and model), the brief's body
-says what the lens finds, and the shared header sets the severity scale, the areas the lens
-owns, the shape of a finding and how to use the profile and those results. Each writes its report (and the
-design lens, when it has a High or Blocker finding, its mockup spec) to a named scratchpad path and returns a short
-summary. The design lens is one agent: its copy table, brand inventory and
+First write `<scratchpad>/briefs/shared-header.md` once, with one copy of what
+every lens needs: the shared header's facts ([`briefs.md`](./briefs.md): the
+pinned commit, the profile, the execute answer, the size facts, the paths of the
+baseline digest and the fleet-standards results), the read-only rule, the
+[Execution boundary](#execution-boundary) and the Severity section of
+[`rubric.md`](./rubric.md), verbatim. Then launch the applicable lens agents (at
+most four at `standard`) in one message so they run concurrently. Each prompt
+tells the lens to read that file first, then its own section of
+[`briefs.md`](./briefs.md) by path and heading (not line ranges, which drift),
+and adds only the parts specific to the lens: its areas and their applicability
+facts, the relevant captures, the probe output paths, the running instances'
+addresses (the primary for every lens, the second for the architecture lens,
+with its data directory and PID), the path of its raw output, the type entries
+and the tier's reading rule, the path of the `rules.md` rows for the areas it
+owns, and the adaptations (dropped bullets, types bullets, the user's focus).
+The product lens is also told to read [`rubric.md`](./rubric.md) CI cost
+severity by path. The [lens table](#lenses-depth-and-budgets) sets the lens's
+agent type, model and tools (launch with that agent type and model). Each writes
+its report (and the design lens, when it has a High or Blocker finding, its
+mockup spec) to a named scratchpad path and returns a short summary. A CLI,
+native, infra or library repo has no instance: the hand-over gives the scratch
+build path and the wrapper command to run it (or "none: static only"), and a
+method that needs an instance takes its reason from [`probe.md`](./probe.md)
+section 10 or the type's entry. The design lens is one agent: its copy table, brand inventory and
 walkthrough logs go in its report file, and its walkthrough screenshots come from
 its own session on the primary instance.
 
@@ -520,6 +553,12 @@ wall time and tokens against its row.
   the areas it owns "Not assessed (lens failed: reason)".
 - **Failed after writing something:** keep the partial output, marked partial,
   with the reason. No retry.
+- **Thin report:** a report that has no result and no skip reason for a method
+  of its areas is marked partial, reason "thin: <method>".
+- **Not progressive:** each finding heading carries the time it was written, and
+  the report's first line is the start time. If every finding time falls in the
+  last tenth of the lens's wall time, the Agents row status says
+  `done (not progressive)`.
 - **Resume, same session only** (the scratchpad is per-session). Read `state`
   from the run log and restart at the first incomplete stage if the repo `HEAD`
   is unchanged, relaunching lenses still `running` and launching any with no row
@@ -543,30 +582,54 @@ assessed", and both instances are stopped (Stage 2, Lifetime).
 
 ## Stage 4 — Verify (main session)
 
-The lens reports are claims. Before anything reaches the page:
+The lens reports are claims. At `standard`, the main session may first hand them
+to one `findings-extract (helper)`. It reads the lens reports and writes to a
+scratchpad file one structured findings list (id, lens, area, severity, title,
+evidence cite, `file:line`) and its proposed duplicate merges. It decides
+nothing: the main session reads that file, applies or drops each merge,
+re-checks every Blocker and High at its source and sets the verdicts. Before
+anything reaches the page:
 
-1. **Merge duplicates, before any re-check.** Two findings are duplicates when
-   they cite the same `file:line` or the same command output.
-   - Keep one, in the lens that owns the finding's area
-     ([`rubric.md`](./rubric.md)). Record the other lenses as "also reported
-     by".
-   - Keep the highest severity that survives verification.
-   - A finding that restates a fleet-standards row is folded into that row.
-   - Each merge is a "merged" line in the correction list.
+1. **Route, re-area, then merge, before any re-check.** In this order:
+   - **Route notes.** A lens report may hold a `## For other areas` section.
+     Route each note into the area that owns it as a finding, verified as
+     usual: "also reported by" the noting lens when the owner raised it too,
+     otherwise the noting lens's finding in that area.
+   - **Re-area.** A finding filed under an area whose check it is not moves to
+     the right area and its owning lens's section, with a "re-areaed" line in
+     the correction list (a backup-checksum finding filed under `code-quality`
+     is `data-integrity`).
+   - **Merge duplicates.** Two findings are duplicates when they cite the same
+     evidence (a `file:line` or a command output), or name the same subject at
+     different lines and one fix resolves both (the `--version` banner is wrong:
+     the code lens cites `cli.py:12`, the product lens cites `README.md:40`).
+     - Keep one, in the lens that owns the finding's area
+       ([`rubric.md`](./rubric.md)). Record the other lenses as "also reported
+       by".
+     - Keep the highest severity that survives verification.
+     - A finding that restates a fleet-standards row is folded into that row.
+     - Each merge is a "merged" line in the correction list.
    - **Reuse previous keys.** With a previous run, match each finding to a
      previous one that cites the same file and the same defect, whatever its
      area or check name (`code-quality:null-body` re-raised as
      `security:null-body`), or that breaks the same rule (a fleet row or a
      repo rule's text) or makes the same repo-wide claim with a different
      example path (`tests:untested-risky-path` on another script), and give it
-     the previous key. Each reuse is a "key
-     reused" line in the correction list. Do this before the diff.
+     the previous key. Each reuse is a "key reused" line in the correction
+     list. Do this before the diff.
+   - **Partial overlap is not a duplicate.** One fix covers only part of the
+     other (a code finding on a file's parse cost, an architecture finding on
+     that file's rotation): keep both, each naming the other ("overlaps
+     `<id>`"), with a "linked" line in the correction list.
+
 2. Re-check every **Blocker** and every **High** finding, every area marked
    **Not ready**, and any finding the plan's "Now" column rests on, at its cited
    source. Read the line; rerun the command. This includes fleet-standards
    fails and failed repo rules at those severities; read the rule's line too.
 3. Correct what does not hold: lower the severity, fix the evidence, or drop the
-   finding. Keep a list of every correction with the reason.
+   finding. Keep a list of every correction with the reason. On the page,
+   "linked", "re-areaed" and "key reused" lines go under Merged and "added
+   (main session)" lines under Corrected ([`template.html`](./template.html) What was checked).
 4. Where lenses disagree with each other or with the code (a research claim
    versus what the code does), list it as a "disputed" line in the correction
    list.
@@ -580,12 +643,19 @@ The lens reports are claims. Before anything reaches the page:
    lens's CI cost table into it, labelled measured or estimated as that table
    labels it ([`briefs.md`](./briefs.md) Security, privacy and data, Method 5).
    With no product lens or no figure, write that table's reason instead.
-7. Set each area's verdict and the overall verdict from the corrected findings,
+7. A finding the main session sees itself (while verifying, filling the page or
+   reading for the scrub) enters with its evidence, goes through step 1 (merge
+   and key reuse) and is re-checked like a lens finding, sits in the area that
+   owns it, the verdicts are set again (step 8), and it gets an "added (main session)"
+   line in the correction list. A hard-coded home ZIP default seen in the Stage
+   6 demo-data read goes back here as a `privacy` finding.
+8. Set each area's verdict and the overall verdict from the corrected findings,
    as [`rubric.md`](./rubric.md) directs.
 
 **Done when:** duplicates are merged, every Blocker and High is confirmed or
 corrected, every applicable area has a verdict or a Not-assessed reason, and the
-correction list (merged, corrected and disputed lines) is written.
+correction list (merged, linked, re-areaed, key reused, added, corrected and
+disputed lines) is written.
 
 ## Stage 5 — Plan and mockups
 
@@ -628,8 +698,7 @@ sections:
   `type` row marked "fallback profile". The `depth` row is here too.
 - `lens_coverage`: one `{lens, read, chosen_by}` object per launched lens, from
   its coverage line. `lens` is the short name (`code`, `architecture`,
-  `product`, `design`, `market`); the rules-harvest helper is not a lens and has
-  no entry. A lens's areas are those the [lens table](#lenses-depth-and-budgets)
+  `product`, `design`, `market`); a helper is not a lens and has no entry. A lens's areas are those the [lens table](#lenses-depth-and-budgets)
   gives it, and `also_reported_by` below uses the same names.
 - `findings`: one object per finding on the page, fleet-standards fails
   included, with these fields:
@@ -718,7 +787,8 @@ included, takes the same five steps:
    to look for. A screenshot that shows one is retaken from clean data or
    cropped. The scrub is a floor, not a substitute:
    it matches shapes, cannot tell a real name or address from a made-up one,
-   and skips the page's embedded `data:` images.
+   and skips the page's embedded `data:` images. A finding seen here goes back
+   through Stage 4 as an added finding.
 3. **Scrub.** Copy every file into one folder, `<scratchpad>/publish/`, the
    page and the log included, and run `python3 <skill folder>/scrub.py <publish>/*`
    on all of them, adding `--literal <value>` for each line of
