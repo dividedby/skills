@@ -67,7 +67,8 @@ Everything the baseline writes goes under one scratchpad folder, `$B`
     <demo variables from the profile> "$@"
   ```
 
-  Drop only the lines for a stack the repo does not use; a stack with no
+  `$T` is the short temp path from the `TMPDIR` bullet below. Drop only the
+  lines for a stack the repo does not use; a stack with no
   section here still gets its package manager's redirect, and the stack
   sections add the tool-specific flags. Every repo-code command is
   `$B/run timeout 600 <command>`; macOS ships no `timeout`, so use `gtimeout`
