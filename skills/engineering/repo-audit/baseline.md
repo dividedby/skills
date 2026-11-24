@@ -527,10 +527,10 @@ loaded by `<script src>` from HTML. The Node rows do not apply, so run these:
   bundle, or at `<repo>/.build/debug/<name>`) fail under `--scratch-path` for an
   environment reason. Fix: run the gate in the scratch clone with `.build`
   symlinked to the scratch path (`ln -s $B/cache/swift $B/clone/.build`). When
-  the full suite cannot run twice inside the 600 s time-box, rerun only the
-  suites that failed for that reason (`swift test --filter <suite>`), with both
-  runs as rows in `commands.md`; the digest reports the first run's result for
-  the rest and the filtered rerun for those suites, naming the fix.
+  the full suite cannot run twice in the time-box, the partial rerun of
+  [step 2](#2-the-repos-own-gates) uses `swift test --filter <suite>` for the
+  suites that failed for that reason; the digest reports the first run's result
+  for the rest and the filtered rerun for those suites, naming the fix.
 - **Vulnerabilities and currency:** `osv-scanner` reads `Package.resolved`;
   compare each pin with its latest tag (`git ls-remote --tags <url>`). Floor:
   `swift-tools-version` and the `platforms:` deployment target against the CI
