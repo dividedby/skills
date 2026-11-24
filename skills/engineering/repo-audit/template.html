@@ -86,8 +86,8 @@ REPO-AUDIT REPORT TEMPLATE. FILL RULES
   widths, themes, cells), and that every figure is a lab or probe measurement on throwaway data, not user data. Tables, in
   order:
   1. Totals per screen (class "wide"): Screen, Cells run, Cells failing, Axe violations, Overflow, Small targets, Console and
-     failed requests, Copy flags (sentences over 25 words, longest block in words, highest mean sentence length, plain-prose blocks over 60
-     words, repeated blocks; the summary row's `spaceDelimited` false means no word figures; long unstructured blocks are counted but
+     failed requests, Copy flags (sentences over the limit, longest block in words, highest mean sentence length, plain-prose blocks over the limit
+     (briefs.md Copy density holds the limits), repeated blocks; the summary row's `spaceDelimited` false means no word figures; long unstructured blocks are counted but
      never make a cell fail, the design lens flags them on primary flows). One row per main screen, failing screens first.
   2. Failing cells (class "wide"): Screen, Cell (state, width, theme), Check, Detail (the rule and impact and count, the
      offending selector, the measured size), Link (the finding's id, or an em dash). At most 30 rows, worst first; when more

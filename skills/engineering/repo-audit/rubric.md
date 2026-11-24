@@ -18,7 +18,7 @@ repo's own claims.
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------ |
 | Type               | The kind of project, one or more, as [`types.md`](./types.md) defines them; a repo matching none gets its fallback       |
 | Target platform    | Where users run it: a browser, a phone, a desktop OS, a server, a pipeline                                               |
-| Ships              | As [`fleet-standards.md`](./fleet-standards.md) section 2 defines it                                                     |
+| Ships              | As [`fleet-standards.md`](./fleet-standards.md#2-pin-the-repo-facts) Pin the repo facts defines it                       |
 | UI present         | A user-facing UI: an app, a site, or CLI output when the output is the product. A library or a pure service has none     |
 | Data store present | The project keeps data of its own that outlives a run: a database, a state file, a cache or queue on disk                |
 | Tier               | Small, Medium or Large by [`types.md`](./types.md). No area's applicability depends on it; it sets how much a lens reads |
@@ -78,15 +78,17 @@ finding with no evidence is not a finding.
 
 - **Checks:** layering, dependency direction, god modules, demo or test code in
   production paths, whether a part should be its own module; and module depth,
-  by the deletion test: pass-through modules, one concept scattered across
-  shallow files, code extracted only so a test can reach it, and one-adapter
-  seams (an interface with one non-test implementation, Low by default). Depth
-  is leverage at the interface, not a line ratio.
+  by the deletion test, which raises the flags **pass-through**, **scattered
+  concept**, **test-only extraction** and **one-adapter seam**
+  ([`briefs.md`](./briefs.md#architecture-security-privacy-and-data) **Module
+  depth** defines each). Depth is leverage at the interface, not a line
+  ratio.
 - **How:** read; run the repo's dependency-graph tool if it has one. For module
   depth, measure each candidate's interface size and caller count (a
   `git grep` of its imports) and write its deletion test
-  ([`briefs.md`](./briefs.md) Architecture, security, privacy and data, item 3,
-  **Module depth**, which also defines the badges). Candidates come from the baseline
+  ([`briefs.md`](./briefs.md#architecture-security-privacy-and-data)
+  Architecture, security, privacy and data, **Module depth**, which also defines
+  the badges). Candidates come from the baseline
   digest's churn hotspots and the profile's entry points; a module with no
   commit in the last year is not one, whatever window the digest used.
 - **Evidence:** the `file:line` of the import or reference that breaks the
@@ -108,7 +110,8 @@ finding with no evidence is not a finding.
   versions).
 - **How:** read the baseline digest's vulnerability, currency and runtime
   end-of-life rows ([`baseline.md`](./baseline.md)) and judge them
-  ([`briefs.md`](./briefs.md) Security, privacy and data, Method 4); run nothing
+  ([`briefs.md`](./briefs.md#security-privacy-and-data) Security, privacy and
+  data, **Tech stack currency**); run nothing
   the digest already ran.
 - **Evidence:** the manifest `file:line`, the digest row and its raw path, or the
   URL and the date it was read.
@@ -120,11 +123,13 @@ finding with no evidence is not a finding.
   test quality: tautological expectations (the expected value computed the same
   way as the code under test), mocks of the repo's own modules (mock only at
   system boundaries), and tests that bypass a module's interface to reach its
-  internals.
+  internals (private helpers, internal state, a deep import path).
 - **How:** read; run the test command; measure run time, count and ratio.
 - **Evidence:** the command and its result; `file:line` samples. Cite the
   `test-size` numbers, do not remeasure them. A test that bypasses an interface
-  is also evidence for module depth under Architecture.
+  is also evidence for module depth under Architecture: it is cited on the
+  candidate's row, counts as evidence for a test-only extraction and does not
+  set a badge on its own.
 
 ### Security
 
@@ -133,13 +138,14 @@ finding with no evidence is not a finding.
   also gets OWASP ASVS 5.0 Level 1. A private repo also gets the go-public
   feasibility checklist: the repo's secrets, personal data, infrastructure
   details, issue and PR content, dependencies, licence and trust, ending in one
-  verdict. It applies only to a private repo ([`briefs.md`](./briefs.md)
-  Security, privacy and data, Method 5, which holds the rows and the verdict
-  rules); its personal-data row is the Privacy area's table, not a second one.
+  verdict. It applies only to a private repo ([`briefs.md`](./briefs.md#security-privacy-and-data)
+  Security, privacy and data, **Go-public feasibility**, which holds the rows
+  and the verdict rules); its personal-data row is the Privacy area's table, not a second one.
 - **How:** read; take the secret scan from the baseline digest; for the web
   checks and a local HTTP server's Host and Origin requests, send requests to the
   second instance; force an error to check secret handling and log redaction
-  ([`briefs.md`](./briefs.md) Security, privacy and data, Method 3).
+  ([`briefs.md`](./briefs.md#security-privacy-and-data) Security, privacy and
+  data, **Security**).
 - **Evidence:** `file:line`, or the request and response, or the command and
   result. A secret is reported as present with its path and commit, never its
   value. The go-public verdict names the rows behind it.
@@ -152,7 +158,8 @@ finding with no evidence is not a finding.
   handling and behaviour when the service is down or slow.
 - **How:** read; measure permissions with `ls -l` on the data paths; exercise
   the outbound calls against the second instance where it is safe
-  ([`briefs.md`](./briefs.md) Security, privacy and data, Method 2).
+  ([`briefs.md`](./briefs.md#security-privacy-and-data) Security, privacy and
+  data, **Privacy and outbound calls**).
 - **Evidence:** the `file:line` or path, with the permission bits; the request
   and the product's behaviour for an exercised call. Never print the data.
 
@@ -160,10 +167,9 @@ finding with no evidence is not a finding.
 
 - **Checks:** validation on write, atomic writes, concurrent writers, backup and
   restore, recovery from corruption, format versioning, cache bounds.
-- **How:** read; run at most three faults on the second instance's scratch copy
-  of the data, never the real one, and only when a persisted user-data store or a
-  documented integrity claim exists ([`briefs.md`](./briefs.md) Security, privacy
-  and data, Method 1).
+- **How:** read; run the faults ([`briefs.md`](./briefs.md#security-privacy-and-data)
+  Security, privacy and data, **Data integrity**, **Faults**, which holds the
+  cap, the conditions and the scratch copy).
 - **Evidence:** the `file:line` of the write path, or the fault's command and
   result.
 
@@ -183,7 +189,8 @@ finding with no evidence is not a finding.
 - **How:** read the UI source; browse the captures and the running UI; measure
   contrast and target size. The probe's axe results and keyboard logs are merged
   with a manual review of names, states and reading order
-  ([`briefs.md`](./briefs.md) Design, Methods 1); axe is not re-run.
+  ([`briefs.md`](./briefs.md#methods) Design, Methods, **Accessibility**); axe
+  is not re-run.
 - **Evidence:** the capture path or `file:line`, and the criterion it fails.
 
 ### Content, copy and branding
@@ -195,8 +202,8 @@ finding with no evidence is not a finding.
   dark-theme parity).
 - **How:** read; browse; measure with the probe's copy metrics, or by counting
   the capture or the UI strings where there is no probe cell. The thresholds,
-  the language rule and the inventory's surfaces are in [`briefs.md`](./briefs.md)
-  Design, Methods 2 and 3.
+  the language rule and the inventory's surfaces are in [`briefs.md`](./briefs.md#methods)
+  Design, Methods, **Copy density** and **Branding inventory**.
 - **Evidence:** the capture path or `file:line`; for a copy flag the screen or
   command, the measured value and the threshold; for branding the inventory row
   and the surfaces that disagree.
@@ -211,9 +218,10 @@ finding with no evidence is not a finding.
   For a product that targets phones, completion at 375 px.
 - **How:** browse; run each task on the primary instance, or from the scratch
   build for a CLI (its documented commands end to end) or a native app, and on the
-  pages a userscript changes ([`briefs.md`](./briefs.md) Design, Methods 4). With
+  pages a userscript changes ([`briefs.md`](./briefs.md#methods) Design,
+  Methods, **Task walkthroughs**). With
   no running instance the walkthrough is skipped with the reason from
-  [`probe.md`](./probe.md) section 10, for example "Needs X: an isolated data
+  [`probe.md`](./probe.md#10-skipped-dimensions) Skipped dimensions, for example "Needs X: an isolated data
   mode" or "Untrusted not run", and the flow is read from source.
 - **Evidence:** the step log and where the flow broke, with a capture at the
   problem step (the command's output for a CLI), and the problem's frequency,
@@ -244,7 +252,7 @@ area's.
     tier repo the findability check is skipped, reason "Depth: Small tier,
     counts and depth only"; the counts and depth are still given.
   - **Cruft.** The baseline digest's cruft section
-    ([`baseline.md`](./baseline.md) section 6: tracked generated, vendored or
+    ([`baseline.md`](./baseline.md#6-cruft-digest) Cruft digest: tracked generated, vendored or
     build output, large binaries, files an ignore rule matches) is cited as it
     stands, never re-run. Add what the digest cannot see; each item states its
     own test, so "stale" is checkable:
@@ -266,8 +274,8 @@ area's.
       read as code (statements, calls, braces) rather than prose, in a source
       file. Examples in doc comments and licence headers do not count.
     - **Stale marker:** a `TODO`, `FIXME`, `XXX` or "not built" marker from the
-      `rules.md` rows [`briefs.md`](./briefs.md) Product and docs conformance
-      item 4 lists (not listed again here) that is stale when it names an issue
+      `rules.md` rows [`briefs.md`](./briefs.md#product-and-docs-conformance)
+      Product and docs conformance **Markers** lists (not listed again here) that is stale when it names an issue
       or pull request that is closed, names a date or version already past, or
       sits on a line `git blame` dates over 365 days ago.
   - **Glossary, when present.** A glossary is `GLOSSARY.md`, `CONTEXT.md` or a
@@ -350,15 +358,16 @@ area's.
   to do, a health check or heartbeat, failure notification for scheduled jobs,
   crash reporting where users are remote; and what the CI costs in billable
   minutes a month, with the cuts that would save them.
-- **How:** read; run the fresh-clone install in a scratch clone, only when it
-  writes solely to the scratchpad, otherwise review it statically; read the
+- **How:** read; run the fresh-clone install; read the
   error copy from non-mutating errors caused on the primary instance
-  ([`briefs.md`](./briefs.md) Product and docs conformance, item 8, which also
-  holds the CI cost method).
+  ([`briefs.md`](./briefs.md#product-and-docs-conformance) Product and docs
+  conformance, **Ops, release and observability**, which holds the
+  **Fresh-clone install, following the README only** method and the CI cost
+  method).
 - **Evidence:** the workflow or runbook `file:line`, the install output, or the
   error response and the request that caused it. A CI cost finding cites the
-  workflow `file:line`, the billable minutes a month (**measured** from
-  billing usage or **estimated** from run durations, and which) and the minutes
+  workflow `file:line`, the billable minutes a month (measured or estimated, and
+  which, as the **CI cost review** labels it) and the minutes
   a month the cut saves.
 
 ### External facts
@@ -398,7 +407,7 @@ agent instruction file the repo keeps, nested ones included.
 - **Checks:**
   - **Documented gates run verbatim.** Each gate an agent file documents, from
     the baseline digest's Gates (documented vs actual) table
-    ([`baseline.md`](./baseline.md) section 2): pass or fail, wall time, and the
+    ([`baseline.md`](./baseline.md#2-the-repos-own-gates) The repo's own gates): pass or fail, wall time, and the
     manual steps needed, meaning a step the doc leaves out that the run needed
     (a tool install, an environment variable). The check judges the gates an
     agent file documents; the page's gates table lists every gate in the digest,
@@ -497,8 +506,9 @@ repo document's `file:line`.
 
 ## CI cost severity
 
-How a CI cost finding ([`briefs.md`](./briefs.md) Product and docs conformance,
-item 8) is rated, on the one scale above; the thresholds were set by the
+How a CI cost finding ([`briefs.md`](./briefs.md#product-and-docs-conformance)
+Product and docs conformance, **Ops, release and observability**, **CI cost
+review**) is rated, on the one scale above; the thresholds were set by the
 maintainer on 2026-11-23. Included minutes are the account's included monthly
 Actions minutes: the billing endpoint's figure when it states one (its
 `discountAmount` mixes free public usage with included minutes, so usage alone
@@ -515,9 +525,9 @@ plan readable, "Needs X: billing scope", with the plan assumed and stated.
 
 Source: <https://docs.github.com/en/billing/concepts/product-billing/github-actions>,
 read on each run for the current figures (when it cannot be read, the table here
-applies, as [`briefs.md`](./briefs.md) item 8 says); the docs state the allowance in
+applies, as the **OS multiplier** in [`briefs.md`](./briefs.md#product-and-docs-conformance) says); the docs state the allowance in
 dollars at the standard Linux rate of $0.006 a minute. Linux-equivalent minutes
-and the OS multiplier are defined in [`briefs.md`](./briefs.md) item 8.
+and the OS multiplier are defined in the same **OS multiplier** bullet.
 
 - **Med at least:** a private repo's CI uses more than **10%** of the included
   minutes.

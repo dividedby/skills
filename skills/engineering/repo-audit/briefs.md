@@ -19,9 +19,10 @@ by path first, then its own section of this file by path and heading
   the shared-header file. Name what _is_ allowed (build and test with caches, coverage and output
   redirected to the scratchpad, read-only `gh` calls, scratch packages outside
   the repo) and the scrubbed environment the repo's code runs in.
-- Whether the lens may run the repo's code: the execute answer from Stage 1.
-  With No, the lens runs none of it and marks each such check "Untrusted not
-  run".
+- Whether the lens may run the repo's code: the execute answer from Stage 1
+  ([`SKILL.md`](./SKILL.md#stage-1--scope) **Ownership and trust**, which
+  decides what runs). A check it skips under that answer is marked "Untrusted
+  not run".
 - A lens that runs the repo's code (benchmark, faults, fresh-clone build, focused
   test, CLI walkthrough) runs the check in
   [`baseline.md`](./baseline.md#keeping-the-repo-unchanged) after each such
@@ -108,11 +109,12 @@ Focus on cost at realistic scale and on correctness risk:
   that leave state half-written.
 - **Tests.** Review whether the suite earns its keep against the
   `docs/testing.md` text and commit the main session passes
-  ([`fleet-standards.md`](./fleet-standards.md) section 1). Recommend only;
+  ([`fleet-standards.md`](./fleet-standards.md#1-read-the-checklist-fresh)
+  **Read the checklist fresh**). Recommend only;
   delete and edit nothing.
   - **Measure:** run time, test count, test-to-source line ratio and the largest
     test file, with the commands. Cite the `test-size` numbers from the fleet
-    check ([section 3](./fleet-standards.md#3-run-each-applicable-row)).
+    check ([Run each applicable row](./fleet-standards.md#3-run-each-applicable-row)).
   - **List**, each with `file:line` samples: change-detector tests and tests of
     trivial code; assertion-free and sleep-based tests; mock-heavy tests;
     near-duplicate clusters, as parametrise candidates; one behaviour tested at
@@ -121,10 +123,9 @@ Focus on cost at realistic scale and on correctness risk:
     computed the same way as the code under test); mocks of the repo's own
     modules (mock only at system boundaries: the network, the clock, the
     filesystem, a third-party service); tests that bypass the module's interface
-    and reach into internals (private helpers, internal state, a deep import
-    path). A bypassing test is also evidence for **Module depth** in the
-    Architecture lens, which looks for it itself; the merge by `file:line`
-    joins the two.
+    and reach into internals ([`rubric.md`](./rubric.md#tests) **Tests** defines
+    them). The Architecture lens looks for these itself as **Module depth**
+    evidence; the merge by `file:line` joins the two.
   - **End with a prune-and-split list.** Each item names the safe-deletion
     check to run first: the lower-level test that covers the behaviour, or a
     coverage or mutation run.
@@ -135,7 +136,8 @@ The brief names the fleet-standards results file: add only what a row could not 
 (a check that passed on a technicality, a gap no row covers). The areas
 `architecture`, `tech-stack`, `security`, `privacy`, `data-integrity` and
 `external-facts` are this lens's; documentation and repo settings are the
-`product` lens's (Product and docs conformance, items 9 and 10). Then assess:
+`product` lens's (Product and docs conformance, **Documentation** and **Repo
+settings and hygiene**). Then assess:
 
 1. **Module architecture.** Layering and dependency direction, god objects,
    test-only or demo code shipped in production targets, whether parts should
@@ -169,14 +171,13 @@ The brief names the fleet-standards results file: add only what a row could not 
    reader open every file to change one thing. Depth is leverage at the
    interface, not a line ratio: a short module that hides a hard decision is
    deep, and a long one that only forwards calls is shallow. Folder structure
-   and top-level layout are item 7 of Product and docs conformance, and tooling
+   and top-level layout are **Repo organisation** under Product and docs
+   conformance, and tooling
    that enforces import boundaries is out of scope, so no check is done twice.
-   - **Applies** on Medium and Large tiers at `standard`, to code with a commit
-     in the last year only; a `quick` run skips it, "Depth: quick run, module
-     depth not run". The other skips and their reasons are in [`rubric.md`](./rubric.md)
-     Architecture; record each in `coverage.skipped_methods` with the method
-     name `module depth`. Check for a shallow clone with
-     `git rev-parse --is-shallow-repository`.
+   - **Applies** as the **Skips** of [`rubric.md`](./rubric.md#architecture)
+     Architecture say, to code with a commit in the last year only; record each
+     skip in `coverage.skipped_methods` with the method name `module depth`.
+     Check for a shallow clone with `git rev-parse --is-shallow-repository`.
    - **Candidates.** The baseline digest's churn hotspots (its top 10; cite them,
      do not re-run `git log`), then the entry points from the Stage 1 profile.
      When the digest's churn row states a window wider than one year, run the
@@ -205,9 +206,9 @@ The brief names the fleet-standards results file: add only what a row could not 
      - **one-adapter seam:** an interface or port with one non-test
        implementation. Low by default.
 
-     A test that reaches past a candidate's interface (it imports a private
-     helper or an internal path) is cited on the candidate's row; it counts as
-     evidence for a test-only extraction and does not set a badge on its own.
+     A test that reaches past a candidate's interface is handled as
+     [`rubric.md`](./rubric.md#tests) **Tests** says (cited on the candidate's
+     row).
      Examples: in a web app, a `services/` wrapper whose methods only forward
      to one API client is a pass-through; in an infra repo, a Terraform module that
      re-exports one resource's variables and outputs unchanged is a pass-through,
@@ -222,7 +223,8 @@ The brief names the fleet-standards results file: add only what a row could not 
      - scattered concept: the number of shallow files the concept spans, and
        callers that must touch several of them for one change;
      - test-only extraction: its only callers are tests, and a test reaches
-       past the interface of the module it came from;
+       past the module's interface (the [`rubric.md`](./rubric.md#tests)
+       **Tests** quality check);
      - one-adapter seam: one non-test implementation counted from the source,
        and no second one planned in a doc or an open issue.
 
@@ -251,8 +253,8 @@ The areas `security`, `privacy`, `data-integrity` and `tech-stack`. Check their
 has a rubric area ([`rubric.md`](./rubric.md)) and an output in the lens report
 file. Where a method cannot run, the report says so with the reason from that
 file's not-assessed list. Release, update and CI checks, including what the CI
-costs, are not here: they are item 8 of Product and docs conformance, so no
-check is done twice.
+costs, are not here: they are **Ops, release and observability** under Product
+and docs conformance, so no check is done twice.
 
 Faults, requests to the running app, forced errors and calls to outside
 services run the repo's code or touch a service, so they share these rules:
@@ -263,7 +265,8 @@ services run the repo's code or touch a service, so they share these rules:
 - Every request goes to the **second instance** ([`SKILL.md`](./SKILL.md)
   Stage 2), which the main session hands over with its port, data directory and PID;
   never to the primary, and never against the user's data. With none, each
-  skips with the reason from [`probe.md`](./probe.md) section 10 ("Needs X: a
+  skips with the reason from [`probe.md`](./probe.md#10-skipped-dimensions)
+  Skipped dimensions ("Needs X: a
   second data dir and port" or "Needs X: an isolated data mode"), and what it
   would have tested is read from source and labelled "read, not run". A CLI or
   an infra repo has no instance, so its faults take that reason; a CLI's forced
@@ -396,8 +399,8 @@ services run the repo's code or touch a service, so they share these rules:
    personal value. Seven rows, each clear, an item to fix or a block, with the
    evidence:
    - **Secrets, in the full history.** The baseline digest's
-     `gitleaks (all refs)` row ([`baseline.md`](./baseline.md) section 1: all
-     refs, a non-shallow clone). Cite it, do not re-run it. A hit is an item that needs a
+     `gitleaks (all refs)` row ([`baseline.md`](./baseline.md#1-universal-tools)
+     Universal tools: all refs, a non-shallow clone). Cite it, do not re-run it. A hit is an item that needs a
      history rewrite, and its key rotated whatever the verdict. A shallow clone
      is "Needs X: full git history" and the row is unchecked.
    - **Personal data.** The personal-data table above, not a second one. Add
@@ -426,7 +429,7 @@ services run the repo's code or touch a service, so they share these rules:
      (`gh api repos/<o>/<r> --jq .private`). A private one the repo needs is an
      item; one that cannot be made public or replaced blocks.
    - **Licence.** A licence file exists, and the baseline's licence scan
-     ([`baseline.md`](./baseline.md) section 5) shows no third-party licence
+     ([`baseline.md`](./baseline.md#5-licences) Licences) shows no third-party licence
      incompatible with it. A missing file is an item (no rewrite); an
      incompatible licence that cannot be replaced blocks.
    - **Trust.** Whether the repo is in `dividedby/claude-config`
@@ -442,7 +445,8 @@ services run the repo's code or touch a service, so they share these rules:
      - **Keep private:** a block, with the reason.
    - **Minutes saved.** The minutes a month that going public would save: the
      repo's total billable minutes a month from the product lens's CI cost table
-     (item 8), minus any larger-runner minutes, which stay billed. The two
+     (**Ops, release and observability** under Product and docs conformance),
+     minus any larger-runner minutes, which stay billed. The two
      lenses run together, so the architecture lens writes "from the CI cost
      table" and the main session fills the number at Stage 4, with measured or
      estimated carried over. With no figure, the reason from that table.
@@ -471,7 +475,7 @@ The **lens report file**, at its named scratchpad path, holds:
   the Host and Origin request log (request, status, data changed);
 - the **go-public checklist** of a private repo: one row per item (row, result,
   evidence, needs a history rewrite), the verdict, and the minutes-saved line, or
-  the skip reason from method 5.
+  the skip reason from **Go-public feasibility**.
 
 The page links this file, published beside the page, and carries only the
 findings, in its generic evidence table; it gets no table of its own for these.
@@ -517,7 +521,7 @@ their `rules.md` rows. Check those rows as the shared header directs, then:
      condition holds.
 7. **Repo organisation.** [`rubric.md`](./rubric.md) holds the checks, the
    tests for "stale", the skip rules and the evidence; this is the order of
-   work. Repo settings are item 10.
+   work. Repo settings are **Repo settings and hygiene**.
    - **Structure.** Count top-level entries and depth first; they cost two
      commands. Then, from Medium tier up, check each top-level source folder
      for a findable public surface; on Small tier skip that with the rubric's
@@ -530,7 +534,7 @@ their `rules.md` rows. Check those rows as the shared header directs, then:
      to, a commented-out block of handlers; in an infra repo, a
      `terraform/archive/` folder untouched for a year that no root or doc
      names, a runbook no other tracked file links to or names, a `TODO(#212)`
-     for an issue that is closed. Take markers from item 4's list and test only
+     for an issue that is closed. Take markers from the **Markers** list and test only
      their age and state. Check the rubric's Skips first (no GitHub remote,
      shallow history) and record each reason.
    - **Glossary and ADRs.** Find each file first. Absent: record the skip
@@ -555,7 +559,7 @@ their `rules.md` rows. Check those rows as the shared header directs, then:
    which is the architecture lens's: it sends only non-mutating requests to the
    primary instance, and reads every mutating path from source, labelled "read,
    not run". With no primary instance, the reason is from
-   [`probe.md`](./probe.md) section 10. The lens report file holds the
+   [`probe.md`](./probe.md#10-skipped-dimensions) Skipped dimensions. The lens report file holds the
    fresh-clone install log, the error-copy log and the CI cost table, and is
    published beside the page.
    - **CI runs the repo's gates.** Take the gates and their "in CI" column from
@@ -692,7 +696,8 @@ their `rules.md` rows. Check those rows as the shared header directs, then:
      - **Fleet rule, a hard constraint on every recommendation.** Keep the
        always-reporting `ci-ok` gate job and never recommend a workflow-level
        `paths:` or `paths-ignore:` on a `pull_request` trigger (the checklist's
-       `ci-gate` row, [`fleet-standards.md`](./fleet-standards.md) section 1).
+       `ci-gate` row, [`fleet-standards.md`](./fleet-standards.md#1-read-the-checklist-fresh)
+       Read the checklist fresh).
        To skip work, put a changed-files check inside a job and exit early, so
        the job and `ci-ok` still report, or skip whole jobs with `if:` while the
        gate job still runs. This holds for a repo that is not in the fleet too.
@@ -707,7 +712,7 @@ their `rules.md` rows. Check those rows as the shared header directs, then:
        month with measured or estimated, cut, minutes saved with measured,
        estimated or projected) and the sample
        statement, in the product lens report file. The repo's total billable
-       minutes a month is the figure the go-public verdict uses.
+       minutes a month feeds the go-public **Minutes saved** line.
 9. **Documentation** (`repo-hygiene`). Outlines for what is missing (README,
    architecture, contributing, changelog convention); quality of in-code docs on
    a sample of about ten files.
@@ -715,7 +720,7 @@ their `rules.md` rows. Check those rows as the shared header directs, then:
     branch protection, ignore rules, fixture hygiene, history size. Read with
     `gh api` (read-only) when a GitHub remote exists; otherwise from the files and
     `git`. Folder structure, cruft, the glossary and the ADRs are not here: they
-    are item 7, so no check is done twice.
+    are **Repo organisation**, so no check is done twice.
 
 ## Design and UX
 
@@ -812,7 +817,8 @@ reason from that file's not-assessed list.
    user from empty data, on the primary instance ([`SKILL.md`](./SKILL.md) Stage 2)
    at 1280 px, and at 375 px only when the profile says the product targets small
    screens. The agent drives the primary instance itself with the scratch
-   Playwright install ([`probe.md`](./probe.md) sections 2 and 3), never the
+   Playwright install ([`probe.md`](./probe.md#2-scratch-install) Scratch
+   install and [Instances](./probe.md#3-instances)), never the
    second instance, and changes data only on the throwaway data. Log one row per
    step: `n | action | what happened | label or text read | feedback shown`. Then
    list the dead ends, unclear labels, missing feedback, empty and error states
@@ -822,7 +828,8 @@ reason from that file's not-assessed list.
    what it costs them (impact) and whether it recurs or has a workaround
    (persistence) against the Severity section; a product opinion with no
    measured user impact is Med at most. Without a running instance (the probe's
-   skip reasons, [`probe.md`](./probe.md) section 10) the walkthrough is skipped
+   skip reasons, [`probe.md`](./probe.md#10-skipped-dimensions) Skipped
+   dimensions) the walkthrough is skipped
    with that reason and the flow is read from source and labelled "read, not
    run"; a CLI needs no instance and runs from the scratch build.
 
@@ -850,7 +857,8 @@ The repo is context only; the output is evidence for other lenses' areas and
 the page's Research section, not rated findings. The lens rates nothing: Stage 4
 turns its evidence into a finding when it shows a mismatch with the repo. Use
 web search (a first pass, widened when thin) and page fetches. Floor: at least
-three search queries for each of items 1 and 2, across at least two kinds of
+three search queries for each of **Competitors and prior art** and **What
+users say**, across at least two kinds of
 source (for example GitHub search and a forum), with the queries listed in the
 report; a blocked source gets a stated alternative.
 

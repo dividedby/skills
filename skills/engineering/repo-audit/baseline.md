@@ -153,7 +153,7 @@ Everything the baseline writes goes under one scratchpad folder, `$B`
   Stage 6. Each check does, in order:
   1. **HEAD** equals the pin. The run never moves it, so a different `HEAD` is
      an outside change (for example a `git pull` in another terminal). Still run
-     steps 2 to 5 against the previous check before re-snapshotting. Only the
+     the checks from **Worktrees** to **Directory mtime only** against the previous check before re-snapshotting. Only the
      paths in `git diff --name-only --no-renames <old> <new>` (the outside
      change) are not a
      breach of the gate that just ran; any other difference is. Then log a
@@ -174,8 +174,8 @@ Everything the baseline writes goes under one scratchpad folder, `$B`
      `find <repo> … ! -type d -newer <marker> -print` lists nothing. An added,
      removed or newer non-directory path is a breach.
   5. **Directory mtime only.** A directory newer than the marker
-     (`find <repo> … -type d -newer <marker> -print`), when steps 3
-     and 4 found nothing (same status, same path list, no newer file), is
+     (`find <repo> … -type d -newer <marker> -print`), when **Status**
+     and **Paths and times** found nothing (same status, same path list, no newer file), is
      reported apart as `mtime only: <dir>`, with the gate. It is not a changed
      repo and not a failure: no path was added, removed or written, and a tool
      made and removed a temporary entry. There is nothing for the maintainer to
@@ -233,12 +233,12 @@ Everything the baseline writes goes under one scratchpad folder, `$B`
 ### Run rules
 
 - **Untrusted repo.** The execute answer from Stage 1
-  ([`SKILL.md`](./SKILL.md) Ownership and trust) decides what runs. With No,
-  only tools that read files without executing the repo's code run
-  (`osv-scanner`, `gitleaks`, `scc`, `git log` and the like); every gate, test, build,
-  installation of the repo's dependencies, and any command this file marks as
-  running repo code is "not run (untrusted not run)". With Yes, each of those
-  runs from the scratch clone.
+  ([`SKILL.md`](./SKILL.md#stage-1--scope) **Ownership and trust**) decides what
+  runs. Every gate, test, build, installation of the repo's dependencies, and
+  any command this file marks as running repo code follows it, and on No is
+  "not run (untrusted not run)". The tools that read files without executing
+  the repo's code (`osv-scanner`, `gitleaks`, `scc`, `git log` and the like)
+  run either way.
 - **Time-box:** 10 minutes per gate or scan by default (`timeout 600`; `gtimeout`
   from coreutils on macOS, or `perl -e 'alarm 600; exec @ARGV' -- <command>`). A
   timed-out command is stopped, keeps its partial output and is reported as "not
@@ -310,7 +310,7 @@ whichever flag the installed version has.
 - **Secrets, all refs (private repos, `standard` only).** A conditional step that
   runs only when the profile says the repo is private
   (`gh api repos/$GH --jq .private`) and the go-public feasibility check runs
-  ([`briefs.md`](./briefs.md) Security, privacy and data, Method 5); a public repo,
+  ([`briefs.md`](./briefs.md#security-privacy-and-data) Security, privacy and data, **Go-public feasibility**); a public repo,
   a repo with no GitHub remote and a `quick` run skip it, and the digest says
   which. It extends the history scan above and keeps its presence-and-location
   rule: first `git -C <repo> rev-parse --is-shallow-repository`. `true` means no
@@ -528,7 +528,7 @@ loaded by `<script src>` from HTML. The Node rows do not apply, so run these:
   environment reason. Fix: run the gate in the scratch clone with `.build`
   symlinked to the scratch path (`ln -s $B/cache/swift $B/clone/.build`). When
   the full suite cannot run twice in the time-box, the partial rerun of
-  [step 2](#2-the-repos-own-gates) uses `swift test --filter <suite>` for the
+  [**Run each once**](#2-the-repos-own-gates) in The repo's own gates uses `swift test --filter <suite>` for the
   suites that failed for that reason; the digest reports the first run's result
   for the rest and the filtered rerun for those suites, naming the fix.
 - **Vulnerabilities and currency:** `osv-scanner` reads `Package.resolved`;
@@ -624,7 +624,7 @@ loaded by `<script src>` from HTML. The Node rows do not apply, so run these:
   for a repo that documents no invocation and has no `.editorconfig`; the digest
   says which case applied. CI often runs `shfmt` before installing dependencies,
   so locally an ignored `node_modules` is diffed (its `.bin` shims); that is an
-  environment failure per [step 2](#2-the-repos-own-gates): rerun in the scratch
+  environment failure per [**Run each once**](#2-the-repos-own-gates) in The repo's own gates: rerun in the scratch
   clone.
 - **Tests:** a `bats` suite runs with `bats --timing --tap <dir>` and
   `BATS_TMPDIR=$B/tmp` under the scrubbed environment; a script-style test is
