@@ -72,8 +72,13 @@ env -i PATH="$PATH" HOME="$B/home" PROBE_MODULES="$B/pw" timeout 120 \
   --out $B/probe/cells/<screen>--<state>--<width>--<theme>.json \
   [--screenshot $B/probe/shots/<same name>.png] [--min-target <px>] \
   [--pointer fine|coarse] [--min-target-pointer any|coarse] \
+  [--allow-scroll '<selector,...>'] \
   [--actions <file.mjs>] [--delay-ms <ms> --delay-match '<glob>'] [--keyboard <n>]
 ```
+
+`--min-target` and `--allow-scroll` take their values from the repo's UI doc
+(see [What a cell holds](#7-what-a-cell-holds)); leave them out when it names
+none.
 
 Exit code 0 means a cell was written, findings or not; 2 means the probe failed
 (bad argument, Playwright or Chromium missing, navigation error). Dark mode is
@@ -95,7 +100,8 @@ Each main screen × the states the product has (empty, loading, error,
 populated) × the widths it supports × the themes it supports.
 
 - **Widths:** 1280; 375 when the product targets phones (profile, README or UI
-  doc); any width the repo's UI doc names.
+  doc); a further width only when the repo's UI doc names it. A width the UI doc
+  does not name is not run.
 - **Themes:** light, and dark when the source answers `prefers-color-scheme` or
   has a theme toggle. A product with one theme gets that one, and the other is
   "Not applicable (product has no dark theme)".
@@ -134,17 +140,17 @@ measuring.
 `schema: 1`. Every list is capped at 20 entries; a capped list is named in
 `truncated`.
 
-| Field      | Content                                                                                                                                                                                                                                                                           |
-| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `axe`      | one entry per violated rule: `rule`, `impact`, `selector` (first node), `count` (nodes)                                                                                                                                                                                           |
-| `overflow` | `present` (the page scrolls sideways), `scrollWidth`, `clientWidth`, `elements` (the ones that start the overflow, not their children), and `inner`: open dialogs and sideways scrollers whose content is wider than the box (`selector`, `scrollWidth`, `clientWidth`, `dialog`) |
-| `targets`  | `small`: under 24×24 CSS px (WCAG 2.2 SC 2.5.8); `belowRepoMin`: under the repo's documented minimum from `--min-target`, else `repoMin: null`; `pointer` (the cell's), `repoMinApplies` (false when `--min-target-pointer coarse` meets a fine cell)                             |
-| `console`  | console errors and uncaught page errors; `failedRequests`: failed requests and responses of 400 or more, with no query string or body                                                                                                                                             |
-| `copy`     | `visibleWords`, `longestBlockWords`, `longSentences` (over the sentence limit), `meanSentenceWords`, `longUnstructuredBlocks` (plain-prose blocks over the block limit), `repeatedBlocks` (distinct blocks of 8 words or more that appear more than once), `spaceDelimited`       |
-| `colours`  | `unmatched`: computed colours in use that match no declared CSS custom property (either theme), `declared`: how many distinct colours the custom properties hold, `unparsed`                                                                                                      |
-| `keyboard` | only with `--keyboard`: `focusable`, `steps`, `trap`, `orderJumps`                                                                                                                                                                                                                |
-| `notes`    | lines the actions module added                                                                                                                                                                                                                                                    |
-| other      | `url` (no query), `screen`, `state`, `width`, `theme`, `pointer`, `probe` (Playwright and axe versions), `screenshot`, `truncated`                                                                                                                                                |
+| Field      | Content                                                                                                                                                                                                                                                                                                                                                            |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `axe`      | one entry per violated rule: `rule`, `impact`, `selector` (first node), `count` (nodes)                                                                                                                                                                                                                                                                            |
+| `overflow` | `present` (the page scrolls sideways), `scrollWidth`, `clientWidth`, `elements` (the ones that start the overflow, not their children), `inner`: open dialogs and sideways scrollers whose content is wider than the box (`selector`, `scrollWidth`, `clientWidth`, `dialog`), and `allowed`: the same for scrollers declared with `--allow-scroll`, not a failure |
+| `targets`  | `small`: under 24×24 CSS px (WCAG 2.2 SC 2.5.8); `belowRepoMin`: under the repo's documented minimum from `--min-target`, else `repoMin: null`; `pointer` (the cell's), `repoMinApplies` (false when `--min-target-pointer coarse` meets a fine cell)                                                                                                              |
+| `console`  | console errors and uncaught page errors; `failedRequests`: failed requests and responses of 400 or more, with no query string or body                                                                                                                                                                                                                              |
+| `copy`     | `visibleWords`, `longestBlockWords`, `longSentences` (over the sentence limit), `meanSentenceWords`, `longUnstructuredBlocks` (plain-prose blocks over the block limit), `repeatedBlocks` (distinct blocks of 8 words or more that appear more than once), `spaceDelimited`                                                                                        |
+| `colours`  | `unmatched`: computed colours in use that match no declared CSS custom property (either theme), `declared`: how many distinct colours the custom properties hold, `unparsed`                                                                                                                                                                                       |
+| `keyboard` | only with `--keyboard`: `focusable`, `steps`, `trap`, `orderJumps`                                                                                                                                                                                                                                                                                                 |
+| `notes`    | lines the actions module added                                                                                                                                                                                                                                                                                                                                     |
+| other      | `url` (no query), `screen`, `state`, `width`, `theme`, `pointer`, `probe` (Playwright and axe versions), `screenshot`, `truncated`                                                                                                                                                                                                                                 |
 
 The sentence and block limits behind `longSentences` and `longUnstructuredBlocks`
 are those of [`briefs.md`](./briefs.md#methods) **Copy density**; the 8-word
@@ -158,7 +164,9 @@ Read them with their limits:
   the design lens cover the rest.
 - The 24 px check does not model the spacing exception (an undersized target
   with enough clear space around it passes). It exempts disabled controls and
-  links inside running text. A repo minimum is read from its UI doc or a
+  links inside running text. A target's size is its hit area: the border box
+  (padding included) widened by a wrapping or `for=` label. Pseudo-element and
+  ancestor hit areas are not modelled. A repo minimum is read from its UI doc or a
   `rules.md` row, else `null`. A minimum that the repo ties to touch (a
   `@media (pointer: coarse)` rule, "44 px on phones") runs on the 375-width
   cells as `--pointer coarse --min-target <px> --min-target-pointer coarse`; in
@@ -166,9 +174,11 @@ Read them with their limits:
 - `overflow.inner` is not the page scrolling: a dialog wider than itself, or a
   scroller (`overflow-x: auto` or `scroll`) with content wider than its box,
   clips content with no page scrollbar. A scroller around a `table` or `pre` is
-  an intended wrapper and is left out; a dialog is always listed. Any entry
-  fails the cell's `overflow` check. An intentional carousel is listed too:
-  judge it from the screenshot.
+  an intended wrapper and is left out; a dialog is always listed. A scroller the
+  repo's UI doc declares intended is passed as `--allow-scroll` (a CSS selector
+  list the main session reads from that doc) and listed under `allowed`, not
+  `inner`. Any other entry fails the cell's `overflow` check, so an undeclared
+  carousel is listed: judge it from the screenshot.
 - With 0 declared colours, every colour is unmatched: report it as "no design
   tokens", not as a hundred misses. Browser defaults (a button's grey) appear as
   unmatched; the design lens judges which matter.
@@ -294,7 +304,10 @@ sentence in two elements and an 80-word list item: the cell shows
 
 Add an open `dialog` 300 px wide holding a 500 px non-table child: at 375 the
 cell shows it in `overflow.inner` with `dialog: true`, and a `table` inside a
-scroller of its own does not appear. Add a button 30 px wide with a
+scroller of its own does not appear. A scroller matching `--allow-scroll` lists
+under `overflow.allowed` and not `inner`; a dialog matching it is still in
+`inner`. A 16 px checkbox inside a 120×32 label is not in `targets.small`; the
+same checkbox with no label is. Add a button 30 px wide with a
 `@media (pointer: coarse)` rule that makes it 40 px: with
 `--min-target 44 --min-target-pointer coarse`, `targets.belowRepoMin` is empty
 and `repoMinApplies` false at `--pointer fine`, and lists the button at

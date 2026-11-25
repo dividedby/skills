@@ -192,11 +192,20 @@ function undeclaredColours(entries, declared) {
   return { declared: set.size, unmatched: all, unparsed };
 }
 
-// rects: [{selector, w, h, disabled, inline}]. Disabled controls and links
-// inside running text are exempt (WCAG 2.2 SC 2.5.8). The spacing exception
-// (an undersized target with enough clear space around it passes) is NOT
-// modelled, so the probe can over-report. A repo minimum that its UI doc ties
-// to touch (repoMinPointer "coarse") applies only in a cell run with a coarse
+// The area a click lands on: the border box (so padding counts) widened by the
+// control's wrapping or `for=` label, which activates it. Pseudo-element and
+// ancestor hit areas are not modelled, so the probe can over-report. Each side
+// takes the larger of control and label, not their union, which is close for a
+// wrapping label and generous for a `for=` label set apart from its control.
+function hitArea({ w, h, labelW = 0, labelH = 0 }) {
+  return { w: Math.max(w, labelW ?? 0), h: Math.max(h, labelH ?? 0) };
+}
+
+// rects: [{selector, w, h, labelW?, labelH?, disabled, inline}]. Disabled
+// controls and links inside running text are exempt (WCAG 2.2 SC 2.5.8). The
+// spacing exception (an undersized target with enough clear space around it
+// passes) is NOT modelled, so the probe can over-report. A repo minimum that its
+// UI doc ties to touch (repoMinPointer "coarse") applies only in a cell run with a coarse
 // pointer; "any" applies in every cell.
 function filterTargets(
   rects,
@@ -205,8 +214,8 @@ function filterTargets(
   const live = rects.filter((r) => !r.disabled && !r.inline);
   const under = (limit) =>
     live
-      .filter((r) => r.w < limit || r.h < limit)
-      .map(({ selector, w, h }) => ({ selector, w, h }));
+      .map((r) => ({ selector: r.selector, ...hitArea(r) }))
+      .filter((r) => r.w < limit || r.h < limit);
   const repoMinApplies =
     !!repoMin && (repoMinPointer === "any" || pointer === "coarse");
   return {
@@ -218,23 +227,34 @@ function filterTargets(
   };
 }
 
-// boxes: [{selector, scrollWidth, clientWidth, dialog, wrapsTable}] from open
-// dialogs and sideways scrollers. A box that scrolls or clips sideways inside
-// itself is reported, except a scroller around a table or code block (an
-// intended wrapper); a dialog is always reported. Widest excess first.
+// boxes: [{selector, scrollWidth, clientWidth, dialog, wrapsTable, declared}]
+// from open dialogs and sideways scrollers. A box that scrolls or clips
+// sideways inside itself is reported (`inner`), except a scroller around a
+// table or code block (an intended wrapper) and one the repo's UI doc declares
+// intended (`declared`, matched by --allow-scroll), which go to `allowed`
+// instead; a dialog is always reported. Widest excess first.
+function splitInnerOverflow(boxes) {
+  const fields = ({ selector, scrollWidth, clientWidth, dialog }) => ({
+    selector,
+    scrollWidth,
+    clientWidth,
+    dialog: !!dialog,
+  });
+  const widest = (a, b) =>
+    b.scrollWidth - b.clientWidth - (a.scrollWidth - a.clientWidth);
+  const over = boxes.filter((b) => b.scrollWidth > b.clientWidth + 1);
+  const allowed = (b) => !b.dialog && b.declared;
+  return {
+    inner: over
+      .filter((b) => !allowed(b) && (b.dialog || !b.wrapsTable))
+      .sort(widest)
+      .map(fields),
+    allowed: over.filter(allowed).sort(widest).map(fields),
+  };
+}
+
 function findInnerOverflow(boxes) {
-  return boxes
-    .filter((b) => b.scrollWidth > b.clientWidth + 1)
-    .filter((b) => b.dialog || !b.wrapsTable)
-    .sort(
-      (a, b) => b.scrollWidth - b.clientWidth - (a.scrollWidth - a.clientWidth),
-    )
-    .map(({ selector, scrollWidth, clientWidth, dialog }) => ({
-      selector,
-      scrollWidth,
-      clientWidth,
-      dialog: !!dialog,
-    }));
+  return splitInnerOverflow(boxes).inner;
 }
 
 // rects: [{selector, left, right, parentRight}]. Reports an element only when
@@ -433,7 +453,7 @@ function distinctFailures(cells) {
 
 // ---------- page code (runs in the browser; collects raw data only) ----------
 
-function pageCollect() {
+function pageCollect(allowScroll) {
   const visible = (el) =>
     el.checkVisibility
       ? el.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true })
@@ -502,12 +522,16 @@ function pageCollect() {
   for (const el of document.querySelectorAll(targetSel)) {
     const r = el.getBoundingClientRect();
     if (!visible(el) || !r.width || !r.height) continue;
+    // A wrapping or `for=` label is part of the hit area.
+    const lr = el.labels?.[0]?.getBoundingClientRect();
     const own = (el.textContent ?? "").trim();
     const parentText = (el.parentElement?.textContent ?? "").trim();
     targets.push({
       selector: sel(el),
       w: Math.round(r.width * 10) / 10,
       h: Math.round(r.height * 10) / 10,
+      labelW: lr ? Math.round(lr.width * 10) / 10 : 0,
+      labelH: lr ? Math.round(lr.height * 10) / 10 : 0,
       disabled: !!el.disabled || el.getAttribute("aria-disabled") === "true",
       inline:
         el.tagName === "A" &&
@@ -560,6 +584,7 @@ function pageCollect() {
       clientWidth: el.clientWidth,
       dialog: isDialog,
       wrapsTable: !!el.querySelector("table,pre"),
+      declared: !!allowScroll && el.matches(allowScroll),
     });
   }
 
@@ -744,6 +769,7 @@ const FLAGS = {
   "delay-ms": "number",
   "min-target": "number",
   "min-target-pointer": "string",
+  "allow-scroll": "string",
   pointer: "string",
   keyboard: "number",
 };
@@ -859,7 +885,18 @@ async function runCell(args, tools) {
     const axeResult = await page.evaluate(() =>
       globalThis.axe.run(document, { resultTypes: ["violations"] }),
     );
-    const raw = await page.evaluate(pageCollect);
+    const allowScroll = args["allow-scroll"] ?? "";
+    // The browser is the selector parser, so a bad list is caught here.
+    if (allowScroll)
+      await page
+        .evaluate(
+          (s) => document.createDocumentFragment().querySelector(s),
+          allowScroll,
+        )
+        .catch(() => {
+          throw new Error("--allow-scroll is a CSS selector list");
+        });
+    const raw = await page.evaluate(pageCollect, allowScroll);
     const truncated = [];
     if (args.screenshot)
       await page.screenshot({ path: args.screenshot, fullPage: true });
@@ -874,11 +911,9 @@ async function runCell(args, tools) {
     }));
     const overflow = findOverflow(raw.rects, raw.clientWidth, raw.scrollWidth);
     overflow.elements = capList(overflow.elements, truncated, "overflow");
-    overflow.inner = capList(
-      findInnerOverflow(raw.innerBoxes),
-      truncated,
-      "overflow.inner",
-    );
+    const split = splitInnerOverflow(raw.innerBoxes);
+    overflow.inner = capList(split.inner, truncated, "overflow.inner");
+    overflow.allowed = capList(split.allowed, truncated, "overflow.allowed");
     const targets = filterTargets(raw.targets, {
       min: 24,
       repoMin: minTarget,
@@ -1018,8 +1053,10 @@ module.exports = {
   normaliseColour,
   matchesDeclared,
   undeclaredColours,
+  hitArea,
   filterTargets,
   findOverflow,
+  splitInnerOverflow,
   findInnerOverflow,
   detectTrap,
   parseArgs,

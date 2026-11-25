@@ -527,6 +527,11 @@ their `rules.md` rows. Check those rows as the shared header directs, then:
    ([`SKILL.md`](./SKILL.md) Stage 2) where there is one (a web app's screen), or
    a CLI's command; with none, read the code and mark what reading cannot settle not
    checkable. Give the table of statuses in the report.
+   - **Run what no test names.** Run every row no test names, plus a random 10 of
+     the rest (seeded; record the seed; fewer than 10 left, run them all). The
+     rest count as **works** (covered by test) and cite the test `file:line`. A
+     row whose named test fails or is skipped is run, not counted. The table
+     states each group's count (run, sampled, covered).
 2. **Docs against code.** Read each statement a doc makes about behaviour (what
    it stores, sends, defaults to, requires, refuses) against the code. A
    mismatch is a finding citing both `file:line`s.
