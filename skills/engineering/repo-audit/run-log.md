@@ -56,7 +56,8 @@ design                 | opus   | 4 min     | 71k    | 24        | 0/1/3/2  | pa
 Stage 3 only. One row per main-session checkpoint (each wake-up and each lens
 return, with the main session's own `TZ=America/Chicago date +%H:%M`): the size in bytes of each
 running lens's report file (`wc -c`, 0 when absent; `not judged` for a lens with
-no checkpoint inside its run). `SKILL.md` judges "not progressive" from these.
+no checkpoint inside its run; blank once a lens has returned). `SKILL.md`
+judges "not progressive" from these.
 
 ```text
 time  | code  | design

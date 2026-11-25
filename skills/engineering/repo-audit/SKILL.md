@@ -574,10 +574,10 @@ wall time and tokens against its row.
 - **Not progressive:** the checkpoints are each lens-return notification and any
   other wake-up during Stage 3. At each, the main session records every running
   lens's report file size (`wc -c`, 0 when absent) in the run log's Checkpoints
-  table with its own `TZ=America/Chicago date +%H:%M`. A lens is not progressive when, at every
-  checkpoint inside its run, the file held no finding beyond the start-time line
-  (its size never grew past that first line before the lens returned); the
-  Agents row status says `done (not progressive)`. A lens with no checkpoint
+  table with its own `TZ=America/Chicago date +%H:%M`, and a returning lens's
+  final size. A lens is not progressive when, at every checkpoint inside its
+  run, its file was no larger than its start-time line (`head -n 1 <file> |
+wc -c`); the Agents row status says `done (not progressive)`. A lens with no checkpoint
   inside its run is not judged, and the Checkpoints table says "not judged" for
   it. The lens's own finding times are supporting evidence only.
 - **Resume, same session only** (the scratchpad is per-session). Read `state`
