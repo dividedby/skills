@@ -112,6 +112,13 @@ def add_design_finding(f, x):
         top_finding="usability-1",
     )
     x["intros"]["usability"] = "One flow fails."
+    # A design verdict needs the design lens: a standard run that launched it.
+    for fact in f["profile"]:
+        if fact["fact"] == "depth":
+            fact["value"] = "standard"
+    f["lens_coverage"].append(
+        {"lens": "design", "read": "the UI", "chosen_by": "Small tier: everything"}
+    )
 
 
 class HeaderAndScorecard(unittest.TestCase):
@@ -513,6 +520,55 @@ class PlanSinceCoverage(unittest.TestCase):
         self.assertEqual(
             cells(lens, "code"), ["code", "read 6 of 6 files", "Small tier: everything"]
         )
+
+
+class QuickDepth(unittest.TestCase):
+    """A quick run's unlaunched lenses own no verdict (SKILL.md, Skipped areas)."""
+
+    def give_verdict(self, area, verdict="ready"):
+        f, x = docs()
+        row = next(r for r in f["scorecard"]["areas"] if r["area"] == area)
+        row.update(
+            applies=True, verdict=verdict, not_assessed_reason=None, top_finding=None
+        )
+        return f, x
+
+    def test_a_verdict_on_an_unlaunched_lens_area_is_refused_by_name(self):
+        for area, lens, verdict in [
+            ("feature-completeness", "product", "ready_with_fixes"),
+            ("repo-hygiene", "product", "ready"),
+            ("ops-release", "product", "not_ready"),
+            ("accessibility", "design", "ready"),
+        ]:
+            with self.subTest(area):
+                f, x = self.give_verdict(area, verdict)
+                out = failures(f, x)
+                self.assertIn(f"`{area}` belongs to the `{lens}` lens", out)
+                self.assertIn(f"Depth: quick run, `{lens}` lens not launched", out)
+
+    def test_every_offending_area_is_named_in_one_refusal(self):
+        f, x = self.give_verdict("feature-completeness", "ready_with_fixes")
+        row = next(r for r in f["scorecard"]["areas"] if r["area"] == "repo-hygiene")
+        row.update(verdict="ready", not_assessed_reason=None)
+        out = failures(f, x)
+        self.assertIn("`feature-completeness`", out)
+        self.assertIn("`repo-hygiene`", out)
+
+    def test_the_depth_reason_renders(self):
+        f, x = docs()
+        row = next(r for r in f["scorecard"]["areas"] if r["area"] == "repo-hygiene")
+        self.assertEqual(row["verdict"], "not_assessed")
+        self.assertEqual(
+            row["not_assessed_reason"], "Depth: quick run, `product` lens not launched"
+        )
+        build(f, x)
+
+    def test_a_standard_run_is_unaffected(self):
+        f, x = self.give_verdict("feature-completeness", "ready_with_fixes")
+        for r in f["profile"]:
+            if r["fact"] == "depth":
+                r["value"] = "standard"
+        build(f, x)
 
 
 class OptionalSections(unittest.TestCase):

@@ -19,9 +19,11 @@ import json
 import os
 import re
 import shlex
+import signal
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 from pathlib import Path
 from typing import Any, NamedTuple
@@ -35,6 +37,10 @@ REPO_ROOT = HERE.parents[3]
 # Slash name of the skill under --plugin-dir: the plugin name in
 # .claude-plugin/plugin.json and the skill's `name` frontmatter.
 DEFAULT_SKILL = "/dividedby-skills:repo-audit"
+# What the preflight tries when --skill is not given: with `~/.claude/skills/repo-audit`
+# linked to this folder, a headless run registers only the bare name.
+SKILL_CANDIDATES = [DEFAULT_SKILL.lstrip("/"), DEFAULT_SKILL.rsplit(":", 1)[-1]]
+PREFLIGHT_TIMEOUT_S = 60
 
 # Not the Artifact tool or any publish or send tool: with none, the skill falls
 # back to saving the page and findings.json in its scratchpad. Edit is left out
@@ -100,6 +106,86 @@ def build_command(
         f"{budget:g}",
         "--no-session-persistence",
     ]
+
+
+# --------------------------------------------------------------- preflight
+
+
+def build_preflight_command(claude: str, plugin_dir: Path) -> list[str]:
+    """One turn that only has to start: the init event lists what loaded. The
+    flags that decide what loads (--plugin-dir) match build_command's."""
+    return [
+        claude,
+        "-p",
+        "ok",
+        "--plugin-dir",
+        str(plugin_dir),
+        "--output-format",
+        "stream-json",
+        "--verbose",
+        "--max-turns",
+        "1",
+        "--no-session-persistence",
+    ]
+
+
+def parse_init(text: str) -> dict | None:
+    """The first `system`/`init` event in stream-json output, else None."""
+    for line in text.splitlines():
+        try:
+            event = json.loads(line)
+        except ValueError:
+            continue
+        if (
+            isinstance(event, dict)
+            and event.get("type") == "system"
+            and event.get("subtype") == "init"
+        ):
+            return event
+    return None
+
+
+def loaded_names(init: dict) -> set[str]:
+    """Skill and slash-command names the child registered, without a leading slash."""
+    names: set[str] = set()
+    for field in ("slash_commands", "skills"):
+        value = init.get(field)
+        if isinstance(value, list):
+            names |= {v.lstrip("/") for v in value if isinstance(v, str)}
+    return names
+
+
+def pick_skill(explicit: str | None, init: dict | None) -> tuple[str | None, str]:
+    """The slash name to run, and a one-line note: the explicit name if it loaded,
+    else the first of SKILL_CANDIDATES that did. None when nothing matches."""
+    if init is None:
+        return None, "no init event from claude (it did not start, or printed no JSON)"
+    loaded = loaded_names(init)
+    wanted = [explicit.lstrip("/")] if explicit else SKILL_CANDIDATES
+    for name in wanted:
+        if name in loaded:
+            return f"/{name}", f"skill `/{name}` is loaded"
+    shown = ", ".join(sorted(n for n in loaded if "audit" in n)) or "none matching"
+    return None, (
+        f"skill {' or '.join(f'`/{n}`' for n in wanted)} is not loaded under "
+        f"--plugin-dir (audit-like names that did load: {shown})"
+    )
+
+
+def resolve_skill(args: argparse.Namespace) -> tuple[str | None, str]:
+    """Run the preflight (a one-turn claude call, killed after its init line)
+    from an empty folder, and pick the skill's slash name."""
+    cmd = build_preflight_command(args.claude, args.plugin_dir)
+    with tempfile.TemporaryDirectory(prefix="repo-audit-preflight-") as empty:
+        stdout, stderr = run_claude(
+            cmd, Path(empty), PREFLIGHT_TIMEOUT_S, until_init=True
+        )
+    name, note = pick_skill(
+        args.skill if args.skill_given else None, parse_init(stdout)
+    )
+    if name is None and stderr.strip():
+        note += f"; {stderr.strip()[:200]}"
+    return name, note
 
 
 # -------------------------------------------------------------------- cost
@@ -261,8 +347,16 @@ class FixtureRun(NamedTuple):
     cost: Cost
 
 
-def run_claude(cmd: list[str], cwd: Path, timeout_s: float) -> tuple[str, str]:
-    """The one place that spawns claude (and spends tokens). Returns stdout, stderr."""
+def run_claude(
+    cmd: list[str], cwd: Path, timeout_s: float, until_init: bool = False
+) -> tuple[str, str]:
+    """The one place that spawns claude (and spends tokens). Returns stdout, stderr.
+
+    With `until_init` (the preflight) it reads stream-json until the init event,
+    then kills the child: stdout holds the lines read, stderr is merged into them.
+    """
+    if until_init:
+        return _read_until_init(cmd, cwd, timeout_s)
     try:
         proc = subprocess.run(
             cmd, cwd=cwd, check=False, capture_output=True, text=True, timeout=timeout_s
@@ -274,6 +368,45 @@ def run_claude(cmd: list[str], cwd: Path, timeout_s: float) -> tuple[str, str]:
     except OSError as err:
         return "", f"could not start {cmd[0]}: {err}"
     return proc.stdout, proc.stderr
+
+
+def _read_until_init(cmd: list[str], cwd: Path, timeout_s: float) -> tuple[str, str]:
+    try:
+        proc = subprocess.Popen(
+            cmd,
+            cwd=cwd,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            start_new_session=True,
+        )
+    except OSError as err:
+        return "", f"could not start {cmd[0]}: {err}"
+
+    # Kill the whole group: a grandchild holding stdout open would block the read.
+    def kill() -> None:
+        try:
+            os.killpg(proc.pid, signal.SIGKILL)
+        except OSError:  # group already gone (macOS reports EPERM for a reaped leader)
+            pass
+
+    timer = threading.Timer(timeout_s, kill)
+    timer.start()
+    seen: list[str] = []
+    try:
+        assert proc.stdout is not None
+        for line in proc.stdout:
+            seen.append(line)
+            if parse_init(line):
+                break
+    finally:
+        timer.cancel()
+        kill()
+        proc.wait()
+        if proc.stdout:
+            proc.stdout.close()
+    return "".join(seen), ""
 
 
 def _text(value: Any) -> str:
@@ -403,8 +536,11 @@ def parse_args(argv: list[str] | None) -> argparse.Namespace:
     parser.add_argument("--plugin-dir", type=Path, default=REPO_ROOT)
     parser.add_argument(
         "--skill",
-        default=DEFAULT_SKILL,
-        help="the skill's slash name under --plugin-dir",
+        help=(
+            "the skill's slash name under --plugin-dir (default: whichever of "
+            f"{' or '.join('/' + n for n in SKILL_CANDIDATES)} a one-turn preflight "
+            "finds loaded)"
+        ),
     )
     parser.add_argument("--claude", default="claude", help="the claude binary")
     parser.add_argument(
@@ -412,6 +548,8 @@ def parse_args(argv: list[str] | None) -> argparse.Namespace:
     )
     args = parser.parse_args(argv)
     args.fixtures = [n for n in args.fixtures.split(",") if n]
+    args.skill_given = args.skill is not None
+    args.skill = args.skill or DEFAULT_SKILL
     return args
 
 
@@ -434,6 +572,17 @@ def main(argv: list[str] | None = None) -> int:
             f"dry run: nothing is spawned and nothing is spent; a real run is {TOKEN_NOTE}."
         )
         print(f"allowed tools: {','.join(ALLOWED_TOOLS)}")
+        print(
+            "skill name: a real run first makes one preflight call (one turn, "
+            "killed after its init line) to "
+            + (
+                f"check that {args.skill} is loaded."
+                if args.skill_given
+                else f"pick the first loaded of {', '.join('/' + n for n in SKILL_CANDIDATES)}."
+            )
+            + " Nothing is spawned now; the commands below use "
+            f"{args.skill}."
+        )
         for name, repo in made.items():
             cmd = build_command(
                 args.claude,
@@ -447,6 +596,13 @@ def main(argv: list[str] | None = None) -> int:
                 f"\n# {name}: cwd {repo}, budget cap ${args.max_budget_usd:g}\n{shlex.join(cmd)}"
             )
         return 0
+
+    name, note = resolve_skill(args)
+    if name is None:
+        print(f"error: {note}; no fixture was run", file=sys.stderr)
+        return 2
+    args.skill = name
+    print(f"preflight: {note}")
 
     schema = json.loads((HERE / "findings.schema.json").read_text(encoding="utf-8"))
     expectations = json.loads((HERE / "expectations.json").read_text(encoding="utf-8"))

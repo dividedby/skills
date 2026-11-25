@@ -285,7 +285,11 @@ Stage 1 counts tracked source lines from `git ls-files` with `wc -l`, or
     feature, and a random sample.
 - **Coverage line.** Each lens ends its report with one line: what it read and how
   it chose. Example: "read 60 of 1,900 files: entry points, top 20 by churn, 20
-  random". The page repeats it per lens.
+  random (seed 7)". On a Medium or Large tier repo the line names the sampling
+  rule (entry points, largest files, churn hotspots, random with the seed, or
+  "full read" when the lens read all of its scope) and gives counts for any
+  part it only sampled, never "every ..." for a sample. The page repeats it per
+  lens.
 - A sampled area is assessed on its sample and says so. It is not "Not
   assessed"; that reason is for an area the run never reached.
 

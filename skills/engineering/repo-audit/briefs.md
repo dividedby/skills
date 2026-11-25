@@ -53,7 +53,11 @@ by path first, then its own section of this file by path and heading
   count and run time.
 - The profile's types, with their `types.md` brief bullets (in the prompt's
   adaptations), and the tier with its reading rule. End the report with one coverage line: what the
-  lens read and how it chose.
+  lens read and how it chose. On a Medium or Large tier repo the line names the
+  sampling rule: entry points, largest files, churn hotspots, random with the
+  seed, or "full read" when the lens read all of its scope. When the lens read
+  only part of the code its areas cover, the line says so as a sample, with
+  counts ("read 1 of 600 module files: entry points"), never as "every ...".
 - The profile with a source per fact. Facts marked unverified must be checked
   before use.
 - The baseline digest and the fleet-standards results are already done, with

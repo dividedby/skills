@@ -320,8 +320,8 @@ log](#the-run-log), [Lenses, depth and budgets](#lenses-depth-and-budgets) and
 - More than four lens agents launched at `standard`, or a `quick` run with an
   area that has no verdict and no "Not assessed (depth)" reason.
 - A run over a budget by more than 50% with no statement on the page.
-- A lens report with no coverage line, or a sampled read presented as a full
-  read.
+- A lens report with no coverage line, a Medium or Large tier coverage line
+  that names no sampling rule, or a sampled read presented as a full read.
 - A Blocker or High finding on the page that was not re-checked in Stage 4.
 - An applicable area with no verdict and no Not-assessed reason.
 - A projection presented as a measurement.

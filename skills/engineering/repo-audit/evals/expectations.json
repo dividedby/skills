@@ -318,7 +318,7 @@
         "packages_min": 6
       },
       "lens_coverage": {
-        "regex": "sampl|random|churn|largest|entry"
+        "regex": "sampl|random|churn|largest|entry|full read"
       },
       "areas": {
         "code-quality": true,

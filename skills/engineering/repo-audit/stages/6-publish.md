@@ -29,7 +29,8 @@ sections:
   packages and remote are rows here, and a type with no `types.md` entry is a
   `type` row marked "fallback profile". The `depth` row is here too.
 - `lens_coverage`: one `{lens, read, chosen_by}` object per launched lens, from
-  its coverage line. `lens` is the short name (`code`, `architecture`,
+  its coverage line, which on a Medium or Large tier repo names the sampling
+  rule and gives counts for a sampled read (`read`, `chosen_by`). `lens` is the short name (`code`, `architecture`,
   `product`, `design`, `market`); a helper is not a lens and has no entry. A lens's areas are those the [lens table](../SKILL.md#lenses-depth-and-budgets)
   gives it, and `also_reported_by` below uses the same names.
 - `findings`: one object per finding on the page, fleet-standards fails
@@ -73,7 +74,12 @@ sections:
   (boolean), `verdict` (`not_ready`, `ready_with_fixes`, `ready` or
   `not_assessed`), `not_assessed_reason` (a reason from the rubric's list, else
   `null`) and `top_finding` (the id of the area's most severe finding, else
-  `null`). Its `packages` field holds, for a monorepo, one object per package
+  `null`). At `quick`, fill an area of a lens that was not launched only from
+  the lens table, never from your own reading or another lens's report: it is
+  `not_assessed`, reason "Depth: quick run, `<lens>` lens not launched", even
+  when a finding touches it. List such a finding under an area of a launched
+  lens, or as a lead. `render.py` refuses a `quick` document that gives one of
+  these areas a verdict. Its `packages` field holds, for a monorepo, one object per package
   with `package`, `type`, `verdict`, `not_assessed_reason` and `top_finding` (an
   unselected package has verdict `not_assessed`, reason Not selected); `[]`
   otherwise.
