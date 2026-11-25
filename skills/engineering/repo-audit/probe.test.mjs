@@ -337,16 +337,6 @@ test("splitInnerOverflow", async (t) => {
       assert.equal(got.allowed.length, allowed);
     });
   }
-  await t.test("findInnerOverflow omits the allowed", () => {
-    const got = probe.findInnerOverflow([
-      box({ selector: "a", declared: true }),
-      box({ selector: "b" }),
-    ]);
-    assert.deepEqual(
-      got.map((b) => b.selector),
-      ["b"],
-    );
-  });
 });
 
 test("findInnerOverflow", async (t) => {
