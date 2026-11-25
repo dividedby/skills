@@ -572,5 +572,5 @@ fail is a Security finding; a missing release workflow is an Ops, release and
 observability finding. The lens that owns the area cites the row and does not
 re-rate it. If the owning lens failed, the area still takes the verdict its
 fleet fails set, and its coverage keeps the "lens failed" reason for the
-methods that lens would have run. The procedure and the row-by-row ratings are in
+methods that lens would have run. Each row's rating comes from its `severity` cell in the checklist; the procedure is in
 [`fleet-standards.md`](./fleet-standards.md).
