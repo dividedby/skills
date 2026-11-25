@@ -9,7 +9,7 @@ an on-demand runner. Not a skill: [`SKILL.md`](../SKILL.md) links here.
 | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
 | `fixtures.py`            | Generates the six fixtures as git repos into a folder you name. Deterministic: same commit SHAs each run                                |
 | `expectations.json`      | Per fixture: type, tier, applicable areas, and the planted findings to match by `key`                                                   |
-| `findings.schema.json`   | The shape of `findings.json` (SKILL.md Stage 6); `render.py` checks its input against it                                                |
+| `findings.schema.json`   | The shape of `findings.json` (`stages/6-publish.md`); `render.py` checks its input against it                                           |
 | `findings_check.py`      | Schema validator (`render.py` also uses it), expectation checks, the cross-run `diff_runs` rule and its input check, all pure functions |
 | `sample-findings.json`   | A schema-valid sample that passes `single-script` at `quick`; the self-test's input                                                     |
 | `sample-page-extra.json` | A schema-valid `page-extra.json` for the sample findings; `render.test.py`'s input                                                      |
@@ -67,7 +67,7 @@ Read from `findings.json`, never from prose:
 
 Instance restarts. The fixtures are synthetic repos with no web UI, so a run
 starts no instance, and the run log is not in `findings.json`. The restart path
-(`SKILL.md` Stage 3 curls each instance and restarts a down one as a background
+([Stage 3](../stages/3-lenses.md) curls each instance and restarts a down one as a background
 task on the same port and data directory; the `process restarted` row in
 [`run-log.md`](../run-log.md)) is checked by reading a real web-UI run's run log:
 every instance a lens used was up or has a `process restarted` row, and no lens

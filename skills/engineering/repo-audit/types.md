@@ -3,7 +3,7 @@
 The one home for what changes with the kind, size and shape of the repo: the
 types and their added checks, the fallback for a repo that matches none, the
 area set for non-code repos, the size tiers, the monorepo rule and the language
-rule. `SKILL.md` Stage 1 and `briefs.md` cite this file and do not restate it.
+rule. [Stage 1](./stages/1-scope.md) and `briefs.md` cite this file and do not restate it.
 The areas and the reasons an area goes unassessed are in
 [`rubric.md`](./rubric.md).
 
@@ -175,8 +175,7 @@ accounts or data.
 - **Added checks:** Host and Origin header checks (DNS-rebinding defence; the
   requests below); loopback-only binding; the launcher works on a fresh clone; an isolated data
   directory and port for capture and fault runs; backups; port conflicts.
-- **Capture:** the isolated instances and the probe ([`SKILL.md`](./SKILL.md)
-  Stage 2).
+- **Capture:** the isolated instances and the probe ([Stage 2](./stages/2-capture.md)).
 - **Host and Origin requests.** Sent to the second instance by the architecture
   lens ([`briefs.md`](./briefs.md) Security, privacy and data, Security). `$PORT`
   is its port, `<read>` a path that returns data, `<write>` a path and `<method>` the method

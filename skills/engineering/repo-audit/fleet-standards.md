@@ -1,13 +1,12 @@
 # Repo Audit — Fleet Standards Check
 
 The main session checks the audited repo against the fleet-wide repo standards
-(it may hand the check to the `fleet-check (helper)`, [`SKILL.md`](./SKILL.md)
-Lenses, depth and budgets): the checklist in `dividedby/claude-config` at `docs/standards.md`. Each row of
+(it may hand the check to the `fleet-check (helper)`, [Lenses, depth and budgets](./SKILL.md#lenses-depth-and-budgets) in `SKILL.md`): the checklist in `dividedby/claude-config` at `docs/standards.md`. Each row of
 that checklist is one rule, the repos it applies to, a read-only check and the
 document it comes from. This file says how to read it, run it and report it.
 The checklist owns the rules; nothing here restates them. The rows are house
 rules, so the section applies only to a repo that passes the ownership test
-([`SKILL.md`](./SKILL.md) Stage 1); [Pin the repo facts](#2-pin-the-repo-facts) says what a repo that fails, or
+([Stage 1](./stages/1-scope.md)); [Pin the repo facts](#2-pin-the-repo-facts) says what a repo that fails, or
 has no remote, gets.
 
 ## 1. Read the checklist fresh

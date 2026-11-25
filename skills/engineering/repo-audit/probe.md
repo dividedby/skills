@@ -2,7 +2,7 @@
 
 The one home for the UI probe: how Stage 2 measures a web UI that a screenshot
 cannot, with Playwright in a scratch install and `probe.js` (beside this file).
-`SKILL.md` Stage 2 owns the rule (isolated instances, the matrix, lifetime) and
+[Stage 2](./stages/2-capture.md) owns the rule (isolated instances, the matrix, lifetime) and
 cites this file for the method; the lenses read the probe's output and do not
 re-measure it. Judging copy, brand and usability from the numbers is the design
 lens's job ([`briefs.md`](./briefs.md)). The probe measures and judges nothing
@@ -15,9 +15,9 @@ where a step differs. `$B` is the scratchpad folder of
 ## 1. Scope and trust
 
 The probe starts the app and loads its pages in a browser, so it is the repo's
-code running. It runs only when the conditions in `SKILL.md` Stage 2 hold, inside
+code running. It runs only when the conditions in [Stage 2](./stages/2-capture.md) hold, inside
 the [Execution boundary](./SKILL.md#execution-boundary) and the answer in
-[Ownership and trust](./SKILL.md#stage-1--scope). Skipped: see [Skipped dimensions](#10-skipped-dimensions).
+[Ownership and trust](./stages/1-scope.md). Skipped: see [Skipped dimensions](#10-skipped-dimensions).
 
 ## 2. Scratch install
 
@@ -41,7 +41,7 @@ beyond the app.
 
 ## 3. Instances
 
-`SKILL.md` Stage 2 sets the rule. How:
+[Stage 2](./stages/2-capture.md) sets the rule. How:
 
 - **Port.** Ask the OS for a free port and check the repo's docs, config and
   launcher for ports they reserve before using it; do not guess:
@@ -281,7 +281,7 @@ Each skip is a reason from [`rubric.md`](./rubric.md)'s list, never silence.
 
 Everything goes under `$B/probe/`: `matrix.md`, `cells/*.json`, `summary.json`,
 `shots/`, `keyboard-*.md`, `lh-*.json`. Raw JSON stays there for the design lens;
-the page carries the totals and failing cells (`SKILL.md` Stage 6, Page content). Screenshots are embedded under the size rule in `SKILL.md` Stage 6; keep the
+the page carries the totals and failing cells ([Stage 6, Page content](./stages/6-publish.md#page-content)). Screenshots are embedded under the size rule in [Stage 6](./stages/6-publish.md); keep the
 first cell per screen and one capture per distinct failure (each `distinct`
 group's `first` cell in `summary.json`), not every failing cell. When both
 rules pick the same cell, it is one image. Real user data never enters

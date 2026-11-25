@@ -24,15 +24,18 @@ A resumed run reads it from here.
 ## Stages
 
 `agent tokens` is the sum of the tokens the harness reports for the agents that
-returned in that stage (`0` when none did). `main context at end` is the main
-session's context size when the stage ended. The harness does not report
-main-session tokens per stage, so none are recorded.
+returned in that stage (`0` when none did). `skill lines read` is the lines of
+skill files the main session read in that stage (`wc -l` of each file, or of the
+section it read, at the pinned skill commit; a file counts the first time it is
+read). `main context at end` is the main session's context size when the stage
+ended. The harness does not report main-session tokens per stage, so none are
+recorded.
 
 ```text
-stage        | start | end   | agent tokens | main context at end
-1 Scope      | 21:02 | 21:09 | 146k         | 92k
-2 Capture    | 21:09 | 21:21 | 0            | 160k
-3 Lenses     | 21:21 | 21:40 | 219k         | 240k
+stage        | start | end   | agent tokens | skill lines read | main context at end
+1 Scope      | 21:02 | 21:09 | 146k         | 1,840            | 92k
+2 Capture    | 21:09 | 21:21 | 0            | 1,090            | 160k
+3 Lenses     | 21:21 | 21:40 | 219k         | 190              | 240k
 ```
 
 ## Agents
@@ -56,7 +59,7 @@ design                 | opus   | 4 min     | 71k    | 24        | 0/1/3/2  | pa
 Stage 3 only. One row per main-session checkpoint (each wake-up and each lens
 return, with the main session's own `TZ=America/Chicago date +%H:%M`): the size in bytes of each
 running lens's report file (`wc -c`, 0 when absent; `not judged` for a lens with
-no checkpoint inside its run; blank once a lens has returned). `SKILL.md`
+no checkpoint inside its run; blank once a lens has returned). [Stage 3](./stages/3-lenses.md)
 judges "not progressive" from these.
 
 ```text
@@ -177,12 +180,14 @@ market        | not launched (standard four-agent cap)
 The budget is the row in [`SKILL.md`](./SKILL.md#lenses-depth-and-budgets) for the
 run's depth and tier. Agent tokens include every helper. A measure
 over its budget by more than 50% is marked in `over` with by how much, and the
-page and the closing message say so. Main-session context is reported, not
-budgeted.
+page and the closing message say so. The main-session reading line is
+reported, not budgeted: its total is the sum of the stages' `skill lines read`,
+its context is the last stage end's size, and the reference is the provisional
+figure in `SKILL.md` for the lines read through Stage 1.
 
 ```text
 measure               | total  | budget          | over
 wall time             | 71 min | 45 min          | +58%
 agent tokens          | 980k   | 1,120k          | no
-main session context  | 415k   | not budgeted    | n/a
+main session reading  | 3,120 lines (1,840 through Stage 1), context 415k | not budgeted (reference about 1,840 through Stage 1) | n/a
 ```

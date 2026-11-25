@@ -2,6 +2,8 @@
 
 > **Status: Accepted** — maintainer decision (2026-11-24). **Amends [ADR 0042](./0042-repo-audit-becomes-a-read-only-report.md).**
 
+> **Amended 2026-11-25** — maintainer decision, [dividedby/skills#708](https://github.com/dividedby/skills/issues/708): the per-stage split landed. `SKILL.md` keeps the shared rules (Execution boundary, run log, lenses, depth and budgets, failure conditions) and a stage index; each stage's instructions are in `stages/N-<name>.md`, read when that stage starts. The last Consequence below is done. The Stage 6 text this ADR places in `SKILL.md` is now `stages/6-publish.md`. The Budgets in `SKILL.md` report a main-session reading line (skill lines read per stage and summed, and the context size at each stage end), with no budget or overrun rule.
+
 ## Context
 
 ADR 0042 says the output is a private Artifact built from `template.html`, a
