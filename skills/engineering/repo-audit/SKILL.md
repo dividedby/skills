@@ -747,9 +747,9 @@ sections:
     `doc-command-missing` (a documented command that does not exist),
     `duplicate-file` (identical files), `golden-mismatch` (the headline number
     differs from the hand computation), `stale-recorded-fixture` (a recorded
-    response older than the code or API it stands in for, with no schema check), `empty-input-accepted` (an
-    empty or default input taken as a real value); otherwise a short kebab-case name. A
-    key reused from the previous run (Stage 4) keeps its old area id and check
+    response older than the code or API it stands in for, with no schema
+    check), `empty-input-accepted` (an empty or default input taken as a real
+    value); otherwise a short kebab-case name. A key reused from the previous run (Stage 4) keeps its old area id and check
     name, even when the finding's `area` now differs.
   - `area`: the area id from [`rubric.md`](./rubric.md).
   - `severity`: `blocker`, `high`, `med` or `low`.

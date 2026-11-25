@@ -152,8 +152,8 @@ Focus on cost at realistic scale and on correctness risk:
     and reach into internals ([`rubric.md`](./rubric.md#tests) **Tests** defines
     them). The Architecture lens looks for these itself as **Module depth**
     evidence; the merge by `file:line` joins the two.
-  - **Recorded-response fixtures** (cassettes, saved API JSON): the age, recording
-    date and schema-check report in [`rubric.md`](./rubric.md#tests) **Tests**.
+  - **Recorded-response fixtures** (cassettes, saved API JSON): the age,
+    recording date and schema-check report in [`rubric.md`](./rubric.md#tests) **Tests**.
   - **End with a prune-and-split list.** Each item names the safe-deletion
     check to run first: the lower-level test that covers the behaviour, or a
     coverage or mutation run.
