@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
 ### Fixed
 
+- `repo-audit`: the isolated instances stay up through the lens stage. Each now starts as a harness background task, so ending a turn no longer reaps it. The main session curls both before launching the lenses and restarts any that is down on the same port and data directory, logging it as `process restarted`. A lens that finds one down reports it and waits instead of starting its own, and a needed instance left down with no restart or logged reason is a failure condition (#704).
 - `repo-audit` evals: the planted `doc-command-missing` expectations now accept the `agent-readiness` area as well as `feature-completeness`, since the rubric files a documented command that fails under agent readiness. The `static-site` standard run found the defect there (#669).
 
 ## [4.0.0] - 2026-11-24

@@ -57,6 +57,16 @@ Read from `findings.json`, never from prose:
 - **no silent gap:** all 16 areas have a scorecard row and a coverage row; every not-applicable or Not-assessed area has a reason.
 - **repo unchanged:** the runner compares `git status --porcelain --ignored`, `HEAD` and a hash of every file outside `.git` before and after.
 
+## Not covered here
+
+Instance restarts. The fixtures are synthetic repos with no web UI, so a run
+starts no instance, and the run log is not in `findings.json`. The restart path
+(`SKILL.md` Stage 3 curls each instance and restarts a down one as a background
+task on the same port and data directory; the `process restarted` row in
+[`run-log.md`](../run-log.md)) is checked by reading a real web-UI run's run log:
+every instance a lens used was up or has a `process restarted` row, and no lens
+started an instance of its own.
+
 ## Run the runner
 
 ```text

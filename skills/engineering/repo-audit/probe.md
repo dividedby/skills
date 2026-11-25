@@ -56,6 +56,12 @@ beyond the app.
 - **Environment.** Start each instance through `$B/run` from
   [`baseline.md`](./baseline.md#environment) with `timeout`, record its PID, port and
   data path in the run log, and stop it by PID, never by name.
+- **Start as a background task.** Run each instance as its own harness
+  background task (Bash `run_in_background`), not `nohup` or `&` inside a call:
+  the harness reaps those when the main turn ends, and Stage 3 outlasts a turn.
+  Record the task id in the run log beside the port and PID. A restart is a new
+  background task on the same port and data directory, logged as
+  `process restarted` with the new task id.
 
 ## 4. Run one cell
 
