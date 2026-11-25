@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 ### Changed
 
 - `repo-audit`: rates fleet-standards fails from the checklist's `severity` column instead of a list of row ids kept in the skill, and takes the definition of "ships" from the checklist. That definition now counts a private tool the owner runs at any cadence, so such a repo's missing CI tests or typecheck rate High. The page and closing message split fails into quality and process; both still count toward their area (#702).
+- `repo-audit`: lenses stamp each finding with the machine's clock instead of a time they invent, and the main session judges whether a lens wrote progressively from the report file's size at its own checkpoints, recorded in the run log. Lenses end with a rules block, one line per rule checked (id, source file, result), so the Rules conformance counts roll up per source file or per area. The rules-harvest helper now starts at about 60 KB of rule documents instead of 1,000 lines (#705; amends ADR 0049).
 
 ### Fixed
 
