@@ -515,10 +515,13 @@ a reason for every tool or gate that did not run.
 
 Before launching, curl each instance. Restart any that is down as a new
 background task on the same port and data directory, and log it as
-`process restarted` in the run log. A lens that finds an instance down marks the
-methods that need it "blocked: instance down" and carries on; the main session
-restarts the instance and continues that lens (SendMessage to the same agent)
-to run them. A lens never starts an instance of its own.
+`process restarted` in the run log. A lens that finds an instance down reports
+it, and the methods that need it wait for the restart: the lens marks them
+"blocked: instance down" and carries on with the rest; the main session restarts
+the instance and continues that lens (SendMessage to the same agent) to run
+them. A lens never starts an instance of its own, except the architecture lens's
+outbound-calls restart of the handed-over second instance
+([`briefs.md`](./briefs.md) shared header).
 
 First write `<scratchpad>/briefs/shared-header.md` once, with one copy of what
 every lens needs: the shared header's facts ([`briefs.md`](./briefs.md): the

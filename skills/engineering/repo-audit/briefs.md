@@ -39,9 +39,10 @@ by path first, then its own section of this file by path and heading
   starts from an empty environment
   ([`baseline.md`](./baseline.md#environment)).
 - A lens that finds a handed-over instance down never starts an instance of its
-  own, on another port or data directory. It notes the instance and the time at
-  the top of its report, carries on with the methods that do not need it, and
-  marks the rest "blocked: instance down". The main session restarts the
+  own, on another port or data directory. It reports the instance and the time
+  at the top of its report, and the methods that need it wait for the restart:
+  it carries on with the methods that do not need it and marks the rest
+  "blocked: instance down". The main session restarts the
   instance and continues that lens (SendMessage to the same agent) to run the
   blocked methods. The one exception is the architecture
   lens's outbound-calls fault (**Outbound calls** under Privacy and data), which
