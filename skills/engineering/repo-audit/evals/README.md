@@ -5,18 +5,22 @@ an on-demand runner. Not a skill: [`SKILL.md`](../SKILL.md) links here.
 
 ## What is here
 
-| File                   | Purpose                                                                                                      |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `fixtures.py`          | Generates the six fixtures as git repos into a folder you name. Deterministic: same commit SHAs each run     |
-| `expectations.json`    | Per fixture: type, tier, applicable areas, and the planted findings to match by `key`                        |
-| `findings.schema.json` | The shape of `findings.json` (SKILL.md Stage 6)                                                              |
-| `findings_check.py`    | Schema validator, expectation checks, the cross-run `diff_runs` rule and its input check, all pure functions |
-| `sample-findings.json` | A schema-valid sample that passes `single-script` at `quick`; the self-test's input                          |
-| `evals.test.py`        | CI self-test: no `claude` call, stdlib and `git` only, about 3-5 s                                           |
-| `run_evals.py`         | The paid runner                                                                                              |
+| File                     | Purpose                                                                                                                                 |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `fixtures.py`            | Generates the six fixtures as git repos into a folder you name. Deterministic: same commit SHAs each run                                |
+| `expectations.json`      | Per fixture: type, tier, applicable areas, and the planted findings to match by `key`                                                   |
+| `findings.schema.json`   | The shape of `findings.json` (SKILL.md Stage 6); `render.py` checks its input against it                                                |
+| `findings_check.py`      | Schema validator (`render.py` also uses it), expectation checks, the cross-run `diff_runs` rule and its input check, all pure functions |
+| `sample-findings.json`   | A schema-valid sample that passes `single-script` at `quick`; the self-test's input                                                     |
+| `sample-page-extra.json` | A schema-valid `page-extra.json` for the sample findings; `render.test.py`'s input                                                      |
+| `evals.test.py`          | CI self-test: no `claude` call, stdlib and `git` only, about 3-5 s                                                                      |
+| `run_evals.py`           | The paid runner                                                                                                                         |
 
 Run the self-test: `python3 -B skills/engineering/repo-audit/evals/evals.test.py`.
 CI's `gate` job runs it with the other `*.test.py` files.
+
+The two samples are also the input of `render.test.py`, which builds the report
+page from them (`python3 -B skills/engineering/repo-audit/render.test.py`).
 
 ## Fixtures
 

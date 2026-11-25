@@ -12,6 +12,8 @@
 
 > **Amended by [ADR 0049](./0049-repo-audit-lens-roster-depth-levels-and-budgets.md)** — five lenses in one launch, at most four at `standard`, each with an agent type, model and tools; Market off for private and single-user repos; `quick` and `standard` depth with stated budgets; the read-only rule and stages are unchanged.
 
+> **Amended by [ADR 0050](./0050-repo-audit-renders-the-page-with-render-py.md)** — a script, `render.py`, builds the report page from `findings.json` and `page-extra.json` using `template.html` as the markup; a hand-filled page is a failure; the read-only rule, lenses and stages are unchanged.
+
 ## Context
 
 `/repo-audit` (3.1.0) ran a leverage hunt: up to five lens seats on the Workflow

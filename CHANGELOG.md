@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
 ### Added
 
+- `repo-audit`: `render.py` builds the report page from `findings.json` and a new `page-extra.json` (prose, plan, fleet-standards rows, extra tables, screenshots, mockups, research), using `template.html` as the markup. The verdict, blockers, scorecard and coverage tables, finding rows and Since the last run come from `findings.json`; verdicts and severities are copied, never recomputed, and the finding rows are sorted by severity then id. Both inputs are checked against a schema, and the page is written only when it has no leftover token, dangling link, duplicate id or unbalanced tag. The template's 200-line header of fill rules is now a short note on editing the markup; the prose rules are in `SKILL.md` Stage 6, and a report page not produced by `render.py` is a failure condition (#708).
+- ADR 0050: `repo-audit` builds the report page with `render.py`; amends ADR 0042 (#708).
 - `repo-audit`: three new checks. The code lens hand-computes one realistic headline number from the source's own rules and compares it with the real output (a mismatch is a Blocker when users decide on the number, else High). Usability checks empty and default values on each input that feeds a decision number, and Tests reports each recorded-response fixture's file age, recording date and whether a schema check exists. The fixed key names gain `golden-mismatch`, `empty-input-accepted` and `stale-recorded-fixture`, and the `single-script` eval fixture plants a stale recorded response (#709).
 
 ### Changed

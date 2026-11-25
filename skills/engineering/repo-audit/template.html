@@ -1,204 +1,24 @@
 <!--
-REPO-AUDIT REPORT TEMPLATE. FILL RULES
-- Clone each repeat block once per item, replace every double-brace token, and delete these comments.
-- Area names, ids, verdicts and reasons come from rubric.md. Section order: Scorecard, Plan, Since the last run, one section per area that has
-  findings (and External facts, Agent readiness and Repo organisation, below), Fleet standards, Rules conformance, Coverage,
-  Measurements, Screens, Mockups, Research, What was checked.
-- Optional sections (Since the last run, Measurements, Screens, Mockups, Research, Checked, any area-section): delete the whole h2 block AND its nav
-  link. Scorecard, Coverage, Fleet standards and Rules conformance are not optional. When the fleet checklist could not be read,
-  keep its section, put the reason in STANDARDS_INTRO and delete the table. A repo that fails the ownership test keeps the
-  section too: STANDARDS_INTRO reads "n/a (not a fleet repo)" with the reason (the ownership test's result), and the table is
-  deleted. A repo with no remote keeps it as well: STANDARDS_INTRO reads "Not assessed (Needs X: a remote)" and the table is
-  deleted.
-- Trust: METHOD_NOTE states how the run treated the repo's code: "trusted" (with the ownership leg that passed, the no-remote result, or the prompt),
-  "untrusted, run allowed (answered HH:MM CT)" or "untrusted, not run (answered no HH:MM CT, no answer by HH:MM CT, or not asked: reason)". OVERALL_TEXT
-  names every area that lost a method or was Not assessed because of it, with the reason Untrusted not run; the Coverage reasons
-  and one UNVERIFIED_ITEM per skipped method carry the same reason. A trusted repo adds nothing more.
-- Scorecard: first section. OVERALL_VERDICT is the overall verdict; with no Blockers, delete the Blockers h3 and list and say
-  so in OVERALL_TEXT. OVERALL_TEXT also names every applicable area that is Not assessed. One row per area in rubric order, areas that do not apply included. An area with findings: its verdict,
-  its top finding, and a link to that finding's id. An area with none: an em dash in the top-finding and link cells. A Not
-  assessed area (not applicable, depth, lens failed, and so on): class not-assessed, label "Not assessed", and the reason in
-  the top-finding cell, for example "lens failed: usage limit". The area name links to its area-section when it has one.
-  Not-applicable areas that share one reason may merge into one row naming their ids. Monorepo: add a second evidence-table
-  (Package, Type, Verdict, Top finding, Link); a package the user did not select is Not assessed, reason Not selected.
-- Area-sections: one per area that has findings, plus `external-facts` when facts were checked, and `agent-readiness` and
-  `repo-hygiene` when they apply and are assessed (see External facts, Agent readiness and Repo organisation below),
-  `security` for a private repo when go-public feasibility ran or was skipped with a reason, and `ops-release` when the
-  repo has CI workflows (see Architecture report and Product report below).
-  Not-assessed areas have none; the scorecard and Coverage carry their reason.
-  Put "Also reported by: lens" under a finding the Stage 4 merge combined; delete that span otherwise. Fold "why it matters"
-  into FINDING. A fleet fail stays a row in the Fleet standards table only; the scorecard row of the area it counts toward
-  links to its fs- id when it is that area's top finding.
-- Since the last run: only when findings.json has a `diff` (SKILL.md Stage 6); otherwise delete the whole h2 block and its nav
-  link. SINCE_INTRO links the previous run's page and gives the five counts (new, fixed, still open, not re-checked, not re-raised). One
-  since-item per key in the diff, grouped in that order: SINCE_STATE (New, Fixed, Still open, Not re-checked, Not re-raised), SINCE_KEY, and
-  SINCE_NOTE (a link to its finding when it is in this run; for a still-open item whose severity changed, both severities; for
-  a not-re-checked item, the area's Not-assessed reason or the lens's reason; for a not-re-raised item, that nothing changed under its
-  path since the previous commit, or that the commits could not be compared). When the previous run could not be read, keep the h2, put that in
-  SINCE_INTRO and delete the list.
-- Rules conformance: the repo's own rules from rules.md, after Fleet standards. RULES_INTRO names the source files read and gives
-  the counts (pass, fail, not assessed) in one or two sentences; with no rules harvested it says so and the tables are deleted.
-  Two evidence-tables. First, counts per source file (Source, Rules, Pass, Fail, Not assessed), a source with fails first.
-  Second, the rows that did not pass, fails first and then not-assessed rows: Rule (id and text), Source (the doc file:line),
-  Result (class "res fail" label FAIL, or class "res unchecked" label NOT ASSESSED), Evidence (the finding's evidence, or the
-  not-assessed reason from rubric.md), Link (the finding's id; an em dash for a not-assessed row). Passes are counts only, never
-  rows. A failed row is also a finding in the area its row names, and that finding's FINDING text names the rule and its source.
-- External facts: the area-section of `external-facts` also holds the facts table, an evidence-table with class "wide" after
-  AREA_INTRO and before the finding table. Keep the section when facts were checked, even with no findings: then delete the
-  finding table. AREA_INTRO says how the values stay current (the update step, pinning test or warning with its file:line, or
-  that there is none) and gives the counts (match, mismatch, couldn't verify, not checked). Columns: Fact (its name and the value
-  the repo holds), File:line, Source URL (a link), Date read, Result (class "res pass" label MATCH, "res fail" label MISMATCH, or
-  "res unchecked" label COULDN'T VERIFY, with the reason in the cell). One row per checked fact, mismatches first. A mismatch is
-  also a finding-row. When the cap leaves candidates unchecked, the last row reads "Not checked: N more", lists where they live in
-  the File:line cell, has an em dash in Source URL and Date read, and is class "res unchecked" label NOT CHECKED.
-- Agent readiness: the area-section of `agent-readiness` also holds the gates table, an evidence-table with class "wide" after
-  AREA_INTRO and before the finding table. Keep the section whenever the area applies, even with no findings: then delete the
-  finding table. AREA_INTRO names each agent file with its lines and words (reported, not scored), the focused test command and
-  its wall time or that there is none, and the counts (stale paths or commands, duplicated items); with no agent file it says
-  so; with no gate documented anywhere it says that and the gates table is deleted. Columns: Gate, Documented at (file:line),
-  As written (ran as written, ran with a change and what, failed as written, or not run with its reason), Result (class
-  "res pass" label PASS, "res fail" label FAIL, or "res unchecked" label NOT RUN, with the counts in the cell), Time, Manual
-  steps (the steps the doc leaves out, or an em dash). One row per gate in the baseline digest's Gates table, fails first.
-  Documented at follows rubric.md's Documented gates check. Each stale path or command and each duplicated item is a
-  finding-row with its file:line (both file:lines for a duplicate); the sampled-issues result goes in AREA_INTRO, or its skip
-  reason does.
-- Repo organisation: the area-section of `repo-hygiene` also holds the cruft table, an evidence-table after AREA_INTRO and
-  before the finding table. Keep the section whenever the area is assessed, even with no findings: then delete the finding table,
-  and delete the cruft table when there is no cruft item. AREA_INTRO gives the structure counts (top-level folders and files, the
-  maximum depth and its deepest path, and how many top-level source folders have a findable public surface, with the ones that do
-  not named, or on a Small tier repo the reason "Depth: Small tier, counts and depth only"; reported, not scored), then the
-  glossary result (entries, entries breaking the format, definitions with implementation detail, avoided terms still used) and
-  the lean report (entry count, unused terms as prune candidates), then the ADR result (count, numbering gaps or duplicates,
-  status and supersede-link problems, noise ADRs), or for either the skip reason from rubric.md, for example "Not applicable (no
-  glossary)", and last every other check or test the area skipped with its reason from rubric.md's Skips, for example "Stale
-  markers, closed-issue test: Needs X: a GitHub remote". Columns: Path, Kind (digest item, scratch directory, orphan
-  doc, commented-out code, stale marker), Evidence (the test it failed: the last commit date, the marker and its age or closed
-  issue, the line count of the block; for a digest item its size and the digest's reason), Finding (its id as a link, or an em
-  dash). One row per item, each with its own path, never a count alone. The baseline digest gives counts and its top 10, so those
-  10 are rows with Kind "digest item"; when it counts more, the last row reads "Digest: N more", names in the Path cell where they
-  live (the raw digest path), has em dashes in Evidence and Finding. An avoided term still used is a finding-row whose EVIDENCE
-  gives the `git grep` hit count, the count judged in sense and up to five `file:line` samples; an ADR problem is a finding-row
-  naming the ADR numbers.
-- UI probe: the Measurements section holds the probe's evidence, from the probe folder's `summary.json` and cells (probe.md),
-  as evidence-tables after MEASUREMENTS_INTRO. Keep it when a probe cell ran, with or without findings; when a web UI was in
-  scope but no cell ran, the section holds the Dimensions not run table alone; otherwise delete it. MEASUREMENTS_INTRO names
-  how the instances were isolated (the mechanism), that both were stopped before Stage 4, the matrix size (screens, states,
-  widths, themes, cells), and that every figure is a lab or probe measurement on throwaway data, not user data. Tables, in
-  order:
-  1. Totals per screen (class "wide"): Screen, Cells run, Cells failing, Axe violations, Overflow, Small targets, Console and
-     failed requests, Copy flags (sentences over the limit, longest block in words, highest mean sentence length, plain-prose blocks over the limit
-     (briefs.md Copy density holds the limits), repeated blocks; the summary row's `spaceDelimited` false means no word figures; long unstructured blocks are counted but
-     never make a cell fail, the design lens flags them on primary flows). One row per main screen, failing screens first.
-  2. Failing cells (class "wide"): Screen, Cell (state, width, theme), Check, Detail (the rule and impact and count, the
-     offending selector, the measured size), Link (the finding's id, or an em dash). At most 30 rows, worst first; when more
-     fail, the last row reads "N more in the probe JSON" with em dashes. Passing cells are counts in table 1, never rows.
-  3. Lighthouse, hosted sites only: Metric (each labelled "(lab)"), Value, Threshold or budget, How measured. Then, when a
-     keyboard pass ran, one row per flow: Flow, Steps, Result (class "res pass" or "res fail"), First failing step.
-  4. Dimensions not run: Dimension, Reason (rubric.md's reason; identical reasons merge as in the Scorecard).
-  A failing check that matters is also a finding in its area: axe, targets and overflow in `accessibility`, copy metrics in
-  `content-branding`, Lighthouse in `performance`, keyboard failures in `usability`; the Link cell carries its id. Coverage
-  ticks Measured and Browsed for the areas the probe ran for, and its Reason lists each dimension not run. SCREENS_INTRO says
-  which cells were captured and why (the first cell per screen, and one cell per distinct failure in `summary.json`
-  `distinct`, not every failing cell).
-- Design report: when the design lens ran, METHOD_NOTE also links its report file (published beside the page), which holds the
-  copy table, the brand inventory and the walkthrough logs. The page adds no table for them: their findings are finding-rows in
-  `accessibility`, `content-branding` and `usability` and cite the report section, and the AREA_INTRO of each of those
-  area-sections links the file.
-- Code report: METHOD_NOTE also links the code lens's report file (published beside the page), which holds the benchmark and
-  test-suite evidence. The page adds no table for it: its findings are finding-rows in `code-quality`, `tests` and
-  `performance` and cite the report section, and the AREA_INTRO of each of those area-sections links the file.
-- Market report: when the market lens ran, METHOD_NOTE also links its report file (published beside the page).
-- Architecture report: METHOD_NOTE also links the architecture lens's report file (published beside the page), which holds
-  the store, personal-data, outbound-call and module depth tables and the go-public checklist. The page adds no table for
-  them: their findings are finding-rows in `architecture`, `data-integrity`, `privacy` and `security`, and the
-  AREA_INTRO of each of those area-sections links the file. For a private repo the `security` AREA_INTRO also states the
-  go-public verdict (Ready, Ready after cleanup or Keep private), the items and which need a history rewrite, and the
-  minutes a month going public would save with measured or estimated; with the check not run it gives the reason from
-  rubric.md instead. Keep the `security` section for that sentence even when the area has no findings, and delete the
-  finding table then.
-- Product report: when the product lens ran, METHOD_NOTE also links its report file (published beside the page), which holds
-  the fresh-clone install log, the error-copy log and the CI cost table. The page adds no table for them: their findings are
-  finding-rows in `ops-release` and cite the report section, and the AREA_INTRO of that area-section links the file. When the
-  repo has CI workflows, that AREA_INTRO also gives the repo's billable minutes a month and its share of the included
-  minutes, each labelled measured or estimated, and the minutes the cuts would save; with no workflow it gives the reason. Keep
-  the `ops-release` section for that sentence even when the area has no findings, and delete the finding table then. The
-  go-public minutes in the `security` AREA_INTRO are `go_public.minutes_saved_per_month` with `go_public.basis`, or its
-  `basis_reason` when null.
-- Depth and budget: METHOD_NOTE states the depth (`standard` or `quick`), the run's wall time and agent tokens against the
-  budget in SKILL.md (a measure over by more than 50% named, with by how much), and the main-session context size as
-  reported, not budgeted. A `quick` run also names every area that is Not assessed (depth) in OVERALL_TEXT, with its lens
-  ("Depth: quick run, <lens> lens not launched"). A skipped market lens states its reason (the market test, or "standard
-  four-agent cap") in METHOD_NOTE.
-- Run log: METHOD_NOTE links `run-log.md` and `findings.json` (both published beside the page) and names every partial or
-  failed lens. A lens that failed with no output: each area it owns is Not assessed with reason "lens failed: reason" in the
-  scorecard and Coverage. A partial lens keeps its verdicts; its scorecard top-finding cells, its Coverage reasons, its
-  AREA_INTRO and UNVERIFIED_ITEM say "Partial" with the reason. No area is left out without a verdict or a Not assessed mark.
-- Coverage: one row per area in rubric order. Read, Ran, Measured, Browsed hold a check mark or an em dash. Not assessed holds
-  "yes" for a Not assessed area, else an em dash. Reason holds the area's Not-assessed reason, or each skipped method and its
-  reason, else an em dash. COVERAGE_INTRO states the size tier, the line-count exclusions and the detected types (per package in a
-  monorepo); it names any type with no types.md entry and marks it "fallback profile". Add a second evidence-table
-  (Lens, Read, How chosen), one row per launched lens, from the lens's coverage line, for example "read 60 of 1,900 files:
-  entry points, top 20 by churn, 20 random". Areas that share one Not-applicable reason may merge as in the Scorecard.
-- evidence-table: the one generic table, used for the Scorecard (Area, Verdict, Top finding, Link), Coverage (Area, Read, Ran,
-  Measured, Browsed, Not assessed, Reason), Measurements (Metric, Value, How measured; the UI probe tables above), the monorepo package table
-  (Package, Type, Verdict, Top finding, Link), the lens coverage table (Lens, Read, How chosen), the two Rules conformance tables
-  (Source, Rules, Pass, Fail, Not assessed; Rule, Source, Result, Evidence, Link), the External facts table (Fact, File:line,
-  Source URL, Date read, Result), the Agent readiness gates table (Gate, Documented at, As written, Result, Time, Manual
-  steps) and the Repo organisation cruft table (Path, Kind, Evidence, Finding). A cell may hold inline HTML (a pill, a link,
-  code). Add class "wide" to the table when it has more than four columns. A new table elsewhere is another instance of it,
-  never new markup. Keep tables inside .tablewrap so the page never scrolls sideways.
-- Each screenshot's src is {{IMG_NAME}}: replace it with that image's data: URI. Class tokens take only the values listed
-  in parentheses below.
-- No captures: when no screen has a capture (no UI, every capture dropped for privacy, or a `quick` run), delete the Screens
-  h2 block and its nav link, and write "No captures: <reason>" in METHOD_NOTE.
-- Colours: inline HTML in a cell or mockup uses only the page's custom properties, never a literal colour, so both themes hold.
-  Cells: `--bg --surface --ink --ink-2 --ink-3 --rule --accent --accent-soft --hi --hi-bg --blocker --blocker-bg --med --med-bg
-  --low --low-bg --good --good-bg`. Mockups: only `--mk-desk --mk-win --mk-bar --mk-label --mk-2 --mk-3 --mk-sep --mk-ft
-  --mk-accent --mk-green --mk-shadow`.
-- Market output is context, not an area: it appears in Research and as evidence in External facts and Tech stack findings. A plan
-  item that rests on it links to #research.
-- Mockups: only when the design lens reported a High or Blocker finding, at most three, each behind one and showing its
-  rewritten copy. Otherwise delete the whole h2 block and its nav link, and write "No mockups: <reason>" (no High or Blocker design
-  finding, or the design lens did not run) in SCREENS_INTRO, or in METHOD_NOTE when the Screens section is deleted. The sample is a browser window. For a desktop-app window, a phone or a terminal, copy that frame from
-  snippets.html: its CSS into this file's <style>, its markup in place of the sample inside .mk, and any --mk-* token it
-  lists that this file lacks (light value in :root, dark value in both dark blocks). Use only --mk-* colours so the
-  mockup follows the theme.
-
-PLACEHOLDERS
-  Header:     PROJECT, SCOPE_REPO, SCOPE_BRANCH, SCOPE_COMMIT, SCOPE_DATE, SUMMARY_LEDE, METHOD_NOTE
-  Nav:        NAV_ID, NAV_LABEL
-  Scorecard:  VERDICT_CLASS (not-ready|fixes|ready|not-assessed), OVERALL_VERDICT (Not ready|Ready with fixes|Ready|Not
-              assessed), OVERALL_TEXT, FINDING_ID, BLOCKER_NAME, AREA_NAME
-  Tables:     TABLE_CAPTION, HEAD_CELL, CELL; in the Scorecard a verdict cell is a pill: VERDICT_CLASS, VERDICT_LABEL
-              (Not ready|Ready with fixes|Ready|Not assessed)
-  Plan:       PLAN_INTRO, NOW_WHEN, NEXT_WHEN, LATER_WHEN, ITEM_TEXT, EFFORT (S|M|L), FINDING_ID
-  Since:      SINCE_INTRO, SINCE_STATE, SINCE_KEY, SINCE_NOTE
-  Areas:      AREA_ID (the rubric id), AREA_TITLE, AREA_INTRO, FINDING_ID, SEV_CLASS (blocker|hi|med|low), SEVERITY
-              (BLOCKER|HIGH|MED|LOW), FINDING, ALSO_REPORTED_BY, EVIDENCE (file:line), FIX, EFFORT
-  Standards:  STANDARDS_INTRO (checklist source and commit, how it was read, repo facts, counts per result, fails split by kind),
-              STANDARD_ID (row id), STANDARD_REQUIREMENT, RESULT_CLASS (pass|fail|na|unchecked), RESULT_LABEL
-              (PASS|FAIL|N/A|NOT CHECKED; a report-only row shows OK in class pass, or FLAG in class
-              unchecked), SEV_CLASS, SEVERITY (fail and flag rows only: delete the sev span otherwise),
-              STANDARD_EVIDENCE, STANDARD_FIX (fail and flag rows; an em dash otherwise), STANDARD_SOURCE (the row's
-              source cell)
-  Measures:   MEASUREMENTS_INTRO (the tables are evidence-tables)
-  Rules:      RULES_INTRO (the tables are evidence-tables)
-  Coverage:   COVERAGE_INTRO (the table is an evidence-table)
-  Screens:    SCREENS_INTRO, IMG_NAME, IMG_ALT, IMG_CAPTION
-  Mockups:    MOCKUPS_INTRO, MOCKUP_TITLE, MOCKUP_CONTEXT, MOCKUP_WIDTH, MOCKUP_HTML, MOCKUP_NOTE
-  Research:   RESEARCH_INTRO, SOURCE_TOPIC, SOURCE_SUMMARY, SOURCE_URL, SOURCE_TITLE, RESEARCH_GAPS
-  Checked:    VERIFIED_ITEM, CORRECTED_ITEM, MERGED_ITEM (the kept finding's id, the lenses it also came from; the
-              fleet-standards row id for a fold; for a linked pair both ids; for a re-areaed finding its id and
-              both areas; for a reused key the key and the previous finding's id), DISPUTED_ITEM (both readings, and which the evidence favours),
-              UNVERIFIED_ITEM
-
-REPEAT BLOCKS (each is wrapped in a repeat comment pair named as below; clone everything between the markers)
-  nav-link, blocker-item, evidence-table (contains evidence-head, evidence-row, evidence-cell), plan-item (once inside each of
-  Now/Next/Later), since-item, area-section (contains finding-row), finding-row, standard-row (one per checklist row, n/a rows included),
-  screenshot, mockup (contains mockup-note), mockup-note, research-source, verified-item, corrected-item, merged-item,
-  disputed-item, unverified-item
-  FINDING_ID on a plan-item, a blocker-item or a scorecard link must equal the FINDING_ID of a finding-row (id="..." on the
-  <tr>); a fleet-standards fail's id is fs-STANDARD_ID.
+REPORT TEMPLATE: the page's markup. render.py fills it from findings.json and page-extra.json; nobody fills it by hand.
+The fill rules are in render.py and render.test.py, and the prose the main session writes is in SKILL.md Stage 6, Page content.
+Editing the markup:
+- This comment is dropped at render time. Keep it free of double-brace tokens and of repeat markers.
+- A double-brace token in capitals is filled once. A block wrapped in a pair of comments, "repeat: name" opening and
+  "/repeat" closing (see the blocks below), is cloned once per item and may nest; the same name may occur more than once
+  in a section (plan-item, once per phase).
+- render.py finds each section by its h2 id and deletes an optional one, with its nav link, when it has no data. It also
+  deletes a table with no body rows, an empty list with its h3, and an empty paragraph.
+- render.py reads the area-section block as the template of every area section, and the first evidence-table (in the
+  scorecard) as the generic table: a table elsewhere is another instance, never new markup. It sets class "wide" on a
+  table with more than four columns.
+- The sample inside .mk is replaced by the mockup's html. For a desktop-window, phone or terminal frame, copy this file,
+  apply snippets.html's steps to the copy and pass it with --template.
+- Add a token, repeat name or section: add it to TOKENS, REPEATS or SECTION_IDS in render.py and fill it there; the
+  inventory test fails until you do.
+- Colours: inline HTML uses only the custom properties below, never a literal colour, so both themes hold. Cells use
+  --bg --surface --ink --ink-2 --ink-3 --rule --accent --accent-soft --hi --hi-bg --blocker --blocker-bg --med --med-bg
+  --low --low-bg --good --good-bg; mockups only --mk-desk --mk-win --mk-bar --mk-label --mk-2 --mk-3 --mk-sep --mk-ft
+  --mk-accent --mk-green --mk-shadow.
 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />

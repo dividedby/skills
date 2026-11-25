@@ -2,7 +2,7 @@
 
 The one home for what the audit judges: the areas, when each applies, why an
 area goes unassessed, the severity scale and the verdict rules. `SKILL.md`,
-`briefs.md`, `fleet-standards.md` and `template.html` cite this file and do not
+`briefs.md`, `fleet-standards.md` and `render.py` cite this file and do not
 restate it.
 
 The question the audit answers: is this repo ready for the people who use it?

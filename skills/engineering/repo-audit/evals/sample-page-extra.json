@@ -1,0 +1,83 @@
+{
+  "project": "fee-tool",
+  "repo": "fee-tool",
+  "scope_date": "2026-11-24",
+  "lede": "One Python script that computes fee schedules. It is not ready: a GitHub token is committed in <code>config.ini</code>.",
+  "method_note": "Quick run, trusted (owner repo, no remote). Standard four-agent cap not reached; market lens skipped (private, single-user). No captures: no user-facing UI. No mockups: no user-facing UI. Wall time and agent tokens are in the <a href=\"run-log.md\">run log</a>; the record is <a href=\"findings.json\">findings.json</a>.",
+  "overall_text": "Not ready: one Blocker, the committed token. Not assessed because of the quick depth: feature completeness, repo organisation, ops and release, agent readiness.",
+  "intros": {
+    "plan": "Revoke the token first; the rest is small and can follow in any order.",
+    "standards": "Not assessed (Needs X: a remote). The fleet checklist applies to repos with a remote.",
+    "rules": "No rules were harvested: the repo documents none.",
+    "coverage": "Small tier, all six tracked files read. Detected type: CLI (Python script).",
+    "code-quality": "One duplicate file.",
+    "tests": "The recorded fee response has no schema check.",
+    "security": "The go-public check does not apply (not a private repo on a remote).",
+    "external-facts": "The schedule is not kept current by any update step or test. 1 mismatch, 0 matches, 0 could not verify, 0 not checked."
+  },
+  "plan": {
+    "now": {
+      "when": "This week",
+      "items": [
+        {
+          "text": "Revoke the committed GitHub token and read it from the environment.",
+          "effort": "S",
+          "finding": "security-1"
+        }
+      ]
+    },
+    "next": {
+      "when": "This month",
+      "items": [
+        {
+          "text": "Update the fee schedule and add a check that warns after its valid-until date.",
+          "effort": "S",
+          "finding": "external-facts-1"
+        },
+        {
+          "text": "Re-record the fee response and add a schema check.",
+          "effort": "S",
+          "finding": "tests-1"
+        }
+      ]
+    },
+    "later": {
+      "when": "When convenient",
+      "items": [
+        {
+          "text": "Delete the duplicate script copy.",
+          "effort": "S",
+          "finding": "code-quality-1"
+        }
+      ]
+    }
+  },
+  "standards": { "rows": [] },
+  "tables": [
+    {
+      "section": "external-facts",
+      "caption": "Facts checked",
+      "head": ["Fact", "File:line", "Source URL", "Date read", "Result"],
+      "rows": [
+        [
+          "Fee schedule, valid until 2019-12-31",
+          "<code>tool.py:8</code>",
+          "<a href=\"https://example.com/fees\">example.com/fees</a>",
+          "2026-11-24",
+          "<span class=\"res fail\">MISMATCH</span> the schedule is past its date"
+        ]
+      ]
+    }
+  ],
+  "checked": {
+    "verified": [
+      "<code>security-1</code>: the token format and the first commit that added it."
+    ],
+    "corrected": [],
+    "merged": [
+      "<code>external-facts-1</code>: also reported by the code lens."
+    ],
+    "disputed": [],
+    "unverified": ["Benchmarks: not run at quick depth."]
+  }
+}

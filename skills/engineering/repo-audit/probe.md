@@ -281,8 +281,7 @@ Each skip is a reason from [`rubric.md`](./rubric.md)'s list, never silence.
 
 Everything goes under `$B/probe/`: `matrix.md`, `cells/*.json`, `summary.json`,
 `shots/`, `keyboard-*.md`, `lh-*.json`. Raw JSON stays there for the design lens;
-the page carries the totals and failing cells ([`template.html`](./template.html)
-header). Screenshots are embedded under the size rule in `SKILL.md` Stage 6; keep the
+the page carries the totals and failing cells (`SKILL.md` Stage 6, Page content). Screenshots are embedded under the size rule in `SKILL.md` Stage 6; keep the
 first cell per screen and one capture per distinct failure (each `distinct`
 group's `first` cell in `summary.json`), not every failing cell. When both
 rules pick the same cell, it is one image. Real user data never enters

@@ -49,7 +49,8 @@ _Avoid_: safety hook, blocker, validator.
 **Supporting file**:
 A file inside a skill folder that the `SKILL.md` links to: usually markdown
 for detail (e.g. repo-audit's `briefs.md`), occasionally an asset the skill
-fills in (e.g. repo-audit's `template.html`).
+fills in (e.g. repo-audit's `template.html`) or a script it runs (e.g.
+repo-audit's `render.py` and `scrub.py`).
 _Avoid_: doc, reference, attachment.
 
 **Idea Inbox**:
