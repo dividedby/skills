@@ -34,12 +34,12 @@
   "lens_coverage": [
     {
       "lens": "code",
-      "read": "read 4 of 4 files",
+      "read": "read 6 of 6 files",
       "chosen_by": "Small tier: everything"
     },
     {
       "lens": "architecture",
-      "read": "read 4 of 4 files",
+      "read": "read 6 of 6 files",
       "chosen_by": "Small tier: everything"
     }
   ],
@@ -82,6 +82,19 @@
       "rule_source": null,
       "also_reported_by": [],
       "package": null
+    },
+    {
+      "id": "tests-1",
+      "key": "tests:stale-recorded-fixture:tests/recorded/fee_schedule.json",
+      "area": "tests",
+      "severity": "med",
+      "title": "The recorded fee response is years old and nothing checks it against the live schema",
+      "evidence": "tests/recorded/fee_schedule.json:2 recorded_at is 2021-06-02; no schema or contract check in the repo",
+      "fix": "Re-record the response and add a schema check that fails when the live API drifts",
+      "effort": "S",
+      "rule_source": null,
+      "also_reported_by": [],
+      "package": null
     }
   ],
   "go_public": null,
@@ -113,9 +126,9 @@
       {
         "area": "tests",
         "applies": true,
-        "verdict": "ready",
+        "verdict": "ready_with_fixes",
         "not_assessed_reason": null,
-        "top_finding": null
+        "top_finding": "tests-1"
       },
       {
         "area": "security",

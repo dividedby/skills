@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- `repo-audit`: three new checks. The code lens hand-computes one realistic headline number from the source's own rules and compares it with the real output (a mismatch is a Blocker when users decide on the number, else High). Usability checks empty and default values on each input that feeds a decision number, and Tests reports each recorded-response fixture's file age, recording date and whether a schema check exists. The fixed key names gain `golden-mismatch`, `empty-input-accepted` and `stale-recorded-fixture`, and the `single-script` eval fixture plants a stale recorded response (#709).
+
 ### Changed
 
 - `repo-audit`: rates fleet-standards fails from the checklist's `severity` column instead of a list of row ids kept in the skill, and takes the definition of "ships" from the checklist. That definition now counts a private tool the owner runs at any cadence, so such a repo's missing CI tests or typecheck rate High. The page and closing message split fails into quality and process; both still count toward their area (#702).

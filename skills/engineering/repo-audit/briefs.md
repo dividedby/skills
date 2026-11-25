@@ -113,6 +113,17 @@ Focus on cost at realistic scale and on correctness risk:
 - **Measure, don't guess.** Build a scratch benchmark outside the repo that
   depends on it by path, generate synthetic data at two sizes, and time the hot
   paths. Report measured numbers with how they were made; mark projections.
+- **Golden output.** Find the headline number: the one the README or UI leads
+  with, or a user decides on. Pick one realistic input and compute the number
+  by hand from the source's own rules and constants, never by calling the code
+  under test. Run the real code or build on the same input and compare. At
+  `quick`, nothing runs: compare the hand-computed value with one the README or
+  a test asserts, or skip with the reason "Depth: quick run, golden output not
+  run". Report both values, the input and the command. A mismatch is rated on
+  [`rubric.md`](./rubric.md#severity) Severity: a Blocker when users decide on
+  the number, else High. A match is evidence, not a finding. This is neither
+  the timing above nor the architecture lens's check of the constants
+  themselves.
 - **Concurrency.** Isolation and threading rules of the stack, unstructured
   tasks, cancellation that does not reach long loops, races between subsystems.
 - **I/O.** Write frequency, durability versus cost, journal and log growth,
@@ -141,6 +152,8 @@ Focus on cost at realistic scale and on correctness risk:
     and reach into internals ([`rubric.md`](./rubric.md#tests) **Tests** defines
     them). The Architecture lens looks for these itself as **Module depth**
     evidence; the merge by `file:line` joins the two.
+  - **Recorded-response fixtures** (cassettes, saved API JSON): the age,
+    recording date and schema-check report in [`rubric.md`](./rubric.md#tests) **Tests**.
   - **End with a prune-and-split list.** Each item names the safe-deletion
     check to run first: the lower-level test that covers the behaviour, or a
     coverage or mutation run.

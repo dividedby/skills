@@ -2,7 +2,8 @@
 
 Each fixture plants the same four defects (a hard-coded secret, a stale dated
 constant, a README command that does not exist, a duplicate file); the shapes
-differ. The output is deterministic: running the generator twice gives the same
+differ. `single-script` adds a fifth, a recorded API response with no schema
+check. The output is deterministic: running the generator twice gives the same
 commit and tree SHAs. Nothing is written inside this repo; the caller names the
 output directory.
 
@@ -124,11 +125,44 @@ Run `make report` to write the monthly summary to `report.txt`.
 )
 
 
+# A saved processor response with a recording date and no schema check anywhere.
+_RECORDED_FEES = """\
+{
+  "recorded_at": "2021-06-02",
+  "source": "processor sandbox /v1/fees",
+  "percent": 2.9,
+  "fixed_cents": 30
+}
+"""
+
+_TEST_FEE_PY = """\
+import json
+import unittest
+from pathlib import Path
+
+from tool import fee
+
+RECORDED = Path(__file__).parent / "recorded" / "fee_schedule.json"
+
+
+class FeeTest(unittest.TestCase):
+    def test_fee_on_a_hundred_dollars(self):
+        recorded = json.loads(RECORDED.read_text())
+        self.assertEqual(recorded["percent"], 2.9)
+        self.assertEqual(fee(10000), 320)
+"""
+
+
 def _single_script() -> list[Commit]:
     return [
         (
             "Add invoice summary script",
-            {"tool.py": _file(_TOOL_PY, True), "README.md": _file(_SS_README_1)},
+            {
+                "tool.py": _file(_TOOL_PY, True),
+                "README.md": _file(_SS_README_1),
+                "tests/recorded/fee_schedule.json": _file(_RECORDED_FEES),
+                "tests/test_fee.py": _file(_TEST_FEE_PY),
+            },
         ),
         (
             "Add upload settings",
