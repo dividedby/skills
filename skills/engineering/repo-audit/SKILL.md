@@ -237,7 +237,7 @@ exist to keep main-session context down.
 Provisional until the audit's fixture runs confirm them: the `architecture` and
 `product` rows (the old single architecture agent was split in two, so the pair
 costs about 100k more), every Small and `quick` figure, the 60-cell probe cap,
-the rules-harvest helper's size threshold and the `fleet-check` and
+the rules-harvest helper's 60 KB size threshold and the `fleet-check` and
 `findings-extract` rows (from one marketplace run: 85.5k tokens in 1.5 min and
 132.4k in 3.2 min).
 
@@ -442,7 +442,7 @@ with that area's reason.
 
 At `quick`, harvest only agent files, coding standards, accepted ADRs and `VERIFY`
 markers. At `standard`, when the harvest sources (the rule and claim documents
-above) run past about 1,000 lines (provisional), the main session may hand
+above) run past about 60 KB (`wc -c`; provisional), the main session may hand
 `rules.md` to one `general-purpose` sonnet helper that runs before the lenses.
 The helper is not a lens: it is not one of the four, not in `lens_coverage`, has
 its own row in the run log's Agents table (`rules-harvest (helper)`) and its own
@@ -529,7 +529,8 @@ pinned commit, the profile, the execute answer, the size facts, the paths of the
 baseline digest and the fleet-standards results), the read-only rule, the
 [Execution boundary](#execution-boundary) and the Severity section of
 [`rubric.md`](./rubric.md), verbatim. Then launch the applicable lens agents (at
-most four at `standard`) in one message so they run concurrently. Each prompt
+most four at `standard`) in one message as background agents, so they run concurrently
+and the harness notifies the main session as each returns. Each prompt
 tells the lens to read that file first, then its own section of
 [`briefs.md`](./briefs.md) by path and heading (not line ranges, which drift),
 and adds only the parts specific to the lens: its areas and their applicability
@@ -568,11 +569,17 @@ wall time and tokens against its row.
 - **Failed after writing something:** keep the partial output, marked partial,
   with the reason. No retry.
 - **Thin report:** a report that has no result and no skip reason for a method
-  of its areas is marked partial, reason "thin: <method>".
-- **Not progressive:** each finding heading carries the time it was written, and
-  the report's first line is the start time. If every finding time falls in the
-  last tenth of the lens's wall time, the Agents row status says
-  `done (not progressive)`.
+  of its areas, or no rules-block entry for a `rules.md` row of its areas, is
+  marked partial, reason "thin: <method or row>".
+- **Not progressive:** the checkpoints are each lens-return notification and any
+  other wake-up during Stage 3. At each, the main session records every running
+  lens's report file size (`wc -c`, 0 when absent) in the run log's Checkpoints
+  table with its own `TZ=America/Chicago date +%H:%M`, and a returning lens's
+  final size. A lens is not progressive when, at every checkpoint inside its
+  run, its file was no larger than its start-time line (`head -n 1 <file> |
+wc -c`); the Agents row status says `done (not progressive)`. A lens with no checkpoint
+  inside its run is not judged, and the Checkpoints table says "not judged" for
+  it. The lens's own finding times are supporting evidence only.
 - **Resume, same session only** (the scratchpad is per-session). Read `state`
   from the run log and restart at the first incomplete stage if the repo `HEAD`
   is unchanged, relaunching lenses still `running` and launching any with no row
@@ -853,7 +860,7 @@ by name, one line per area (its verdict, or its Not-assessed reason), a line
 for the fleet-standards section (counts per result, with fails split into
 quality and process, and the checklist commit, or "n/a (not a fleet repo)", or "Not assessed (Needs X: a remote)"), a trust line
 (the ownership result and the execute answer, with the areas it cost), a
-line for Rules conformance (pass, fail and not-assessed counts),
+line for Rules conformance (pass, fail and not-assessed counts, rolled up from the lenses' rules blocks),
 the top findings, what was verified and what was not, the run's totals (wall time and
 agent tokens, against the budget, with any measure over by more than 50% named
 and by how much, and the main-session context size, reported not budgeted), the

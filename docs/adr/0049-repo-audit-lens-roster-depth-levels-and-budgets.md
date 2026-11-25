@@ -2,6 +2,8 @@
 
 > **Status: Accepted** — maintainer decision (2026-11-23). **Amends [ADR 0042](./0042-repo-audit-becomes-a-read-only-report.md).**
 
+> **Amended 2026-11-24** — [dividedby/skills#705](https://github.com/dividedby/skills/issues/705): the rules-harvest helper's threshold is about 60 KB of harvest sources, not 1,000 lines. The Decision below states the amended rule.
+
 ## Context
 
 ADR 0042 fixed four lenses, Design and Market the only optional ones, and named
@@ -59,7 +61,9 @@ method issues landed. Three costed runs of the skill at `0a0cc06` showed gaps:
   so no verdict is lost.
 - **A rules-harvest helper.** Stage 1 may delegate `rules.md` to one pre-lens
   helper when the harvest sources (the rule and claim documents it reads) exceed
-  about 1,000 lines (provisional). It is not a lens: not counted in the four, not
+  about 60 KB (provisional; was 1,000 lines until
+  [#705](https://github.com/dividedby/skills/issues/705), since one-paragraph
+  lines made line counts misleading). It is not a lens: not counted in the four, not
   in `lens_coverage`, logged as its own Agents row, its tokens in the run total.
   The main session still checks a source `file:line` on every row. Not allowed at
   `quick`.

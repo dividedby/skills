@@ -51,6 +51,21 @@ code                   | sonnet | 11 min    | 148k   | 62        | 0/2/5/3  | do
 design                 | opus   | 4 min     | 71k    | 24        | 0/1/3/2  | partial (stopped at cap)
 ```
 
+## Checkpoints
+
+Stage 3 only. One row per main-session checkpoint (each wake-up and each lens
+return, with the main session's own `TZ=America/Chicago date +%H:%M`): the size in bytes of each
+running lens's report file (`wc -c`, 0 when absent; `not judged` for a lens with
+no checkpoint inside its run; blank once a lens has returned). `SKILL.md`
+judges "not progressive" from these.
+
+```text
+time  | code  | design
+21:24 | 3104  | 5120
+21:25 | 9412  | 14206 (returned)
+21:32 | 31880 (returned) |
+```
+
 ## Commands
 
 One row per logged command; `SKILL.md` says which.
