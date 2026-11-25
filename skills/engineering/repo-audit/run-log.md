@@ -74,9 +74,11 @@ made.
 
 ## Read-only proof
 
-One `process started` row per instance Stage 2 starts (a `process restarted` row
-when the architecture lens restarts the second one, with the old and new PID): its role, port, PID and
-data directory (in the scratchpad), and when it was stopped. Stage 6's preview
+One `process started` row per instance Stage 2 starts: its role, port, PID, the
+background task id and data directory (in the scratchpad), and when it was
+stopped. A `process restarted` row for each restart (the main session's curl
+before Stage 3 found one down, or the architecture lens restarted the second
+one), with the old and new PID and task id, the reason and who restarted it. Stage 6's preview
 server is one more row: its port, PID and the publish folder it serves. One
 `after gate` row per gate or scan that runs the repo's code, and one per lens
 command that runs it, from the per-gate check in
@@ -109,9 +111,10 @@ Stage 6: git status --porcelain --ignored | Stage 1 snapshot (8c02d19) | differs
 Stage 6: path list              | Stage 1 snapshot (8c02d19) | differs: default.profraw (the swift test breach)
 Stage 6: HEAD                   | 8c02d19          | 8c02d19
 Stage 6: files newer than the marker | Stage 1 marker | default.profraw (breach), and <repo root>, which holds it
-process started                 | primary :8080 pid 4121 data $B/data/a | stopped 21:20
-process started                 | second :8081 pid 4130 data $B/data/b | stopped 21:31 (restarted below)
-process restarted               | second :8081 pid 4130 -> 4188 (down-service test) | old pid stopped 21:31; pid 4188 stopped 21:50, before Stage 4
+process started                 | primary :8080 pid 4121 task bk7q2 data $B/data/a | found down at 21:20, before Stage 3 (restarted below)
+process started                 | second :8081 pid 4130 task bm3x9 data $B/data/b | stopped 21:31 (restarted below)
+process restarted               | primary :8080 pid 4121 -> 4162 task bt5c1 (curl before Stage 3 found it down; main session) | same data $B/data/a; old pid gone; pid 4162 stopped 21:50, before Stage 4
+process restarted               | second :8081 pid 4130 -> 4188 task bw8d4 (down-service test; architecture lens) | old pid stopped 21:31; pid 4188 gone after the kill fault, checked 21:50, before Stage 4
 process started                 | preview :52814 pid 5230 serving $B/publish | stopped 22:41, before publish
 ```
 

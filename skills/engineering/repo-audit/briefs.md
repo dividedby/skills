@@ -38,6 +38,17 @@ by path first, then its own section of this file by path and heading
   wrapper (`$B/run env VAR=... <cmd>`), never before it, since the wrapper
   starts from an empty environment
   ([`baseline.md`](./baseline.md#environment)).
+- A lens that finds a handed-over instance down never starts an instance of its
+  own, on another port or data directory. It reports the instance and the time
+  at the top of its report, and the methods that need it wait for the restart:
+  it carries on with the methods that do not need it and marks the rest
+  "blocked: instance down". The main session restarts the
+  instance and continues that lens (SendMessage to the same agent) to run the
+  blocked methods. The one exception is the architecture
+  lens's outbound-calls fault (**Outbound calls** under Privacy and data), which
+  restarts the handed-over second instance itself, on its port and data
+  directory. The instance that lens's own kill fault leaves down is deliberate,
+  not a finding.
 - The size facts: lines per area after exclusions, the largest files, test
   count and run time.
 - The profile's types, with their `types.md` brief bullets (in the prompt's
@@ -308,7 +319,8 @@ services run the repo's code or touch a service, so they share these rules:
        merge;
      - kill a write midway: send a large write and kill the process listening on
        the instance's port, after checking that its PID is the handed-over
-       instance PID or that process's child (a wrapper such as `timeout` is
+       instance PID (the new PID, if this lens restarted it) or that process's
+       child (a wrapper such as `timeout` is
        not it; any other listener is left alone and the fault is skipped), then
        look for a half-written file or a leftover temp file and whether the
        store still loads from a copy. A refused kill is skipped, reason
@@ -340,13 +352,16 @@ services run the repo's code or touch a service, so they share these rules:
      it is safe, against the second instance: a read-only call that needs no
      credential, and a down or slow service by pointing the base-URL setting at a
      closed port or a scratch stub that sleeps. The setting may need the second
-     instance restarted: the lens restarts it itself (same data directory and
-     port, scrubbed environment), before the kill fault, and reports the old and
-     new PID in its report and summary; the main session logs a
-     `process restarted` row in the run log's Read-only proof and stops the new
-     PID before Stage 4. Where the code has no such setting, read it and label it
-     "read, not run". With no outbound call, Not
-     applicable (no outbound calls).
+     instance restarted: the lens restarts it itself, the one case where a lens
+     starts an instance (the handed-over one: same data directory and port,
+     scrubbed environment, a background task), before the kill fault, and
+     reports the old and new PID and task id in its report and summary; the main
+     session logs a `process restarted` row in the run log's Read-only proof and
+     stops the new PID before Stage 4 (or logs it gone after the kill fault). A
+     background task a lens starts can end with the lens; the kill fault runs
+     last, so nothing after it needs the instance. Where the code has no such setting, read
+     it and label it "read, not run". With no outbound call, Not applicable (no
+     outbound calls).
    - **Evidence:** the `file:line` of each store, call and doc statement; the
      permission bits; for an exercised call, the request and what the product
      did.

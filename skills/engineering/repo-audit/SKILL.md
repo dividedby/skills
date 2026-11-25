@@ -485,8 +485,10 @@ the repo's code follows the execute answer from Stage 1:
 - **Other UI types** (CLI, native app, userscript): capture as the type's entry
   in [`types.md`](./types.md) directs, unless a repo rule forbids the method
   (see its How to use).
-- **Lifetime.** Both instances stay up through Stage 3. The main session stops
-  both before Stage 4 and logs it; none is left running at publish.
+- **Lifetime.** Both instances stay up through Stage 3, each started as a
+  harness background task ([`probe.md`](./probe.md#3-instances)) so the end of a
+  turn does not reap it. The main session stops both before Stage 4 and logs it;
+  none is left running at publish.
 - **Baseline.** The main session runs [`baseline.md`](./baseline.md) before the
   lenses launch, under the [Execution boundary](#execution-boundary). It writes
   `digest.md` with the raw output beside it in the scratchpad and judges
@@ -511,6 +513,16 @@ a reason for every tool or gate that did not run.
 
 ## Stage 3 — Lenses (parallel)
 
+Before launching, curl each instance. Restart any that is down as a new
+background task on the same port and data directory, and log it as
+`process restarted` in the run log. A lens that finds an instance down reports
+it, and the methods that need it wait for the restart: the lens marks them
+"blocked: instance down" and carries on with the rest; the main session restarts
+the instance and continues that lens (SendMessage to the same agent) to run
+them. A lens never starts an instance of its own, except the architecture lens's
+outbound-calls restart of the handed-over second instance
+([`briefs.md`](./briefs.md) shared header).
+
 First write `<scratchpad>/briefs/shared-header.md` once, with one copy of what
 every lens needs: the shared header's facts ([`briefs.md`](./briefs.md): the
 pinned commit, the profile, the execute answer, the size facts, the paths of the
@@ -523,7 +535,7 @@ tells the lens to read that file first, then its own section of
 and adds only the parts specific to the lens: its areas and their applicability
 facts, the relevant captures, the probe output paths, the running instances'
 addresses (the primary for every lens, the second for the architecture lens,
-with its data directory and PID), the path of its raw output, the type entries
+with its data directory, PID and background task id), the path of its raw output, the type entries
 and the tier's reading rule, the path of the `rules.md` rows for the areas it
 owns, and the adaptations (dropped bullets, types bullets, the user's focus).
 The product lens is also told to read [`rubric.md`](./rubric.md) CI cost
@@ -566,7 +578,7 @@ wall time and tokens against its row.
   is unchanged, relaunching lenses still `running` and launching any with no row
   yet. The execute answer is read from the log's Run block, not asked again. The
   instances are checked and restarted from the same data directories if they no
-  longer answer. A lens cut off at `running (retry)` counts as its second failure. Lenses
+  longer answer (as background tasks, logged `process restarted`, per Stage 3). A lens cut off at `running (retry)` counts as its second failure. Lenses
   marked `done`, `partial` or `failed` keep their status and any retry already
   used. A changed `HEAD` starts a new run (a `HEAD` that moves while the run is
   live re-pins and restarts Stage 1, as Stage 1 says).
@@ -873,6 +885,7 @@ what is unverified and any partial or failed lens.
 - An instance started on the user's real data folder, outside the Execution
   boundary or left running at publish, or a skipped probe dimension with no
   reason.
+- An instance a lens needed was down with no restart and no run-log reason.
 - A fleet-standards check run that was not read-only, or a checklist copy
   reused instead of read fresh.
 - No run log, or a run log missing a section (a section with nothing to log
