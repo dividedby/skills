@@ -17,6 +17,7 @@ import re
 import shutil
 import sys
 import tempfile
+import time
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -494,6 +495,22 @@ class LargeExpectationTests(unittest.TestCase):
             with self.subTest(label):
                 self.assertEqual(self.failed(doc), ["lens coverage"])
 
+    def test_each_sampling_rule_the_brief_allows_passes_and_the_run_that_missed_it_fails(
+        self,
+    ):
+        for chosen_by, ok in [
+            ("entry points", True),
+            ("the largest files", True),
+            ("churn hotspots", True),
+            ("random, seed 7", True),
+            ("full read: all of its scope", True),
+            ("every doc and manifest; module files only via billing index.js", False),
+        ]:
+            doc = self.large_sample()
+            doc["lens_coverage"][1].update(read="read 12 files", chosen_by=chosen_by)
+            with self.subTest(chosen_by):
+                self.assertEqual(self.failed(doc), [] if ok else ["lens coverage"])
+
     def test_the_failure_names_the_lens_that_did_not_sample(self):
         doc = self.large_sample()
         doc["lens_coverage"][1].update(read="read everything", chosen_by="every file")
@@ -710,6 +727,19 @@ class RunnerTests(unittest.TestCase):
         self.assertIn("--max-budget-usd 10", text)
         self.assertEqual(text.count("claude -p"), 1)
 
+    def test_dry_run_says_the_preflight_would_run_and_which_names_it_tries(self):
+        with (
+            tempfile.TemporaryDirectory() as tmp,
+            mock.patch.object(
+                run_evals, "run_claude", side_effect=AssertionError("spawned claude")
+            ),
+            contextlib.redirect_stdout(io.StringIO()) as out,
+        ):
+            run_evals.main(["--dry-run", "--out", tmp, "--fixtures", "single-script"])
+        text = out.getvalue()
+        self.assertIn("preflight", text)
+        self.assertIn("/dividedby-skills:repo-audit, /repo-audit", text)
+
     def test_unknown_fixture_is_an_error(self):
         with contextlib.redirect_stderr(io.StringIO()):
             self.assertEqual(run_evals.main(["--dry-run", "--fixtures", "nope"]), 2)
@@ -791,6 +821,118 @@ class RunnerTests(unittest.TestCase):
             self.assertEqual(
                 run_evals.locate_findings(art, "", 500), art / "findings.json"
             )
+
+    @staticmethod
+    def init_line(**fields) -> str:
+        event = {"type": "system", "subtype": "init", "slash_commands": [], **fields}
+        return json.dumps({"type": "hook", "subtype": "x"}) + "\n" + json.dumps(event)
+
+    def test_skill_resolution_picks_the_name_the_child_loaded(self):
+        namespaced, bare = "dividedby-skills:repo-audit", "repo-audit"
+        for label, explicit, loaded, want in [
+            (
+                "explicit name present",
+                "/custom:audit",
+                ["custom:audit"],
+                "/custom:audit",
+            ),
+            ("explicit without a slash", "repo-audit", [bare], "/repo-audit"),
+            ("default namespaced present", None, [bare, namespaced], f"/{namespaced}"),
+            ("falls back to bare", None, ["compact", bare], f"/{bare}"),
+            ("name listed under skills", None, [], f"/{bare}"),
+            ("explicit absent", "/custom:audit", [bare], None),
+            ("neither present", None, ["compact", "other:audit-ish"], None),
+        ]:
+            with self.subTest(label):
+                init = {"slash_commands": loaded}
+                if label == "name listed under skills":
+                    init["skills"] = [bare]
+                name, note = run_evals.pick_skill(explicit, init)
+                self.assertEqual(name, want)
+                if want is None:
+                    self.assertIn("not loaded", note)
+
+    def test_skill_resolution_without_an_init_event_is_an_error(self):
+        name, note = run_evals.pick_skill(None, run_evals.parse_init("not json\n{}"))
+        self.assertIsNone(name)
+        self.assertIn("no init event", note)
+
+    def test_preflight_command_is_one_cheap_turn_with_the_plugin_dir(self):
+        cmd = run_evals.build_preflight_command("claude", Path("/plug"))
+        self.assertEqual(cmd[:2], ["claude", "-p"])
+        for flag, value in [
+            ("--plugin-dir", "/plug"),
+            ("--output-format", "stream-json"),
+            ("--max-turns", "1"),
+        ]:
+            self.assertEqual(cmd[cmd.index(flag) + 1], value)
+        self.assertIn("--verbose", cmd)
+
+    def test_resolve_skill_spawns_once_from_an_empty_folder_and_reads_the_init_line(
+        self,
+    ):
+        calls = []
+
+        def spawn(cmd, cwd, timeout, until_init=False):
+            calls.append((cmd, list(Path(cwd).iterdir()), until_init))
+            return self.init_line(slash_commands=["repo-audit"]), ""
+
+        args = run_evals.parse_args([])
+        with mock.patch.object(run_evals, "run_claude", side_effect=spawn):
+            name, _ = run_evals.resolve_skill(args)
+        self.assertEqual(name, "/repo-audit")
+        self.assertEqual(len(calls), 1)
+        self.assertEqual(calls[0][1:], ([], True))
+
+    def test_main_stops_before_any_fixture_when_the_skill_is_not_loaded(self):
+        def spawn(cmd, cwd, timeout, until_init=False):
+            assert until_init, "a fixture run started"
+            return self.init_line(slash_commands=["compact"]), ""
+
+        with (
+            tempfile.TemporaryDirectory() as tmp,
+            mock.patch.object(run_evals, "run_claude", side_effect=spawn),
+            contextlib.redirect_stdout(io.StringIO()),
+            contextlib.redirect_stderr(io.StringIO()) as err,
+        ):
+            code = run_evals.main(["--out", tmp, "--fixtures", "single-script"])
+        self.assertEqual(code, 2)
+        self.assertIn("not loaded", err.getvalue())
+        self.assertIn("no fixture was run", err.getvalue())
+
+    def test_main_runs_the_fixtures_under_the_resolved_name(self):
+        prompts = []
+
+        def spawn(cmd, cwd, timeout, until_init=False):
+            if until_init:
+                return self.init_line(slash_commands=["repo-audit"]), ""
+            prompts.append(cmd[2])
+            return "{}", ""
+
+        with (
+            tempfile.TemporaryDirectory() as tmp,
+            mock.patch.object(run_evals, "run_claude", side_effect=spawn),
+            contextlib.redirect_stdout(io.StringIO()) as out,
+        ):
+            run_evals.main(["--out", tmp, "--fixtures", "single-script"])
+        self.assertEqual(len(prompts), 1)
+        self.assertTrue(prompts[0].startswith("/repo-audit quick"))
+        self.assertIn("preflight: skill `/repo-audit` is loaded", out.getvalue())
+
+    def test_the_preflight_kills_the_child_after_its_init_line(self):
+        script = (
+            "import json,sys,time\n"
+            "print(json.dumps({'type':'system','subtype':'init','slash_commands':['repo-audit']}),flush=True)\n"
+            "time.sleep(60)\n"
+        )
+        started = time.time()
+        stdout, _ = run_evals.run_claude(
+            [sys.executable, "-c", script], Path.cwd(), 30, until_init=True
+        )
+        self.assertLess(time.time() - started, 20)
+        init = run_evals.parse_init(stdout)
+        assert init is not None
+        self.assertEqual(init["slash_commands"], ["repo-audit"])
 
     def run_one_fixture(self, tmp: str, spawn) -> run_evals.FixtureRun:
         out = Path(tmp)

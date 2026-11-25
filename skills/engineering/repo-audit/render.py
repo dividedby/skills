@@ -801,6 +801,31 @@ class _Build:
             self.err(f"{where}: {problem}")
         return value.replace("{{", "&#123;&#123;")
 
+    # -- consistency
+
+    def depth_errors(self) -> None:
+        """At quick depth, an applicable area of an unlaunched lens must read Not assessed (depth)."""
+        depth = (_fact(self.f["profile"], "depth") or "").strip().lower()
+        if depth != "quick":
+            return
+        owner = _load_checker().AREA_OWNER
+        launched = {r["lens"] for r in self.f["lens_coverage"]}
+        for area, row in self.card_areas.items():
+            lens = owner.get(area)
+            if (
+                lens is None
+                or lens in launched
+                or row.get("applies") is not True
+                or row.get("verdict") == "not_assessed"
+            ):
+                continue
+            self.err(
+                f"scorecard.areas: `{area}` belongs to the `{lens}` lens, which a "
+                f"quick run does not launch; it must read Not assessed with the "
+                f'reason "Depth: quick run, `{lens}` lens not launched", '
+                f"not `{row.get('verdict')}`"
+            )
+
     # -- selection
 
     def area_ids(self) -> list[str]:
@@ -1334,6 +1359,7 @@ def build_page(
     """The finished page. Raises RenderError listing every problem found."""
     tpl = load_template(template)
     b = _Build(findings, extra, tpl, base)
+    b.depth_errors()
     area_ids = b.area_ids()
     area_tables = {a: b.extra_tables(a) for a in AREAS}
     for a, tables in area_tables.items():

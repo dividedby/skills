@@ -56,7 +56,7 @@ lens, which `quick` does not launch). The self-test generates all six.
 Read from `findings.json`, never from prose:
 
 - **type and tier:** the profile's `type` and `tier` rows (`type_regex`, `fallback`, `tier`; `packages_min` counts the scorecard's package rows).
-- **lens coverage:** a fixture with a `lens_coverage` regex (`large-workspace`) fails unless the findings have `lens_coverage` rows and each row's `read` and `chosen_by` text matches it (a sample, random, churn, largest or entry-point statement). Other tiers read everything, so they set no regex.
+- **lens coverage:** a fixture with a `lens_coverage` regex (`large-workspace`) fails unless the findings have `lens_coverage` rows and each row's `read` and `chosen_by` text matches it (a sample, random, churn, largest, entry-point or "full read" statement: the rules `briefs.md` allows on a Medium or Large tier repo). Other tiers read everything, so they set no regex.
 - **applicable areas:** `areas` maps an area id to `true` or `false` (checked against the scorecard's `applies`), or `null` when the rubric leaves it to judgement (not asserted).
 - **planted findings:** a finding matches on its `key`, split into `<area>:<check>:<path>`: the key's area is in the expectation's `areas`, its path is in `paths`, and its check name matches the `check` regex (case-insensitive). The finding's own `area` field is not used. Area and path follow from the fixture; the check name is the model's wording, so the regex is loose and `SKILL.md` fixes the canonical names. A failure prints the nearest finding.
 - **depth gaps:** `quick` launches only the `code` and `architecture` lenses. A planted finding whose owner lens did not run (`checked_at` lacks `quick`) is checked as a depth gap instead: its `gap_area` is Not assessed with a reason starting `Depth`. The README command, the docs-only duplicate and the static-site findings are asserted as findings only with `--depth standard`.
@@ -83,8 +83,23 @@ python3 skills/engineering/repo-audit/evals/run_evals.py             # paid
 `--dry-run` generates the fixtures (free) and prints the exact `claude -p`
 command for each. Options: `--fixtures a,b`, `--depth quick|standard`,
 `--max-budget-usd` (default 10 per fixture), `--out DIR`, `--plugin-dir`,
-`--skill` (default `/dividedby-skills:repo-audit`, the plugin name from
-`.claude-plugin/plugin.json` and the skill name), `--claude`, `--timeout-min`.
+`--skill` (the skill's slash name; default: the first of
+`/dividedby-skills:repo-audit` and `/repo-audit` that the preflight finds
+loaded), `--claude`, `--timeout-min`.
+
+**Preflight.** Before any fixture, a real run makes one cheap
+`claude -p --plugin-dir <dir> --output-format stream-json --verbose --max-turns 1`
+call from an empty folder, reads only the `system`/`init` event (its
+`slash_commands` and `skills` lists) and kills the child. The plugin name
+`dividedby-skills` only exists when the plugin loads under that name; where
+`~/.claude/skills/repo-audit` links to the same folder, the headless child
+registers just `repo-audit`, and a run that asked for the namespaced name would
+report the skill "not installed" after spending the whole budget. With `--skill`
+the preflight checks that name is loaded; without it, it tries the namespaced
+name, then the bare one, prints which it used, and runs every fixture under it.
+If none is loaded the runner exits 2 before spending on a fixture. `--dry-run`
+makes no call at all: it says the preflight would run and prints the commands
+with the name it would try first.
 
 Each fixture is one headless `claude -p` call in the fixture folder with
 `--permission-mode dontAsk` and `--allowedTools Read,Grep,Glob,Write,Bash,Agent,WebSearch,WebFetch`.
