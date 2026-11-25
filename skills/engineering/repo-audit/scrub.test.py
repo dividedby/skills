@@ -493,6 +493,60 @@ class FileTests(unittest.TestCase):
             ],
         )
 
+    def test_a_literal_over_the_hit_limit_warns_by_position_never_by_value(self):
+        text = "the cobalt wall, the cobalt door; Cobalt!\n"
+        page = self.write("page.html", text)
+        code, out, err = self.cli_err(
+            "--literal", "cobalt", "--max-literal-hits", "2", str(page)
+        )
+        self.assertEqual(code, 0)
+        self.assertIn("literal #1", err)
+        self.assertIn("matched 3 times (over 2)", err)
+        self.assertNotIn("cobalt", (out + err).lower())
+        # Advisory: the rewrite is what it would be without the warning.
+        self.assertEqual(
+            page.read_text(),
+            "the [redacted:literal] wall, the [redacted:literal] door; "
+            "[redacted:literal]!\n",
+        )
+        self.assertIn("literal 3", out)
+
+    def test_the_hit_limit_counts_across_files_and_skips_data_uris(self):
+        a = self.write("a.html", "cobalt cobalt data:text/plain,cobalt cobalt")
+        b = self.write("b.html", "cobalt")
+        _, _, err = self.cli_err(
+            "--literal", "cobalt", "--max-literal-hits", "2", str(a), str(b)
+        )
+        self.assertIn("matched 4 times", err)
+
+    def test_the_hit_limit_stays_quiet_at_or_under_it_and_when_off(self):
+        text = "cobalt " * 3
+        for flags, warns in (
+            (["--max-literal-hits", "3"], False),
+            (["--max-literal-hits", "4"], False),
+            (["--max-literal-hits", "0"], False),
+            ([], False),  # default 20
+            (["--max-literal-hits", "2"], True),
+        ):
+            with self.subTest(flags):
+                page = self.write("page.html", text)
+                _, _, err = self.cli_err("--literal", "cobalt", *flags, str(page))
+                self.assertEqual("warning" in err, warns)
+
+    def test_only_the_literal_that_trips_the_limit_is_named(self):
+        page = self.write("page.html", "oak, oak, oak, and Lena once\n")
+        code, out, err = self.cli_err(
+            "--json",
+            *("--literal", "Lena", "--literal", "oak", "--max-literal-hits", "2"),
+            str(page),
+        )
+        self.assertEqual(code, 0)
+        self.assertEqual(json.loads(out)["warnings"], [{"literal_index": 2, "hits": 3}])
+        self.assertIn("literal #2 ", err)
+        self.assertNotIn("#1", err)
+        self.assertNotIn("#3", err)
+        self.assertNotIn("oak", out + err)
+
     def test_files_in_a_subfolder_are_named_relative_to_the_common_folder(self):
         (self.dir / "lens").mkdir()
         a = self.write("page.html", "x")

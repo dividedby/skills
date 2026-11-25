@@ -1,6 +1,7 @@
 """Scrub the files a repo-audit run publishes of local and personal details.
 
-    scrub.py [--check] [--json] [--literal TEXT] [--hostname NAME] [--no-auto] FILE...
+    scrub.py [--check] [--json] [--literal TEXT] [--max-literal-hits N]
+             [--hostname NAME] [--no-auto] FILE...
 
 Every file is read as UTF-8 text and rewritten in place: each match becomes a
 category placeholder such as `[redacted:home-path]`, then the file is scanned
@@ -9,6 +10,13 @@ writes, exit 1 on any match). Exit 2, with a message on stderr and
 nothing written: a file is missing or is not UTF-8 text.
 The summary carries counts and category names, never a matched value, so it can
 go straight into the run log. Standard library only.
+
+A `--literal` that matches more than N times across all files (default 20, `0`
+turns the check off) is probably a common word, and redacting it breaks the
+page: stderr gets `scrub: warning: literal #K matched M times (over N) ...`,
+K counting the non-empty `--literal` values from 1, and `--json` adds
+`warnings: [{literal_index, hits}]`. Never the value. Advisory: the exit code and
+the rewrite are the same with or without it.
 
 Categories, each deliberately narrow so the floor has few false positives:
 
@@ -32,7 +40,7 @@ Categories, each deliberately narrow so the floor has few false positives:
                 value after `team`.
   username      the current user only (from the environment).
   literal       any --literal string (a name, a place, a ZIP, an id), whole
-                word, any case.
+                word, any case; warns when one matches over N times.
   hostname      this machine's name and any --hostname name, plus private
                 suffixes (.local, .lan, .internal, .home.arpa, .corp).
   ip            IPv4 and IPv6 except loopback, unspecified, multicast,
@@ -626,10 +634,20 @@ class FileResult:
     remaining: dict[str, int]
 
 
+DEFAULT_MAX_LITERAL_HITS = 20
+
+
+@dataclass
+class LiteralWarning:
+    literal_index: int  # 1-based position among the --literal values, never the value
+    hits: int
+
+
 @dataclass
 class RunResult:
     mode: str  # "check" or "scrub"
     files: list[FileResult]
+    warnings: list[LiteralWarning] = field(default_factory=list)
 
     @property
     def removed(self) -> int:
@@ -650,14 +668,45 @@ class RunResult:
             "removed": self.removed,
             "remaining": self.remaining,
             "check": self.check,
+            "warnings": [asdict(w) for w in self.warnings],
         }
 
 
-def run(paths: list[Path], ctx: Context, check_only: bool) -> RunResult:
+def literal_warnings(
+    texts: list[str], literals: list[str], limit: int
+) -> list[LiteralWarning]:
+    """Literals that match more than `limit` times across `texts` (0 is off).
+
+    Advisory: each literal is counted on its own, whole-word and any case, on the
+    text as read with `data:` URIs skipped. The scrub's other rules and
+    overlapping literals are not taken into account, so it can over-count."""
+    if limit <= 0:
+        return []
+    segments = [
+        seg
+        for text in texts
+        for seg in _DATA_URI.split(text)[::2]  # even: not data:
+    ]
+    warnings: list[LiteralWarning] = []
+    for i, lit in enumerate(literals, 1):
+        regex = re.compile(rf"(?i)(?<![A-Za-z0-9]){re.escape(lit)}(?![A-Za-z0-9])")
+        hits = sum(len(regex.findall(seg)) for seg in segments)
+        if hits > limit:
+            warnings.append(LiteralWarning(i, hits))
+    return warnings
+
+
+def run(
+    paths: list[Path],
+    ctx: Context,
+    check_only: bool,
+    max_literal_hits: int = DEFAULT_MAX_LITERAL_HITS,
+) -> RunResult:
     base = Path(os.path.commonpath([str(p.resolve().parent) for p in paths]))
     rules = build_rules(ctx)
     files: list[FileResult] = []
     texts = [_read(path) for path in paths]  # every file is readable before any write
+    warnings = literal_warnings(texts, ctx.literals, max_literal_hits)
     for path, text in zip(paths, texts):
         if check_only:
             removed: dict[str, int] = {}
@@ -670,7 +719,7 @@ def run(paths: list[Path], ctx: Context, check_only: bool) -> RunResult:
         files.append(
             FileResult(str(path.resolve().relative_to(base)), removed, remaining)
         )
-    return RunResult("check" if check_only else "scrub", files)
+    return RunResult("check" if check_only else "scrub", files, warnings)
 
 
 def _by_category(counts: dict[str, int]) -> str:
@@ -716,6 +765,13 @@ def main(argv: list[str] | None = None) -> int:
         help="any private string to redact (a name, place, ZIP, id)",
     )
     ap.add_argument(
+        "--max-literal-hits",
+        type=int,
+        default=DEFAULT_MAX_LITERAL_HITS,
+        metavar="N",
+        help="warn when a --literal matches more than N times (default %(default)s, 0 = off)",
+    )
+    ap.add_argument(
         "--hostname",
         action="append",
         default=[],
@@ -733,10 +789,16 @@ def main(argv: list[str] | None = None) -> int:
     ctx.literals += [n for n in args.literal if n]
     ctx.hostnames += [n for n in args.hostname if n]
     try:
-        result = run(args.files, ctx, args.check)
+        result = run(args.files, ctx, args.check, args.max_literal_hits)
     except InputError as exc:
         print(f"scrub: {exc}", file=sys.stderr)
         return 2
+    for w in result.warnings:
+        print(
+            f"scrub: warning: literal #{w.literal_index} matched {w.hits} times "
+            f"(over {args.max_literal_hits}); likely a common word, check the list",
+            file=sys.stderr,
+        )
     print(json.dumps(result.to_json(), indent=2) if args.json else format_text(result))
     return 0 if result.check == "pass" else 1
 
