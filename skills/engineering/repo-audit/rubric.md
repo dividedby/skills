@@ -29,7 +29,7 @@ method inside an area follows the same rule: a method whose condition fails is
 skipped with a reason.
 
 Fleet standards are a section, not an area, and are not in the table. They apply
-to fleet repos, as the ownership test in [`SKILL.md`](./SKILL.md) Stage 1
+to fleet repos, as the ownership test in [Stage 1](./stages/1-scope.md)
 decides. A repo that fails it gets "n/a (not a fleet repo)"; a repo with no
 remote gets "Not assessed (Needs X: a remote)".
 
@@ -482,7 +482,7 @@ the fact, tool or need in the reason.
   `<method>` not run". Otherwise say what was sampled.
 - **Untrusted not run:** it needs code from an untrusted repo and the run was
   not allowed to execute it: the answer was No, or nobody answered
-  ([`SKILL.md`](./SKILL.md) Stage 1, Ownership and trust).
+  ([Stage 1](./stages/1-scope.md), Ownership and trust).
 - **Refused:** the session's permission layer refused the command, or a repo
   rule forbids the method. Name the command and the refusal, or cite the rule's
   `file:line`.

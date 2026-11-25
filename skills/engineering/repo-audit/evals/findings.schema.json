@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "repo-audit findings.json",
-  "description": "The machine-readable record of one repo-audit run, written in SKILL.md Stage 6. The checker in findings_check.py implements this schema's keywords only: $ref to $defs, type (a name or a list, null included), enum, pattern, required, properties, items and additionalProperties false.",
+  "description": "The machine-readable record of one repo-audit run, written in stages/6-publish.md (Stage 6). The checker in findings_check.py implements this schema's keywords only: $ref to $defs, type (a name or a list, null included), enum, pattern, required, properties, items and additionalProperties false.",
   "type": "object",
   "additionalProperties": false,
   "required": [

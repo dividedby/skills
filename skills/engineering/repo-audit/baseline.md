@@ -2,7 +2,7 @@
 
 The one home for the deterministic baseline: the tools and commands the main
 session runs in Stage 2, before the lenses launch, so that what a tool answers
-exactly is not left to a lens to find by reading. `SKILL.md` Stage 2 and
+exactly is not left to a lens to find by reading. [Stage 2](./stages/2-capture.md) and
 `briefs.md` cite this file and do not restate it. The baseline measures and
 judges nothing; the lenses judge. It runs under the
 [Execution boundary](./SKILL.md#execution-boundary).
@@ -233,7 +233,7 @@ Everything the baseline writes goes under one scratchpad folder, `$B`
 ### Run rules
 
 - **Untrusted repo.** The execute answer from Stage 1
-  ([`SKILL.md`](./SKILL.md#stage-1--scope) **Ownership and trust**) decides what
+  ([Stage 1](./stages/1-scope.md) **Ownership and trust**) decides what
   runs. Every gate, test, build, installation of the repo's dependencies, and
   any command this file marks as running repo code follows it, and on No is
   "not run (untrusted not run)". The tools that read files without executing
@@ -509,7 +509,7 @@ loaded by `<script src>` from HTML. The Node rows do not apply, so run these:
   repo (the scratch install of [`probe.md`](./probe.md)):
   `page.coverage.startJSCoverage()`, drive the UI tests' flows (or the probe's
   screen walk) against the primary instance
-  ([`SKILL.md`](./SKILL.md) Stage 2), `stopJSCoverage()`, and report used
+  ([Stage 2](./stages/2-capture.md)), `stopJSCoverage()`, and report used
   bytes over total bytes per script. Say which drove it; a screen walk is not the
   test suite. Without UI tests, a browser, or a way to start the instance:
   **"JS coverage: not measured (reason)"**, with the reason from the closed list.
@@ -756,7 +756,7 @@ tool or gate | area | reason from the closed list | detail
 ```
 
 - The evidence pack for every lens is `digest.md` and the `raw/` folder's path
-  ([`SKILL.md`](./SKILL.md) Stage 3). Lenses check the digest; they do not
+  ([Stage 3](./stages/3-lenses.md)). Lenses check the digest; they do not
   rediscover it ([`briefs.md`](./briefs.md) shared header).
 - Everything in the digest is a fact with a command behind it. A number the
   baseline could not measure says "not measured" and why, never a guess.

@@ -92,7 +92,7 @@ Categories, each deliberately narrow so the floor has few false positives:
 
 This is a floor. It matches shapes, so prose with no cue (a place named in a
 sentence, a coordinate with no location word) passes it; the Stage 6 demo-data
-read in SKILL.md is what covers those.
+read in `stages/6-publish.md` is what covers those.
 
 `data:` URIs (the page's embedded screenshots) are skipped whole.
 """

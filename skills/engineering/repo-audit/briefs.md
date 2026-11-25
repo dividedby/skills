@@ -9,7 +9,7 @@ shared header below that are the same for every lens are written once to
 `<scratchpad>/briefs/shared-header.md`; the per-lens parts (its areas, its
 types' bullets, its `rules.md` rows) go in its prompt. Each lens reads the file
 by path first, then its own section of this file by path and heading
-([`SKILL.md`](./SKILL.md) Stage 3).
+([Stage 3](./stages/3-lenses.md)).
 
 ## Shared header (every lens)
 
@@ -20,7 +20,7 @@ by path first, then its own section of this file by path and heading
   redirected to the scratchpad, read-only `gh` calls, scratch packages outside
   the repo) and the scrubbed environment the repo's code runs in.
 - Whether the lens may run the repo's code: the execute answer from Stage 1
-  ([`SKILL.md`](./SKILL.md#stage-1--scope) **Ownership and trust**, which
+  ([Stage 1](./stages/1-scope.md) **Ownership and trust**, which
   decides what runs). A check it skips under that answer is marked "Untrusted
   not run".
 - A lens that runs the repo's code (benchmark, faults, fresh-clone build, focused
@@ -88,7 +88,7 @@ by path first, then its own section of this file by path and heading
   evidence. For an area that does not apply, or a method the lens cannot use,
   the report says so with a reason from that file's not-assessed list.
 - The `rules.md` rows for the areas the lens owns
-  ([`SKILL.md`](./SKILL.md) Stage 1). Check every row, and the repo's own rules
+  ([Stage 1](./stages/1-scope.md)). Check every row, and the repo's own rules
   before generic practice. Report each failed row as its own finding: the row
   id, the rule's `file:line` as its `rule_source` and the evidence that it
   fails. A passing row gets no finding. A row the lens could not check gets a
@@ -288,10 +288,10 @@ Faults, requests to the running app, forced errors and calls to outside
 services run the repo's code or touch a service, so they share these rules:
 
 - They follow the [Execution boundary](./SKILL.md#execution-boundary) and the
-  execute answer from Stage 1 ([`SKILL.md`](./SKILL.md)); neither is restated
+  execute answer from [Stage 1](./stages/1-scope.md); neither is restated
   here. With No, each is skipped with "Untrusted not run".
-- Every request goes to the **second instance** ([`SKILL.md`](./SKILL.md)
-  Stage 2), which the main session hands over with its port, data directory and PID;
+- Every request goes to the **second instance** ([Stage 2](./stages/2-capture.md)),
+  which the main session hands over with its port, data directory and PID;
   never to the primary, and never against the user's data. With none, each
   skips with the reason from [`probe.md`](./probe.md#10-skipped-dimensions)
   Skipped dimensions ("Needs X: a
@@ -479,7 +479,7 @@ services run the repo's code or touch a service, so they share these rules:
      incompatible with it. A missing file is an item (no rewrite); an
      incompatible licence that cannot be replaced blocks.
    - **Trust.** Whether the repo is in `dividedby/claude-config`
-     `docs/repos.md`, read as [`SKILL.md`](./SKILL.md) Stage 1 reads it for the
+     `docs/repos.md`, read as [Stage 1](./stages/1-scope.md) reads it for the
      ownership test, and whether that entry gives a reason to stay private. A
      reason blocks. When the file cannot be read, the row is "Needs X: access to
      `docs/repos.md`" and is unchecked.
@@ -537,7 +537,7 @@ their `rules.md` rows. Check those rows as the shared header directs, then:
    documents one status: **works**, **broken** (what failed, with the doc and
    code `file:line` or the command's output), or **not checkable** with a reason
    from the not-assessed list. Run each on the primary instance
-   ([`SKILL.md`](./SKILL.md) Stage 2) where there is one (a web app's screen), or
+   ([Stage 2](./stages/2-capture.md)) where there is one (a web app's screen), or
    a CLI's command; with none, read the code and mark what reading cannot settle not
    checkable. Give the table of statuses in the report.
    - **Run what no test names.** Run every row no test names, plus a random 10 of
@@ -605,8 +605,8 @@ their `rules.md` rows. Check those rows as the shared header directs, then:
    not ship, no CI workflows). Each bullet states the
    evidence it needs, and one that cannot run says why with a reason from
    [`rubric.md`](./rubric.md). Checks that need a running app follow the
-   [Execution boundary](./SKILL.md#execution-boundary) and the Stage 1 execute
-   answer ([`SKILL.md`](./SKILL.md)). This lens never uses the second instance,
+   [Execution boundary](./SKILL.md#execution-boundary) and the [Stage 1](./stages/1-scope.md) execute
+   answer. This lens never uses the second instance,
    which is the architecture lens's: it sends only non-mutating requests to the
    primary instance, and reads every mutating path from source, labelled "read,
    not run". With no primary instance, the reason is from
@@ -865,7 +865,7 @@ reason from that file's not-assessed list.
    main create-and-compare flows; for a CLI, the documented commands end to end;
    for a userscript, the pages it changes; for a native app, its primary tasks
    in the scratch build. Name the tasks chosen (at most three) and why. Walk each as a first-time
-   user from empty data, on the primary instance ([`SKILL.md`](./SKILL.md) Stage 2)
+   user from empty data, on the primary instance ([Stage 2](./stages/2-capture.md))
    at 1280 px, and at 375 px only when the profile says the product targets small
    screens. The agent drives the primary instance itself with the scratch
    Playwright install ([`probe.md`](./probe.md#2-scratch-install) Scratch
@@ -894,7 +894,7 @@ reason from that file's not-assessed list.
    beside the page, and carries only the findings, in its generic evidence
    table. Every finding cites its place in this file.
 2. **A mockup spec only when a High or Blocker design finding exists**, for up
-   to the number of screens [`SKILL.md`](./SKILL.md) Stage 5 sets, each behind
+   to the number of screens [Stage 5](./stages/5-plan.md) sets, each behind
    such a finding: layout regions, components, exact copy, states, light and dark
    colour notes, precise enough to render as HTML without guessing. Where the
    finding is about copy, the mockup shows the rewritten copy in place, never
