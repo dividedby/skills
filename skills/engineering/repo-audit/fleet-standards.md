@@ -64,14 +64,14 @@ The `applies to` column names repo types and traits. Decide these facts once,
 in Stage 1, from the files (not from the repo's own claims). The Stage 1
 profile supplies languages, tests, CI and visibility; the check adds:
 
-| Fact             | Meaning                                                                                                                                                                 |
-| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Code             | Any tracked source file. A docs-only repo has none                                                                                                                      |
-| Ships            | Someone uses it beyond its development: a deployed site or service, a released package or app, a tool the owner runs day to day. Scratch and archived repos do not ship |
-| CD               | A deploy or release workflow, or a documented deploy path                                                                                                               |
-| Several packages | More than one `package.json` that belongs to the repo (not `node_modules`)                                                                                              |
-| Monorepo         | A workspace manifest or several packages that belong to the repo, in any stack ([`types.md`](./types.md) monorepo rule); not vendored copies                            |
-| GitHub remote    | The repo has a remote on github.com, so `$GH` is set                                                                                                                    |
+| Fact             | Meaning                                                                                                                                                                                                                                                                                                                 |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Code             | Any tracked source file. A docs-only repo has none                                                                                                                                                                                                                                                                      |
+| Ships            | As the checklist header's "Repo facts" paragraph defines it, read from the same pinned commit as the rows. If that read has no such definition (an older local copy), use "used for real work beyond its own development, at any cadence; scratch, experiments and archived repos don't ship" and say so in the section |
+| CD               | A deploy or release workflow, or a documented deploy path                                                                                                                                                                                                                                                               |
+| Several packages | More than one `package.json` that belongs to the repo (not `node_modules`)                                                                                                                                                                                                                                              |
+| Monorepo         | A workspace manifest or several packages that belong to the repo, in any stack ([`types.md`](./types.md) monorepo rule); not vendored copies                                                                                                                                                                            |
+| GitHub remote    | The repo has a remote on github.com, so `$GH` is set                                                                                                                                                                                                                                                                    |
 
 A row applies when the repo has every fact its `applies to` names ("all"
 applies to every repo). When the column uses a word this table and the
@@ -134,8 +134,8 @@ Then judge the output against the row's requirement, reading the matched file
 when the check is a proxy (a `grep` hit can be a comment). When a check measures
 something the Stage 1 profile also counted (test lines, source lines, file
 counts), compare the two. When they differ by more than about 2x, the check's
-pattern missed files (for example a case-sensitive glob that skips Swift
-`Tests/`): report both numbers in the evidence, judge the row on the profile's
+pattern missed files (for example a pattern that skips a test layout the repo
+uses): report both numbers in the evidence, judge the row on the profile's
 count, and name what the check missed. When a row's check names another document
 as its reference (the `labels` row's CORE tables in `dividedby/skills`
 `docs/agents/labels.md`), read that document at a pinned commit as [Read the checklist fresh](#1-read-the-checklist-fresh)
@@ -162,8 +162,10 @@ A row the checklist marks **report-only** (`test-size`) never gets a **fail**.
 Run its check and print the numbers as evidence. The result is **OK** when no
 limit in the row is crossed and **flag** when one is (or **not checked** as
 above). A limit the check cannot measure, such as wall time with no CI run to
-read, is reported as unknown and is not a flag. Its limits are house rules, so
-say that on the page. A flag asks for the code lens's test-suite
+read, is reported as unknown and is not a flag. The evidence prints both
+numbers (test code, and fixtures and snapshots) and the fixture share; the flag
+follows the row's limits as written. Its limits are house rules, so say that on
+the page. A flag asks for the code lens's test-suite
 review, which reuses these numbers; the flag is not a finding there. It is a
 Low finding with id `fs-<row id>`, whose fix line points at that review's
 prune-and-split list. It asks for a look, not a change.
@@ -177,24 +179,19 @@ not the addresses.
 
 Every fail is a finding, cites its row id and source, and is rated on the
 Severity scale in [`rubric.md`](./rubric.md), which also says how it counts
-toward an area. The ids below are the usual ratings; a fail
-that meets a higher line on the scale (a secret in the tree is a Blocker) takes
-that rating.
+toward an area. The checklist rates its own rows:
 
-- **High** — a gate that stops broken or leaking code reaching users is
-  missing on a repo that ships: tests, typecheck or secret scanning not run in
-  CI, a deploy that does not re-run the gates, or a userscript with a
-  wildcard `@connect`.
-- **Med** — process and repo hygiene: changelog, labels, the idea-inbox
-  template or issue, lint, lockfiles, dependency updates, merge settings,
-  default branch, branch ruleset, CI gate shape, deploy paths, pnpm
-  workspaces, commit identity, userscript release notes and `@grant`. A High row on
-  a repo that does not ship drops to Med.
-- **Low** — style and scaffolding: formatter config, `.editorconfig`, the
-  format workflow, `CLAUDE.md` commands, `docs/agents/`, README, licence.
-
-A row id this list does not name takes the tier its requirement fits; say so
-in the evidence.
+- A fail's rating is the row's `severity` cell.
+- A conditional cell resolves against the repo facts from
+  [Pin the repo facts](#2-pin-the-repo-facts) ("High if it ships, else Med"), or
+  against what the check found (`userscript-meta`: "High for a wildcard
+  `@connect`, Med for a missing `@grant`"). The evidence names the condition
+  that applied.
+- A fail that meets a higher line on the scale (a secret in the tree is a
+  Blocker) takes that rating.
+- A row with no `severity` column or an empty cell takes the tier its
+  requirement fits on the scale. The evidence says the checklist did not give
+  the rating.
 
 The fix line is the concrete change, one line, in the checklist's own terms
 ("add `.github/workflows/format.yml` running `ruff format --check`"). Name a
@@ -205,13 +202,16 @@ workflow, config, label or setting.
 ## 5. Results and handoff
 
 The section has no verdict of its own (see [Rate and write the fix line](#4-rate-and-write-the-fix-line)). The page and the closing message give the count per result and the checklist
-commit. Report-only flags are not fails. Rows marked **not checked** are listed
+commit, with fails split by the row's `kind` ("fail: 6 (quality 2, process 4)");
+a row with no `kind` counts as quality. The split is for reading only: every
+fail still counts toward its area as rubric.md "Fleet standards and the areas"
+says. Report-only flags are not fails. Rows marked **not checked** are listed
 under "Unverified" in the page's "What was checked" section, each with its
 reason.
 
 Write the results to a scratchpad file (`fleet-standards.md`): the source and
 commit, the repo facts, then one line per row with id, result, severity,
-evidence, fix and source. Give the path to every lens; the architecture
+kind, evidence, fix and source. Give the path to every lens; the architecture
 lens may add context a row could not see. Fails
 enter Stage 4 and the plan like any other finding, with finding id
 `fs-<row id>`.

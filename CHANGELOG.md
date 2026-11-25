@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- `repo-audit`: rates fleet-standards fails from the checklist's `severity` column instead of a list of row ids kept in the skill, and takes the definition of "ships" from the checklist. That definition now counts a private tool the owner runs at any cadence, so such a repo's missing CI tests or typecheck rate High. The page and closing message split fails into quality and process; both still count toward their area (#702).
+
 ### Fixed
 
 - `repo-audit` evals: the planted `doc-command-missing` expectations now accept the `agent-readiness` area as well as `feature-completeness`, since the rubric files a documented command that fails under agent readiness. The `static-site` standard run found the defect there (#669).

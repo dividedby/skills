@@ -838,8 +838,8 @@ files.
 
 Close with a short message: the link, the overall verdict with any Blockers
 by name, one line per area (its verdict, or its Not-assessed reason), a line
-for the fleet-standards section (counts per result and the checklist commit, or
-"n/a (not a fleet repo)", or "Not assessed (Needs X: a remote)"), a trust line
+for the fleet-standards section (counts per result, with fails split into
+quality and process, and the checklist commit, or "n/a (not a fleet repo)", or "Not assessed (Needs X: a remote)"), a trust line
 (the ownership result and the execute answer, with the areas it cost), a
 line for Rules conformance (pass, fail and not-assessed counts),
 the top findings, what was verified and what was not, the run's totals (wall time and
