@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/2.0.0/).
 
 ### Fixed
 
+- `repo-audit`: scanner and scrub correctness. With range manifests and no lockfile, osv-scanner's transitive versions are labelled "resolved by the tool" and paired with the installed versions before a lens reads them, and an unpaired row is a lead, not a finding. Stage 1 says how to build the private-literals file from the data file a hard rule names without printing it, dropping ordinary words. `scrub.py` warns, by position and never by value, when a `--literal` matches more than N times (`--max-literal-hits`, default 20, `0` off), and `--json` gains `warnings`. The Privacy lens counts each literal's hits across `git log --all -p` by kind and reports a nonzero count as a finding (#706).
 - `repo-audit`: the isolated instances stay up through the lens stage. Each now starts as a harness background task, so ending a turn no longer reaps it. The main session curls both before launching the lenses and restarts any that is down on the same port and data directory, logging it as `process restarted`. A lens that finds one down reports it and waits instead of starting its own, and a needed instance left down with no restart or logged reason is a failure condition (#704).
 - `repo-audit` evals: the planted `doc-command-missing` expectations now accept the `agent-readiness` area as well as `feature-completeness`, since the rubric files a documented command that fails under agent readiness. The `static-site` standard run found the defect there (#669).
 

@@ -347,6 +347,20 @@ services run the repo's code or touch a service, so they share these rules:
    - **Synthetic data.** Fixtures in the tree and the Stage 2 captures hold
      made-up names, emails and identifiers only. Report the path of any that
      look real, never the value.
+   - **Private literals in history.** When Stage 1 listed private literals,
+     count each one's hits across the full history, summed per kind, never by
+     value. Write the history once to a scratch file `$H` outside the publish
+     folder (`git log --all -p > "$H"`), count each literal against it, and
+     delete `$H` afterwards:
+     `while IFS=$'\t' read -r kind value || [ -n "$value" ]; do printf '%s\t%s\n' "$kind" "$(grep -aoiwF -- "$value" "$H" | wc -l)"; done < <literals file>`
+     (an occurrence count, not `grep -c`'s line count), then sum per kind. Only
+     `kind<TAB>hits` reaches stdout: never `cat` the literals file or `$H`,
+     echo `$value` or trace the shell (`set -x`). `grep -w` treats `_` as a word
+     character, as scrub.py does not, so counts are approximate. A kind whose
+     count is far above the rest is likely a common word: prune its literals
+     and recount before rating. A nonzero count is a Privacy finding citing the
+     kind and the count, rated as a secret in history is; it needs a history
+     rewrite. Not a fleet-standards row.
    - **Outbound calls.** Every host the code calls (an API in a web app; a
      provider, a registry or a notification endpoint in an infra repo), found
      from the code and config. For each: what it sends, and whether that includes

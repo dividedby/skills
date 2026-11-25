@@ -297,6 +297,11 @@ whichever flag the installed version has.
   found": it adds a Not run row "Tool unavailable: osv-scanner does not parse
   `<lockfile and format>`" (area `tech-stack`), and the stack's own audit (Node:
   `pnpm audit`, see [Node and pnpm](#node-and-pnpm)) covers that ecosystem.
+  With range manifests and no lockfile, osv-scanner resolves its own transitive
+  versions, which the installed environment may not have: label those rows
+  "resolved by the tool" and pair each with the installed version (the Node
+  install, the Python scratch venv's package list) before a lens reads it. A
+  row with no installed version to pair is a lead, not a finding.
 - **Secrets, tree and history:**
   `gitleaks dir --no-banner --redact --report-format json --report-path $B/raw/gitleaks-tree.json <repo>`
   and `gitleaks git --no-banner --redact --report-format json --report-path $B/raw/gitleaks-history.json <repo>`
@@ -414,7 +419,10 @@ file. A floor that cannot be installed is "not run (tool unavailable: version)".
   (or `pip-audit <repo>` for a `pyproject.toml`, which builds the project and so
   runs repo code: run it under the scrubbed environment; for a `uv.lock` or
   `poetry.lock`, export to a requirements file in `$B/tmp` first, and
-  `osv-scanner` reads the lockfile directly). With no manifest, look at the
+  `osv-scanner` reads the lockfile directly). A range manifest with no lock
+  gives `osv-scanner` its own resolution: label its rows "resolved by the
+  tool" and pair each with the scratch venv's installed version (see
+  [Universal tools](#1-universal-tools)). With no manifest, look at the
   imports: stdlib only means "not run (not applicable: no dependency
   manifest)"; third-party imports with no manifest is itself a fact for the
   digest.

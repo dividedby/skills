@@ -289,9 +289,20 @@ when the run can ask.
 **Private literals.** A private string the repo's own rules name (an agent
 file's hard rule about a household ZIP, a town or a person's name) is listed in
 the profile by kind with its source file and line, never its value. The values go
-to `<scratchpad>/private-literals.txt`, one per line, which never goes in the
-publish folder. A lens that reports a hard-coded private value (a Privacy
-finding such as an app default) adds it to the file too.
+to `<scratchpad>/private-literals.txt`, one `kind<TAB>value` per line (no blank
+lines), so a count can be grouped by kind without reading a value. The file
+never goes in the publish folder, and every reader takes the value field only.
+A lens that reports a hard-coded private value (a Privacy finding such as an
+app default) adds it to the file too.
+
+When the hard rule points at a real data file (a household list, a customer
+export), extract its names and identifiers into the literals file without
+printing them: command output goes straight into the file, and only counts and
+kinds are shown. Drop ordinary words: filter against the system word list when
+there is one, otherwise keep capitalised names, identifiers with a digit and
+anything the rule names outright. A common word in the list redacts every
+ordinary use of it and breaks the page, so the scrub's over-match warning
+(Stage 6, **Scrub**) is read as a prompt to prune the list and rerun.
 
 **Ownership and trust.** Two results, each recorded in the profile with its
 source:
@@ -807,7 +818,7 @@ included, takes the same five steps:
    places, and replace each with made-up text. Check the empty and first-run
    captures, and the report text that quotes them, for values the app fills in
    by default (a default ZIP, city or name); `private-literals.txt` lists what
-   to look for. A screenshot that shows one is retaken from clean data or
+   to look for (its value field). A screenshot that shows one is retaken from clean data or
    cropped. The scrub is a floor, not a substitute:
    it matches shapes, cannot tell a real name or address from a made-up one,
    and skips the page's embedded `data:` images. A finding seen here goes back
@@ -815,9 +826,14 @@ included, takes the same five steps:
 3. **Scrub.** Copy every file into one folder, `<scratchpad>/publish/`, the
    page and the log included, and run `python3 <skill folder>/scrub.py <publish>/*`
    on all of them, adding `--literal <value>` for each line of
-   `<scratchpad>/private-literals.txt` and for any user name the machine's own
+   `<scratchpad>/private-literals.txt` (the value field), passed first so the
+   warning's K is the file's K-th line, and for any user name the machine's own
    names do not cover, and `--hostname <name>` for a host name. `--literal`
    takes any private string: a name, a place, a ZIP, an account or device id.
+   A `scrub: warning: literal #K matched M times` on stderr means the K-th
+   `--literal` passed (line K of the file) is probably a common word: drop it,
+   copy the files into the publish folder afresh (the first run already
+   rewrote them) and rerun.
    The log records how many literals were passed, never their values. It
    rewrites each file in place, putting a `[redacted:<category>]` placeholder in
    place of each match, and prints counts per file and category, never values.

@@ -159,9 +159,11 @@ finding with no evidence is not a finding.
 - **How:** read; measure permissions with `ls -l` on the data paths; exercise
   the outbound calls against the second instance where it is safe
   ([`briefs.md`](./briefs.md#security-privacy-and-data) Security, privacy and
-  data, **Privacy and outbound calls**).
+  data, **Privacy and outbound calls**); count each private literal's hits in
+  history by kind, never printing a value.
 - **Evidence:** the `file:line` or path, with the permission bits; the request
-  and the product's behaviour for an exercised call. Never print the data.
+  and the product's behaviour for an exercised call; the kind and count for a
+  literal in history. Never print the data.
 
 ### Data integrity
 
