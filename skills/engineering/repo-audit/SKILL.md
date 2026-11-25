@@ -745,7 +745,10 @@ sections:
     when the check applies, so keys match across runs: `secret-scan` (a
     hard-coded secret), `stale-constant` (a dated value past its date),
     `doc-command-missing` (a documented command that does not exist),
-    `duplicate-file` (identical files); otherwise a short kebab-case name. A
+    `duplicate-file` (identical files), `golden-mismatch` (the headline number
+    differs from the hand computation), `stale-recorded-fixture` (a recorded
+    response older than the code or API it stands in for, with no schema check), `empty-input-accepted` (an
+    empty or default input taken as a real value); otherwise a short kebab-case name. A
     key reused from the previous run (Stage 4) keeps its old area id and check
     name, even when the finding's `area` now differs.
   - `area`: the area id from [`rubric.md`](./rubric.md).

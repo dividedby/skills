@@ -22,17 +22,19 @@ CI's `gate` job runs it with the other `*.test.py` files.
 
 Each fixture has 4 commits, no remote, and four planted defects: a hard-coded
 secret, a stale dated constant (`2019-12-31`), a README command that does not
-exist, and a duplicate file. The secret is a fake token assembled at runtime, so
+exist, and a duplicate file. `single-script` plants a fifth: a recorded API
+response (`tests/recorded/fee_schedule.json`, recorded 2021-06-02) that no
+schema check covers. The secret is a fake token assembled at runtime, so
 no committed file holds it. Nothing is real; emails are `@example.invalid`.
 
-| Fixture           | Shape                                                                      | Tier   | Used by the runner |
-| ----------------- | -------------------------------------------------------------------------- | ------ | ------------------ |
-| `single-script`   | One Python script, config, README, a copy of the script                    | Small  | yes                |
-| `docs-only`       | Markdown and YAML, no tracked source                                       | Small  | yes                |
-| `unknown-type`    | A Verilog design; matches no `types.md` entry, so a fallback profile       | Small  | yes                |
-| `workspace`       | pnpm workspace, 3 packages, about 3.5k source lines                        | Medium | no                 |
-| `static-site`     | Static HTML and CSS with an overflow and a low-contrast pair               | Small  | no                 |
-| `large-workspace` | pnpm workspace, 6 packages, about 113k generated source lines in 618 files | Large  | no, on demand      |
+| Fixture           | Shape                                                                        | Tier   | Used by the runner |
+| ----------------- | ---------------------------------------------------------------------------- | ------ | ------------------ |
+| `single-script`   | One Python script, config, README, a copy of the script, a recorded response | Small  | yes                |
+| `docs-only`       | Markdown and YAML, no tracked source                                         | Small  | yes                |
+| `unknown-type`    | A Verilog design; matches no `types.md` entry, so a fallback profile         | Small  | yes                |
+| `workspace`       | pnpm workspace, 3 packages, about 3.5k source lines                          | Medium | no                 |
+| `static-site`     | Static HTML and CSS with an overflow and a low-contrast pair                 | Small  | no                 |
+| `large-workspace` | pnpm workspace, 6 packages, about 113k generated source lines in 618 files   | Large  | no, on demand      |
 
 `large-workspace` is generated, not checked in. Its source is cheap and varied
 JS (five function shapes rotated by package and module) with nothing the tier

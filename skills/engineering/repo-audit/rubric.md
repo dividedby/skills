@@ -123,7 +123,14 @@ finding with no evidence is not a finding.
   test quality: tautological expectations (the expected value computed the same
   way as the code under test), mocks of the repo's own modules (mock only at
   system boundaries), and tests that bypass a module's interface to reach its
-  internals (private helpers, internal state, a deep import path).
+  internals (private helpers, internal state, a deep import path); and each
+  recorded-response fixture (a cassette, saved API JSON): its file age
+  (`git log -1 --format=%cs -- <path>`), its stated recording date (or "no
+  date") and whether a schema or contract check exists. A recording is stale
+  when its date or file age is older than the newest change to the code or API
+  it stands in for, or past the repo's own refresh rule. A stale recording with
+  no schema check is Med, High when it backs a number users decide on. The
+  privacy check of fixtures stays under Privacy.
 - **How:** read; run the test command; measure run time, count and ratio.
 - **Evidence:** the command and its result; `file:line` samples. Cite the
   `test-size` numbers, do not remeasure them. A test that bypasses an interface
@@ -217,7 +224,10 @@ finding with no evidence is not a finding.
 
 - **Checks:** the primary tasks end to end (at most 3), first run, dead ends,
   unclear labels, missing feedback, empty and error states, recovery and undo.
-  For a product that targets phones, completion at 375 px.
+  For a product that targets phones, completion at 375 px. For each input that
+  feeds a decision number, its empty and default values on the primary
+  instance (empty, zero, whitespace, omitted): silent acceptance, or a default
+  shown as a real number, is a failure.
 - **How:** browse; run each task on the primary instance, or from the scratch
   build for a CLI (its documented commands end to end) or a native app, and on the
   pages a userscript changes ([`briefs.md`](./briefs.md#methods) Design,
@@ -228,6 +238,9 @@ finding with no evidence is not a finding.
 - **Evidence:** the step log and where the flow broke, with a capture at the
   problem step (the command's output for a CLI), and the problem's frequency,
   impact and persistence.
+  The input checks are part of the walkthroughs and skipped with the same
+  reason when there is no instance; their evidence is the step and the number
+  shown.
 
 ### Feature completeness vs docs
 
@@ -397,6 +410,8 @@ area's.
   `VERIFY` marker on the same value. Over 30 candidates, check every marked value and every value that
   feeds a user-facing number (an amount, date or limit the user sees or decides
   on), then list the rest as not checked with the count.
+- **Recorded API responses** a fact relies on are checked under
+  [Tests](#tests), by age and schema check.
 - **Evidence:** per fact, the code `file:line`, the source URL, the date it was
   read, the value found and the result: match, mismatch or couldn't verify. A
   mismatch gives both values. The `file:line` of the update step, the pinning

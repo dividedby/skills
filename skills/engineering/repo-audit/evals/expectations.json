@@ -54,6 +54,13 @@
           "paths": ["README.md"],
           "checked_at": ["standard"],
           "gap_area": "feature-completeness"
+        },
+        {
+          "id": "stale-recorded-fixture",
+          "areas": ["tests"],
+          "check": "fixture|recorded|cassette|schema|stale",
+          "paths": ["tests/recorded/fee_schedule.json"],
+          "checked_at": ["quick", "standard"]
         }
       ]
     },

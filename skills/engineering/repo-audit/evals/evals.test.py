@@ -115,6 +115,10 @@ class FixtureTests(unittest.TestCase):
             )
         elif planted["id"] == "doc-command-missing":
             self.assert_command_documented_but_absent(repo, paths[0])
+        elif planted["id"] == "stale-recorded-fixture":
+            self.assertIn("recorded_at", (repo / paths[0]).read_text())
+            for name in tracked(repo):
+                self.assertNotIn("schema", (repo / name).read_text().lower(), name)
         elif planted["id"] == "viewport-overflow":
             css = (repo / "styles.css").read_text()
             self.assertRegex(css, r"\.hero\s*\{[^}]*width:\s*480px")
@@ -419,6 +423,8 @@ LARGE_KEYS = {
     "security-1": "security:secret-scan:packages/api/src/config.js",
     "external-facts-1": "external-facts:stale-constant:packages/billing/src/index.js",
     "code-quality-1": "code-quality:duplicate-file:packages/cli/src/format.js",
+    # Not planted in the large fixture; re-keyed so the sample stays one document.
+    "tests-1": "tests:stale-recorded-fixture:packages/api/test/recorded.json",
 }
 
 
