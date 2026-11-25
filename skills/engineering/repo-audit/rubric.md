@@ -391,7 +391,10 @@ area's.
   official source for each: a government or standards-body page, the provider's
   own docs, the standard. A blog, a forum or the repo's own comment is not a
   source. A fact whose source cannot be found or read is "couldn't verify", never
-  a match. Over 30 candidates, check every marked value and every value that
+  a match. A value the repo itself labels an estimate (a comment, a doc or a
+  `rules.md` row saying so) is "couldn't verify (estimate)" with no search,
+  listed with its `file:line`, and is not a mismatch; that label wins over a
+  `VERIFY` marker on the same value. Over 30 candidates, check every marked value and every value that
   feeds a user-facing number (an amount, date or limit the user sees or decides
   on), then list the rest as not checked with the count.
 - **Evidence:** per fact, the code `file:line`, the source URL, the date it was

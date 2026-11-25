@@ -256,6 +256,89 @@ test("filterTargets uses 24 px as the limit and exempts disabled and inline", as
   });
 });
 
+test("hit area counts a wrapping or for= label", async (t) => {
+  const cases = [
+    ["a 16x16 box in a 120x32 label is not small", 16, 16, 120, 32, 0],
+    ["no label: 16x16 is small", 16, 16, undefined, undefined, 1],
+    ["a label only 20 high is still small", 16, 16, 120, 20, 1],
+    ["a label widens one side only", 16, 30, 120, 10, 0],
+    ["a label null (no label) is small", 16, 16, null, null, 1],
+  ];
+  for (const [name, w, h, labelW, labelH, small] of cases) {
+    await t.test(name, () => {
+      const got = probe.filterTargets([
+        { selector: "input", w, h, labelW, labelH },
+      ]);
+      assert.equal(got.small.length, small);
+    });
+  }
+  await t.test("the label counts for the repo minimum too", () => {
+    const rect = { selector: "input", w: 16, h: 16, labelW: 120, labelH: 32 };
+    assert.equal(
+      probe.filterTargets([rect], { repoMin: 44 }).belowRepoMin.length,
+      1,
+    );
+    assert.equal(
+      probe.filterTargets([{ ...rect, labelH: 48 }], { repoMin: 44 })
+        .belowRepoMin.length,
+      0,
+    );
+  });
+  await t.test("disabled and inline stay exempt", () => {
+    const got = probe.filterTargets([
+      { selector: "a", w: 10, h: 10, labelW: 5, labelH: 5, disabled: true },
+      { selector: "p a", w: 10, h: 10, inline: true },
+    ]);
+    assert.deepEqual(got.small, []);
+  });
+  await t.test("reported size is the hit area", () => {
+    const got = probe.filterTargets([
+      { selector: "input", w: 16, h: 16, labelW: 120, labelH: 20 },
+    ]);
+    assert.deepEqual(got.small, [{ selector: "input", w: 120, h: 20 }]);
+  });
+});
+
+test("splitInnerOverflow", async (t) => {
+  const box = (over) => ({
+    selector: "div",
+    scrollWidth: 500,
+    clientWidth: 300,
+    dialog: false,
+    wrapsTable: false,
+    declared: false,
+    ...over,
+  });
+  const cases = [
+    [
+      "a declared scroller is allowed, not reported",
+      box({ declared: true }),
+      0,
+      1,
+    ],
+    ["an undeclared scroller is reported", box(), 1, 0],
+    [
+      "a declared dialog is still reported",
+      box({ dialog: true, declared: true }),
+      1,
+      0,
+    ],
+    [
+      "a declared box that fits is in neither",
+      box({ declared: true, scrollWidth: 301 }),
+      0,
+      0,
+    ],
+  ];
+  for (const [name, b, inner, allowed] of cases) {
+    await t.test(name, () => {
+      const got = probe.splitInnerOverflow([b]);
+      assert.equal(got.inner.length, inner);
+      assert.equal(got.allowed.length, allowed);
+    });
+  }
+});
+
 test("findInnerOverflow", async (t) => {
   const box = (over) => ({
     selector: "div",
@@ -582,6 +665,11 @@ test("parseArgs", async (t) => {
   for (const [name, argv] of bad) {
     await t.test(name, () => assert.throws(() => probe.parseArgs(argv)));
   }
+  await t.test("--allow-scroll takes a selector list", () => {
+    const got = probe.parseArgs(["--allow-scroll", ".a, #b > .c"]);
+    assert.deepEqual(got, { "allow-scroll": ".a, #b > .c" });
+    assert.throws(() => probe.parseArgs(["--allow-scroll"]));
+  });
   await t.test("valid", () => {
     const got = probe.parseArgs([
       "--url",
