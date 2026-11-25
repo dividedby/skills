@@ -365,7 +365,7 @@ execute repo code  | no (asked 21:03 CT, no answer by 21:05 CT) | the question
     `coverage.skipped_methods`.
   - **The page** states the result (trusted, untrusted and yes, or untrusted and
     no, with the time) and names every area that lost a method or was Not
-    assessed because of it ([`template.html`](./template.html) header). It also
+    assessed because of it ([Page content](#page-content)). It also
     says that a prompt line trusting the repo answers the question next time.
 
 Decide whether each area in [`rubric.md`](./rubric.md) applies, from the
@@ -661,7 +661,7 @@ anything reaches the page:
 3. Correct what does not hold: lower the severity, fix the evidence, or drop the
    finding. Keep a list of every correction with the reason. On the page,
    "linked", "re-areaed" and "key reused" lines go under Merged and "added
-   (main session)" lines under Corrected ([`template.html`](./template.html) What was checked).
+   (main session)" lines under Corrected (`checked` in `page-extra.json`).
 4. Where lenses disagree with each other or with the code (a research claim
    versus what the code does), list it as a "disputed" line in the correction
    list.
@@ -708,17 +708,29 @@ lens specs, as HTML inside the page, in the template's mockup frame,
 following the theme toggle. Mockups are hand-written HTML and CSS that match the
 platform's look; they are not screenshots of code, and they show the rewritten
 copy, never placeholder text. The template ships a browser
-frame, and its header says when to copy a desktop-window, phone or terminal
-frame from [`snippets.html`](./snippets.html). With no such finding, or no design
-lens, render none and say why on the page ([`template.html`](./template.html)
-header, Mockups).
+frame; for a desktop-window, phone or terminal frame, copy
+[`snippets.html`](./snippets.html)'s frame as its header says. With no such
+finding, or no design lens, write none and say why on the page ([Page
+content](#page-content), Mockups).
 
 ## Stage 6 — Publish
 
-Fill [`template.html`](./template.html) as its header comment directs; the
-fill rules live there. Embed each screenshot at its original width up to
-1,280 px, downscale only above that, never upscale, as JPEG at about q70, and
-keep the page under the Artifact size limit.
+[`render.py`](./render.py) builds the page; nobody fills
+[`template.html`](./template.html) by hand. Write `findings.json` and
+`page-extra.json` (below), downscale each screenshot, then run
+`python3 <skill folder>/render.py <scratchpad>/findings.json <scratchpad>/page-extra.json -o <scratchpad>/page.html`.
+It takes everything computed from `findings.json` (the header's commit and
+branch, the verdict, blockers, scorecard and coverage tables, finding rows,
+Since the last run) and everything written from `page-extra.json`,
+checks both against their schemas, and writes the page only when it has no
+leftover token, dangling link, duplicate id or unbalanced tag. On an error it
+prints one line per fault and writes nothing: fix the input, never the page.
+
+Downscaling is a model step, since the script has no image library: embed each
+screenshot at its original width up to 1,280 px, downscale only above that,
+never upscale, as JPEG at about q70, and keep the page under the Artifact size
+limit. `render.py` embeds the file as it is. Its output goes through the scrub
+below like any other file.
 
 Write `findings.json` from the verified findings; its shape is
 [`evals/findings.schema.json`](./evals/findings.schema.json). Its top-level
@@ -800,15 +812,174 @@ sections:
   `not_reraised` when the code did not change under its path between the two
   pinned commits (or the commits could not be compared); else `fixed`. The same
   commit never gives a `fixed`. The page gets a "Since the last run" section
-  ([`template.html`](./template.html) header) and marks a still-open item whose
-  severity changed.
+  (computed by `render.py`) and marks a still-open item whose severity changed
+  (a `since_notes` entry in `page-extra.json`).
+
+### Page content
+
+Write `page-extra.json` beside `findings.json`; its shape is
+[`page-extra.schema.json`](./page-extra.schema.json), a sample is
+[`evals/sample-page-extra.json`](./evals/sample-page-extra.json). It holds what
+`findings.json` does not: prose, the plan, the fleet-standards rows, extra
+tables, screens, mockups, research and the Stage 4 lists. A `prose` string is
+inline HTML limited to text, link, list, table and inline-SVG tags;
+`render.py` refuses any other tag (script, style, iframe, form, img), event
+handlers, links other than `#`, relative, http, https and mailto, `url()` in a
+style, and any literal colour (a fallback inside `var()` included), so use only
+the page's custom properties (`--ink`, `--accent`, `--hi`, `--good` and the rest the template
+lists; mockups only `--mk-*`). Cells, plan text and notes may carry a pill, a
+link or code. Intros are one or two sentences that add what the tables do not. Finding rows
+are sorted by `render.py`, not by `findings.json`: Blocker, High, Med, Low, then
+by id (numeric part as a number); a fleet fail has no finding row.
+
+- **Trust and method** (`method_note`, `overall_text`). `method_note` states how
+  the run treated the repo's code: "trusted" (with the ownership leg that
+  passed, the no-remote result or the prompt), "untrusted, run allowed (answered
+  HH:MM CT)", or "untrusted, not run (answered no HH:MM CT, no answer by HH:MM CT,
+  or not asked: reason)". `overall_text` names every area that lost a method or
+  was Not assessed because of it, with the reason Untrusted not run; the Coverage
+  reasons and one `checked.unverified` line per skipped method carry it too. It
+  also says there are no Blockers when none, and names every applicable area
+  that is Not assessed; a `quick` run names each one Not assessed (depth) with
+  its lens ("Depth: quick run, `<lens>` lens not launched").
+- **Depth, budget, run log.** `method_note` states the depth, the run's wall
+  time and agent tokens against the budget in this file (a measure over by more
+  than 50% named, with by how much) and the main-session context size,
+  reported, not budgeted. It links `run-log.md` and `findings.json`, and the
+  report file of each lens that ran, all beside the page (design: copy table,
+  brand inventory, walkthrough logs; code: benchmark and test-suite evidence;
+  architecture: store, personal-data, outbound-call and module depth tables and
+  the go-public checklist; product: install log, error-copy log, CI cost table;
+  market). It names every partial or failed lens, and a skipped market lens with
+  its reason (the market test, or "standard four-agent cap"). A lens that failed
+  with no output leaves each area it owns Not assessed, "lens failed: reason", in
+  `findings.json`; a partial lens keeps its verdicts and says "Partial" with the
+  reason in its Coverage reasons, area intros and `checked.unverified` line. No
+  area is left without a verdict or a Not-assessed mark.
+- **Area intros** (`intros.<area id>`). A section exists for each area with
+  findings; write an intro for it. An intro also keeps a section with no
+  findings, and the section's finding table is then left out. Write one for
+  `external-facts` when facts were checked, `agent-readiness` whenever the area
+  applies, `repo-hygiene` whenever it is assessed, `security` for a private repo
+  when go-public feasibility ran or was skipped with a reason, and `ops-release`
+  when the repo has CI workflows. A Not-assessed area has none (the scorecard
+  and Coverage carry its reason). Fold "why it matters" into a finding's
+  `title`. The areas a lens report feeds link its file: the design report from
+  `accessibility`, `content-branding` and `usability`; the code report from
+  `code-quality`, `tests` and `performance`; the architecture report from
+  `architecture`, `data-integrity`, `privacy` and `security`; the product report
+  from `ops-release`. A report's tables are not on the page; its findings are
+  finding rows citing the report section. For a private repo the `security`
+  intro states the go-public verdict (Ready, Ready after cleanup or Keep private),
+  the items and which need a history rewrite, and the minutes a month going
+  public would save with `go_public.basis`, or `go_public.basis_reason` when
+  null; with the check not run it gives the reason from `rubric.md`. The
+  `ops-release` intro, when the repo has CI workflows, gives the billable minutes
+  a month and their share of the included minutes, each labelled measured or
+  estimated, and the minutes the cuts would save; with no workflow, the reason.
+  Keep both sections for those sentences even with no findings.
+- **Fleet standards** (`intros.standards`, `standards.rows`). The intro gives the
+  checklist source and commit, how it was read, the repo facts, counts per result
+  and the fails split into quality and process. When the checklist could not be
+  read, the repo is not a fleet repo or it has no remote, `rows` is `[]` and the
+  intro says "n/a (not a fleet repo)" with the ownership test's result, or
+  "Not assessed (Needs X: a remote)", or the reason. One row per checklist row,
+  n/a rows included. A report-only row shows OK (`pass`) or FLAG (`unchecked`,
+  with a severity). A fleet fail is a row, never a finding row: its finding in
+  `findings.json` has id `fs-<row id>`, and the scorecard link to it resolves to the row.
+- **Rules conformance** (`intros.rules`, tables in section `rules`). The intro
+  names the source files read and the counts (pass, fail, not assessed); with no
+  rules harvested it says so and there are no tables. Two tables: counts per
+  source file (Source, Rules, Pass, Fail, Not assessed; a source with fails
+  first), then the rows that did not pass, fails first (Rule: id and text;
+  Source: `file:line`; Result: `res fail` FAIL or `res unchecked` NOT ASSESSED;
+  Evidence: the finding's evidence, or the not-assessed reason from
+  `rubric.md`; Link: the finding's id, an em dash for a not-assessed row). Passes
+  are counts only. A failed row is also a finding in its area whose title names
+  the rule and its source.
+- **Area tables** (`tables`, section = the area id), each before the finding
+  table. External facts: Fact (name and the value the repo holds), File:line,
+  Source URL (a link), Date read, Result (`res pass` MATCH, `res fail` MISMATCH,
+  `res unchecked` COULDN'T VERIFY, with the reason); mismatches first, each also a
+  finding; with candidates left by the cap, a last row "Not checked: N more"
+  (`res unchecked` NOT CHECKED, where they live in File:line, em dashes in Source
+  URL and Date read). The intro says how the values stay current (the update step,
+  pinning test or warning with its file:line, or none) and gives the counts.
+  Agent readiness: Gate, Documented at (`file:line`, per the rubric's Documented
+  gates check), As written (ran as written, ran with a change and what, failed as
+  written, or not run with its reason), Result (`res pass` PASS, `res fail` FAIL,
+  `res unchecked` NOT RUN, with the counts), Time, Manual steps (what the doc leaves out, or
+  an em dash); one row per gate in the baseline digest's Gates table, fails first. Its intro names each agent file
+  with lines and words (reported, not scored), the focused test command and its
+  wall time or that there is none, the counts (stale paths or commands,
+  duplicated items), and the sampled-issues result or its skip reason. With no
+  agent file it says so; with no gate documented anywhere it says that and
+  there is no gates table. Each stale
+  path, command and duplicate is a finding row with its `file:line` (both for a
+  duplicate). Repo
+  organisation: Path, Kind (digest item, scratch directory, orphan doc,
+  commented-out code, stale marker), Evidence (the test it failed), Finding (its
+  id as a link, or an em dash); one row per item with its own path, the baseline
+  digest's top 10 as "digest item" rows and a last row "Digest: N more" naming
+  where the rest live. Its intro gives the structure counts (top-level folders
+  and files, maximum depth and its deepest path, top-level source folders with a
+  findable public surface; on a Small tier repo "Depth: Small tier, counts and
+  depth only"), the glossary, lean-report and ADR results, and every skipped
+  check with its reason from the rubric's Skips. An avoided term still used is a
+  finding whose evidence gives the `git grep` hit count, the count judged in
+  sense and up to five `file:line` samples.
+- **UI probe** (`intros.measurements`, tables in section `measurements`). Keep
+  it when a probe cell ran; when a web UI was in scope and no cell ran, the
+  Dimensions not run table alone; otherwise write no intro. The intro names how
+  the instances were isolated, that both were stopped before Stage 4, the
+  matrix size (screens, states, widths, themes, cells) and that every figure is a
+  lab or probe measurement on throwaway data. Tables, in order: Totals per
+  screen (Screen, Cells run, Cells failing, Axe violations, Overflow, Small
+  targets, Console and failed requests, Copy flags; failing screens first). Copy flags
+  are sentences over the limit, the longest block in words, the highest mean
+  sentence length, plain-prose blocks over the limit (`briefs.md` Copy density
+  holds the limits) and repeated blocks; a summary row with `spaceDelimited`
+  false has no word figures, and long unstructured blocks are counted but never
+  fail a cell (the design lens flags them on primary flows);
+  Failing cells (Screen, Cell: state, width and theme; Check; Detail: the rule,
+  impact and count, the offending selector or the measured size; Link; at most
+  30, worst first, a last row "N more in the probe JSON"; passing cells are
+  counts in table 1, never rows); Lighthouse for hosted sites (Metric each
+  labelled "(lab)", Value, Threshold or budget, How measured) with one row per
+  keyboard flow (Flow, Steps, Result as `res pass` or `res fail`, First failing
+  step); Dimensions not run
+  (Dimension, Reason). A failing check that matters is also a finding in its
+  area: axe, targets and overflow in `accessibility`, copy metrics in
+  `content-branding`, Lighthouse in `performance`, keyboard failures in
+  `usability`, each with its id in the Link cell. `intros.screens` says which
+  cells were captured and why.
+- **Coverage** (`intros.coverage`). States the size tier, the line-count
+  exclusions and the detected types (per package in a monorepo), and names any
+  type with no `types.md` entry as "fallback profile". The tables come from
+  `findings.json`.
+- **What was checked** (`checked`, one line per item). `merged` holds the kept
+  finding's id and the lenses it also came from; for a fold, the fleet-standards
+  row id; for a linked pair, both ids; for a re-areaed finding, its id and both
+  areas; for a reused key, the key and the previous finding's id. `disputed`
+  holds both readings and which the evidence favours.
+- **Plan** (`plan`). Items link to a finding id on the page, `fs-<row id>` or
+  `research`; an item resting on market output links `research`. Every Blocker
+  is in Now.
+- **Screens, mockups, research** (`screens`, `mockups`, `research`). With no
+  capture (no UI, every capture dropped for privacy, or a `quick` run) leave
+  `screens` out and write "No captures: reason" in `method_note`. Mockups exist
+  only for a High or Blocker design finding, at most three, each showing its
+  rewritten copy; otherwise leave `mockups` out and write "No mockups: reason"
+  in `intros.screens`, or `method_note` with no Screens section. Market output
+  is context, not an area: it appears in `research` and as evidence in External
+  facts and Tech stack findings.
+
+### Publish files
 
 The page ships with `run-log.md`, `findings.json` and the report file of every
 lens that ran (code, architecture, product, design, market), beside it through
-the Artifact `files` map, each linked from the page. The page names
-every partial or failed lens and marks the areas that lens owns, as the template
-header directs. Every file that leaves the scratchpad, those side files
-included, takes the same five steps:
+the Artifact `files` map, each linked from the page. Every file that leaves the
+scratchpad, those side files included, takes the same five steps:
 
 1. **Finish the files.** The page, `findings.json`, each lens report and any
    other file bound for the `files` map are final, and the log has its
@@ -869,8 +1040,8 @@ included, takes the same five steps:
    repeat from **Scrub**.
 
 Publish as a **private** Artifact, from the publish folder. If the Artifact tool
-offers a `quickstart`, run it (it is read-only), then keep this skill's template,
-which already meets the page contract. Where the Artifact tool is unavailable,
+offers a `quickstart`, run it (it is read-only), then keep the page `render.py`
+built, which already meets the page contract. Where the Artifact tool is unavailable,
 send the publish folder's page, `run-log.md` and `findings.json` to the user as
 files.
 
@@ -927,5 +1098,7 @@ what is unverified and any partial or failed lens.
 - A projection presented as a measurement.
 - Real personal data or a secret value in a screenshot, on the page or in any
   published file (a lens report, `findings.json` or the run log included).
+- A report page not produced by `render.py` (hand-filled or edited after the
+  build) or built from a `page-extra.json` that failed its checks.
 - A published file that did not go through the scrub, a final `--check` that
   did not exit 0 before publishing, or a matched value written to the run log.

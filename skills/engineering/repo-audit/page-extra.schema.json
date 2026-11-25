@@ -1,0 +1,226 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "repo-audit page-extra.json",
+  "description": "What the main session writes for the report page, beside findings.json (SKILL.md Stage 6): the prose, plan, fleet-standards rows, extra tables, screenshots, mockups and research that findings.json does not hold. render.py builds the page from the two files and template.html. Every string typed `prose` is trusted inline HTML (render.py allows only text, link, list, table and inline-SVG tags and their plain attributes, links to #, relative paths, http, https and mailto, and no url() or literal colour in a style or colour attribute); `text` strings are plain and escaped. The checker implements the keywords findings_check.py does: $ref to $defs, type, enum, pattern, required, properties, items and additionalProperties false. Counts and non-empty rules beyond that are render.py's.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "project",
+    "repo",
+    "scope_date",
+    "lede",
+    "method_note",
+    "overall_text",
+    "intros",
+    "plan",
+    "standards"
+  ],
+  "properties": {
+    "project": { "$ref": "#/$defs/text" },
+    "repo": { "$ref": "#/$defs/text" },
+    "scope_date": { "$ref": "#/$defs/text" },
+    "lede": { "$ref": "#/$defs/prose" },
+    "method_note": { "$ref": "#/$defs/prose" },
+    "overall_text": { "$ref": "#/$defs/prose" },
+    "intros": {
+      "description": "One intro per section. `plan`, `standards`, `rules` and `coverage` are required. `measurements`, `screens`, `mockups` and `research` keep their section and are required with its data. `since` is required when findings.json has `diff: null`, else appended to the computed counts. An area key keeps that area's section (it has one anyway when it has findings, fleet-standards fails aside) and is required for each section the page shows; a Not-assessed area has none.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["plan", "standards", "rules", "coverage"],
+      "properties": {
+        "plan": { "$ref": "#/$defs/prose" },
+        "standards": { "$ref": "#/$defs/prose" },
+        "rules": { "$ref": "#/$defs/prose" },
+        "coverage": { "$ref": "#/$defs/prose" },
+        "measurements": { "$ref": "#/$defs/prose" },
+        "screens": { "$ref": "#/$defs/prose" },
+        "mockups": { "$ref": "#/$defs/prose" },
+        "research": { "$ref": "#/$defs/prose" },
+        "since": { "$ref": "#/$defs/prose" },
+        "code-quality": { "$ref": "#/$defs/prose" },
+        "architecture": { "$ref": "#/$defs/prose" },
+        "tech-stack": { "$ref": "#/$defs/prose" },
+        "tests": { "$ref": "#/$defs/prose" },
+        "security": { "$ref": "#/$defs/prose" },
+        "privacy": { "$ref": "#/$defs/prose" },
+        "data-integrity": { "$ref": "#/$defs/prose" },
+        "performance": { "$ref": "#/$defs/prose" },
+        "accessibility": { "$ref": "#/$defs/prose" },
+        "content-branding": { "$ref": "#/$defs/prose" },
+        "usability": { "$ref": "#/$defs/prose" },
+        "feature-completeness": { "$ref": "#/$defs/prose" },
+        "repo-hygiene": { "$ref": "#/$defs/prose" },
+        "ops-release": { "$ref": "#/$defs/prose" },
+        "external-facts": { "$ref": "#/$defs/prose" },
+        "agent-readiness": { "$ref": "#/$defs/prose" }
+      }
+    },
+    "plan": {
+      "description": "Now / Next / Later. Every Blocker in findings.json `scorecard.blockers` is in `now`. `finding` is an id on the page: a finding id, `fs-<standard id>` or a section id such as `research`.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["now", "next", "later"],
+      "properties": {
+        "now": { "$ref": "#/$defs/phase" },
+        "next": { "$ref": "#/$defs/phase" },
+        "later": { "$ref": "#/$defs/phase" }
+      }
+    },
+    "standards": {
+      "description": "The Fleet standards table, one row per checklist row, n/a rows included. `rows` is empty when the checklist could not be read, the repo is not a fleet repo or has no remote; `intros.standards` then says why. A `fail` row, and a report-only `FLAG` row, carry `severity`. `label` is only for a report-only row: `OK` with `pass`, `FLAG` with `unchecked`.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rows"],
+      "properties": {
+        "rows": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "requirement", "source", "result"],
+            "properties": {
+              "id": { "$ref": "#/$defs/id" },
+              "requirement": { "$ref": "#/$defs/prose" },
+              "source": { "$ref": "#/$defs/prose" },
+              "result": { "enum": ["pass", "fail", "na", "unchecked"] },
+              "label": { "enum": ["OK", "FLAG"] },
+              "severity": { "enum": ["blocker", "high", "med", "low"] },
+              "evidence": { "type": "string" },
+              "fix": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "tables": {
+      "description": "Extra evidence tables, each under the section it belongs to: `rules`, `measurements`, or an area section (`external-facts`, `agent-readiness`, `repo-hygiene`), where it sits before the finding table. A table with more than four columns is rendered wide. Cells are prose.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["section", "caption", "head", "rows"],
+        "properties": {
+          "section": {
+            "enum": [
+              "rules",
+              "measurements",
+              "external-facts",
+              "agent-readiness",
+              "repo-hygiene"
+            ]
+          },
+          "caption": { "$ref": "#/$defs/text" },
+          "head": { "type": "array", "items": { "type": "string" } },
+          "rows": {
+            "type": "array",
+            "items": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      }
+    },
+    "screens": {
+      "description": "Captures, already downscaled (JPEG about q70). `path` is a file, relative to this file's folder; render.py embeds it as a data: URI. Empty or absent deletes the Screens section; method_note then reads `No captures: <reason>`.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "alt", "caption"],
+        "properties": {
+          "path": { "type": "string" },
+          "alt": { "$ref": "#/$defs/text" },
+          "caption": { "$ref": "#/$defs/prose" }
+        }
+      }
+    },
+    "mockups": {
+      "description": "At most three, only when the design lens reported a High or Blocker finding. `html` replaces the contents of the mockup frame and uses only --mk-* colours. `width` is the frame's width in px plus 56. Empty or absent deletes the section; screens intro or method_note then reads `No mockups: <reason>`.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["title", "context", "width", "html", "notes"],
+        "properties": {
+          "title": { "$ref": "#/$defs/text" },
+          "context": { "$ref": "#/$defs/prose" },
+          "width": { "type": "integer" },
+          "html": { "$ref": "#/$defs/prose" },
+          "notes": { "type": "array", "items": { "$ref": "#/$defs/prose" } }
+        }
+      }
+    },
+    "research": {
+      "description": "The market lens's output as sources. Absent deletes the Research section.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sources"],
+      "properties": {
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["topic", "summary", "url", "title"],
+            "properties": {
+              "topic": { "$ref": "#/$defs/text" },
+              "summary": { "$ref": "#/$defs/prose" },
+              "url": { "type": "string", "pattern": "^https?://\\S+$" },
+              "title": { "$ref": "#/$defs/text" }
+            }
+          }
+        },
+        "gaps": { "type": "string" }
+      }
+    },
+    "checked": {
+      "description": "What Stage 4 verified, corrected, merged, disputed and could not verify, one line each. The section is deleted when every list is empty.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "verified": { "type": "array", "items": { "type": "string" } },
+        "corrected": { "type": "array", "items": { "type": "string" } },
+        "merged": { "type": "array", "items": { "type": "string" } },
+        "disputed": { "type": "array", "items": { "type": "string" } },
+        "unverified": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "since_notes": {
+      "description": "A note for one key of findings.json `diff`, for example both severities of a still-open item. Without one, a key in this run links to its finding, a not-re-checked key gives its area's reason, and a not-re-raised key a stock sentence.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["key", "note"],
+        "properties": {
+          "key": { "type": "string" },
+          "note": { "$ref": "#/$defs/prose" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "text": { "type": "string", "pattern": "\\S" },
+    "prose": { "type": "string", "pattern": "\\S" },
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$" },
+    "phase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["when", "items"],
+      "properties": {
+        "when": { "$ref": "#/$defs/prose" },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["text", "effort", "finding"],
+            "properties": {
+              "text": { "$ref": "#/$defs/prose" },
+              "effort": { "enum": ["S", "M", "L"] },
+              "finding": { "$ref": "#/$defs/id" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

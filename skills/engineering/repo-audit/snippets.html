@@ -2,11 +2,11 @@
 <!--
 REPO-AUDIT MOCKUP FRAMES. Open this file to preview them; it is not part of the report.
 template.html ships a browser frame. When the audited product is a desktop app, a phone app or a terminal tool,
-copy the matching frame:
-1. Its CSS block (between its "=== name ===" markers) into template.html's <style>.
-2. Its markup in place of the sample inside .mk.
-3. Each --mk-* token it lists that template.html lacks: the light value in :root, the dark value in both dark blocks.
-4. Set the mockup's data-w to the frame's --w + 56.
+copy the matching frame into a scratch copy of template.html, then pass the copy to render.py with --template:
+1. Its CSS block (between its "=== name ===" markers) into the copy's <style>.
+2. Its markup is the mockup's html in page-extra.json (render.py puts it inside .mk).
+3. Each --mk-* token it lists that the copy lacks: the light value in :root, the dark value in both dark blocks.
+4. Set the mockup's width in page-extra.json to the frame's --w + 56.
 Colours come only from --mk-* tokens so the mockup follows the theme. Frame classes are prefixed (bw-, ph-, tm-) or
 distinct, so two frames can sit in one file.
 -->
@@ -454,8 +454,8 @@ distinct, so two frames can sit in one file.
 <main>
   <h1>Repo-audit mockup frames</h1>
   <p>
-    Copy a frame into <code>template.html</code> as the header comment there
-    says. Each frame lists the <code>--mk-*</code> tokens it uses.
+    Copy a frame into a scratch copy of <code>template.html</code>, as the
+    header above says. Each frame lists the <code>--mk-*</code> tokens it uses.
   </p>
 
   <h2>Desktop window</h2>
