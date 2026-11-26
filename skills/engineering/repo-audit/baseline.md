@@ -31,17 +31,18 @@ Everything the baseline writes goes under one scratchpad folder, `$B`
   publishes one; copy the binary to `$B/tools/bin`). Never install into the
   repo, and never into a global location: pass `--no-bin` to
   `uv python install`, and set the wrapper's redirects below as plain variables
-  for the install too, since `uv`, pnpm and `go install` write global caches by
-  default. Pin the version the repo's CI pins; otherwise record the version
-  used.
+  for the install too (except `gh release download`, below), since `uv`, pnpm
+  and `go install` write global caches by default. Pin the version the repo's
+  CI pins; otherwise record the version used.
 - **Run every install and download from a directory under `$B`**, never the repo
   (`cd "$B/dl/<tool>"` first, or the tool's own directory flag), and never with
-  `HOME` unset or empty. A tool with no home writes its state relative to the
-  working directory: a 2026-11-25 eval run left `.local/state/gh/device-id` in
-  the audited repo that way. `gh release download` needs the host's login, so it
-  keeps the host `HOME` and gets `XDG_STATE_HOME="$B/state"` and
-  `XDG_CACHE_HOME="$B/cache"`; it never gets the wrapper's scratch `HOME` or a
-  redirected `XDG_CONFIG_HOME`.
+  `HOME` unset or empty: a tool with no home writes its state relative to the
+  working directory, into the repo. `gh release download` needs the host's
+  login, so it keeps the host `HOME` and gets `XDG_STATE_HOME="$B/state"` and
+  `XDG_CACHE_HOME="$B/cache"`, never the wrapper's scratch `HOME` or a
+  redirected `XDG_CONFIG_HOME`. A `pnpm dlx` run that must read the repo (a
+  linter from the repo root) is the one exception to the directory rule; its
+  redirects still apply.
 - **A refused or unavailable install.** The session's permission layer can
   refuse a release download. Take the next route, in this order: the tool
   already on the host from a package manager (used as is, nothing installed,
